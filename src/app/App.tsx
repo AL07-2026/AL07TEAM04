@@ -1,97 +1,91 @@
-import { House, Layers3 } from 'lucide-react';
-import { createBrowserRouter, Link, Outlet } from 'react-router';
+import { useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
+import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
-const linkButtonClass =
-  'inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90';
+const roles = [
+  {
+    id: 'talent',
+    title: '인재',
+    description: '경험을 등록하고 프로젝트에 제안합니다.',
+  },
+  {
+    id: 'company',
+    title: '회사',
+    description: '프로젝트를 등록하고 제안을 확인합니다.',
+  },
+];
 
-function Layout() {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <Link className="font-semibold" to="/">
-            React SPA
-          </Link>
-          <nav className="flex gap-4 text-sm text-muted-foreground">
-            <Link className="hover:text-foreground" to="/">
-              홈
-            </Link>
-            <Link className="hover:text-foreground" to="/about">
-              소개
-            </Link>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-16">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
-
-function HomePage() {
-  return (
-    <section className="space-y-8">
-      <div className="space-y-4">
-        <p className="text-sm font-medium text-primary">Vite + React + React Router</p>
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
-          가볍게 시작하는 React SPA
-        </h1>
-        <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-          라우팅, Tailwind CSS, 기본 UI와 검증 명령만 포함한 범용 보일러플레이트입니다.
-        </p>
-      </div>
-      <Link className={linkButtonClass} to="/about">
-        구성 확인
-      </Link>
-    </section>
-  );
-}
-
-function AboutPage() {
-  const items = [
-    { icon: House, label: 'React Router 기반 SPA 라우팅' },
-    { icon: Layers3, label: 'Tailwind CSS와 shadcn/ui 호환 구조' },
-  ];
+function RoleSelectionPage() {
+  const [selectedRole, setSelectedRole] = useState('talent');
 
   return (
-    <section className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">기본 구성</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {items.map(({ icon: Icon, label }) => (
-          <div className="rounded-xl border border-border bg-card p-6" key={label}>
-            <Icon className="mb-4 size-6 text-primary" />
-            <p>{label}</p>
+    <main className="min-h-screen bg-slate-200 text-white sm:flex sm:items-center sm:justify-center sm:p-6">
+      <section className="mx-auto flex min-h-screen w-full max-w-[320px] flex-col overflow-hidden rounded-none bg-[#020617] shadow-2xl sm:min-h-[690px] sm:rounded-[18px]">
+        <header className="flex h-12 items-center gap-2 border-b border-white/10 bg-[#111827] px-4">
+          <button
+            aria-label="이전으로 돌아가기"
+            className="-ml-1 flex size-6 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/10"
+            type="button"
+          >
+            <ChevronLeft className="size-4" strokeWidth={2.4} />
+          </button>
+          <h1 className="text-sm font-semibold">역할 선택</h1>
+        </header>
+
+        <div className="flex flex-1 flex-col px-5 pb-6 pt-7">
+          <p className="text-[11px] font-medium text-[#2f6df6]">2 / 2</p>
+
+          <div className="mt-4 space-y-3">
+            <h2 className="text-[19px] font-bold leading-tight text-slate-100">
+              어떤 역할로 시작할까요?
+            </h2>
+            <p className="text-[11px] text-slate-400">한 계정에 한 역할만 사용합니다.</p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
-function NotFoundPage() {
-  return (
-    <section className="space-y-4 text-center">
-      <p className="text-sm font-medium text-primary">404</p>
-      <h1 className="text-3xl font-bold">페이지를 찾을 수 없습니다</h1>
-      <Link className={`${linkButtonClass} mt-4`} to="/">
-        홈으로 이동
-      </Link>
-    </section>
+          <div className="mt-5 space-y-4">
+            {roles.map((role) => (
+              <button
+                aria-pressed={selectedRole === role.id}
+                className={`flex h-[104px] w-full flex-col rounded-[11px] border p-4 text-left transition ${
+                  selectedRole === role.id
+                    ? 'border-[#2f6df6] bg-[#111827] shadow-[0_0_0_1px_#2f6df6]'
+                    : 'border-slate-700 bg-[#111827]'
+                }`}
+                key={role.id}
+                onClick={() => {
+                  setSelectedRole(role.id);
+                }}
+                type="button"
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`size-3 rounded-full border ${
+                      selectedRole === role.id ? 'border-[#2f6df6] bg-[#2f6df6]' : 'border-[#3956b8]'
+                    }`}
+                  />
+                  <span className="text-[15px] font-semibold text-slate-100">{role.title}</span>
+                </span>
+                <span className="mt-3 text-[11px] leading-5 text-slate-400">{role.description}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            className="mt-4 h-[39px] w-full rounded-[9px] bg-[#316bea] text-[12px] font-semibold text-white transition hover:bg-[#245ddd]"
+            type="button"
+          >
+            다음
+          </button>
+        </div>
+      </section>
+    </main>
   );
 }
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    Component: Layout,
-    children: [
-      { index: true, Component: HomePage },
-      { path: 'about', Component: AboutPage },
-      { path: '*', Component: NotFoundPage },
-    ],
-  },
+  { path: '/', Component: RoleSelectionPage },
+  { path: '/role', Component: RoleSelectionPage },
 ]);
 
 export function App() {
