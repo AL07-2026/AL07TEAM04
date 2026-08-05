@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 
@@ -15,8 +15,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#020617] text-[#e2e8f0]">
-      <section className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col gap-4 px-6 pb-8 pt-16">
+    <main className="min-h-dvh bg-slate-200 text-[#e2e8f0] sm:flex sm:items-center sm:justify-center sm:p-6">
+      <section className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col gap-4 overflow-hidden bg-[#020617] px-6 pb-8 pt-16 shadow-2xl sm:min-h-[844px] sm:rounded-[18px]">
         <p className="text-xs font-medium text-[#2563eb]">로그인</p>
 
         <h1 className="h-12 text-2xl font-bold leading-[1.2] tracking-[-0.01em] text-[#e2e8f0]">
@@ -78,12 +78,12 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <a
+        <Link
           className="w-fit text-[13px] font-medium text-[#2563eb] hover:text-[#3b82f6]"
-          href="/signup"
+          to="/signup"
         >
           계정이 없나요? 회원가입
-        </a>
+        </Link>
       </section>
     </main>
   );

@@ -64,9 +64,9 @@ export function CompanyInfoPage() {
   }
 
   return (
-    <main className="flex min-h-dvh justify-center bg-white px-2 py-4 text-slate-50">
-      <section className="min-h-[748px] w-full max-w-[346px] rounded-[20px] bg-[#030717] px-5 pb-8 pt-4 shadow-sm">
-        <header className="mb-8 flex items-center gap-2 text-[17px] font-semibold leading-none">
+    <main className="min-h-dvh bg-slate-200 text-slate-50 sm:flex sm:items-center sm:justify-center sm:p-6">
+      <section className="mx-auto min-h-dvh w-full max-w-[390px] overflow-hidden bg-[#020617] shadow-2xl sm:min-h-[844px] sm:rounded-[18px]">
+        <header className="flex h-12 items-center gap-2 border-b border-white/10 bg-[#111827] px-4 text-sm font-semibold leading-none">
           <button
             aria-label="역할 선택으로 돌아가기"
             className="flex size-6 items-center justify-center rounded-full text-slate-100 transition hover:bg-white/10"
@@ -80,7 +80,7 @@ export function CompanyInfoPage() {
           <h1>회사 기본정보</h1>
         </header>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-5 px-5 pb-8 pt-7" onSubmit={handleSubmit}>
           <div className="mb-1 space-y-2">
             <h2 className="text-[21px] font-bold leading-tight">회사 정보를 확인할게요</h2>
             <p className="text-[12px] font-medium text-[#8993A5]">
@@ -93,7 +93,7 @@ export function CompanyInfoPage() {
               <span className="text-[11px] font-semibold text-slate-100">{label}</span>
               <input
                 autoComplete="off"
-                className="h-[43px] w-full rounded-[9px] border border-[#354156] bg-[#202B3D] px-3 text-[12px] font-medium text-slate-50 outline-none transition placeholder:text-[#8390A2] focus:border-[#6258F4] focus:ring-2 focus:ring-[#6258F4]/30"
+                className="h-12 w-full rounded-xl border border-[#334155] bg-[#1e293b] px-3 text-[13px] font-medium text-slate-50 outline-none transition placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/25"
                 id={id}
                 onChange={(event) => {
                   setForm((current) => ({ ...current, [id]: event.target.value }));
@@ -106,7 +106,7 @@ export function CompanyInfoPage() {
           ))}
 
           <button
-            className="mt-3 h-[43px] w-full rounded-[9px] bg-[#5B4CF4] text-[13px] font-bold text-white transition hover:bg-[#6A5BFF] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 h-12 w-full rounded-xl bg-[#2563eb] text-sm font-bold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!isComplete}
             type="submit"
           >

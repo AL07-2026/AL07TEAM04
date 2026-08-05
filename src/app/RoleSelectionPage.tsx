@@ -21,7 +21,7 @@ export function RoleSelectionPage() {
 
   return (
     <main className="min-h-dvh bg-slate-200 text-white sm:flex sm:items-center sm:justify-center sm:p-6">
-      <section className="mx-auto flex min-h-dvh w-full max-w-[320px] flex-col overflow-hidden bg-[#020617] shadow-2xl sm:min-h-[690px] sm:rounded-[18px]">
+      <section className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col overflow-hidden bg-[#020617] shadow-2xl sm:min-h-[844px] sm:rounded-[18px]">
         <header className="flex h-12 items-center gap-2 border-b border-white/10 bg-[#111827] px-4">
           <button
             aria-label="로그인 화면으로 돌아가기"
@@ -53,7 +53,7 @@ export function RoleSelectionPage() {
                 aria-pressed={selectedRole === role.id}
                 className={`flex h-[104px] w-full flex-col rounded-[11px] border p-4 text-left transition ${
                   selectedRole === role.id
-                    ? 'border-[#2f6df6] bg-[#111827] shadow-[0_0_0_1px_#2f6df6]'
+                    ? 'border-[#2563eb] bg-[#111827] shadow-[0_0_0_1px_#2563eb]'
                     : 'border-slate-700 bg-[#111827]'
                 }`}
                 key={role.id}
@@ -66,8 +66,8 @@ export function RoleSelectionPage() {
                   <span
                     className={`size-3 rounded-full border ${
                       selectedRole === role.id
-                        ? 'border-[#2f6df6] bg-[#2f6df6]'
-                        : 'border-[#3956b8]'
+                        ? 'border-[#2563eb] bg-[#2563eb]'
+                        : 'border-slate-600'
                     }`}
                   />
                   <span className="text-[15px] font-semibold text-slate-100">{role.title}</span>
@@ -80,7 +80,7 @@ export function RoleSelectionPage() {
           </div>
 
           <button
-            className="mt-4 h-[39px] w-full rounded-[9px] bg-[#316bea] text-[12px] font-semibold text-white transition hover:bg-[#245ddd]"
+            className="mt-5 h-12 w-full rounded-xl bg-[#2563eb] text-sm font-semibold text-white transition hover:bg-[#1d4ed8]"
             onClick={() => {
               void navigate(selectedRole === 'company' ? '/company-info' : '/basic-profile');
             }}
