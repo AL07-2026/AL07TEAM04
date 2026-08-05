@@ -1,4 +1,5 @@
 import { type FormEvent } from 'react';
+import { useNavigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 
@@ -6,8 +7,11 @@ const fieldClassName =
   'h-12 w-full rounded-xl border border-[#334155] bg-[#1e293b] px-3 text-[13px] text-[#e2e8f0] outline-none transition-colors placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/25';
 
 export function LoginPage() {
+  const navigate = useNavigate();
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    void navigate('/role');
   }
 
   return (
