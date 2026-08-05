@@ -7,6 +7,22 @@ import { CompanyInfoPage } from '@/app/CompanyInfoPage';
 import { LoginPage } from '@/app/LoginPage';
 import { RoleSelectionPage } from '@/app/RoleSelectionPage';
 import { SignupPage } from '@/app/SignupPage';
+import {
+  CompanyHomePage,
+  ExperienceSelectionPage,
+  MyProposalDetailPage,
+  MyProposalsPage,
+  ProjectCompletePage,
+  ProjectDetailPage,
+  ProjectListPage,
+  ProjectManagementPage,
+  ProjectRegisterPage,
+  ProposalCompletePage,
+  ProposalPage,
+  ReceivedProposalDetailPage,
+  ReceivedProposalsPage,
+  SeniorHomePage,
+} from '@/app/wireframe/FlowPages';
 
 function createAppRouter() {
   return createBrowserRouter([
@@ -16,6 +32,20 @@ function createAppRouter() {
     { path: '/role', Component: RoleSelectionPage },
     { path: '/company-info', Component: CompanyInfoPage },
     { path: '/basic-profile', Component: BasicProfilePage },
+    { path: '/senior', Component: SeniorHomePage },
+    { path: '/senior/experience', Component: ExperienceSelectionPage },
+    { path: '/senior/projects', Component: ProjectListPage },
+    { path: '/senior/projects/:projectId', Component: ProjectDetailPage },
+    { path: '/senior/projects/:projectId/proposal', Component: ProposalPage },
+    { path: '/senior/proposal-complete', Component: ProposalCompletePage },
+    { path: '/senior/proposals', Component: MyProposalsPage },
+    { path: '/senior/proposals/:proposalId', Component: MyProposalDetailPage },
+    { path: '/company', Component: CompanyHomePage },
+    { path: '/company/projects', Component: ProjectManagementPage },
+    { path: '/company/projects/new', Component: ProjectRegisterPage },
+    { path: '/company/project-complete', Component: ProjectCompletePage },
+    { path: '/company/proposals', Component: ReceivedProposalsPage },
+    { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },
     { path: '*', element: <Navigate replace to="/login" /> },
   ]);
 }
