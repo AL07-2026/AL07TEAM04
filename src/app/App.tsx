@@ -1,96 +1,133 @@
-import { House, Layers3 } from 'lucide-react';
-import { createBrowserRouter, Link, Outlet } from 'react-router';
+import { ArrowLeft } from 'lucide-react';
+import { FormEvent, useMemo, useState } from 'react';
+import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
-const linkButtonClass =
-  'inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90';
+const fields = [
+  {
+    id: 'companyName',
+    label: '회사명',
+    placeholder: '회사명을 입력하세요',
+    type: 'text',
+  },
+  {
+    id: 'companyAddress',
+    label: '회사주소',
+    placeholder: '회사주소를 입력하세요',
+    type: 'text',
+  },
+  {
+    id: 'managerName',
+    label: '담당자명',
+    placeholder: '담당자 이름을 입력하세요',
+    type: 'text',
+  },
+  {
+    id: 'email',
+    label: '업무 이메일',
+    placeholder: '업무 이메일을 입력하세요',
+    type: 'email',
+  },
+  {
+    id: 'phone',
+    label: '연락처',
+    placeholder: '담당자 연락처를 입력하세요',
+    type: 'tel',
+  },
+] as const;
 
-function Layout() {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <Link className="font-semibold" to="/">
-            React SPA
-          </Link>
-          <nav className="flex gap-4 text-sm text-muted-foreground">
-            <Link className="hover:text-foreground" to="/">
-              홈
-            </Link>
-            <Link className="hover:text-foreground" to="/about">
-              소개
-            </Link>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-16">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
+type FieldId = (typeof fields)[number]['id'];
+type CompanyForm = Record<FieldId, string>;
+
+const initialForm: CompanyForm = {
+  companyName: '',
+  companyAddress: '',
+  managerName: '',
+  email: '',
+  phone: '',
+};
 
 function HomePage() {
-  return (
-    <section className="space-y-8">
-      <div className="space-y-4">
-        <p className="text-sm font-medium text-primary">Vite + React + React Router</p>
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
-          가볍게 시작하는 React SPA
-        </h1>
-        <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-          라우팅, Tailwind CSS, 기본 UI와 검증 명령만 포함한 범용 보일러플레이트입니다.
-        </p>
-      </div>
-      <Link className={linkButtonClass} to="/about">
-        구성 확인
-      </Link>
-    </section>
+  const [form, setForm] = useState<CompanyForm>(initialForm);
+  const [submitted, setSubmitted] = useState(false);
+
+  const isComplete = useMemo(
+    () => fields.every(({ id }) => form[id].trim().length > 0),
+    [form],
   );
-}
 
-function AboutPage() {
-  const items = [
-    { icon: House, label: 'React Router 기반 SPA 라우팅' },
-    { icon: Layers3, label: 'Tailwind CSS와 shadcn/ui 호환 구조' },
-  ];
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!isComplete) {
+      return;
+    }
+
+    setSubmitted(true);
+  };
 
   return (
-    <section className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">기본 구성</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {items.map(({ icon: Icon, label }) => (
-          <div className="rounded-xl border border-border bg-card p-6" key={label}>
-            <Icon className="mb-4 size-6 text-primary" />
-            <p>{label}</p>
+    <main className="flex min-h-screen justify-center bg-white px-2 py-4 text-slate-50">
+      <section className="min-h-[748px] w-full max-w-[346px] rounded-[20px] bg-[#030717] px-5 pb-8 pt-4 shadow-sm">
+        <header className="mb-8 flex items-center gap-2 text-[17px] font-semibold leading-none">
+          <button
+            aria-label="뒤로가기"
+            className="flex size-6 items-center justify-center rounded-full text-slate-100 transition hover:bg-white/10"
+            type="button"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+          </button>
+          <h1>회사 기본정보</h1>
+        </header>
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="mb-1 space-y-2">
+            <h2 className="text-[21px] font-bold leading-tight">회사 정보를 확인할게요</h2>
+            <p className="text-[12px] font-medium text-[#8993A5]">
+              프로젝트와 제안 확인 후 연락에 사용됩니다.
+            </p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
-function NotFoundPage() {
-  return (
-    <section className="space-y-4 text-center">
-      <p className="text-sm font-medium text-primary">404</p>
-      <h1 className="text-3xl font-bold">페이지를 찾을 수 없습니다</h1>
-      <Link className={`${linkButtonClass} mt-4`} to="/">
-        홈으로 이동
-      </Link>
-    </section>
+          {fields.map(({ id, label, placeholder, type }) => (
+            <label className="block space-y-2" htmlFor={id} key={id}>
+              <span className="text-[11px] font-semibold text-slate-100">{label}</span>
+              <input
+                autoComplete="off"
+                className="h-[43px] w-full rounded-[9px] border border-[#354156] bg-[#202B3D] px-3 text-[12px] font-medium text-slate-50 outline-none transition placeholder:text-[#8390A2] focus:border-[#6258F4] focus:ring-2 focus:ring-[#6258F4]/30"
+                id={id}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, [id]: event.target.value }))
+                }
+                placeholder={placeholder}
+                type={type}
+                value={form[id]}
+              />
+            </label>
+          ))}
+
+          <button
+            className="mt-3 h-[43px] w-full rounded-[9px] bg-[#5B4CF4] text-[13px] font-bold text-white transition hover:bg-[#6A5BFF] disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!isComplete}
+            type="submit"
+          >
+            회사로 시작
+          </button>
+
+          {submitted ? (
+            <p className="text-center text-[12px] font-semibold text-[#7AEEB7]">
+              회사 정보가 저장되었습니다.
+            </p>
+          ) : null}
+        </form>
+      </section>
+    </main>
   );
 }
 
 const router = createBrowserRouter([
   {
     path: '/',
-    Component: Layout,
-    children: [
-      { index: true, Component: HomePage },
-      { path: 'about', Component: AboutPage },
-      { path: '*', Component: NotFoundPage },
-    ],
+    Component: HomePage,
   },
 ]);
 
