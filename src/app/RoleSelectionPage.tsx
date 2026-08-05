@@ -80,6 +80,9 @@ export function RoleSelectionPage() {
 
           <button
             className="mt-4 h-[39px] w-full rounded-[9px] bg-[#316bea] text-[12px] font-semibold text-white transition hover:bg-[#245ddd]"
+            onClick={() => {
+              void navigate(selectedRole === 'company' ? '/company-info' : '/basic-profile');
+            }}
             type="button"
           >
             다음
