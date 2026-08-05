@@ -14,4 +14,29 @@ describe('통합 화면 라우팅', () => {
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe('/role');
   });
+
+  it('회사 역할을 선택하면 회사 기본정보 화면으로 이동한다', async () => {
+    window.history.pushState({}, '', '/role');
+    render(<App />);
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '회사 - 프로젝트를 등록하고 제안을 확인합니다.',
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+    expect(await screen.findByRole('heading', { name: '회사 기본정보' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/company-info');
+  });
+
+  it('인재 역할로 진행하면 기본 프로필 화면으로 이동한다', async () => {
+    window.history.pushState({}, '', '/role');
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+
+    expect(await screen.findByText('새로운 기회', { selector: 'strong' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/basic-profile');
+  });
 });

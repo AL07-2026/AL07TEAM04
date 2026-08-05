@@ -49,6 +49,7 @@ export function RoleSelectionPage() {
           <div className="mt-5 space-y-4">
             {roles.map((role) => (
               <button
+                aria-label={`${role.title} - ${role.description}`}
                 aria-pressed={selectedRole === role.id}
                 className={`flex h-[104px] w-full flex-col rounded-[11px] border p-4 text-left transition ${
                   selectedRole === role.id
