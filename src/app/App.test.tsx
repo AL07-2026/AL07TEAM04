@@ -11,6 +11,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/company-info', '회사 기본정보'],
     ['/senior', '인재 홈'],
     ['/senior/experience', '경험 선택'],
+    ['/senior/experience/interview', 'AI 경험 인터뷰'],
+    ['/senior/experience/card', '경험 카드가 완성됐어요'],
     ['/senior/projects', '프로젝트 목록'],
     ['/senior/projects/1', '프로젝트 상세'],
     ['/senior/projects/1/proposal', '제안하기'],
@@ -36,9 +38,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('이메일'), { target: { value: 'senior@example.com' } });
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: /다음/ }));
     expect(await screen.findByRole('heading', { name: '역할 선택' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: /다음/ }));
     expect(await screen.findByRole('heading', { name: '인재 기본정보' })).toBeInTheDocument();
   });
 
@@ -73,12 +75,12 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(window.location.pathname).toBe('/company/project-complete');
   });
 
-  it('받은 제안의 상태와 연락처를 확인한다', () => {
+  it('받은 제안의 상태와 대화 제안을 확인한다', () => {
     window.history.pushState({}, '', '/company/proposals/1');
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '검토 중으로 변경' }));
     expect(screen.getByText('제안 상태를 검토 중으로 변경했습니다.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '연락처 보기' }));
+    fireEvent.click(screen.getByRole('button', { name: '대화 제안하기' }));
     expect(screen.getByText(/010-1234-5678/)).toBeInTheDocument();
   });
 });

@@ -9,6 +9,8 @@ import { RoleSelectionPage } from '@/app/RoleSelectionPage';
 import { SignupPage } from '@/app/SignupPage';
 import {
   CompanyHomePage,
+  ExperienceCardPage,
+  ExperienceInterviewPage,
   ExperienceSelectionPage,
   MyProposalDetailPage,
   MyProposalsPage,
@@ -24,6 +26,8 @@ import {
   SeniorHomePage,
 } from '@/app/wireframe/FlowPages';
 
+import { ViewportProvider } from '@/app/wireframe/Ui';
+
 function createAppRouter() {
   return createBrowserRouter([
     { path: '/', element: <Navigate replace to="/login" /> },
@@ -34,6 +38,8 @@ function createAppRouter() {
     { path: '/basic-profile', Component: BasicProfilePage },
     { path: '/senior', Component: SeniorHomePage },
     { path: '/senior/experience', Component: ExperienceSelectionPage },
+    { path: '/senior/experience/interview', Component: ExperienceInterviewPage },
+    { path: '/senior/experience/card', Component: ExperienceCardPage },
     { path: '/senior/projects', Component: ProjectListPage },
     { path: '/senior/projects/:projectId', Component: ProjectDetailPage },
     { path: '/senior/projects/:projectId/proposal', Component: ProposalPage },
@@ -53,5 +59,9 @@ function createAppRouter() {
 export function App() {
   const [router] = useState(createAppRouter);
 
-  return <RouterProvider router={router} />;
+  return (
+    <ViewportProvider>
+      <RouterProvider router={router} />
+    </ViewportProvider>
+  );
 }
