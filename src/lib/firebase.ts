@@ -15,5 +15,7 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+auth.languageCode = 'ko';
+
 export const db = getFirestore(app);
 export default app;

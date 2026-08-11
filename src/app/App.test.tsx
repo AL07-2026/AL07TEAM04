@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { App } from '@/app/App';
 
@@ -39,10 +39,14 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('비밀번호 확인'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button', { name: /인증 메일 받기/ }));
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /인증 메일 받기/ }));
+    });
     expect(await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
+    });
     expect(await screen.findByRole('heading', { name: '저장된 내 경험 정보' })).toBeInTheDocument();
   });
 

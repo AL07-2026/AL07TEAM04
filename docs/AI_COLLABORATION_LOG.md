@@ -16,19 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 이메일 유효성 및 실제 도메인 검증 추가 & 파이어베이스 이메일 인증 발송 처리
+### [2026-08-11] 파이어베이스 인증 메일 한국어 언어 설정(auth.languageCode = 'ko') 및 템플릿 바인딩
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **이메일 실존 유효성 검증 로직 추가 (`isValidEmail`)**:
-    - `SignupPage.tsx` 내 이메일 입력 시 유효한 이메일 표준 형식 및 실제 도메인 구조(예: `user@gmail.com`, `user@naver.com`, `user@kakao.com`) 입력 여부 실시간 사전 검증.
-  - **파이어베이스 이메일 인증 발송 에러 핸들링 강화**:
-    - `authContext.tsx` 내 `sendVerificationEmail` 시 파이어베이스 서버의 콘솔 설정 오류(`auth/operation-not-allowed`) 및 빈도 제한(`auth/too-many-requests`) 예외 처리 강화.
+  - **파이어베이스 인증 언어 한국어 고정 설정**:
+    - `src/lib/firebase.ts` 내 `auth.languageCode = 'ko'` 설정 추가로 파이어베이스 인증 이메일 발송 시 한국어로 번역 및 서비스 안내문이 자동 적용되도록 바인딩.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
+  - [MODIFY] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
