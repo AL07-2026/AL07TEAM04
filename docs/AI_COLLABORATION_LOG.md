@@ -16,11 +16,11 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 프레임 상하단 불필요한 빈 여백 제거 및 자연스러운 배치 최적화
+### [2026-08-11] 모바일 프레임 상하단 완벽 수직 대칭(Equidistant Centering) 및 요소 확대 최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **상하단 과도한 여백 제거**: 모바일 뷰어 프레임 내에서 100px 가량 발생했던 `my-auto` 수직 중앙 정렬 여백을 제거하고 헤더 바로 아래부터 자연스럽게 흐르는 `pt-1 pb-2` 상단 정렬 레이아웃 적용 (`LoginPage.tsx`).
-  - **전체 시각적 밸런스 조율**: 상단 탭부터 구글 로그인, 회원가입 링크까지 스크롤 없이 시원하고 균형 잡힌 간격으로 수직 배치 완성.
+  - **상하단 여백 완벽 대칭 정렬**: 위로 쏠렸던 모바일 프레임 내부 배치를 **상단 여백과 하단 여백이 1:1로 완전 대칭(`my-auto justify-center`)**되도록 중앙 분배 완료 (`LoginPage.tsx`).
+  - **요소별 체급 확대**: 여백만 비어 보이지 않도록 텍스트 크기(`16px` 제목 / `13px` 설명), 배너 높이(`h-36 sm:h-40`), 입력 필드(`h-11`), 메인 로그인 버튼(`h-12 text-[15px] font-extrabold`)의 체급을 풍성하게 확대하여 스크롤 없이 가득 찬 느낌의 고품격 비주얼 완성.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/login`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.

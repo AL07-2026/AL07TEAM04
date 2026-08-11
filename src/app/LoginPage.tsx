@@ -171,8 +171,8 @@ export function LoginPage() {
 
   if (isMobile) {
     return (
-      <MobilePage contentClassName="px-4.5 py-3.5 flex flex-col min-h-0 flex-1 overflow-y-auto" showBack={false} title="경험매칭">
-        <div className="flex flex-col gap-3.5 w-full max-w-sm mx-auto pt-1 pb-2">
+      <MobilePage contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto" showBack={false} title="경험매칭">
+        <div className="flex flex-col gap-4 w-full max-w-sm mx-auto my-auto py-2">
           {/* Initial Role Choice Tabs */}
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-white p-1 shadow-2xs">
             <button
@@ -182,7 +182,7 @@ export function LoginPage() {
                 setErrorMessage('');
               }}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-xs font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-extrabold transition-all',
                 role === 'senior'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -197,7 +197,7 @@ export function LoginPage() {
                 setErrorMessage('');
               }}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-xs font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs sm:text-sm font-extrabold transition-all',
                 role === 'company'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -208,8 +208,8 @@ export function LoginPage() {
           </div>
 
           {/* Heading Pitch */}
-          <div className="flex flex-col gap-1 text-left px-0.5">
-            <h2 className="text-[15px] font-extrabold tracking-tight text-[#17212B] leading-snug">
+          <div className="flex flex-col gap-1.5 text-left px-0.5">
+            <h2 className="text-[16px] font-extrabold tracking-tight text-[#17212B] leading-snug">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <span className="text-[#F06B4F]">기업의 가치</span>가 됩니다.
@@ -220,7 +220,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-[12px] leading-relaxed font-medium text-slate-500">
+            <p className="text-[13px] leading-relaxed font-medium text-slate-500">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -231,9 +231,9 @@ export function LoginPage() {
           <RollingBanner isCompact />
 
           {/* Login Form */}
-          <form className="flex flex-col gap-2.5 pt-1" onSubmit={submit}>
+          <form className="flex flex-col gap-3 pt-0.5" onSubmit={submit}>
             <div className="flex flex-col gap-1 text-left">
-              <label className="text-xs font-extrabold text-[#17212B]">이메일</label>
+              <label className="text-[13px] font-extrabold text-[#17212B]">이메일</label>
               <input
                 autoComplete="email"
                 type="email"
@@ -244,12 +244,12 @@ export function LoginPage() {
                   setErrorMessage('');
                 }}
                 placeholder="이메일을 입력하세요"
-                className="h-10 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs font-medium text-[#17212B] outline-none focus:border-[#F06B4F] focus:ring-1 focus:ring-[#F06B4F]"
+                className="h-11 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs sm:text-sm font-medium text-[#17212B] outline-none focus:border-[#F06B4F] focus:ring-1 focus:ring-[#F06B4F]"
               />
             </div>
 
             <div className="flex flex-col gap-1 text-left">
-              <label className="text-xs font-extrabold text-[#17212B]">비밀번호</label>
+              <label className="text-[13px] font-extrabold text-[#17212B]">비밀번호</label>
               <input
                 autoComplete="current-password"
                 type="password"
@@ -260,7 +260,7 @@ export function LoginPage() {
                   setErrorMessage('');
                 }}
                 placeholder="비밀번호를 입력하세요"
-                className="h-10 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs font-medium text-[#17212B] outline-none focus:border-[#F06B4F] focus:ring-1 focus:ring-[#F06B4F]"
+                className="h-11 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs sm:text-sm font-medium text-[#17212B] outline-none focus:border-[#F06B4F] focus:ring-1 focus:ring-[#F06B4F]"
               />
             </div>
 
@@ -270,11 +270,11 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            {/* Main Action Button - RESTORED TO DARK GREEN (#173F3A) AS REQUESTED BY USER */}
+            {/* Main Action Button - Dark Green (#173F3A) & Enlarged 15px font */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-[14px] font-extrabold text-white shadow-md shadow-[#173F3A]/20 transition-all hover:bg-[#0E2825] active:scale-[0.99] disabled:opacity-40"
+              className="flex h-12 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-[15px] font-extrabold text-white shadow-md shadow-[#173F3A]/20 transition-all hover:bg-[#0E2825] active:scale-[0.99] disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -294,7 +294,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-10.5 w-full items-center justify-center gap-2.5 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs font-bold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] active:scale-[0.99]"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs sm:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] active:scale-[0.99]"
             >
               <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -305,9 +305,9 @@ export function LoginPage() {
               Google 계정으로 로그인
             </button>
 
-            <div className="flex items-center justify-center pt-1">
+            <div className="flex items-center justify-center pt-1.5 pb-1">
               <Link
-                className="text-xs font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
+                className="text-[13px] font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
