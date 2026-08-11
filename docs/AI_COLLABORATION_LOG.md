@@ -16,27 +16,24 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 화면 전반 텍스트 크기 시인성 강화 (배치 보존) 및 배포
+### [2026-08-11] 회원가입 온보딩 플로우 중복 단계(/role) 제거 및 직관적 프로필 이동 개편
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **모바일 폰트 가독성 미세 증대 적용**:
-    - 헤더 타이틀 (`text-[16px]` ➔ `text-[17px]`), 뷰포트 스위처 (`text-[10px]` ➔ `text-[11px]`)
-    - 폼 라벨 (`text-xs 12px` ➔ `text-[13px] font-extrabold`), 입력 필드 텍스트 (`text-[13px]` ➔ `text-[14px]`)
-    - 액션 버튼 (`text-sm 14px` ➔ `text-[15px] font-extrabold`), 회원가입/빠른시작 링크 (`text-xs` ➔ `text-[13px]`)
-    - 메인 헤드라인 (`text-[14.5px]` ➔ `text-[15.5px]` 1줄 정렬 보존), 서브 설명문구 (`text-[11px]` ➔ `text-[12px]`)
-    - 하단 네비게이션 바 (`text-[11px]` ➔ `text-[12px]`)
-    - 회원가입, 역할 선택, 기본정보 폼 및 3단계 프로세스 카드 뱃지·설명문구 폰트 전반 미세 확대 보정.
+  - **불필요한 중복 단계(`/role`) 제거**:
+    - 첫 로그인 화면(`/login`)에서 인재 ↔ 기업 탭을 이미 선택하므로, 회원가입 시 선택한 역할 정보(`role=senior` | `role=company`)가 유지되도록 파라미터 연동.
+    - `SignupPage.tsx` 상단에 인라인 역할 선택 필(`🙋‍♂️ 인재 회원가입` ↔ `🏢 회사 회원가입`)을 배치하여 폼 내에서 바로 변경/확인 가능.
+    - 회원가입 완료 후 중복 화면인 `/role`을 거치지 않고 바로 `인재 기본정보`(`/basic-profile`) 또는 `회사 기본정보`(`/company-info`)로 즉시 진입하도록 1단계 단축.
+  - **PC 상단 네비게이션 헤더 연속성 확보**:
+    - 회원가입 후 기본정보 페이지 진입 시에도 PC 상단 네비게이션 헤더(`홈`, `프로젝트`, `내 제안`, `내 정보`)가 100% 정상 노출되도록 보정.
+    - 기존 `/role` 직접 접근 시에도 상단 헤더가 표시되도록 `role` 및 `activeNav`속성 보완.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
   - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
   - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
   - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

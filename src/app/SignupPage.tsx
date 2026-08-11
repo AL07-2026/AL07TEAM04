@@ -1,25 +1,35 @@
 import { type FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { cn } from '@/lib/utils';
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { mode } = useViewportMode();
+
+  const initialRole = searchParams.get('role') === 'company' ? 'company' : 'senior';
+  const [selectedRole, setSelectedRole] = useState<'senior' | 'company'>(initialRole);
   const [form, setForm] = useState({ name: '', email: '', password: '', agreed: false });
   const [message, setMessage] = useState('');
+
   const update = (key: 'name' | 'email' | 'password') => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage('');
   };
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!form.name || !form.email || form.password.length < 8 || !form.agreed) {
       setMessage('필수 정보와 약관 동의를 확인해 주세요.');
       return;
     }
-    void navigate('/role');
+    if (selectedRole === 'company') {
+      void navigate('/company-info');
+    } else {
+      void navigate('/basic-profile');
+    }
   }
 
   const isMobile = mode === 'mobile';
@@ -37,12 +47,45 @@ export function SignupPage() {
         )}
       >
         <form className="flex flex-col gap-3.5" onSubmit={submit}>
+          {/* Inline Role Choice Tabs */}
+          <div className="flex w-full rounded-full border border-[#E0D9C8] bg-[#FAF7F2] p-1 shadow-2xs mb-1">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('senior')}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
+                selectedRole === 'senior'
+                  ? 'bg-[#173F3A] text-white shadow-xs'
+                  : 'text-slate-500 hover:text-[#17212B]',
+              )}
+            >
+              🙋‍♂️ 인재 회원가입
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('company')}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
+                selectedRole === 'company'
+                  ? 'bg-[#173F3A] text-white shadow-xs'
+                  : 'text-slate-500 hover:text-[#17212B]',
+              )}
+            >
+              🏢 회사 회원가입
+            </button>
+          </div>
+
           <div className="flex flex-col gap-1">
             <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>
               계정을 만들어 시작하세요
             </h2>
-            <p className="text-[13px] font-medium text-slate-500">이어잡 공통 정보만 먼저 입력합니다.</p>
+            <p className="text-[13px] font-medium text-slate-500">
+              {selectedRole === 'senior'
+                ? '인재 전용 프로젝트 매칭 계정을 생성합니다.'
+                : '기업 전용 실무 과제 등록 계정을 생성합니다.'}
+            </p>
           </div>
+
           <Field
             autoComplete="name"
             label="이름"
@@ -80,7 +123,9 @@ export function SignupPage() {
               {message}
             </p>
           ) : null}
-          <ActionButton type="submit">다음 단계로 이동 →</ActionButton>
+          <ActionButton type="submit" role={selectedRole}>
+            {selectedRole === 'company' ? '회사 기본정보 입력 →' : '인재 기본정보 입력 →'}
+          </ActionButton>
           <Link
             className="w-fit text-xs font-bold text-[#F06B4F] underline hover:text-[#E05A3E]"
             to="/login"

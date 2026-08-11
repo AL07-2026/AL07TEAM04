@@ -206,7 +206,7 @@ export function LoginPage() {
             <div className="flex items-center justify-center pt-2">
               <Link
                 className="text-[13px] font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
-                to="/signup"
+                to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
               </Link>
@@ -307,7 +307,7 @@ export function LoginPage() {
             <div className="flex items-center justify-center pt-2 border-t border-[#E0D9C8]/60 mt-1">
               <Link
                 className="text-xs md:text-sm font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
-                to="/signup"
+                to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
               </Link>
