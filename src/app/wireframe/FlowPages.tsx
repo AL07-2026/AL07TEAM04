@@ -91,11 +91,12 @@ export function ProcessOverviewGraphicCard() {
           <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Mic className="size-4.5 md:size-5.5" />
           </div>
-          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight break-keep">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               1. 경험을 말해요
             </span>
-            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
+              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
               AI 음성 대화
             </span>
           </div>
@@ -105,11 +106,12 @@ export function ProcessOverviewGraphicCard() {
           <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
             <Award className="size-4.5 md:size-5.5" />
           </div>
-          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#F06B4F] leading-tight break-keep">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#F06B4F] leading-tight whitespace-nowrap">
               2. 카드로 확인
             </span>
-            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
+              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
               문제·역할·결과
             </span>
           </div>
@@ -119,11 +121,12 @@ export function ProcessOverviewGraphicCard() {
           <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Target className="size-4.5 md:size-5.5" />
           </div>
-          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight break-keep">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               3. 기업이 판단
             </span>
-            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
+              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
               프로젝트 근거 매칭
             </span>
           </div>

@@ -16,11 +16,11 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 경험매칭 3단계 프로세스 카드 아이콘 왼쪽/텍스트 오른쪽 수평 배치 개편
+### [2026-08-11] PC 웹 전용 경험매칭 3단계 프로세스 카드 한 줄(Single-Line) 텍스트 표현 개편
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **공간 효율성 및 안정감 강화**: 수직 중앙 정렬 구조에서 **아이콘 좌측(Left) / 텍스트 우측(Right) 수평 배치 구조**로 전면 수정 (`FlowPages.tsx`).
-  - 좌측 원형 아이콘과 우측 2줄 텍스트(제목 + 보조설명)의 안정적인 가로 정렬을 통해 카드 내부 여백 및 40~60대 시니어 가독성 대폭 향상.
+  - **PC 웹 한 줄 텍스트 표기 개편**: 넓은 데스크톱 화면에서 텍스트 줄바꿈 없이 **`1. 경험을 말해요 | AI 음성 대화`** 형태로 한 줄에 수평 정렬되도록 레이아웃 수정 (`FlowPages.tsx`).
+  - 모바일 환경에서는 2줄 자동 세로 스택 레이아웃 유지 (`flex-col md:flex-row md:items-center`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
