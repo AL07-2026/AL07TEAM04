@@ -98,9 +98,9 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
 
       {/* Clean Text Description Below the Image */}
       {!isCompact && (
-        <div className="flex flex-col gap-1 px-1 pt-1">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-0.5 text-xs font-extrabold text-white leading-none shadow-2xs">
+        <div className="flex flex-col gap-2 px-1 pt-2 md:pt-2.5 pb-1">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3.5 py-1.5 md:py-2 text-xs md:text-[13px] font-extrabold text-white leading-tight shadow-2xs">
               {slide.tag}
             </span>
             <strong className="text-sm md:text-base font-extrabold text-[#17212B] truncate">
