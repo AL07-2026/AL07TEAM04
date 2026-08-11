@@ -16,19 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 UX 4대 최적화 (버튼 높이 48px 확대 + 카드 우측 버튼 정렬 + 좌우 여백 px-4 통일 + 내 제안 타이포 축소)
+### [2026-08-11] 모바일 4대 탭(홈/프로젝트/내 제안/내 정보) 디자인 시스템 100% 통일 규격화 완료
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **하단 메인 액션 버튼 48px(`h-12`) 체급 확대**: 좁아 보였던 `프로젝트 전체 둘러보기 →` 및 메인 버튼 높이를 48px로 시원하게 확대하여 답답함 해소 (`Ui.tsx`).
-  - **카드 내 '프로젝트 보기 →' 우측 정렬**: 모바일 카드의 `프로젝트 보기 →` / `제안 확인 →` 알약 버튼을 오른쪽 끝(`justify-end`)으로 정렬하여 명확하고 안정감 있는 visual flow 완성 (`Ui.tsx`).
-  - **좌우 화면 여백 100% 규격화**: 홈, 프로젝트, 내 제안, 내 정보 화면의 모바일 좌우 여백을 **`px-4` (16px)로 100% 동일하게 통일**하여 화면 간 전환 시 이질감 완전 제거 (`FlowPages.tsx`).
-  - **폰트 타이포그래피 계층 규격화 & 내 제안 메인 타이틀 16px 축소**: 20~24px로 너무 커서 부담스러웠던 모바일 헤더 타이틀을 `text-[16px] font-extrabold`로 알맞게 축소 조정 (`FlowPages.tsx`).
+  - **모든 모바일 화면 좌우 여백 100% 동기화**: 모바일 뷰어(`isMobile`) 모드에서 홈, 프로젝트, 내 제안, 내 정보 등 **모든 화면의 좌우 여백을 `px-4` (16px)로 100% 동일하게 일치**시킴 (`FlowPages.tsx`).
+  - **4단계 타이포그래피 계층 시스템 적용**:
+    - Level 1 메인 타이틀: `text-[16px]`~`text-[18px]` (부담스러웠던 20~24px 메인 헤더 전면 축소 균형화)
+    - Level 2 섹션 헤더: `text-[15px]` font-extrabold
+    - Level 3 본문/메타: `text-[13px]` font-medium
+    - Level 4 캡션/뱃지: `text-[11px]` font-bold
+  - **버튼 높이 48px(`h-12`) 및 카드 알약 우측 정렬 100% 표준화**: 모든 메인 액션 버튼 48px, 카드 내 `프로젝트 보기 →` 알약 버튼 우측 정렬(`justify-end`) (`Ui.tsx`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/senior`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
   - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

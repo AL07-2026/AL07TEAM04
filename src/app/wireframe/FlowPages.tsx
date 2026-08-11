@@ -1131,23 +1131,28 @@ export function ReceivedProposalDetailPage() {
 
 export function SeniorProfilePage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
 
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName="flex flex-col gap-4 px-4 pb-6 pt-4 max-w-6xl mx-auto w-full"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="senior"
       showBack={false}
       title="내 정보"
     >
       {/* Profile Header Card */}
-      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
           김
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <strong className="text-lg font-extrabold text-[#17212B]">김인재 님</strong>
+            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">김인재 님</strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 본인 인증
             </span>
@@ -1158,9 +1163,9 @@ export function SeniorProfilePage() {
       </div>
 
       {/* Experience Summary Card */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-2.5">
-          <strong className="text-base font-extrabold text-[#17212B]">대표 경험 카드</strong>
+          <strong className="text-[15px] font-extrabold text-[#17212B]">대표 경험 카드</strong>
           <span className="text-xs font-extrabold text-[#173F3A]">AI 경험 인터뷰 완료</span>
         </div>
         <div className="flex flex-col gap-2 text-xs">
@@ -1175,7 +1180,7 @@ export function SeniorProfilePage() {
         </div>
       </div>
 
-      {/* Action Buttons System (Standardized 44px Height) */}
+      {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
         <ActionButton onClick={() => void navigate('/basic-profile')} secondary>
           기본 정보 수정
@@ -1193,23 +1198,28 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
 
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName="flex flex-col gap-4 px-4 pb-6 pt-4 max-w-6xl mx-auto w-full"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="company"
       showBack={false}
       title="내 정보"
     >
       {/* Company Profile Header Card */}
-      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
           🏢
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <strong className="text-lg font-extrabold text-[#17212B]">그로우랩</strong>
+            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">그로우랩</strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 인증 기업
             </span>
@@ -1220,9 +1230,9 @@ export function CompanyProfilePage() {
       </div>
 
       {/* Company Info Card */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-2.5">
-          <strong className="text-base font-extrabold text-[#17212B]">기업 정보</strong>
+          <strong className="text-[15px] font-extrabold text-[#17212B]">기업 정보</strong>
           <span className="text-xs font-extrabold text-[#173F3A]">등록 완료</span>
         </div>
         <div className="flex flex-col gap-2 text-xs">
@@ -1237,7 +1247,7 @@ export function CompanyProfilePage() {
         </div>
       </div>
 
-      {/* Action Buttons System (Standardized 44px Height) */}
+      {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
         <ActionButton onClick={() => void navigate('/company-info')} role="company" secondary>
           기업 정보 수정
