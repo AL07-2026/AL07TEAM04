@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import 'tailwindcss';
 
 @theme inline {
@@ -7,25 +8,39 @@
   --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  
+  --color-evergreen: #173F3A;
+  --color-coral: #F06B4F;
+  --color-ivory: #F7F3EA;
+  --color-mint: #DDEBE7;
+  --color-ink: #17212B;
 }
 
 :root {
-  color-scheme: dark;
-  --background: oklch(0.14 0.025 260);
-  --foreground: oklch(0.97 0.006 250);
-  --card: oklch(0.2 0.035 260);
-  --card-foreground: oklch(0.97 0.006 250);
-  --primary: oklch(0.62 0.21 255);
-  --primary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.25 0.028 260);
-  --muted-foreground: oklch(0.7 0.025 250);
-  --border: oklch(0.31 0.03 260);
-  --input: oklch(0.31 0.03 260);
-  --ring: oklch(0.62 0.21 255);
+  color-scheme: light;
+  --background: #F7F3EA; /* Background: Warm Ivory */
+  --foreground: #17212B; /* Text: Ink */
+  --card: #ffffff;
+  --card-foreground: #17212B;
+  --primary: #173F3A; /* Primary: Deep Evergreen */
+  --primary-foreground: #ffffff;
+  --accent: #F06B4F; /* Accent: Warm Coral */
+  --accent-foreground: #ffffff;
+  --secondary: #DDEBE7; /* Secondary: Soft Mint */
+  --secondary-foreground: #173F3A;
+  --muted: #EBE5D9;
+  --muted-foreground: #4B5768;
+  --border: #E0D9C8;
+  --input: #E0D9C8;
+  --ring: #173F3A;
 }
 
 * {
@@ -37,17 +52,28 @@ body {
   min-height: 100vh;
   margin: 0;
   background: var(--background);
+  color: var(--foreground);
   font-family:
-    Inter,
-    Pretendard,
-    ui-sans-serif,
-    system-ui,
+    'Pretendard',
     -apple-system,
     BlinkMacSystemFont,
+    system-ui,
+    Roboto,
+    'Helvetica Neue',
     'Segoe UI',
+    'Apple SD Gothic Neo',
+    'Noto Sans KR',
     sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #17212B;
+  box-shadow: 0 0 0 1000px #FAF7F2 inset;
+  caret-color: #17212B;
 }
 
 button,
