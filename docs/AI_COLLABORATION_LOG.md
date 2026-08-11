@@ -16,11 +16,27 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-11] PC 버전 '내 정보' 및 '회사 정보' 이동 시 상단 네비게이션 메뉴 사라짐 현상 보정
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **원인 분석**: `BasicProfilePage` 및 `CompanyInfoPage`에서 `<MobilePage>`를 호출할 때 `role` 및 `activeNav` props가 누락되어, PC 대화면 상단 메뉴 렌더링 조건(`{role && activeNav ? ... : null}`)을 충족하지 못해 상단 네비게이션 바가 사라지던 버그 수정.
+  - **수정 적용**:
+    - `BasicProfilePage.tsx`: `<MobilePage role="senior" activeNav="profile" backTo="/senior" ...>` 적용.
+    - `CompanyInfoPage.tsx`: `<MobilePage role="company" activeNav="profile" backTo="/company" ...>` 적용.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 25개 테스트 100% 통과, vite production build 완료) 성공.
+- **변경 파일**:
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
   - **새 첨부 그래픽 이미지 기반 테두리 없는 롤링 배너(`RollingBanner`) 캐러셀 구현**:
     - 불필요한 박스 외곽 테두리, 하단 "15년+ 실무 노하우" 바, "경험 <-> 프로젝트 연결" 오버레이 배지 제거.
+  - **GitHub 신규 브랜치 `BASIC` 생성 및 원격 업로드**:
+    - `BASIC` 브랜치로 전환 후 변경사항 커밋 및 GitHub `origin/BASIC` 원격 브랜치 업로드 완료.
+  - **Firebase Hosting 온라인 배포 완료**:
+    - `npm run build` 라이브 빌드 수행 후 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
   - **상단 헤더 '이어잡' 브랜드 로고 위치 위로 10% 미세 이동**:
     - 브랜드 로고 버튼에 미세 오프셋 트랜스폼(`-translate-y-[2.5px]`)을 적용하여 위쪽으로 10% 높게 시각적 정렬 보정 완료.
   - **상단 헤더 '이어잡' 브랜드 로고 크기 10% 축소 조정**:

@@ -52,8 +52,10 @@ export function BasicProfilePage() {
 
   return (
     <MobilePage
-      backTo="/role"
+      activeNav="profile"
+      backTo="/senior"
       contentClassName={isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10'}
+      role="senior"
       title="인재 기본정보"
     >
       <div
