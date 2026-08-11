@@ -88,45 +88,45 @@ export function ProcessOverviewGraphicCard() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3.5 pt-0.5">
         <div className="flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:p-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
-          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Mic className="size-4.5 md:size-5.5" />
+          <div className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Mic className="size-4 md:size-5" />
           </div>
-          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
+          <div className="flex flex-row items-center gap-1.5 flex-wrap text-left min-w-0">
+            <span className="text-[12px] md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               1. 경험을 말해요
             </span>
-            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
-              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
+            <span className="text-slate-300 font-light text-xs select-none">|</span>
+            <span className="text-[11px] md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               AI 음성 대화
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:p-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]">
-          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
-            <Award className="size-4.5 md:size-5.5" />
+          <div className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
+            <Award className="size-4 md:size-5" />
           </div>
-          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#F06B4F] leading-tight whitespace-nowrap">
+          <div className="flex flex-row items-center gap-1.5 flex-wrap text-left min-w-0">
+            <span className="text-[12px] md:text-[15px] font-extrabold text-[#F06B4F] leading-tight whitespace-nowrap">
               2. 카드로 확인
             </span>
-            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
-              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
+            <span className="text-slate-300 font-light text-xs select-none">|</span>
+            <span className="text-[11px] md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               문제·역할·결과
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:p-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
-          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Target className="size-4.5 md:size-5.5" />
+          <div className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Target className="size-4 md:size-5" />
           </div>
-          <div className="flex flex-col md:flex-row md:items-center md:gap-2 text-left justify-center min-w-0">
-            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
+          <div className="flex flex-row items-center gap-1.5 flex-wrap text-left min-w-0">
+            <span className="text-[12px] md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               3. 기업이 판단
             </span>
-            <span className="text-[10px] md:text-[14px] font-semibold text-slate-600 leading-tight whitespace-nowrap flex items-center">
-              <span className="hidden md:inline-block text-slate-300 font-light mx-1.5">|</span>
+            <span className="text-slate-300 font-light text-xs select-none">|</span>
+            <span className="text-[11px] md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               프로젝트 근거 매칭
             </span>
           </div>
