@@ -514,11 +514,17 @@ export function ExperienceCardPage() {
 
 export function ProjectListPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
     <MobilePage
       activeNav="projects"
       backTo="/senior/experience"
-      contentClassName="flex flex-col gap-3.5 px-6 py-5"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="senior"
       title="프로젝트 목록"
     >
@@ -526,7 +532,9 @@ export function ProjectListPage() {
         <Chip selected>운영</Chip>
         <Chip selected>영업</Chip>
       </div>
-      <h2 className="text-lg font-extrabold text-[#17212B]">추천 프로젝트 12개</h2>
+      <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-lg md:text-xl')}>
+        추천 프로젝트 12개
+      </h2>
       {projects.map((project, index) => (
         <ProjectCard
           key={project.title}
@@ -672,7 +680,10 @@ export function ProposalCompletePage() {
 
 export function MyProposalsPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const [filter, setFilter] = useState('전체');
+
   const visible =
     filter === '전체'
       ? seniorProposals
@@ -680,7 +691,10 @@ export function MyProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="senior"
       showBack={false}
       title="내 제안"
@@ -692,7 +706,10 @@ export function MyProposalsPage() {
           </Chip>
         ))}
       </div>
-      <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#17212B]">보낸 제안 {visible.length}건</h2>
+      {/* STANDARDIZED MOBILE MAIN HEADER: DOWN-SCALED FROM 20px/24px TO 16px ON MOBILE FOR PERFECT VISUAL BALANCE */}
+      <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-xl md:text-2xl')}>
+        보낸 제안 {visible.length}건
+      </h2>
       <div className="flex flex-col gap-4">
         {visible.map((project) => (
           <ProjectCard
@@ -875,6 +892,8 @@ export function ProjectCompletePage() {
 
 export function ProjectManagementPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const [filter, setFilter] = useState('전체');
   const managed = [
     {
@@ -893,7 +912,10 @@ export function ProjectManagementPage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="company"
       showBack={false}
       title="프로젝트 관리"
@@ -937,6 +959,8 @@ export function ProjectManagementPage() {
 
 export function ReceivedProposalsPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const [filter, setFilter] = useState('전체');
   const visible =
     filter === '전체'
@@ -945,7 +969,10 @@ export function ReceivedProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
+      contentClassName={cn(
+        'flex flex-col gap-4',
+        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
+      )}
       role="company"
       showBack={false}
       title="받은 제안"

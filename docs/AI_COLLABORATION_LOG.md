@@ -16,21 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 홈 배너 복원 및 4대 탭(홈/프로젝트/내 제안/내 정보) UI 규격화·최적화
+### [2026-08-11] 모바일 UX 4대 최적화 (버튼 높이 48px 확대 + 카드 우측 버튼 정렬 + 좌우 여백 px-4 통일 + 내 제안 타이포 축소)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 유지 & 모바일 홈 배너 복원**: PC 웹 버전에는 영향을 주지 않으면서, 모바일 버전 홈 화면에 다이내믹 인터랙티브 롤링 배너 캐러셀(`RollingBanner`) 복원 완료 (`FlowPages.tsx`).
-  - **모바일 4대 탭 UI 규격화 시스템 구축**: 모바일 애플리케이션 표준 규격(iOS/Material HIG) 기준 적용:
-    - **버튼 높이 44px(`h-11`) 통일**: `ActionButton` 및 주요 실행 버튼 높이를 모바일 터치 표준인 44px로 규격화.
-    - **타이포그래피 층위 명확화**: 메인 제목 `20px`, 카드 제목 `16px`, 본문 `13~14px`, 캡션 `11~12px`.
-    - **내 정보(Profile) 전용 탭 구축**: `/senior/profile` 및 `/company/profile` 최적화 프로필 카드 및 실행 버튼 배치 완료.
+  - **하단 메인 액션 버튼 48px(`h-12`) 체급 확대**: 좁아 보였던 `프로젝트 전체 둘러보기 →` 및 메인 버튼 높이를 48px로 시원하게 확대하여 답답함 해소 (`Ui.tsx`).
+  - **카드 내 '프로젝트 보기 →' 우측 정렬**: 모바일 카드의 `프로젝트 보기 →` / `제안 확인 →` 알약 버튼을 오른쪽 끝(`justify-end`)으로 정렬하여 명확하고 안정감 있는 visual flow 완성 (`Ui.tsx`).
+  - **좌우 화면 여백 100% 규격화**: 홈, 프로젝트, 내 제안, 내 정보 화면의 모바일 좌우 여백을 **`px-4` (16px)로 100% 동일하게 통일**하여 화면 간 전환 시 이질감 완전 제거 (`FlowPages.tsx`).
+  - **폰트 타이포그래피 계층 규격화 & 내 제안 메인 타이틀 16px 축소**: 20~24px로 너무 커서 부담스러웠던 모바일 헤더 타이틀을 `text-[16px] font-extrabold`로 알맞게 축소 조정 (`FlowPages.tsx`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/senior`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
