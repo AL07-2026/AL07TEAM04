@@ -16,16 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 프로세스 카드 박스 중앙 정렬 및 스마트폰 모바일 반응형 최적화
+### [2026-08-11] useViewportMode 기반 모바일 토글 뷰 및 스마트폰 스크린 레이아웃 호환성 버그 수정
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 박스 중앙 정렬 적용**: 카드 박스 내 아이콘, 제목, 구분선, 보조설명이 **박스 한가운데 정중앙(`md:justify-center md:items-center`)**에 위치하도록 정렬 개편 (`FlowPages.tsx`).
-  - **스마트폰 모바일 화면 최적화**: 360px~430px 대표 스마트폰 스크린에서 아이콘 좌측 배치 + 제목(14px bold) & 설명(12px) 2줄 세로 스택으로 직관적인 터치 UX 제공.
+  - **원인 분석**: PC 웹 환경에서 '모바일' 토글 버튼 클릭 시(390px 스마트폰 프레임), Tailwind CSS media query(`md:`, `sm:`)가 브라우저 윈도우 크기(1920px)로 평가되어 3컬럼 가로 그리드가 강제 적용되면서 모바일 프레임 안에서 텍스트가 잘리고 겹치는 현상 발생.
+  - **수정 적용**: `ProcessOverviewGraphicCard` 및 `ProjectCard`에서 `useViewportMode()`의 `isMobile` 상태를 직접 감지하도록 개편 (`FlowPages.tsx`, `Ui.tsx`).
+  - `isMobile === true` 시 390px 스마트폰 프레임 및 실제 스마트폰 접속 환경에서 **1컬럼 완벽 세로 스택(`flex flex-col`)**으로 전환되어 텍스트 깨짐 및 가로 스크롤 현상을 100% 해결.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

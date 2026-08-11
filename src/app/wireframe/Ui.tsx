@@ -535,6 +535,9 @@ export type Project = {
 };
 
 export function ProjectCard({ onClick, project }: { onClick?: () => void; project: Project }) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   const parts = project.meta.split(' · ');
   const isStatusMeta =
     parts.length > 1 &&
@@ -543,17 +546,18 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
   const detailMeta = isStatusMeta ? parts.slice(1).join(' · ') : project.meta;
 
   const content = (
-    <div className="flex w-full flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className={cn('flex w-full gap-4', isMobile ? 'flex-col items-start' : 'flex-row items-center justify-between')}>
       {/* Left / Primary Content Column */}
-      <div className="flex flex-col items-start gap-1.5 md:gap-2 text-left flex-1 min-w-0">
+      <div className="flex flex-col items-start gap-1.5 text-left flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-[13px] md:text-[16px] font-extrabold text-[#173F3A]">
+          <span className={cn('font-extrabold text-[#173F3A]', isMobile ? 'text-[13px]' : 'text-[16px]')}>
             {project.company}
           </span>
           {statusText ? (
             <span
               className={cn(
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] md:text-[13px] font-extrabold border shadow-2xs',
+                'inline-flex items-center px-2.5 py-0.5 rounded-full font-extrabold border shadow-2xs',
+                isMobile ? 'text-[11px]' : 'text-[13px]',
                 statusText === '연락 받음' || statusText === '연락함'
                   ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
                   : statusText === '공개 중'
@@ -566,26 +570,28 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
           ) : null}
         </div>
 
-        <strong className="text-left text-[17px] md:text-[22px] font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors">
+        <strong className={cn('text-left font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors', isMobile ? 'text-[16px]' : 'text-[22px]')}>
           {project.title}
         </strong>
 
-        <span className="text-left text-[13px] md:text-[16px] font-semibold text-slate-500">
+        <span className={cn('text-left font-semibold text-slate-500', isMobile ? 'text-[12px]' : 'text-[16px]')}>
           {isStatusMeta ? `제안일: ${detailMeta}` : detailMeta}
         </span>
       </div>
 
       {/* Right Column: Action Button Badge */}
-      <div className="flex items-center justify-between md:justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E0D9C8]/60 w-full md:w-auto">
-        <span className="inline-flex items-center gap-1.5 px-4 md:px-5 py-2 md:py-2.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] text-[13px] md:text-[15px] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs">
+      <div className={cn('flex items-center shrink-0 w-full md:w-auto', isMobile ? 'justify-start pt-1' : 'justify-end pt-0')}>
+        <span className={cn('inline-flex items-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs', isMobile ? 'px-3.5 py-1.5 text-xs' : 'px-5 py-2.5 text-[15px]')}>
           {project.action ?? '프로젝트 보기 →'}
         </span>
       </div>
     </div>
   );
 
-  const classes =
-    'group flex w-full flex-col rounded-2xl border border-[#E0D9C8] bg-white p-5 md:p-6 shadow-xs transition-all duration-200 hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.998]';
+  const classes = cn(
+    'group flex w-full flex-col rounded-2xl border border-[#E0D9C8] bg-white shadow-xs transition-all duration-200 hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.998]',
+    isMobile ? 'p-4' : 'p-6',
+  );
 
   return onClick ? (
     <button className={classes} onClick={onClick} type="button">
