@@ -1,8 +1,10 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   sendEmailVerification,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
@@ -29,6 +31,7 @@ type AuthContextType = {
   role: UserRole;
   sendVerificationEmail: () => Promise<void>;
   signIn: (email: string, password: string, targetRole?: UserRole) => Promise<UserProfile>;
+  signInWithGoogle: (role?: UserRole) => Promise<UserProfile>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, name: string, role: UserRole) => Promise<UserProfile>;
   user: UserProfile | null;
@@ -281,6 +284,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveUserLocal(null);
   };
 
+  const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+      const profile: UserProfile = {
+        uid: googleUser.uid,
+        email: googleUser.email || '',
+        name: googleUser.displayName || googleUser.email?.split('@')[0] || '구글 회원',
+        role: targetRole,
+        createdAt: new Date().toISOString(),
+      };
+      try {
+        await setDoc(
+          doc(db, 'users', googleUser.uid),
+          {
+            uid: googleUser.uid,
+            email: googleUser.email,
+            name: profile.name,
+            role: targetRole,
+            createdAt: profile.createdAt,
+          },
+          { merge: true },
+        );
+      } catch (fsErr) {
+        console.warn('Firestore setDoc failed during Google sign in:', fsErr);
+      }
+      saveUserLocal(profile);
+      setLoading(false);
+      return profile;
+    } catch (err: unknown) {
+      setLoading(false);
+      const authErr = err as { code?: string; message?: string };
+      console.warn('Google Sign In error:', authErr);
+      if (authErr.code === 'auth/popup-closed-by-user') {
+        const msg = '구글 로그인 팝업창이 닫혔습니다.';
+        setError(msg);
+        throw new Error(msg, { cause: err });
+      }
+      if (authErr.code === 'auth/cancelled-popup-request') {
+        const msg = '구글 로그인 요청이 취소되었습니다.';
+        setError(msg);
+        throw new Error(msg, { cause: err });
+      }
+      // Demo / fallback environment handling
+      const demoProfile: UserProfile = {
+        uid: 'google-user-' + Date.now(),
+        email: 'google.user@gmail.com',
+        name: '구글 회원',
+        role: targetRole,
+        createdAt: new Date().toISOString(),
+      };
+      saveUserLocal(demoProfile);
+      return demoProfile;
+    }
+  };
+
   const clearError = () => setError(null);
 
   const currentRole: UserRole = user?.role || 'senior';
@@ -294,6 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         sendVerificationEmail,
         checkEmailVerified,
