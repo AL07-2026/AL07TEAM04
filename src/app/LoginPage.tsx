@@ -45,7 +45,7 @@ export function RollingBanner() {
   return (
     <div className="flex flex-col gap-2.5 w-full">
       {/* 100% Pure Unobscured Banner Graphic Image */}
-      <div className="relative h-44 md:h-60 w-full overflow-hidden rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs group">
+      <div className="relative h-44 sm:h-52 md:h-64 lg:h-[265px] w-full overflow-hidden rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs group">
         <img
           src={slide.image}
           alt={slide.title}
@@ -288,12 +288,12 @@ export function LoginPage() {
   }
 
   return (
-    <MobilePage contentClassName="px-6 pb-12 pt-8 md:px-12 md:py-12 flex items-center justify-center" showBack={false} title="경험매칭">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-14 items-center max-w-6xl w-full mx-auto">
+    <MobilePage contentClassName="px-6 pb-10 pt-6 md:px-12 md:py-8 flex items-center justify-center min-h-[calc(100vh-80px)]" showBack={false} title="경험매칭">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-6xl w-full mx-auto">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
-        <div className="md:col-span-7 flex flex-col gap-6">
-          <div className="flex flex-col gap-3.5 items-start text-left">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
+        <div className="md:col-span-7 flex flex-col justify-center gap-6 py-2">
+          <div className="flex flex-col gap-3 items-start text-left">
+            <h2 className="text-2xl md:text-3xl lg:text-[34px] font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <br className="hidden md:inline" />
@@ -306,7 +306,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-sm md:text-base leading-relaxed font-medium text-slate-600">
+            <p className="text-sm md:text-base leading-relaxed font-medium text-slate-600 max-w-lg">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -318,7 +318,7 @@ export function LoginPage() {
         </div>
 
         {/* Right Side: Role Selector Tabs & Login Form (PC: col-span-5) */}
-        <div className="md:col-span-5 flex flex-col gap-5 rounded-3xl border border-[#E0D9C8] bg-white p-6 md:p-8 shadow-lg">
+        <div className="md:col-span-5 flex flex-col gap-4.5 rounded-3xl border border-[#E0D9C8] bg-white p-6 md:p-7 shadow-lg">
           {/* Initial Role Choice Tabs */}
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-[#FAF7F2] p-1.5 shadow-2xs">
             <button

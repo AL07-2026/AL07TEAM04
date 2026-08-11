@@ -16,22 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 파이어베이스 구글(Google) OAuth 소셜 로그인 연동 및 UI 탑재
+### [2026-08-11] PC 웹 메인 화면 좌우 비율 및 수직 밸런스 정밀 조정
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **Firebase Auth 구글 소셜 로그인 연동 (`signInWithGoogle`)**:
-    - `authContext.tsx` 내 `GoogleAuthProvider` 및 `signInWithPopup` 기반 소셜 인증 기능 구축.
-    - 로그인 성공 시 사용자 정보(이름, 이메일, 역할) 파이어베이스 Firestore 및 로컬 세션 자동 바인딩.
-  - **로그인 및 회원가입 화면 구글 로그인 버튼 배치 (`LoginPage.tsx`, `SignupPage.tsx`)**:
-    - 기존 임시 '체험 계정으로 빠른 시작' 버튼을 정식 **`Google 계정으로 로그인`** / **`Google 계정으로 빠른 회원가입`** 버튼으로 전면 개편.
-    - 구글 공식 컬러 로고 SVG 및 트렌디한 둥근 캡슐 버튼 스타일 적용.
+  - **PC 웹 화면 좌우 높이 및 수직 정렬 밸런스 정밀화 (`LoginPage.tsx`)**:
+    - 우측 구글 로그인 카드 세로 길이에 맞추어 좌측 배너 그래픽 높이(`h-44 sm:h-52 md:h-64 lg:h-[265px]`) 및 수직 패딩/여백(`gap-4.5`, `p-6 md:p-7`)을 정밀 조정.
+    - 좌측 타이틀 영역과 우측 카드 상단 라인이 **1:1 비율로 수평/수직 균형**을 이루도록 레이아웃 정돈.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
   - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
