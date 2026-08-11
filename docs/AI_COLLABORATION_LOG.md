@@ -16,17 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 로그인 화면 외부 프레임 상하단 높이 20%+ 확장 최적화
+### [2026-08-11] 모바일 프레임 상하단 불필요한 빈 여백 제거 및 자연스러운 배치 최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 외부 박스 수직 확장**: 답답해 보였던 PC 웹 외부 프레임 박스의 최소 높이(`md:min-h-[740px] lg:min-h-[820px]`) 및 상하단 패딩(`py-12 lg:py-16`)을 약 20% 이상 넉넉하게 확장하여 훨씬 시원하고 여유로운 데스크톱 레이아웃 구축 (`Ui.tsx`, `LoginPage.tsx`).
-  - **내부 요소 밸런스 조정**: 좌측 배너 이미지 높이(`h-56 lg:h-[245px]`) 및 우측 폼 카드 영역 패딩을 함께 확대하여 고품격 UI 밸런스 구현.
+  - **상하단 과도한 여백 제거**: 모바일 뷰어 프레임 내에서 100px 가량 발생했던 `my-auto` 수직 중앙 정렬 여백을 제거하고 헤더 바로 아래부터 자연스럽게 흐르는 `pt-1 pb-2` 상단 정렬 레이아웃 적용 (`LoginPage.tsx`).
+  - **전체 시각적 밸런스 조율**: 상단 탭부터 구글 로그인, 회원가입 링크까지 스크롤 없이 시원하고 균형 잡힌 간격으로 수직 배치 완성.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/login`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

@@ -171,8 +171,8 @@ export function LoginPage() {
 
   if (isMobile) {
     return (
-      <MobilePage contentClassName="px-4.5 py-4 flex flex-col min-h-0 flex-1 overflow-y-auto" showBack={false} title="경험매칭">
-        <div className="flex flex-col gap-3 w-full max-w-sm mx-auto my-auto py-1">
+      <MobilePage contentClassName="px-4.5 py-3.5 flex flex-col min-h-0 flex-1 overflow-y-auto" showBack={false} title="경험매칭">
+        <div className="flex flex-col gap-3.5 w-full max-w-sm mx-auto pt-1 pb-2">
           {/* Initial Role Choice Tabs */}
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-white p-1 shadow-2xs">
             <button
