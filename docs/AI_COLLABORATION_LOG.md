@@ -16,24 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 회원가입 온보딩 플로우 중복 단계(/role) 제거 및 직관적 프로필 이동 개편
+### [2026-08-11] '내 정보' / '회사 정보' 메인 탭 헤더 네비게이션 및 불필요 뒤로가기 제거 개편
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **불필요한 중복 단계(`/role`) 제거**:
-    - 첫 로그인 화면(`/login`)에서 인재 ↔ 기업 탭을 이미 선택하므로, 회원가입 시 선택한 역할 정보(`role=senior` | `role=company`)가 유지되도록 파라미터 연동.
-    - `SignupPage.tsx` 상단에 인라인 역할 선택 필(`🙋‍♂️ 인재 회원가입` ↔ `🏢 회사 회원가입`)을 배치하여 폼 내에서 바로 변경/확인 가능.
-    - 회원가입 완료 후 중복 화면인 `/role`을 거치지 않고 바로 `인재 기본정보`(`/basic-profile`) 또는 `회사 기본정보`(`/company-info`)로 즉시 진입하도록 1단계 단축.
-  - **PC 상단 네비게이션 헤더 연속성 확보**:
-    - 회원가입 후 기본정보 페이지 진입 시에도 PC 상단 네비게이션 헤더(`홈`, `프로젝트`, `내 제안`, `내 정보`)가 100% 정상 노출되도록 보정.
-    - 기존 `/role` 직접 접근 시에도 상단 헤더가 표시되도록 `role` 및 `activeNav`속성 보완.
+  - **상단 네비게이션 바 화면 폭 비의존 100% 지속 노출**:
+    - PC 모드에서 화면 미디어쿼리(`hidden md:flex`) 반응형 조건으로 인해 768px 미만 분할 창에서 메뉴가 숨겨지던 현상 보정 (`flex` 전환).
+  - **메인 탭 화면 불필요 뒤로가기(< ChevronLeft) 버튼 제거**:
+    - `내 정보`(`BasicProfilePage.tsx`) 및 `회사 정보`(`CompanyInfoPage.tsx`)는 서비스 주요 메인 4개 탭 중 하나이므로 온보딩 화면으로 되돌아가는 불필요한 뒤로가기 버튼(`showBack={false}`) 전면 제거.
+    - 이제 `홈`, `프로젝트`, `내 제안`, `내 정보` 4개 탭 모두 일관된 메인 탭 헤더 구조 및 지속 상단 네비게이션 탑재.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
-  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

@@ -197,9 +197,9 @@ export function MobilePage({
                 </div>
               </div>
 
-              {/* Desktop Top Nav Menu (Visible on md+ screens) */}
+              {/* Desktop Top Nav Menu */}
               {role && activeNav ? (
-                <div className="hidden md:flex items-center gap-1.5 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8]">
+                <div className="flex items-center gap-1.5 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8]">
                   {navItems[role].map((item) => {
                     const selected = item.id === activeNav;
                     const IconComponent = item.Icon;
