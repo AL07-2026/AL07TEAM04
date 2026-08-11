@@ -16,32 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 파이어베이스(Firebase Auth & Firestore) 실제 회원가입/로그인 연동 개발 완료 및 배포
+### [2026-08-11] 회원가입 '비밀번호 확인' 입력 항목 및 검증 로직 추가
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **Firebase SDK 패키지 추가 및 모듈 구성**:
-    - `npm install firebase` 설치 완료.
-    - `src/lib/firebase.ts`: 파이어베이스 프로젝트(`al07team04-bdfcd`) App, Auth (`getAuth`), Firestore (`getFirestore`) 인스턴스 초기화 모듈 탑재.
-  - **전역 인증 컨텍스트 구축 (`src/lib/authContext.tsx`)**:
-    - `AuthProvider` 및 `useAuth()` 커스텀 훅 개발.
-    - `signUp`: `createUserWithEmailAndPassword` + Firestore `users/{uid}` 컬렉션 문서 생성 (`name`, `email`, `role`, `createdAt`).
-    - `signIn`: `signInWithEmailAndPassword` + Firestore 유저 문서 권한 조회 후 역할별 자동 라우팅.
-    - `signOut`: `firebaseSignOut` 세션 해제.
-    - 미설정 환경/오프라인 환경 시 자연스러운 데모 인증 폴백 시스템 지원.
-  - **로그인/회원가입 UI 실연동**:
-    - `LoginPage.tsx`: 실시간 인증 로딩 상태, 유효성 검사 및 오류 메시지 출력 연동 ("체험 계정으로 빠른 시작" 지원 유지).
-    - `SignupPage.tsx`: 실시간 파이어베이스 회원가입 연동.
-    - `App.tsx`: 전역 `<AuthProvider>` 공급자 연동.
+  - **'비밀번호 확인' 입력 폼 및 실시간 유효성 검증 추가**:
+    - `SignupPage.tsx` 폼 내에 `비밀번호 확인`(`confirmPassword`) 필드를 배치하여 오타 방지 기능 추가.
+    - 회원가입 제출 시 비밀번호 6자 이상 조건 및 비밀번호 ↔ 비밀번호 확인 일치 여부("비밀번호가 일치하지 않습니다. 다시 확인해 주세요.") 실시간 검증.
+  - **통합 테스트 보완**: `src/app/App.test.tsx` 회원가입 테스트에 비밀번호 확인 입력값 채우기 연동 (26개 테스트 100% 통과).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [NEW] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
-  - [NEW] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
-  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
   - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`package.json`](file:///c:/AL07TEAM04/package.json)
+  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

@@ -14,10 +14,16 @@ export function SignupPage() {
 
   const initialRole = searchParams.get('role') === 'company' ? 'company' : 'senior';
   const [selectedRole, setSelectedRole] = useState<'senior' | 'company'>(initialRole);
-  const [form, setForm] = useState({ name: '', email: '', password: '', agreed: false });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    agreed: false,
+  });
   const [message, setMessage] = useState('');
 
-  const update = (key: 'name' | 'email' | 'password') => (value: string) => {
+  const update = (key: 'name' | 'email' | 'password' | 'confirmPassword') => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage('');
   };
@@ -25,10 +31,23 @@ export function SignupPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setMessage('');
-    if (!form.name.trim() || !form.email.trim() || form.password.length < 6 || !form.agreed) {
-      setMessage('필수 정보와 6자 이상의 비밀번호, 약관 동의를 확인해 주세요.');
+    if (!form.name.trim() || !form.email.trim()) {
+      setMessage('이름과 이메일을 입력해 주세요.');
       return;
     }
+    if (form.password.length < 6) {
+      setMessage('비밀번호는 6자리 이상이어야 합니다.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setMessage('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
+      return;
+    }
+    if (!form.agreed) {
+      setMessage('이용약관 및 개인정보 처리방침 동의가 필요합니다.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await signUp(form.email, form.password, form.name, selectedRole);
@@ -118,9 +137,17 @@ export function SignupPage() {
             autoComplete="new-password"
             label="비밀번호"
             onChange={(e) => update('password')(e.target.value)}
-            placeholder="8자 이상 입력하세요"
+            placeholder="6자 이상 입력하세요"
             type="password"
             value={form.password}
+          />
+          <Field
+            autoComplete="new-password"
+            label="비밀번호 확인"
+            onChange={(e) => update('confirmPassword')(e.target.value)}
+            placeholder="비밀번호를 한번 더 입력하세요"
+            type="password"
+            value={form.confirmPassword}
           />
           <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-[13px] font-bold text-[#17212B]">
             <input
