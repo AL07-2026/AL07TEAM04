@@ -16,18 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 토글 활성화 색상 개편 (PC웹/모바일: 블랙, 인재/기업 시작: 주황색)
+### [2026-08-11] 로그인 후 서비스 화면 PC 웹 풀버전(Full-Width) 반응형 구조 개편
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **상단 'PC 웹 / 모바일' 뷰포트 토글 활성화 색상**: 블랙(`bg-[#17212B] text-white shadow-2xs`)으로 변경 (`Ui.tsx`).
-  - **'인재로 시작 / 기업으로 시작' 회원 탭 활성화 색상**: 대표 시그니처 주황색(`bg-[#F06B4F] text-white shadow-md`)으로 PC웹 및 모바일 환경 모두 동일 적용 (`LoginPage.tsx`, `SignupPage.tsx`).
+  - **로그인/회원가입 미인증 화면**: 기존 PC 웹 테두리 프레임 박스 형태 100% 유지 (`LoginPage.tsx`, `SignupPage.tsx`).
+  - **로그인 후 서비스 화면 (`/senior`, `/company` 등)**: PC 웹 접속 시 프레임 제약 없이 전체 화면을 활용하는 **풀버전(Full-Width) 반응형 웹 구조 (`w-full max-w-7xl mx-auto`)**로 개편 (`Ui.tsx`).
+  - 상단 탑 네비게이션 바 역시 풀 블리드(`w-full border-b sticky top-0`) 구조로 변경하여 시원하고 트렌디한 데스크톱 UX 제공.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

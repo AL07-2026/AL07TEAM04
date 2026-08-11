@@ -188,7 +188,8 @@ export function MobilePage({
             {role && activeNav ? <BottomNav active={activeNav} role={role} forceShow /> : null}
           </section>
         </main>
-      ) : (
+      ) : !role ? (
+        /* Unauthenticated / Login / Signup Screen: Desktop Card Frame Layout */
         <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-8 sm:flex sm:items-center sm:justify-center">
           <section className="mx-auto flex w-full max-w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border">
             {/* Header (Responsive: Desktop PC Top Navbar + View Mode Switcher) */}
@@ -211,7 +212,7 @@ export function MobilePage({
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => void navigate(role === 'company' ? '/company' : '/senior')}
+                    onClick={() => void navigate('/login')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition -translate-y-[2.5px]"
                   >
                     <img
@@ -232,35 +233,8 @@ export function MobilePage({
                 </div>
               </div>
 
-              {/* Desktop Top Nav Menu */}
-              {role && activeNav ? (
-                <div className="flex items-center gap-1.5 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8]">
-                  {navItems[role].map((item) => {
-                    const selected = item.id === activeNav;
-                    const IconComponent = item.Icon;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => void navigate(item.path)}
-                        className={cn(
-                          'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-extrabold transition-all',
-                          selected
-                            ? 'bg-[#173F3A] text-white shadow-xs'
-                            : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                        )}
-                      >
-                        <IconComponent className={cn('size-4', selected ? 'text-white' : 'text-slate-500')} />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {/* Viewport Mode Switcher & Quick Role Switcher */}
+              {/* Viewport Mode Switcher */}
               <div className="flex items-center gap-2">
-                {/* 2-Mode View Switcher Toggle Pill */}
                 <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
                   <button
                     type="button"
@@ -294,9 +268,116 @@ export function MobilePage({
 
             {/* Content Container */}
             <div className={cn('min-h-0 flex-1 overflow-y-auto', contentClassName)}>{children}</div>
+          </section>
+        </main>
+      ) : (
+        /* Logged-In Service Pages: Full Version Responsive Web Layout */
+        <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
+          <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
+            {/* Top Navbar */}
+            <header className="w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
+              <div className="flex items-center gap-4">
+                {showBack ? (
+                  <button
+                    aria-label="이전 화면으로 돌아가기"
+                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
+                    onClick={() => {
+                      if (backTo) void navigate(backTo);
+                      else void navigate(-1);
+                    }}
+                    type="button"
+                  >
+                    <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
+                  </button>
+                ) : null}
 
-            {/* Bottom Navigation (Mobile Only) */}
-            {role && activeNav ? <BottomNav active={activeNav} role={role} /> : null}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void navigate(role === 'company' ? '/company' : '/senior')}
+                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
+                  >
+                    <img
+                      src="/logo_text.png"
+                      alt="이어잡"
+                      className="hidden md:block h-[26px] w-auto object-contain"
+                    />
+                    <img
+                      src="/logo_icon.png"
+                      alt="이어잡"
+                      className="md:hidden size-6 object-contain"
+                    />
+                  </button>
+                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-sm">|</span>
+                  <h1 className="text-base md:text-lg font-extrabold tracking-tight text-[#17212B]">
+                    {title}
+                  </h1>
+                </div>
+              </div>
+
+              {/* Desktop Center Navigation Tabs */}
+              {role && activeNav ? (
+                <div className="flex items-center gap-2 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8]">
+                  {navItems[role].map((item) => {
+                    const selected = item.id === activeNav;
+                    const IconComponent = item.Icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => void navigate(item.path)}
+                        className={cn(
+                          'flex items-center gap-2 px-4.5 py-2 rounded-full text-xs md:text-sm font-extrabold transition-all',
+                          selected
+                            ? 'bg-[#173F3A] text-white shadow-xs'
+                            : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                        )}
+                      >
+                        <IconComponent className={cn('size-4', selected ? 'text-white' : 'text-slate-500')} />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {/* Right Mode Switcher */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewportMode('pc')}
+                    className={cn(
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
+                      !isMobileMode
+                        ? 'bg-[#17212B] text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                    )}
+                  >
+                    <Monitor className="size-3.5" />
+                    <span className="hidden sm:inline">PC 웹</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewportMode('mobile')}
+                    className={cn(
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
+                      isMobileMode
+                        ? 'bg-[#17212B] text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                    )}
+                  >
+                    <Smartphone className="size-3.5" />
+                    <span className="hidden sm:inline">모바일</span>
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* Main Content Area (Full Width Responsive) */}
+            <div className={cn('w-full max-w-7xl mx-auto flex-1 p-6 md:p-8', contentClassName)}>
+              {children}
+            </div>
           </section>
         </main>
       )}
