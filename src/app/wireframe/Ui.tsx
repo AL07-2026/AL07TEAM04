@@ -117,7 +117,7 @@ export function MobilePage({
 
                 <div className="flex items-center gap-1.5">
                   <img src="/logo_icon.png" alt="이어잡" className="size-5 object-contain" />
-                  <h1 className="text-[16px] font-extrabold tracking-tight text-[#17212B]">
+                  <h1 className="text-[17px] font-extrabold tracking-tight text-[#17212B]">
                     {title}
                   </h1>
                 </div>
@@ -128,7 +128,7 @@ export function MobilePage({
                 <button
                   type="button"
                   onClick={() => setViewportMode('pc')}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold text-slate-600 hover:text-[#173F3A] hover:bg-white transition"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold text-slate-600 hover:text-[#173F3A] hover:bg-white transition"
                 >
                   <Monitor className="size-3 text-[#173F3A]" />
                   <span>PC</span>
@@ -136,7 +136,7 @@ export function MobilePage({
                 <button
                   type="button"
                   onClick={() => setViewportMode('mobile')}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#F06B4F] text-white shadow-2xs transition"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#F06B4F] text-white shadow-2xs transition"
                 >
                   <Smartphone className="size-3 text-white" />
                   <span>모바일</span>
@@ -310,7 +310,7 @@ function BottomNav({
           <button
             aria-current={selected ? 'page' : undefined}
             className={cn(
-              'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition',
+              'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition',
               selected
                 ? 'font-extrabold text-[#173F3A]'
                 : 'text-slate-400 hover:text-[#17212B]',
@@ -338,10 +338,10 @@ export function StepProgressBar({ current, total }: { current: number; total: nu
   return (
     <div className="flex flex-col items-center gap-1.5 py-1">
       <div className="flex items-center gap-1.5">
-        <span className="text-[11px] font-extrabold tracking-wide text-[#17212B]">
+        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">
           경험 등록
         </span>
-        <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[10px] font-extrabold text-[#173F3A] shadow-2xs">
+        <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
           {current}/{total} 단계
         </span>
       </div>
@@ -369,7 +369,7 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        'flex h-12 w-full items-center justify-center rounded-full px-4 text-sm font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        'flex h-12 w-full items-center justify-center rounded-full px-4 text-[15px] font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-xs hover:bg-[#F7F3EA]'
           : cn(
@@ -398,7 +398,7 @@ export function Chip({
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex h-[32px] items-center justify-center rounded-full px-3.5 text-xs font-extrabold transition',
+        'flex h-[32px] items-center justify-center rounded-full px-3.5 text-[13px] font-extrabold transition',
         selected
           ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
           : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
@@ -421,10 +421,10 @@ export type Project = {
 export function ProjectCard({ onClick, project }: { onClick?: () => void; project: Project }) {
   const content = (
     <>
-      <span className="text-xs font-extrabold text-[#173F3A]">{project.company}</span>
-      <strong className="text-left text-base font-extrabold text-[#17212B]">{project.title}</strong>
-      <span className="text-left text-xs font-medium text-[#4B5768]">{project.meta}</span>
-      <span className="text-xs font-extrabold text-[#F06B4F]">
+      <span className="text-[13px] font-extrabold text-[#173F3A]">{project.company}</span>
+      <strong className="text-left text-[17px] font-extrabold text-[#17212B]">{project.title}</strong>
+      <span className="text-left text-[13px] font-medium text-[#4B5768]">{project.meta}</span>
+      <span className="text-[13px] font-extrabold text-[#F06B4F]">
         {project.action ?? '프로젝트 보기 →'}
       </span>
     </>
@@ -448,8 +448,8 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
 export function SummaryCard({ label, value }: { label: string; role?: Role; value: string }) {
   return (
     <div className="flex h-[104px] flex-1 flex-col justify-between rounded-[20px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
-      <span className="text-xs font-semibold text-[#4B5768]">{label}</span>
-      <strong className="text-[24px] font-extrabold tracking-tight text-[#173F3A]">
+      <span className="text-[13px] font-semibold text-[#4B5768]">{label}</span>
+      <strong className="text-[26px] font-extrabold tracking-tight text-[#173F3A]">
         {value}
       </strong>
     </div>
@@ -459,8 +459,8 @@ export function SummaryCard({ label, value }: { label: string; role?: Role; valu
 export function InfoPanel({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div className="flex w-full flex-col gap-2 rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-      <strong className="text-xs font-bold text-[#17212B]">{label}</strong>
-      <div className="text-[13px] leading-6 text-[#17212B]/85 font-medium">{children}</div>
+      <strong className="text-[13px] font-bold text-[#17212B]">{label}</strong>
+      <div className="text-[14px] leading-6 text-[#17212B]/85 font-medium">{children}</div>
     </div>
   );
 }
@@ -469,11 +469,11 @@ type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string 
 
 export function Field({ className, label, ...props }: FieldProps) {
   return (
-    <label className="flex w-full flex-col gap-2 text-xs font-semibold text-[#17212B]">
+    <label className="flex w-full flex-col gap-2 text-[13px] font-extrabold text-[#17212B]">
       <span>{label}</span>
       <input
         className={cn(
-          'h-12 w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 text-[13px] text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'h-12 w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 text-[14px] text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
           className,
         )}
         {...props}
@@ -486,11 +486,11 @@ type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { 
 
 export function TextAreaField({ className, label, ...props }: TextAreaFieldProps) {
   return (
-    <label className="flex w-full flex-col gap-2 text-xs font-semibold text-[#17212B]">
+    <label className="flex w-full flex-col gap-2 text-[13px] font-extrabold text-[#17212B]">
       <span>{label}</span>
       <textarea
         className={cn(
-          'h-24 w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 text-[13px] leading-5 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'h-24 w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 text-[14px] leading-5 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
           className,
         )}
         {...props}
@@ -501,7 +501,7 @@ export function TextAreaField({ className, label, ...props }: TextAreaFieldProps
 
 export function StatusBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="w-fit rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1.5 text-xs font-bold text-[#173F3A]">
+    <span className="w-fit rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1.5 text-[13px] font-bold text-[#173F3A]">
       ● {children}
     </span>
   );

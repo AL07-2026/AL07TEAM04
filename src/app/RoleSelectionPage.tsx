@@ -35,11 +35,11 @@ export function RoleSelectionPage() {
       title="역할 선택"
     >
       <div className="flex flex-col gap-1">
-        <p className="text-xs font-extrabold text-[#173F3A]">2 / 2 단계</p>
+        <p className="text-[13px] font-extrabold text-[#173F3A]">2 / 2 단계</p>
         <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>
           어떤 역할로 시작할까요?
         </h2>
-        <p className="text-xs font-medium text-slate-500">한 계정에 한 역할만 선택하여 사용합니다.</p>
+        <p className="text-[13px] font-medium text-slate-500">한 계정에 한 역할만 선택하여 사용합니다.</p>
       </div>
 
       <div className={cn('grid gap-3.5 my-1', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-6')}>
@@ -60,8 +60,8 @@ export function RoleSelectionPage() {
           >
             <span className="flex items-center justify-between">
               <span className="flex items-center gap-2.5">
-                <span className={isMobile ? 'text-xl' : 'text-2xl'}>{role.icon}</span>
-                <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-base' : 'text-xl')}>
+                <span className="text-xl">{role.icon}</span>
+                <strong className="text-base font-extrabold text-[#17212B]">
                   {role.title}
                 </strong>
               </span>
@@ -76,7 +76,7 @@ export function RoleSelectionPage() {
                 {selected === role.id ? '✓ 선택됨' : '선택'}
               </span>
             </span>
-            <span className="text-xs font-medium text-slate-600 leading-relaxed">{role.description}</span>
+            <span className="text-[13px] font-medium text-slate-600 leading-relaxed">{role.description}</span>
           </button>
         ))}
       </div>

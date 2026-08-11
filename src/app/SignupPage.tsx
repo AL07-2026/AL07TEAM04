@@ -41,7 +41,7 @@ export function SignupPage() {
             <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>
               계정을 만들어 시작하세요
             </h2>
-            <p className="text-xs font-medium text-slate-500">이어잡 공통 정보만 먼저 입력합니다.</p>
+            <p className="text-[13px] font-medium text-slate-500">이어잡 공통 정보만 먼저 입력합니다.</p>
           </div>
           <Field
             autoComplete="name"
@@ -66,7 +66,7 @@ export function SignupPage() {
             type="password"
             value={form.password}
           />
-          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-xs font-semibold text-[#17212B]">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-[13px] font-bold text-[#17212B]">
             <input
               checked={form.agreed}
               className="size-4 accent-[#173F3A]"

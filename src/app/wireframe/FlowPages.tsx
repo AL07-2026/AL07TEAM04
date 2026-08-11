@@ -81,32 +81,32 @@ export function ProcessOverviewGraphicCard() {
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-extrabold tracking-wide text-[#173F3A]">
+        <span className="text-[12px] font-extrabold tracking-wide text-[#173F3A]">
           ✨ 경험매칭 3단계 프로세스
         </span>
-        <span className="text-[10px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
+        <span className="text-[11px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
       </div>
       <div className="grid grid-cols-3 gap-1.5 pt-1">
         <div className="flex flex-col items-center gap-1 rounded-xl bg-[#DDEBE7] p-2 text-center border border-[#BBD5CE]">
           <div className="flex size-7 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Mic className="size-3.5" />
           </div>
-          <span className="text-[10px] font-extrabold text-[#173F3A]">1. 경험을 말해요</span>
-          <span className="text-[9px] font-medium text-slate-600">AI 음성 대화</span>
+          <span className="text-[11px] font-extrabold text-[#173F3A]">1. 경험을 말해요</span>
+          <span className="text-[10px] font-medium text-slate-600">AI 음성 대화</span>
         </div>
         <div className="flex flex-col items-center gap-1 rounded-xl bg-[#FAF7F2] p-2 text-center border border-[#E0D9C8]">
           <div className="flex size-7 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
             <Award className="size-3.5" />
           </div>
-          <span className="text-[10px] font-extrabold text-[#F06B4F]">2. 카드로 확인</span>
-          <span className="text-[9px] font-medium text-slate-600">문제·역할·결과</span>
+          <span className="text-[11px] font-extrabold text-[#F06B4F]">2. 카드로 확인</span>
+          <span className="text-[10px] font-medium text-slate-600">문제·역할·결과</span>
         </div>
         <div className="flex flex-col items-center gap-1 rounded-xl bg-[#DDEBE7] p-2 text-center border border-[#BBD5CE]">
           <div className="flex size-7 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Target className="size-3.5" />
           </div>
-          <span className="text-[10px] font-extrabold text-[#173F3A]">3. 기업이 판단</span>
-          <span className="text-[9px] font-medium text-slate-600">프로젝트 근거 매칭</span>
+          <span className="text-[11px] font-extrabold text-[#173F3A]">3. 기업이 판단</span>
+          <span className="text-[10px] font-medium text-slate-600">프로젝트 근거 매칭</span>
         </div>
       </div>
     </div>

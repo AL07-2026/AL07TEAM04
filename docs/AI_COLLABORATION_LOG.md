@@ -16,21 +16,27 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 버전 '내 정보' 및 '회사 정보' 이동 시 상단 네비게이션 메뉴 사라짐 현상 보정 및 배포
+### [2026-08-11] 모바일 화면 전반 텍스트 크기 시인성 강화 (배치 보존) 및 배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **원인 분석**: `BasicProfilePage` 및 `CompanyInfoPage`에서 `<MobilePage>`를 호출할 때 `role` 및 `activeNav` props가 누락되어, PC 대화면 상단 메뉴 렌더링 조건(`{role && activeNav ? ... : null}`)을 충족하지 못해 상단 네비게이션 바가 사라지던 버그 수정.
-  - **수정 적용**:
-    - `BasicProfilePage.tsx`: `<MobilePage role="senior" activeNav="profile" backTo="/senior" ...>` 적용.
-    - `CompanyInfoPage.tsx`: `<MobilePage role="company" activeNav="profile" backTo="/company" ...>` 적용.
-  - **GitHub BASIC 브랜치 업로드 완료**:
-    - `git push origin BASIC`으로 `origin/BASIC` 원격 브랜치 반영 완료.
-  - **Firebase Hosting 온라인 배포 완료**:
-    - `npm run build` 후 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
+  - **모바일 폰트 가독성 미세 증대 적용**:
+    - 헤더 타이틀 (`text-[16px]` ➔ `text-[17px]`), 뷰포트 스위처 (`text-[10px]` ➔ `text-[11px]`)
+    - 폼 라벨 (`text-xs 12px` ➔ `text-[13px] font-extrabold`), 입력 필드 텍스트 (`text-[13px]` ➔ `text-[14px]`)
+    - 액션 버튼 (`text-sm 14px` ➔ `text-[15px] font-extrabold`), 회원가입/빠른시작 링크 (`text-xs` ➔ `text-[13px]`)
+    - 메인 헤드라인 (`text-[14.5px]` ➔ `text-[15.5px]` 1줄 정렬 보존), 서브 설명문구 (`text-[11px]` ➔ `text-[12px]`)
+    - 하단 네비게이션 바 (`text-[11px]` ➔ `text-[12px]`)
+    - 회원가입, 역할 선택, 기본정보 폼 및 3단계 프로세스 카드 뱃지·설명문구 폰트 전반 미세 확대 보정.
+  - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
+  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
   - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
   - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

@@ -89,14 +89,14 @@ export function RollingBanner() {
       {/* Clean Text Description Below the Image (Stacked 2-Line Layout) */}
       <div className="flex flex-col gap-1.5 px-1 pt-1">
         <div className="flex items-center gap-2 overflow-hidden">
-          <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-1 text-[11px] md:text-xs font-extrabold text-white leading-none shadow-2xs">
+          <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-1 text-[12px] md:text-xs font-extrabold text-white leading-none shadow-2xs">
             {slide.tag}
           </span>
-          <strong className="text-xs md:text-sm font-extrabold text-[#17212B] truncate">
+          <strong className="text-[13.5px] md:text-sm font-extrabold text-[#17212B] truncate">
             {slide.title}
           </strong>
         </div>
-        <p className="text-[11px] md:text-xs font-medium text-slate-500 line-clamp-1 pl-0.5">
+        <p className="text-[12px] md:text-xs font-medium text-slate-500 line-clamp-1 pl-0.5">
           {slide.description}
         </p>
       </div>
@@ -132,7 +132,7 @@ export function LoginPage() {
               type="button"
               onClick={() => setRole('senior')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-xs font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-[13px] font-extrabold transition-all',
                 role === 'senior'
                   ? 'bg-[#173F3A] text-white shadow-xs'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -144,7 +144,7 @@ export function LoginPage() {
               type="button"
               onClick={() => setRole('company')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-xs font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-[13px] font-extrabold transition-all',
                 role === 'company'
                   ? 'bg-[#173F3A] text-white shadow-xs'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -155,7 +155,7 @@ export function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <h2 className="text-[14.5px] sm:text-base font-extrabold tracking-tight text-[#17212B] leading-snug whitespace-nowrap">
+            <h2 className="text-[15.5px] sm:text-base font-extrabold tracking-tight text-[#17212B] leading-snug whitespace-nowrap">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <span className="text-[#F06B4F]">기업의 가치</span>가 됩니다.
@@ -166,7 +166,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-[11px] leading-relaxed font-medium text-slate-500">
+            <p className="text-[12px] leading-relaxed font-medium text-slate-500">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -205,7 +205,7 @@ export function LoginPage() {
             </ActionButton>
             <div className="flex items-center justify-center pt-2">
               <Link
-                className="text-xs font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
+                className="text-[13px] font-extrabold text-[#F06B4F] underline hover:text-[#E05A3E]"
                 to="/signup"
               >
                 계정이 없나요? 회원가입

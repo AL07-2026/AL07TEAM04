@@ -86,7 +86,7 @@ export function CompanyInfoPage() {
             <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>
               회사 정보를 확인할게요
             </h2>
-            <p className="text-xs font-medium text-slate-500">프로젝트와 제안 확인 후 연락에 사용됩니다.</p>
+            <p className="text-[13px] font-medium text-slate-500">프로젝트와 제안 확인 후 연락에 사용됩니다.</p>
           </div>
 
           <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>

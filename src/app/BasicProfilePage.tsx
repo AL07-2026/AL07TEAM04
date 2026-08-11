@@ -69,7 +69,7 @@ export function BasicProfilePage() {
             <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>
               경험을 간단히 알려주세요
             </h2>
-            <p className="text-xs font-medium text-slate-500">프로젝트 추천과 제안 프로필에 사용됩니다.</p>
+            <p className="text-[13px] font-medium text-slate-500">프로젝트 추천과 제안 프로필에 사용됩니다.</p>
           </div>
 
           <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
@@ -112,7 +112,7 @@ export function BasicProfilePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-[#17212B]">이력서 첨부 (선택)</span>
+            <span className="text-[13px] font-extrabold text-[#17212B]">이력서 첨부 (선택)</span>
             <input
               accept=".pdf,.doc,.docx"
               className="sr-only"
@@ -123,7 +123,7 @@ export function BasicProfilePage() {
             <ActionButton onClick={() => fileInputRef.current?.click()} secondary type="button">
               {attachment ? attachment.name : '파일 선택'}
             </ActionButton>
-            <p className="text-[11px] text-slate-500">PDF·DOCX, 최대 10MB · 제안한 기업만 확인</p>
+            <p className="text-[12px] font-medium text-slate-500">PDF·DOCX, 최대 10MB · 제안한 기업만 확인</p>
           </div>
           {message ? (
             <p aria-live="polite" className="text-xs font-medium text-rose-500">
