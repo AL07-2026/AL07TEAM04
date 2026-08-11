@@ -2,12 +2,15 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export function SignupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { mode } = useViewportMode();
+  const { signUp } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialRole = searchParams.get('role') === 'company' ? 'company' : 'senior';
   const [selectedRole, setSelectedRole] = useState<'senior' | 'company'>(initialRole);
@@ -19,16 +22,26 @@ export function SignupPage() {
     setMessage('');
   };
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!form.name || !form.email || form.password.length < 8 || !form.agreed) {
-      setMessage('필수 정보와 약관 동의를 확인해 주세요.');
+    setMessage('');
+    if (!form.name.trim() || !form.email.trim() || form.password.length < 6 || !form.agreed) {
+      setMessage('필수 정보와 6자 이상의 비밀번호, 약관 동의를 확인해 주세요.');
       return;
     }
-    if (selectedRole === 'company') {
-      void navigate('/company-info');
-    } else {
-      void navigate('/basic-profile');
+    setIsSubmitting(true);
+    try {
+      await signUp(form.email, form.password, form.name, selectedRole);
+      if (selectedRole === 'company') {
+        void navigate('/company-info');
+      } else {
+        void navigate('/basic-profile');
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage(error.message || '회원가입 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -123,8 +136,12 @@ export function SignupPage() {
               {message}
             </p>
           ) : null}
-          <ActionButton type="submit" role={selectedRole}>
-            {selectedRole === 'company' ? '회사 기본정보 입력 →' : '인재 기본정보 입력 →'}
+          <ActionButton type="submit" role={selectedRole} disabled={isSubmitting}>
+            {isSubmitting
+              ? '회원가입 처리 중...'
+              : selectedRole === 'company'
+                ? '회사 기본정보 입력 →'
+                : '인재 기본정보 입력 →'}
           </ActionButton>
           <Link
             className="w-fit text-xs font-bold text-[#F06B4F] underline hover:text-[#E05A3E]"

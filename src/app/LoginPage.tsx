@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 const bannerSlides = [
@@ -107,16 +108,33 @@ export function RollingBanner() {
 export function LoginPage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
+  const { signIn } = useAuth();
   const [role, setRole] = useState<'senior' | 'company'>('senior');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (role === 'senior') {
-      void navigate('/senior');
-    } else {
-      void navigate('/company');
+    setErrorMessage('');
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('이메일과 비밀번호를 입력해 주세요.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const userProfile = await signIn(email, password, role);
+      if (userProfile.role === 'company') {
+        void navigate('/company');
+      } else {
+        void navigate('/senior');
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMessage(error.message || '로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -130,7 +148,10 @@ export function LoginPage() {
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-white p-1 shadow-2xs">
             <button
               type="button"
-              onClick={() => setRole('senior')}
+              onClick={() => {
+                setRole('senior');
+                setErrorMessage('');
+              }}
               className={cn(
                 'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-[13px] font-extrabold transition-all',
                 role === 'senior'
@@ -142,7 +163,10 @@ export function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => setRole('company')}
+              onClick={() => {
+                setRole('company');
+                setErrorMessage('');
+              }}
               className={cn(
                 'flex flex-1 items-center justify-center gap-1 rounded-full py-2.5 text-[13px] font-extrabold transition-all',
                 role === 'company'
@@ -180,7 +204,10 @@ export function LoginPage() {
             <Field
               autoComplete="email"
               label="이메일"
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrorMessage('');
+              }}
               placeholder="이메일을 입력하세요"
               type="email"
               value={email}
@@ -188,13 +215,23 @@ export function LoginPage() {
             <Field
               autoComplete="current-password"
               label="비밀번호"
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrorMessage('');
+              }}
               placeholder="비밀번호를 입력하세요"
               type="password"
               value={password}
             />
-            <ActionButton type="submit" role={role}>
-              {role === 'senior' ? '인재로 로그인 →' : '기업으로 로그인 →'}
+
+            {errorMessage ? (
+              <p aria-live="polite" className="text-xs font-bold text-rose-500">
+                {errorMessage}
+              </p>
+            ) : null}
+
+            <ActionButton type="submit" role={role} disabled={isSubmitting}>
+              {isSubmitting ? '로그인 처리 중...' : role === 'senior' ? '인재로 로그인 →' : '기업으로 로그인 →'}
             </ActionButton>
             <ActionButton
               onClick={() => void navigate(role === 'senior' ? '/senior' : '/company')}
@@ -281,7 +318,10 @@ export function LoginPage() {
             <Field
               autoComplete="email"
               label="이메일"
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrorMessage('');
+              }}
               placeholder="이메일을 입력하세요"
               type="email"
               value={email}
@@ -289,13 +329,23 @@ export function LoginPage() {
             <Field
               autoComplete="current-password"
               label="비밀번호"
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrorMessage('');
+              }}
               placeholder="비밀번호를 입력하세요"
               type="password"
               value={password}
             />
-            <ActionButton type="submit" role={role}>
-              {role === 'senior' ? '인재로 로그인 →' : '기업으로 로그인 →'}
+
+            {errorMessage ? (
+              <p aria-live="polite" className="text-xs font-bold text-rose-500">
+                {errorMessage}
+              </p>
+            ) : null}
+
+            <ActionButton type="submit" role={role} disabled={isSubmitting}>
+              {isSubmitting ? '로그인 처리 중...' : role === 'senior' ? '인재로 로그인 →' : '기업으로 로그인 →'}
             </ActionButton>
             <ActionButton
               onClick={() => void navigate(role === 'senior' ? '/senior' : '/company')}

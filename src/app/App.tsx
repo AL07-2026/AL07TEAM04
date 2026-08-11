@@ -27,6 +27,7 @@ import {
 } from '@/app/wireframe/FlowPages';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
+import { AuthProvider } from '@/lib/authContext';
 
 function createAppRouter() {
   return createBrowserRouter([
@@ -60,8 +61,10 @@ export function App() {
   const [router] = useState(createAppRouter);
 
   return (
-    <ViewportProvider>
-      <RouterProvider router={router} />
-    </ViewportProvider>
+    <AuthProvider>
+      <ViewportProvider>
+        <RouterProvider router={router} />
+      </ViewportProvider>
+    </AuthProvider>
   );
 }

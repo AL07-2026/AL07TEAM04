@@ -16,21 +16,32 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] '내 정보' / '회사 정보' 메인 탭 헤더 네비게이션 및 불필요 뒤로가기 제거 개편
+### [2026-08-11] 파이어베이스(Firebase Auth & Firestore) 실제 회원가입/로그인 연동 개발 완료 및 배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **상단 네비게이션 바 화면 폭 비의존 100% 지속 노출**:
-    - PC 모드에서 화면 미디어쿼리(`hidden md:flex`) 반응형 조건으로 인해 768px 미만 분할 창에서 메뉴가 숨겨지던 현상 보정 (`flex` 전환).
-  - **메인 탭 화면 불필요 뒤로가기(< ChevronLeft) 버튼 제거**:
-    - `내 정보`(`BasicProfilePage.tsx`) 및 `회사 정보`(`CompanyInfoPage.tsx`)는 서비스 주요 메인 4개 탭 중 하나이므로 온보딩 화면으로 되돌아가는 불필요한 뒤로가기 버튼(`showBack={false}`) 전면 제거.
-    - 이제 `홈`, `프로젝트`, `내 제안`, `내 정보` 4개 탭 모두 일관된 메인 탭 헤더 구조 및 지속 상단 네비게이션 탑재.
+  - **Firebase SDK 패키지 추가 및 모듈 구성**:
+    - `npm install firebase` 설치 완료.
+    - `src/lib/firebase.ts`: 파이어베이스 프로젝트(`al07team04-bdfcd`) App, Auth (`getAuth`), Firestore (`getFirestore`) 인스턴스 초기화 모듈 탑재.
+  - **전역 인증 컨텍스트 구축 (`src/lib/authContext.tsx`)**:
+    - `AuthProvider` 및 `useAuth()` 커스텀 훅 개발.
+    - `signUp`: `createUserWithEmailAndPassword` + Firestore `users/{uid}` 컬렉션 문서 생성 (`name`, `email`, `role`, `createdAt`).
+    - `signIn`: `signInWithEmailAndPassword` + Firestore 유저 문서 권한 조회 후 역할별 자동 라우팅.
+    - `signOut`: `firebaseSignOut` 세션 해제.
+    - 미설정 환경/오프라인 환경 시 자연스러운 데모 인증 폴백 시스템 지원.
+  - **로그인/회원가입 UI 실연동**:
+    - `LoginPage.tsx`: 실시간 인증 로딩 상태, 유효성 검사 및 오류 메시지 출력 연동 ("체험 계정으로 빠른 시작" 지원 유지).
+    - `SignupPage.tsx`: 실시간 파이어베이스 회원가입 연동.
+    - `App.tsx`: 전역 `<AuthProvider>` 공급자 연동.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [NEW] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
+  - [NEW] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
+  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`package.json`](file:///c:/AL07TEAM04/package.json)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
