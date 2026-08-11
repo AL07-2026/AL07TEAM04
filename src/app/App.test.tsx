@@ -35,7 +35,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', '/signup?role=senior');
     render(<App />);
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '김인재' } });
-    fireEvent.change(screen.getByLabelText('이메일 (인증용 개인메일)'), { target: { value: 'senior@example.com' } });
+    const testEmail = `senior-${Date.now()}@example.com`;
+    fireEvent.change(screen.getByLabelText('이메일 (인증용 개인메일)'), { target: { value: testEmail } });
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('비밀번호 확인'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
