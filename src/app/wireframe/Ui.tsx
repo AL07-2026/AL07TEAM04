@@ -329,7 +329,7 @@ export function MobilePage({
                         className={cn(
                           'flex items-center gap-2 px-4.5 py-2 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
-                            ? 'bg-[#173F3A] text-white shadow-xs'
+                            ? 'bg-[#F06B4F] text-white shadow-xs'
                             : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                         )}
                       >
@@ -428,7 +428,7 @@ function BottomNav({
             className={cn(
               'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition',
               selected
-                ? 'font-extrabold text-[#173F3A]'
+                ? 'font-extrabold text-[#F06B4F]'
                 : 'text-slate-400 hover:text-[#17212B]',
             )}
             key={item.id}
@@ -438,7 +438,7 @@ function BottomNav({
             <IconComponent
               className={cn(
                 'size-5 transition-transform',
-                selected ? 'scale-110 text-[#173F3A]' : 'text-slate-400',
+                selected ? 'scale-110 text-[#F06B4F]' : 'text-slate-400',
               )}
             />
             <span>{item.label}</span>

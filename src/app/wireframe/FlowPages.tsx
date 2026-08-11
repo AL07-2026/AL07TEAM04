@@ -79,34 +79,54 @@ const receivedProposals: Project[] = [
 
 export function ProcessOverviewGraphicCard() {
   return (
-    <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-5 shadow-xs">
+    <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-5 shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] md:text-[16px] font-extrabold tracking-wide text-[#173F3A]">
+        <span className="text-[13px] md:text-[17px] font-extrabold tracking-wide text-[#173F3A]">
           ✨ 경험매칭 3단계 프로세스
         </span>
         <span className="text-[11px] md:text-[14px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
       </div>
-      <div className="grid grid-cols-3 gap-2 pt-1">
-        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#DDEBE7] p-2.5 md:p-4 text-center border border-[#BBD5CE]">
-          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Mic className="size-3.5 md:size-5" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3.5 pt-0.5">
+        <div className="flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:p-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
+          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Mic className="size-4.5 md:size-5.5" />
           </div>
-          <span className="text-[11px] md:text-[15px] font-extrabold text-[#173F3A]">1. 경험을 말해요</span>
-          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">AI 음성 대화</span>
+          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight break-keep">
+              1. 경험을 말해요
+            </span>
+            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+              AI 음성 대화
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#FAF7F2] p-2.5 md:p-4 text-center border border-[#E0D9C8]">
-          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
-            <Award className="size-3.5 md:size-5" />
+
+        <div className="flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:p-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]">
+          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
+            <Award className="size-4.5 md:size-5.5" />
           </div>
-          <span className="text-[11px] md:text-[15px] font-extrabold text-[#F06B4F]">2. 카드로 확인</span>
-          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">문제·역할·결과</span>
+          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#F06B4F] leading-tight break-keep">
+              2. 카드로 확인
+            </span>
+            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+              문제·역할·결과
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#DDEBE7] p-2.5 md:p-4 text-center border border-[#BBD5CE]">
-          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Target className="size-3.5 md:size-5" />
+
+        <div className="flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:p-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
+          <div className="flex size-9 md:size-11 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Target className="size-4.5 md:size-5.5" />
           </div>
-          <span className="text-[11px] md:text-[15px] font-extrabold text-[#173F3A]">3. 기업이 판단</span>
-          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">프로젝트 근거 매칭</span>
+          <div className="flex flex-col text-left justify-center gap-0.5 min-w-0">
+            <span className="text-[12px] md:text-[16px] font-extrabold text-[#173F3A] leading-tight break-keep">
+              3. 기업이 판단
+            </span>
+            <span className="text-[10px] md:text-[13px] font-semibold text-slate-600 leading-tight break-keep">
+              프로젝트 근거 매칭
+            </span>
+          </div>
         </div>
       </div>
     </div>
