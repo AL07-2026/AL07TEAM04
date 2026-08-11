@@ -31,16 +31,14 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
   });
 
-  it('회원가입 후 인재 역할과 프로젝트 탐색으로 이동한다', async () => {
-    window.history.pushState({}, '', '/signup');
+  it('회원가입 후 인재 기본정보 입력으로 바로 이동한다', async () => {
+    window.history.pushState({}, '', '/signup?role=senior');
     render(<App />);
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '김인재' } });
     fireEvent.change(screen.getByLabelText('이메일'), { target: { value: 'senior@example.com' } });
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button', { name: /다음/ }));
-    expect(await screen.findByRole('heading', { name: '역할 선택' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /다음/ }));
+    fireEvent.click(screen.getByRole('button', { name: /인재 기본정보 입력/ }));
     expect(await screen.findByRole('heading', { name: '인재 기본정보' })).toBeInTheDocument();
   });
 

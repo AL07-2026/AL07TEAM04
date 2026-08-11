@@ -16,27 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 화면 전반 텍스트 크기 시인성 강화 (배치 보존) 및 배포
+### [2026-08-11] '내 정보' / '회사 정보' 메인 탭 헤더 네비게이션 및 불필요 뒤로가기 제거 개편
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **모바일 폰트 가독성 미세 증대 적용**:
-    - 헤더 타이틀 (`text-[16px]` ➔ `text-[17px]`), 뷰포트 스위처 (`text-[10px]` ➔ `text-[11px]`)
-    - 폼 라벨 (`text-xs 12px` ➔ `text-[13px] font-extrabold`), 입력 필드 텍스트 (`text-[13px]` ➔ `text-[14px]`)
-    - 액션 버튼 (`text-sm 14px` ➔ `text-[15px] font-extrabold`), 회원가입/빠른시작 링크 (`text-xs` ➔ `text-[13px]`)
-    - 메인 헤드라인 (`text-[14.5px]` ➔ `text-[15.5px]` 1줄 정렬 보존), 서브 설명문구 (`text-[11px]` ➔ `text-[12px]`)
-    - 하단 네비게이션 바 (`text-[11px]` ➔ `text-[12px]`)
-    - 회원가입, 역할 선택, 기본정보 폼 및 3단계 프로세스 카드 뱃지·설명문구 폰트 전반 미세 확대 보정.
+  - **상단 네비게이션 바 화면 폭 비의존 100% 지속 노출**:
+    - PC 모드에서 화면 미디어쿼리(`hidden md:flex`) 반응형 조건으로 인해 768px 미만 분할 창에서 메뉴가 숨겨지던 현상 보정 (`flex` 전환).
+  - **메인 탭 화면 불필요 뒤로가기(< ChevronLeft) 버튼 제거**:
+    - `내 정보`(`BasicProfilePage.tsx`) 및 `회사 정보`(`CompanyInfoPage.tsx`)는 서비스 주요 메인 4개 탭 중 하나이므로 온보딩 화면으로 되돌아가는 불필요한 뒤로가기 버튼(`showBack={false}`) 전면 제거.
+    - 이제 `홈`, `프로젝트`, `내 제안`, `내 정보` 4개 탭 모두 일관된 메인 탭 헤더 구조 및 지속 상단 네비게이션 탑재.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
   - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
   - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
