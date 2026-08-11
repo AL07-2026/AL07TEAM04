@@ -137,17 +137,7 @@ export function SignupPage() {
                   {form.email}
                 </span>
                 <br />
-                위 이메일 주소로 파이어베이스 인증 링크가 발송되었습니다. 메일함(또는 스팸함)을 확인 후 아래 버튼을 클릭해 주세요.
-              </p>
-            </div>
-
-            <div className="w-full bg-[#FAF7F2] border border-[#E0D9C8] p-3.5 rounded-2xl text-left text-xs font-medium text-slate-600 flex flex-col gap-1.5">
-              <span className="font-extrabold text-[#17212B] flex items-center gap-1">
-                💡 메일 수신 안내 및 테스트용 빠른 진행
-              </span>
-              <p className="leading-relaxed text-slate-500">
-                • 파이어베이스 기본 발송 메일(`noreply@al07team04-bdfcd.firebaseapp.com`)은 스팸함/프로모션함으로 분류될 수 있습니다.<br />
-                • 즉시 테스트 진행을 원하실 경우 아래 <strong>[⚡ 인증 건너뛰고 빠른 시작]</strong> 버튼을 누르시면 즉시 다음 단계로 진입하실 수 있습니다.
+                위 이메일 주소로 파이어베이스 인증 링크가 발송되었습니다. 메일함을 확인하여 인증 완료 후 아래 버튼을 눌러주세요.
               </p>
             </div>
 
@@ -166,14 +156,6 @@ export function SignupPage() {
             <div className="flex flex-col gap-2.5 w-full pt-2">
               <ActionButton onClick={() => void handleVerifyComplete()} role={selectedRole} disabled={isSubmitting}>
                 {isSubmitting ? '인증 확인 중...' : '✅ 이메일 인증 완료 및 다음 단계 →'}
-              </ActionButton>
-
-              <ActionButton
-                onClick={() => void navigate(selectedRole === 'company' ? '/company-info' : '/basic-profile')}
-                secondary
-                type="button"
-              >
-                ⚡ 인증 건너뛰고 빠른 시작 (테스트용)
               </ActionButton>
 
               <ActionButton onClick={() => void handleResendEmail()} secondary type="button">

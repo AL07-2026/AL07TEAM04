@@ -16,16 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 파이어베이스 인증 메일 한국어 언어 설정(auth.languageCode = 'ko') 및 템플릿 바인딩
+### [2026-08-11] 파이어베이스 인증 메일 연동 완료에 따른 임시 건너뛰기 버튼 제거 및 회원가입 UI 정돈
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **파이어베이스 인증 언어 한국어 고정 설정**:
-    - `src/lib/firebase.ts` 내 `auth.languageCode = 'ko'` 설정 추가로 파이어베이스 인증 이메일 발송 시 한국어로 번역 및 서비스 안내문이 자동 적용되도록 바인딩.
+  - **임시 건너뛰기 버튼 제거 및 이메일 인증 화면 정돈**:
+    - 파이어베이스 Authentication 서버 실서버 이메일 발송 연동 완결에 따라 `SignupPage.tsx` 내 임시 테스트용 `⚡ 인증 건너뛰고 빠른 시작` 버튼 제거.
+    - 정식 이메일 인증 안내 화면 및 `✅ 이메일 인증 완료 및 다음 단계` / `🔄 인증 메일 재발송`으로 깔끔하게 UI 정돈.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
