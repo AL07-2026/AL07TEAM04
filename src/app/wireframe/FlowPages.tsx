@@ -687,26 +687,28 @@ export function MyProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col gap-3.5 px-6 py-5"
+      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
       role="senior"
       showBack={false}
       title="내 제안"
     >
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         {['전체', '검토 중', '연락 받음'].map((item) => (
           <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
             {item}
           </Chip>
         ))}
       </div>
-      <h2 className="text-lg font-extrabold text-[#17212B]">보낸 제안 {visible.length}건</h2>
-      {visible.map((project) => (
-        <ProjectCard
-          key={project.title}
-          onClick={() => void navigate('/senior/proposals/1')}
-          project={project}
-        />
-      ))}
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#17212B]">보낸 제안 {visible.length}건</h2>
+      <div className="flex flex-col gap-4">
+        {visible.map((project) => (
+          <ProjectCard
+            key={project.title}
+            onClick={() => void navigate('/senior/proposals/1')}
+            project={project}
+          />
+        ))}
+      </div>
     </MobilePage>
   );
 }
@@ -894,12 +896,12 @@ export function ProjectManagementPage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="flex flex-col gap-3.5 px-6 py-5"
+      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
       role="company"
       showBack={false}
       title="프로젝트 관리"
     >
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         {['전체', '공개 중', '마감'].map((item) => (
           <Chip
             key={item}
@@ -911,22 +913,24 @@ export function ProjectManagementPage() {
           </Chip>
         ))}
       </div>
-      <h2 className="text-lg font-extrabold text-[#17212B]">
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#17212B]">
         등록 프로젝트 {filter === '마감' ? 0 : 2}개
       </h2>
-      {filter !== '마감' ? (
-        managed.map((project) => (
-          <ProjectCard
-            key={project.title}
-            onClick={() => void navigate('/company/proposals')}
-            project={project}
-          />
-        ))
-      ) : (
-        <p className="rounded-xl border border-[#E0D9C8] bg-white p-4 text-sm text-slate-500 shadow-xs">
-          마감된 프로젝트가 없습니다.
-        </p>
-      )}
+      <div className="flex flex-col gap-4">
+        {filter !== '마감' ? (
+          managed.map((project) => (
+            <ProjectCard
+              key={project.title}
+              onClick={() => void navigate('/company/proposals')}
+              project={project}
+            />
+          ))
+        ) : (
+          <p className="rounded-xl border border-[#E0D9C8] bg-white p-6 text-base text-slate-500 shadow-xs">
+            마감된 프로젝트가 없습니다.
+          </p>
+        )}
+      </div>
       <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
         새 프로젝트 등록
       </ActionButton>
@@ -944,13 +948,13 @@ export function ReceivedProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col gap-3.5 px-6 py-5"
+      contentClassName="flex flex-col gap-4.5 max-w-6xl mx-auto w-full px-6 py-6 md:px-10 md:py-8"
       role="company"
       showBack={false}
       title="받은 제안"
     >
-      <p className="text-[13px] font-extrabold text-[#173F3A]">신규 서비스 운영 체계 만들기</p>
-      <div className="flex gap-2">
+      <p className="text-[14px] md:text-[17px] font-extrabold text-[#173F3A]">신규 서비스 운영 체계 만들기</p>
+      <div className="flex gap-2.5">
         {['전체', '검토 전', '연락함'].map((item) => (
           <Chip
             key={item}

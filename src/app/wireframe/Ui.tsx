@@ -535,25 +535,60 @@ export type Project = {
 };
 
 export function ProjectCard({ onClick, project }: { onClick?: () => void; project: Project }) {
+  const parts = project.meta.split(' · ');
+  const isStatusMeta =
+    parts.length > 1 &&
+    ['검토 중', '연락 받음', '검토 전', '공개 중', '연락함', '마감'].includes(parts[0]!.trim());
+  const statusText = isStatusMeta ? parts[0]!.trim() : null;
+  const detailMeta = isStatusMeta ? parts.slice(1).join(' · ') : project.meta;
+
   const content = (
-    <>
-      <span className="text-[13px] md:text-[16px] font-extrabold text-[#173F3A]">{project.company}</span>
-      <strong className="text-left text-[17px] md:text-[21px] font-extrabold text-[#17212B]">{project.title}</strong>
-      <span className="text-left text-[13px] md:text-[16px] font-medium text-[#4B5768]">{project.meta}</span>
-      <span className="text-[13px] md:text-[16px] font-extrabold text-[#F06B4F]">
-        {project.action ?? '프로젝트 보기 →'}
-      </span>
-    </>
+    <div className="flex w-full flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Left / Primary Content Column */}
+      <div className="flex flex-col items-start gap-1.5 md:gap-2 text-left flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="text-[13px] md:text-[16px] font-extrabold text-[#173F3A]">
+            {project.company}
+          </span>
+          {statusText ? (
+            <span
+              className={cn(
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] md:text-[13px] font-extrabold border shadow-2xs',
+                statusText === '연락 받음' || statusText === '연락함'
+                  ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
+                  : statusText === '공개 중'
+                    ? 'bg-[#EBF5FF] text-[#1D4ED8] border-[#BFDBFE]'
+                    : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
+              )}
+            >
+              ● {statusText}
+            </span>
+          ) : null}
+        </div>
+
+        <strong className="text-left text-[17px] md:text-[22px] font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors">
+          {project.title}
+        </strong>
+
+        <span className="text-left text-[13px] md:text-[16px] font-semibold text-slate-500">
+          {isStatusMeta ? `제안일: ${detailMeta}` : detailMeta}
+        </span>
+      </div>
+
+      {/* Right Column: Action Button Badge */}
+      <div className="flex items-center justify-between md:justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E0D9C8]/60 w-full md:w-auto">
+        <span className="inline-flex items-center gap-1.5 px-4 md:px-5 py-2 md:py-2.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] text-[13px] md:text-[15px] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs">
+          {project.action ?? '프로젝트 보기 →'}
+        </span>
+      </div>
+    </div>
   );
+
   const classes =
-    'flex min-h-40 md:min-h-48 w-full flex-col items-start gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 shadow-xs';
+    'group flex w-full flex-col rounded-2xl border border-[#E0D9C8] bg-white p-5 md:p-6 shadow-xs transition-all duration-200 hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.998]';
 
   return onClick ? (
-    <button
-      className={cn(classes, 'transition hover:border-[#173F3A]/40 hover:shadow-md')}
-      onClick={onClick}
-      type="button"
-    >
+    <button className={classes} onClick={onClick} type="button">
       {content}
     </button>
   ) : (
