@@ -16,18 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] useViewportMode 기반 모바일 토글 뷰 및 스마트폰 스크린 레이아웃 호환성 버그 수정
+### [2026-08-11] 로그인 화면 한 화면(No-Scroll) 배치 및 타이포그래피 UI 규칙 최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **원인 분석**: PC 웹 환경에서 '모바일' 토글 버튼 클릭 시(390px 스마트폰 프레임), Tailwind CSS media query(`md:`, `sm:`)가 브라우저 윈도우 크기(1920px)로 평가되어 3컬럼 가로 그리드가 강제 적용되면서 모바일 프레임 안에서 텍스트가 잘리고 겹치는 현상 발생.
-  - **수정 적용**: `ProcessOverviewGraphicCard` 및 `ProjectCard`에서 `useViewportMode()`의 `isMobile` 상태를 직접 감지하도록 개편 (`FlowPages.tsx`, `Ui.tsx`).
-  - `isMobile === true` 시 390px 스마트폰 프레임 및 실제 스마트폰 접속 환경에서 **1컬럼 완벽 세로 스택(`flex flex-col`)**으로 전환되어 텍스트 깨짐 및 가로 스크롤 현상을 100% 해결.
+  - **로그인 화면 한 화면(No-Scroll) 최적화**: 모바일 프레임(390px) 및 PC 웹 모드 모두에서 스크롤 없이 **구글 간편 로그인 버튼 및 회원가입 링크까지 한 화면에 100% 표시**되도록 여백/컴팩트 배너 레이아웃 개편 (`LoginPage.tsx`).
+  - **로그인 버튼 및 텍스트 폰트 크기 규칙 통일**: 지나치게 컸던 '인재로 로그인' 버튼 글자 크기를 타이포그래피 계층 규칙(`text-xs font-extrabold` / `text-sm font-extrabold`)에 맞게 정돈하고 시그니처 오렌지 색상(`#F06B4F`)으로 통일감 부여.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
-  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
+  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/login`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
