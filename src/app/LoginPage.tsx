@@ -288,7 +288,7 @@ export function LoginPage() {
   }
 
   return (
-    <MobilePage contentClassName="px-6 pb-10 pt-6 md:px-12 md:py-8 flex items-center justify-center min-h-[calc(100vh-80px)]" showBack={false} title="경험매칭">
+    <MobilePage contentClassName="px-6 pb-12 pt-8 md:px-12 md:py-12 flex items-center justify-center" showBack={false} title="경험매칭">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-6xl w-full mx-auto">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-6 py-2">
