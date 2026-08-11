@@ -16,12 +16,14 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 메인 화면 좌우 비율 및 수직 밸런스 정밀 조정
+### [2026-08-11] PC 웹 메인 좌측 헤딩 및 소개 텍스트 폰트 크기 10% 확대 시각화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 화면 좌우 높이 및 수직 정렬 밸런스 정밀화 (`LoginPage.tsx`)**:
-    - 우측 구글 로그인 카드 세로 길이에 맞추어 좌측 배너 그래픽 높이(`h-44 sm:h-52 md:h-64 lg:h-[265px]`) 및 수직 패딩/여백(`gap-4.5`, `p-6 md:p-7`)을 정밀 조정.
-    - 좌측 타이틀 영역과 우측 카드 상단 라인이 **1:1 비율로 수평/수직 균형**을 이루도록 레이아웃 정돈.
+  - **좌측 피치 타이틀 & 배너 설명 폰트 크기 10% 확대 (`LoginPage.tsx`)**:
+    - 피치 타이틀 폰트 확대: `text-2xl md:text-3xl lg:text-[34px]` → `text-2xl md:text-3xl lg:text-[38px]`
+    - 피치 서브타이틀 폰트 확대: `text-sm md:text-base` → `text-base md:text-lg`
+    - 캐러셀 태그/제목/설명 폰트 확대: `text-[13px] md:text-xs`, `text-[15px] md:text-base`, `text-[13px] md:text-sm`
+    - 가독성 향상 및 전체 레이아웃 가시성 극대화.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
