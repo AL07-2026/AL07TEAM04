@@ -15,6 +15,7 @@ import {
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { RollingBanner } from '@/app/LoginPage';
 import { cn } from '@/lib/utils';
 
 import {
@@ -170,25 +171,8 @@ export function SeniorHomePage() {
         )}
       </div>
 
-      {/* Main Brand Banner Card */}
-      <div className="relative overflow-hidden rounded-xl border border-[#E0D9C8] bg-white shadow-xs">
-        <div className={cn('relative w-full overflow-hidden bg-[#F7F3EA]', isMobile ? 'h-36' : 'h-40 md:h-56')}>
-          <img
-            src="/eojob_main_banner.jpg"
-            alt="당신의 경험이, 다음 해답이 되도록"
-            className="h-full w-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#17212B]/85 via-[#17212B]/35 to-transparent p-5 md:p-7 flex flex-col justify-end text-white">
-            <span className="text-[11px] md:text-[15px] font-extrabold text-[#F06B4F] mb-1">✨ 이어잡 슬로건</span>
-            <strong className={cn('font-extrabold tracking-tight', isMobile ? 'text-base' : 'text-lg md:text-2xl lg:text-3xl')}>
-              당신의 경험이, 다음 해답이 되도록
-            </strong>
-            <p className="text-xs md:text-base font-medium text-white/90 mt-1">
-              해결해 본 사람과 해결이 필요한 조직을 잇습니다.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR MOBILE & PC */}
+      <RollingBanner isCompact={isMobile} />
 
       {/* Visual Process Overview */}
       <ProcessOverviewGraphicCard />
@@ -197,20 +181,20 @@ export function SeniorHomePage() {
       <button
         onClick={() => void navigate('/senior/experience/interview')}
         type="button"
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:shadow-md active:scale-[0.99]"
       >
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-1.5 text-xs md:text-base font-extrabold text-[#F06B4F]">
             <Sparkles className="size-4 text-[#F06B4F]" /> 1/3 경험 등록 추천
           </span>
-          <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-sm' : 'text-base md:text-xl lg:text-2xl')}>
+          <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-base' : 'text-lg md:text-xl lg:text-2xl')}>
             AI 경험 인터뷰 시작하기
           </strong>
           <span className="text-xs md:text-base font-medium text-slate-600">
             말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
           </span>
         </div>
-        <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25', isMobile ? 'size-10' : 'size-14')}>
+        <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25', isMobile ? 'size-11' : 'size-14')}>
           <Mic className={isMobile ? 'size-5' : 'size-7'} />
         </div>
       </button>
@@ -770,10 +754,14 @@ export function CompanyHomePage() {
       showBack={false}
       title="회사 홈"
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 border-b border-[#E0D9C8]/60 pb-3">
         <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl')}>그로우랩 담당자님 👋</h2>
         <p className="text-xs md:text-base font-medium text-slate-500 mt-1">프로젝트와 새 제안을 확인하세요.</p>
       </div>
+
+      {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR COMPANY HOME */}
+      <RollingBanner isCompact={isMobile} />
+
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
         <SummaryCard label="등록 프로젝트" role="company" value="2개" />
         <SummaryCard label="새 제안" role="company" value="5건" />
@@ -1110,6 +1098,130 @@ export function ReceivedProposalDetailPage() {
           {message}
         </p>
       ) : null}
+    </MobilePage>
+  );
+}
+
+export function SeniorProfilePage() {
+  const navigate = useNavigate();
+
+  return (
+    <MobilePage
+      activeNav="profile"
+      contentClassName="flex flex-col gap-4 px-4 pb-6 pt-4 max-w-6xl mx-auto w-full"
+      role="senior"
+      showBack={false}
+      title="내 정보"
+    >
+      {/* Profile Header Card */}
+      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
+          김
+        </div>
+        <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <strong className="text-lg font-extrabold text-[#17212B]">김인재 님</strong>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
+              ✓ 본인 인증
+            </span>
+          </div>
+          <span className="text-xs font-bold text-slate-500 truncate">sehddnr2@naver.com</span>
+          <span className="text-xs font-extrabold text-[#F06B4F]">시니어 인재 회원</span>
+        </div>
+      </div>
+
+      {/* Experience Summary Card */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-2.5">
+          <strong className="text-base font-extrabold text-[#17212B]">대표 경험 카드</strong>
+          <span className="text-xs font-extrabold text-[#173F3A]">AI 경험 인터뷰 완료</span>
+        </div>
+        <div className="flex flex-col gap-2 text-xs">
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">주요 분야:</span>
+            <span className="font-medium text-slate-700">서비스 운영 15년 · 프로세스 설계</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">핵심 성과:</span>
+            <span className="font-medium text-slate-700">반복 납기 지연 문제 개선 (준수율 향상)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons System (Standardized 44px Height) */}
+      <div className="flex flex-col gap-2.5 pt-2">
+        <ActionButton onClick={() => void navigate('/basic-profile')} secondary>
+          기본 정보 수정
+        </ActionButton>
+        <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
+          🎙️ AI 경험 인터뷰 재진행
+        </ActionButton>
+        <ActionButton onClick={() => void navigate('/login')} secondary className="text-rose-500 border-rose-200 hover:bg-rose-50">
+          로그아웃
+        </ActionButton>
+      </div>
+    </MobilePage>
+  );
+}
+
+export function CompanyProfilePage() {
+  const navigate = useNavigate();
+
+  return (
+    <MobilePage
+      activeNav="profile"
+      contentClassName="flex flex-col gap-4 px-4 pb-6 pt-4 max-w-6xl mx-auto w-full"
+      role="company"
+      showBack={false}
+      title="내 정보"
+    >
+      {/* Company Profile Header Card */}
+      <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
+          🏢
+        </div>
+        <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <strong className="text-lg font-extrabold text-[#17212B]">그로우랩</strong>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
+              ✓ 인증 기업
+            </span>
+          </div>
+          <span className="text-xs font-bold text-slate-500 truncate">company@growlab.co.kr</span>
+          <span className="text-xs font-extrabold text-[#F06B4F]">기업 회원</span>
+        </div>
+      </div>
+
+      {/* Company Info Card */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4.5 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-2.5">
+          <strong className="text-base font-extrabold text-[#17212B]">기업 정보</strong>
+          <span className="text-xs font-extrabold text-[#173F3A]">등록 완료</span>
+        </div>
+        <div className="flex flex-col gap-2 text-xs">
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">산업 분야:</span>
+            <span className="font-medium text-slate-700">IT / SaaS 플랫폼</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">등록 프로젝트:</span>
+            <span className="font-medium text-slate-700">2개 진행 중</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons System (Standardized 44px Height) */}
+      <div className="flex flex-col gap-2.5 pt-2">
+        <ActionButton onClick={() => void navigate('/company-info')} role="company" secondary>
+          기업 정보 수정
+        </ActionButton>
+        <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
+          + 새 프로젝트 등록
+        </ActionButton>
+        <ActionButton onClick={() => void navigate('/login')} secondary className="text-rose-500 border-rose-200 hover:bg-rose-50">
+          로그아웃
+        </ActionButton>
+      </div>
     </MobilePage>
   );
 }

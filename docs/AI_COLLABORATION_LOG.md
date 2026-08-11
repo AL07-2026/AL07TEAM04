@@ -16,15 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] RollingBanner 주황색 태그 배지 뱃지 상하단 패딩 20%+ 여유 확장
+### [2026-08-11] 모바일 홈 배너 복원 및 4대 탭(홈/프로젝트/내 제안/내 정보) UI 규격화·최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **주황색 태그 배지 상하 여백 확장**: 답답하게 좁아 보였던 배너 설명 영역의 주황색 태그 배지(`✨ 이어잡 메인`, `🎙️ AI 경험 인터뷰`, `🏢 핵심 프로젝트 연결`) 상하 수직 패딩을 `py-0.5`에서 **`py-1.5 md:py-2`**로 넉넉하게 확장하여 훨씬 여유 있고 품격 있는 뱃지 비주얼 구현 (`LoginPage.tsx`).
+  - **PC 웹 유지 & 모바일 홈 배너 복원**: PC 웹 버전에는 영향을 주지 않으면서, 모바일 버전 홈 화면에 다이내믹 인터랙티브 롤링 배너 캐러셀(`RollingBanner`) 복원 완료 (`FlowPages.tsx`).
+  - **모바일 4대 탭 UI 규격화 시스템 구축**: 모바일 애플리케이션 표준 규격(iOS/Material HIG) 기준 적용:
+    - **버튼 높이 44px(`h-11`) 통일**: `ActionButton` 및 주요 실행 버튼 높이를 모바일 터치 표준인 44px로 규격화.
+    - **타이포그래피 층위 명확화**: 메인 제목 `20px`, 카드 제목 `16px`, 본문 `13~14px`, 캡션 `11~12px`.
+    - **내 정보(Profile) 전용 탭 구축**: `/senior/profile` 및 `/company/profile` 최적화 프로필 카드 및 실행 버튼 배치 완료.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
-  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/login`
+  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/senior`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

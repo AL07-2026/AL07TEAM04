@@ -390,13 +390,13 @@ const navItems = {
     { id: 'home', label: '홈', path: '/senior', Icon: Home },
     { id: 'projects', label: '프로젝트', path: '/senior/projects', Icon: Briefcase },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
-    { id: 'profile', label: '내 정보', path: '/basic-profile', Icon: User },
+    { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
   company: [
     { id: 'home', label: '홈', path: '/company', Icon: Home },
     { id: 'projects', label: '프로젝트 관리', path: '/company/projects', Icon: FolderKanban },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
-    { id: 'profile', label: '회사 정보', path: '/company-info', Icon: Building2 },
+    { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },
   ],
 } as const;
 
@@ -482,15 +482,19 @@ export function ActionButton({
   secondary,
   ...props
 }: ActionButtonProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
     <button
       className={cn(
-        'flex h-12 md:h-15 w-full items-center justify-center rounded-full px-5 text-[15px] md:text-[19px] font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        'flex w-full items-center justify-center rounded-full px-5 font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        isMobile ? 'h-11 text-xs sm:text-sm shadow-md' : 'h-12 md:h-14 text-[15px] md:text-[18px]',
         secondary
-          ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-xs hover:bg-[#F7F3EA]'
+          ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
               roleStyles[role].background,
-              'text-white shadow-md shadow-[#173F3A]/20 hover:shadow-lg hover:scale-[1.008] active:scale-[0.992]',
+              'text-white shadow-md shadow-[#173F3A]/20 hover:shadow-lg hover:scale-[1.005] active:scale-[0.995]',
             ),
         className,
       )}

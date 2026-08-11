@@ -9,6 +9,7 @@ import { RoleSelectionPage } from '@/app/RoleSelectionPage';
 import { SignupPage } from '@/app/SignupPage';
 import {
   CompanyHomePage,
+  CompanyProfilePage,
   ExperienceCardPage,
   ExperienceInterviewPage,
   ExperienceSelectionPage,
@@ -24,6 +25,7 @@ import {
   ReceivedProposalDetailPage,
   ReceivedProposalsPage,
   SeniorHomePage,
+  SeniorProfilePage,
 } from '@/app/wireframe/FlowPages';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
@@ -47,12 +49,14 @@ function createAppRouter() {
     { path: '/senior/proposal-complete', Component: ProposalCompletePage },
     { path: '/senior/proposals', Component: MyProposalsPage },
     { path: '/senior/proposals/:proposalId', Component: MyProposalDetailPage },
+    { path: '/senior/profile', Component: SeniorProfilePage },
     { path: '/company', Component: CompanyHomePage },
     { path: '/company/projects', Component: ProjectManagementPage },
     { path: '/company/projects/new', Component: ProjectRegisterPage },
     { path: '/company/project-complete', Component: ProjectCompletePage },
     { path: '/company/proposals', Component: ReceivedProposalsPage },
     { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },
+    { path: '/company/profile', Component: CompanyProfilePage },
     { path: '*', element: <Navigate replace to="/login" /> },
   ]);
 }
