@@ -79,34 +79,34 @@ const receivedProposals: Project[] = [
 
 export function ProcessOverviewGraphicCard() {
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+    <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-5 shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-extrabold tracking-wide text-[#173F3A]">
+        <span className="text-[12px] md:text-[16px] font-extrabold tracking-wide text-[#173F3A]">
           ✨ 경험매칭 3단계 프로세스
         </span>
-        <span className="text-[11px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
+        <span className="text-[11px] md:text-[14px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
       </div>
-      <div className="grid grid-cols-3 gap-1.5 pt-1">
-        <div className="flex flex-col items-center gap-1 rounded-xl bg-[#DDEBE7] p-2 text-center border border-[#BBD5CE]">
-          <div className="flex size-7 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Mic className="size-3.5" />
+      <div className="grid grid-cols-3 gap-2 pt-1">
+        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#DDEBE7] p-2.5 md:p-4 text-center border border-[#BBD5CE]">
+          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Mic className="size-3.5 md:size-5" />
           </div>
-          <span className="text-[11px] font-extrabold text-[#173F3A]">1. 경험을 말해요</span>
-          <span className="text-[10px] font-medium text-slate-600">AI 음성 대화</span>
+          <span className="text-[11px] md:text-[15px] font-extrabold text-[#173F3A]">1. 경험을 말해요</span>
+          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">AI 음성 대화</span>
         </div>
-        <div className="flex flex-col items-center gap-1 rounded-xl bg-[#FAF7F2] p-2 text-center border border-[#E0D9C8]">
-          <div className="flex size-7 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
-            <Award className="size-3.5" />
+        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#FAF7F2] p-2.5 md:p-4 text-center border border-[#E0D9C8]">
+          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
+            <Award className="size-3.5 md:size-5" />
           </div>
-          <span className="text-[11px] font-extrabold text-[#F06B4F]">2. 카드로 확인</span>
-          <span className="text-[10px] font-medium text-slate-600">문제·역할·결과</span>
+          <span className="text-[11px] md:text-[15px] font-extrabold text-[#F06B4F]">2. 카드로 확인</span>
+          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">문제·역할·결과</span>
         </div>
-        <div className="flex flex-col items-center gap-1 rounded-xl bg-[#DDEBE7] p-2 text-center border border-[#BBD5CE]">
-          <div className="flex size-7 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
-            <Target className="size-3.5" />
+        <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[#DDEBE7] p-2.5 md:p-4 text-center border border-[#BBD5CE]">
+          <div className="flex size-7 md:size-10 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
+            <Target className="size-3.5 md:size-5" />
           </div>
-          <span className="text-[11px] font-extrabold text-[#173F3A]">3. 기업이 판단</span>
-          <span className="text-[10px] font-medium text-slate-600">프로젝트 근거 매칭</span>
+          <span className="text-[11px] md:text-[15px] font-extrabold text-[#173F3A]">3. 기업이 판단</span>
+          <span className="text-[10px] md:text-[13px] font-medium text-slate-600">프로젝트 근거 매칭</span>
         </div>
       </div>
     </div>
@@ -131,8 +131,8 @@ export function SeniorHomePage() {
     >
       <div className={cn('flex justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3', isMobile ? 'flex-col items-start' : 'flex-row items-center')}>
         <div>
-          <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>김인재님, 안녕하세요 👋</h2>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.</p>
+          <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl')}>김인재님, 안녕하세요 👋</h2>
+          <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.</p>
         </div>
         {!isMobile && (
           <div className="flex items-center gap-2">
@@ -143,18 +143,18 @@ export function SeniorHomePage() {
 
       {/* Main Brand Banner Card */}
       <div className="relative overflow-hidden rounded-xl border border-[#E0D9C8] bg-white shadow-xs">
-        <div className={cn('relative w-full overflow-hidden bg-[#F7F3EA]', isMobile ? 'h-36' : 'h-40 md:h-52')}>
+        <div className={cn('relative w-full overflow-hidden bg-[#F7F3EA]', isMobile ? 'h-36' : 'h-40 md:h-56')}>
           <img
             src="/eojob_main_banner.jpg"
             alt="당신의 경험이, 다음 해답이 되도록"
             className="h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#17212B]/85 via-[#17212B]/35 to-transparent p-4 flex flex-col justify-end text-white">
-            <span className="text-[11px] font-extrabold text-[#F06B4F] mb-0.5">✨ 이어잡 슬로건</span>
-            <strong className={cn('font-extrabold tracking-tight', isMobile ? 'text-base' : 'text-lg md:text-2xl')}>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#17212B]/85 via-[#17212B]/35 to-transparent p-5 md:p-7 flex flex-col justify-end text-white">
+            <span className="text-[11px] md:text-[15px] font-extrabold text-[#F06B4F] mb-1">✨ 이어잡 슬로건</span>
+            <strong className={cn('font-extrabold tracking-tight', isMobile ? 'text-base' : 'text-lg md:text-2xl lg:text-3xl')}>
               당신의 경험이, 다음 해답이 되도록
             </strong>
-            <p className="text-xs font-medium text-white/90 mt-0.5">
+            <p className="text-xs md:text-base font-medium text-white/90 mt-1">
               해결해 본 사람과 해결이 필요한 조직을 잇습니다.
             </p>
           </div>
@@ -168,21 +168,21 @@ export function SeniorHomePage() {
       <button
         onClick={() => void navigate('/senior/experience/interview')}
         type="button"
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-white p-4 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
       >
-        <div className="flex flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-xs font-extrabold text-[#F06B4F]">
-            <Sparkles className="size-3.5 text-[#F06B4F]" /> 1/3 경험 등록 추천
+        <div className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-xs md:text-base font-extrabold text-[#F06B4F]">
+            <Sparkles className="size-4 text-[#F06B4F]" /> 1/3 경험 등록 추천
           </span>
-          <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-sm' : 'text-base md:text-lg')}>
+          <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-sm' : 'text-base md:text-xl lg:text-2xl')}>
             AI 경험 인터뷰 시작하기
           </strong>
-          <span className="text-xs font-medium text-slate-600">
+          <span className="text-xs md:text-base font-medium text-slate-600">
             말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
           </span>
         </div>
-        <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25', isMobile ? 'size-10' : 'size-12')}>
-          <Mic className={isMobile ? 'size-5' : 'size-6'} />
+        <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25', isMobile ? 'size-10' : 'size-14')}>
+          <Mic className={isMobile ? 'size-5' : 'size-7'} />
         </div>
       </button>
 
@@ -194,7 +194,7 @@ export function SeniorHomePage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">추천 프로젝트</h3>
+        <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">추천 프로젝트</h3>
         <div className={cn('grid gap-3', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4')}>
           <ProjectCard onClick={() => void navigate('/senior/projects/1')} project={featuredProject} />
           {projects.slice(1).map((proj) => (
@@ -740,8 +740,8 @@ export function CompanyHomePage() {
       title="회사 홈"
     >
       <div className="flex flex-col gap-1">
-        <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl')}>그로우랩 담당자님 👋</h2>
-        <p className="text-xs md:text-sm font-medium text-slate-500">프로젝트와 새 제안을 확인하세요.</p>
+        <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl')}>그로우랩 담당자님 👋</h2>
+        <p className="text-xs md:text-base font-medium text-slate-500 mt-1">프로젝트와 새 제안을 확인하세요.</p>
       </div>
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
         <SummaryCard label="등록 프로젝트" role="company" value="2개" />
@@ -749,7 +749,7 @@ export function CompanyHomePage() {
         {!isMobile && <SummaryCard label="매칭 성공률" role="company" value="95%" />}
         {!isMobile && <SummaryCard label="평균 매칭 소요" role="company" value="3일" />}
       </div>
-      <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">최근 프로젝트</h3>
+      <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">최근 프로젝트</h3>
       <ProjectCard onClick={() => void navigate('/company/projects')} project={latest} />
       <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
         새 프로젝트 등록

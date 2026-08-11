@@ -90,14 +90,14 @@ export function RollingBanner() {
       {/* Clean Text Description Below the Image (Stacked 2-Line Layout) */}
       <div className="flex flex-col gap-1.5 px-1 pt-1">
         <div className="flex items-center gap-2 overflow-hidden">
-          <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-1 text-[13px] md:text-xs font-extrabold text-white leading-none shadow-2xs">
+          <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-1 text-[13px] md:text-[14px] font-extrabold text-white leading-none shadow-2xs">
             {slide.tag}
           </span>
-          <strong className="text-[15px] md:text-base font-extrabold text-[#17212B] truncate">
+          <strong className="text-[15px] md:text-[17px] font-extrabold text-[#17212B] truncate">
             {slide.title}
           </strong>
         </div>
-        <p className="text-[13px] md:text-sm font-medium text-slate-500 line-clamp-1 pl-0.5">
+        <p className="text-[13px] md:text-[15px] font-medium text-slate-500 line-clamp-1 pl-0.5">
           {slide.description}
         </p>
       </div>
@@ -293,7 +293,7 @@ export function LoginPage() {
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-6 py-2">
           <div className="flex flex-col gap-3 items-start text-left">
-            <h2 className="text-2xl md:text-3xl lg:text-[38px] font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
+            <h2 className="text-2xl md:text-3xl lg:text-[40px] font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <br className="hidden md:inline" />
@@ -306,7 +306,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-base md:text-lg leading-relaxed font-medium text-slate-600 max-w-xl">
+            <p className="text-base md:text-[19px] leading-relaxed font-medium text-slate-600 max-w-xl">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}

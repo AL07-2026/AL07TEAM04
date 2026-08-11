@@ -16,17 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 로그인 후 서비스 화면 PC 웹 풀버전(Full-Width) 반응형 구조 개편
+### [2026-08-11] 40~60대 시니어 대상 PC 웹 폰트 크기 +20% 이상 일괄 확대 및 가독성 타이포그래피 규칙 재설정
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **로그인/회원가입 미인증 화면**: 기존 PC 웹 테두리 프레임 박스 형태 100% 유지 (`LoginPage.tsx`, `SignupPage.tsx`).
-  - **로그인 후 서비스 화면 (`/senior`, `/company` 등)**: PC 웹 접속 시 프레임 제약 없이 전체 화면을 활용하는 **풀버전(Full-Width) 반응형 웹 구조 (`w-full max-w-7xl mx-auto`)**로 개편 (`Ui.tsx`).
-  - 상단 탑 네비게이션 바 역시 풀 블리드(`w-full border-b sticky top-0`) 구조로 변경하여 시원하고 트렌디한 데스크톱 UX 제공.
+  - **40~60대 시니어 최고경영진/실무자 타겟 타이포그래피 개편**: PC 웹 환경에서 눈이 피로하지 않고 한눈에 직관적으로 들어오도록 폰트 크기를 위계별로 +20% 이상 전면 확대 (`Ui.tsx`, `FlowPages.tsx`, `LoginPage.tsx`).
+  - **가독성 위계 규칙**:
+    1. **최소 단위 태그/메타/보조 문구** (`10px~12px` → **`14px~16px`** 확대, `text-xs md:text-base`)
+    2. **카드 본문/설명/입력 폼** (`13px~14px` → **`17px~18px`** 확대, `text-sm md:text-[18px]`)
+    3. **소제목/카드 타이틀/버튼** (`15px~17px` → **`19px~21px`** 확대, `text-[17px] md:text-[21px]`)
+    4. **섹션 타이틀/메인 헤딩** (`18px~24px` → **`24px~36px`** 확대, `text-2xl md:text-3xl lg:text-4xl`)
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
