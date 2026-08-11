@@ -192,7 +192,7 @@ export function SignupPage() {
                 className={cn(
                   'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
                   selectedRole === 'senior'
-                    ? 'bg-[#173F3A] text-white shadow-xs'
+                    ? 'bg-[#F06B4F] text-white shadow-md'
                     : 'text-slate-500 hover:text-[#17212B]',
                 )}
               >
@@ -204,7 +204,7 @@ export function SignupPage() {
                 className={cn(
                   'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
                   selectedRole === 'company'
-                    ? 'bg-[#173F3A] text-white shadow-xs'
+                    ? 'bg-[#F06B4F] text-white shadow-md'
                     : 'text-slate-500 hover:text-[#17212B]',
                 )}
               >

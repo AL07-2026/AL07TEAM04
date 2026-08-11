@@ -156,7 +156,7 @@ export function MobilePage({
                   className={cn(
                     'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
                     !isMobileMode
-                      ? 'bg-[#F06B4F] text-white shadow-2xs'
+                      ? 'bg-[#17212B] text-white shadow-2xs'
                       : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                   )}
                 >
@@ -169,7 +169,7 @@ export function MobilePage({
                   className={cn(
                     'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
                     isMobileMode
-                      ? 'bg-[#F06B4F] text-white shadow-2xs'
+                      ? 'bg-[#17212B] text-white shadow-2xs'
                       : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                   )}
                 >
@@ -268,7 +268,7 @@ export function MobilePage({
                     className={cn(
                       'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       !isMobileMode
-                        ? 'bg-[#F06B4F] text-white shadow-2xs'
+                        ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                     )}
                   >
@@ -281,7 +281,7 @@ export function MobilePage({
                     className={cn(
                       'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       isMobileMode
-                        ? 'bg-[#F06B4F] text-white shadow-2xs'
+                        ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                     )}
                   >

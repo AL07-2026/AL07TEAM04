@@ -16,17 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹/모바일 토글 스위치 활성화 색상 대표 주황색(#F06B4F) 통일
+### [2026-08-11] 토글 활성화 색상 개편 (PC웹/모바일: 블랙, 인재/기업 시작: 주황색)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **상단 뷰포트 토글 버튼 활성화 컬러 개편 (`Ui.tsx`)**:
-    - 기존 'PC 웹' 활성화 시 다크 그린(`bg-[#173F3A]`) 색상에서 브랜드 시그니처 대표 주황색(`bg-[#F06B4F] text-white shadow-2xs`)으로 전면 통일.
-    - PC 웹 / 모바일 어떠한 모드를 선택하더라도 직관적인 오렌지 캡슐 스타일링 적용.
+  - **상단 'PC 웹 / 모바일' 뷰포트 토글 활성화 색상**: 블랙(`bg-[#17212B] text-white shadow-2xs`)으로 변경 (`Ui.tsx`).
+  - **'인재로 시작 / 기업으로 시작' 회원 탭 활성화 색상**: 대표 시그니처 주황색(`bg-[#F06B4F] text-white shadow-md`)으로 PC웹 및 모바일 환경 모두 동일 적용 (`LoginPage.tsx`, `SignupPage.tsx`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
