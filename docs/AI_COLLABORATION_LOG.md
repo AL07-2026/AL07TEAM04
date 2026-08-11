@@ -16,19 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 메인 좌측 헤딩 및 소개 텍스트 폰트 크기 10% 확대 시각화
+### [2026-08-11] 실제 모바일/스마트폰 접속 시 모바일 전용 뷰 자동 감지 및 토글 버튼 숨김 처리
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **좌측 피치 타이틀 & 배너 설명 폰트 크기 10% 확대 (`LoginPage.tsx`)**:
-    - 피치 타이틀 폰트 확대: `text-2xl md:text-3xl lg:text-[34px]` → `text-2xl md:text-3xl lg:text-[38px]`
-    - 피치 서브타이틀 폰트 확대: `text-sm md:text-base` → `text-base md:text-lg`
-    - 캐러셀 태그/제목/설명 폰트 확대: `text-[13px] md:text-xs`, `text-[15px] md:text-base`, `text-[13px] md:text-sm`
-    - 가독성 향상 및 전체 레이아웃 가시성 극대화.
+  - **스마트폰/모바일 기기 자동 판별 로직 구현 (`Ui.tsx`)**:
+    - User Agent (iOS iPhone/iPad, Android 등) 및 화면 해상도(768px 미만) 자동 감지하여 모바일 접속 시 무조건 **모바일 전용 뷰(Mobile View)**로 즉시 진입하도록 바인딩.
+    - 화면 리사이즈 및 모바일 기기 접속 시 자동으로 모바일 뷰로 반응형 전환.
+  - **스마트폰 접속 시 토글 버튼 숨김 처리**:
+    - 스마트폰 환경에서는 상단 'PC 웹 / 모바일' 토글 스위치가 노출되지 않도록 깔끔하게 처리(`hidden sm:flex`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

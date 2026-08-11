@@ -10,7 +10,7 @@ import {
   Smartphone,
   User,
 } from 'lucide-react';
-import { createContext, useContext, type ReactNode, useState } from 'react';
+import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { cn } from '@/lib/utils';
@@ -37,11 +37,36 @@ export const useViewportMode = () => useContext(ViewportContext);
 export function ViewportProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ViewportMode>(() => {
     if (typeof window !== 'undefined') {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isMobileUA =
+        /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
+          userAgent,
+        );
+      const isSmallScreen = window.innerWidth < 768;
+      if (isMobileUA || isSmallScreen) {
+        return 'mobile';
+      }
       const saved = localStorage.getItem('eojob_viewport_mode');
       if (saved === 'pc' || saved === 'mobile') return saved;
     }
     return 'pc';
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isMobileUA =
+        /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
+          userAgent,
+        );
+      if (isMobileUA || window.innerWidth < 768) {
+        setModeState('mobile');
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const setMode = (newMode: ViewportMode) => {
     setModeState(newMode);
@@ -123,8 +148,8 @@ export function MobilePage({
                 </div>
               </div>
 
-              {/* Mode Switcher Toggle Pill for Mobile View */}
-              <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
+              {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
+              <div className="hidden sm:flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
                 <button
                   type="button"
                   onClick={() => setViewportMode('pc')}
