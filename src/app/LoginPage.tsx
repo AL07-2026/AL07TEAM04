@@ -43,12 +43,12 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
   const slide = bannerSlides[currentIndex]!;
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-2 w-full">
       {/* 100% Pure Unobscured Banner Graphic Image */}
       <div
         className={cn(
           'relative w-full overflow-hidden rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs group',
-          isCompact ? 'h-32 sm:h-36' : 'h-40 md:h-52 lg:h-[220px]',
+          isCompact ? 'h-32 sm:h-36' : 'h-44 md:h-56 lg:h-[245px]',
         )}
       >
         <img
@@ -64,21 +64,21 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
           onClick={() =>
             setCurrentIndex((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)
           }
-          className="absolute left-2 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
         >
-          <ChevronLeft className="size-3.5 text-[#17212B]" />
+          <ChevronLeft className="size-4 text-[#17212B]" />
         </button>
         <button
           type="button"
           aria-label="다음 배너"
           onClick={() => setCurrentIndex((prev) => (prev + 1) % bannerSlides.length)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
         >
-          <ChevronRight className="size-3.5 text-[#17212B]" />
+          <ChevronRight className="size-4 text-[#17212B]" />
         </button>
 
         {/* Dot Indicators */}
-        <div className="absolute bottom-2 right-2 flex items-center gap-1 z-10">
+        <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 z-10">
           {bannerSlides.map((item, index) => (
             <button
               key={item.id}
@@ -88,8 +88,8 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
               className={cn(
                 'h-1 rounded-full transition-all duration-300',
                 index === currentIndex
-                  ? 'w-4 bg-[#F06B4F]'
-                  : 'w-1 bg-[#173F3A]/30 hover:bg-[#173F3A]/60',
+                  ? 'w-5 bg-[#F06B4F]'
+                  : 'w-1.5 bg-[#173F3A]/30 hover:bg-[#173F3A]/60',
               )}
             />
           ))}
@@ -98,9 +98,9 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
 
       {/* Clean Text Description Below the Image */}
       {!isCompact && (
-        <div className="flex flex-col gap-1 px-1 pt-0.5">
+        <div className="flex flex-col gap-1 px-1 pt-1">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-2.5 py-0.5 text-xs font-extrabold text-white leading-none shadow-2xs">
+            <span className="shrink-0 whitespace-nowrap inline-flex items-center justify-center rounded-full bg-[#F06B4F] px-3 py-0.5 text-xs font-extrabold text-white leading-none shadow-2xs">
               {slide.tag}
             </span>
             <strong className="text-sm md:text-base font-extrabold text-[#17212B] truncate">
@@ -320,12 +320,12 @@ export function LoginPage() {
   }
 
   return (
-    <MobilePage contentClassName="px-6 py-6 md:px-10 md:py-8 flex items-center justify-center" showBack={false} title="경험매칭">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10 items-center max-w-5xl w-full mx-auto my-auto">
+    <MobilePage contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1" showBack={false} title="경험매칭">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
-        <div className="md:col-span-7 flex flex-col justify-center gap-4 py-1">
-          <div className="flex flex-col gap-2 items-start text-left">
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
+        <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">
+          <div className="flex flex-col gap-2.5 items-start text-left">
+            <h2 className="text-2xl md:text-3xl lg:text-[34px] font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <br className="hidden md:inline" />
@@ -338,7 +338,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-xs md:text-sm lg:text-base leading-relaxed font-medium text-slate-600 max-w-xl">
+            <p className="text-sm md:text-base lg:text-[17px] leading-relaxed font-medium text-slate-600 max-w-xl">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -350,14 +350,14 @@ export function LoginPage() {
         </div>
 
         {/* Right Side: Role Selector Tabs & Login Form (PC: col-span-5) */}
-        <div className="md:col-span-5 flex flex-col gap-3.5 rounded-2xl border border-[#E0D9C8] bg-white p-5 md:p-6 shadow-md">
+        <div className="md:col-span-5 flex flex-col gap-4 rounded-3xl border border-[#E0D9C8] bg-white p-6 md:p-7 lg:p-8 shadow-lg my-2">
           {/* Initial Role Choice Tabs */}
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-[#FAF7F2] p-1 shadow-2xs">
             <button
               type="button"
               onClick={() => setRole('senior')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs md:text-sm font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs md:text-sm font-extrabold transition-all',
                 role === 'senior'
                   ? 'bg-[#F06B4F] text-white shadow-md'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -369,7 +369,7 @@ export function LoginPage() {
               type="button"
               onClick={() => setRole('company')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-xs md:text-sm font-extrabold transition-all',
+                'flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs md:text-sm font-extrabold transition-all',
                 role === 'company'
                   ? 'bg-[#F06B4F] text-white shadow-md'
                   : 'text-slate-500 hover:text-[#17212B]',
@@ -379,7 +379,7 @@ export function LoginPage() {
             </button>
           </div>
 
-          <form className="flex flex-col gap-3" onSubmit={submit}>
+          <form className="flex flex-col gap-3.5" onSubmit={submit}>
             <Field
               autoComplete="email"
               label="이메일"
@@ -413,7 +413,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-md shadow-[#173F3A]/20 transition-all hover:bg-[#0E2825] hover:scale-[1.005] active:scale-[0.995] disabled:opacity-40"
+              className="flex h-11.5 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-sm md:text-base font-extrabold text-white shadow-md shadow-[#173F3A]/20 transition-all hover:bg-[#0E2825] hover:scale-[1.005] active:scale-[0.995] disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -422,7 +422,7 @@ export function LoginPage() {
                   : '기업으로 로그인 →'}
             </button>
 
-            <div className="relative my-0.5 flex items-center justify-center">
+            <div className="relative my-1 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#E0D9C8]" />
               </div>
@@ -433,7 +433,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-10.5 w-full items-center justify-center gap-2.5 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs md:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] hover:border-[#173F3A] active:scale-[0.992]"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs md:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] hover:border-[#173F3A] active:scale-[0.992]"
             >
               <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

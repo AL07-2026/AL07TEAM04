@@ -16,16 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 로그인 버튼 다크 그린 복원 및 모바일 수직 화면 여백 균형 최적화
+### [2026-08-11] PC 웹 로그인 화면 외부 프레임 상하단 높이 20%+ 확장 최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **로그인 버튼 다크 그린(#173F3A) 복원**: 사용자 요청에 따라 '인재로 로그인 →' 버튼 색상을 기존 **시그니처 다크 그린(`bg-[#173F3A] hover:bg-[#0E2825] text-white shadow-md`)**으로 원복 완료.
-  - **모바일 수직 화면 여백 균형 최적화**: 모바일 프레임(390px) 내에서 과도했던 상하단 여백을 제거하고, 배너 높이(`h-32 sm:h-36`) 및 폼 요소(`h-10`, `h-11`)의 높이를 넉넉하고 시원하게 늘려 **스크롤 없이 화면 80% 이상을 안정적으로 수직 채우도록 조율**.
+  - **PC 웹 외부 박스 수직 확장**: 답답해 보였던 PC 웹 외부 프레임 박스의 최소 높이(`md:min-h-[740px] lg:min-h-[820px]`) 및 상하단 패딩(`py-12 lg:py-16`)을 약 20% 이상 넉넉하게 확장하여 훨씬 시원하고 여유로운 데스크톱 레이아웃 구축 (`Ui.tsx`, `LoginPage.tsx`).
+  - **내부 요소 밸런스 조정**: 좌측 배너 이미지 높이(`h-56 lg:h-[245px]`) 및 우측 폼 카드 영역 패딩을 함께 확대하여 고품격 UI 밸런스 구현.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/login`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
