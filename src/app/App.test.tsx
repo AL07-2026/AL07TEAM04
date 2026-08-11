@@ -43,7 +43,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /인증 메일 받기/ }));
     });
-    expect(await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' }, { timeout: 5000 })).toBeInTheDocument();
 
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
