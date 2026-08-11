@@ -219,14 +219,27 @@ export function SignupPage() {
               type="password"
               value={form.password}
             />
-            <Field
-              autoComplete="new-password"
-              label="비밀번호 확인"
-              onChange={(e) => update('confirmPassword')(e.target.value)}
-              placeholder="비밀번호를 한번 더 입력하세요"
-              type="password"
-              value={form.confirmPassword}
-            />
+            <div className="flex flex-col gap-1">
+              <Field
+                autoComplete="new-password"
+                label="비밀번호 확인"
+                onChange={(e) => update('confirmPassword')(e.target.value)}
+                placeholder="비밀번호를 한번 더 입력하세요"
+                type="password"
+                value={form.confirmPassword}
+              />
+              {form.confirmPassword ? (
+                form.password === form.confirmPassword ? (
+                  <p className="text-[12px] font-extrabold text-emerald-600 flex items-center gap-1 pl-1">
+                    ✓ 비밀번호가 일치합니다.
+                  </p>
+                ) : (
+                  <p className="text-[12px] font-extrabold text-rose-500 flex items-center gap-1 pl-1">
+                    ✕ 비밀번호가 일치하지 않습니다.
+                  </p>
+                )
+              ) : null}
+            </div>
             <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-[13px] font-bold text-[#17212B]">
               <input
                 checked={form.agreed}
