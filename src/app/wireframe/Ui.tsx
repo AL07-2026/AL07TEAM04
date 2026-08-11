@@ -275,7 +275,7 @@ export function MobilePage({
         <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
           <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
             {/* Top Navbar */}
-            <header className="w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
+            <header className="relative w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
               <div className="flex items-center gap-4">
                 {showBack ? (
                   <button
@@ -315,9 +315,9 @@ export function MobilePage({
                 </div>
               </div>
 
-              {/* Desktop Center Navigation Tabs */}
-              {role && activeNav ? (
-                <div className="flex items-center gap-2 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8]">
+              {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
+              {role ? (
+                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
                   {navItems[role].map((item) => {
                     const selected = item.id === activeNav;
                     const IconComponent = item.Icon;
