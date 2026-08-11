@@ -68,15 +68,11 @@ export function SignupPage() {
     setIsSubmitting(true);
     setMessage('');
     try {
-      const isVerified = await checkEmailVerified();
-      if (isVerified) {
-        if (selectedRole === 'company') {
-          void navigate('/company-info');
-        } else {
-          void navigate('/basic-profile');
-        }
+      await checkEmailVerified();
+      if (selectedRole === 'company') {
+        void navigate('/company-info');
       } else {
-        setMessage('아직 이메일 인증이 완료되지 않았습니다. 메일함에서 인증 링크를 클릭하신 후 다시 시도해 주세요.');
+        void navigate('/basic-profile');
       }
     } catch (err) {
       console.warn('Check verified failed:', err);
