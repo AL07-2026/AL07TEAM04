@@ -153,17 +153,27 @@ export function MobilePage({
                 <button
                   type="button"
                   onClick={() => setViewportMode('pc')}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold text-slate-600 hover:text-[#173F3A] hover:bg-white transition"
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
+                    !isMobileMode
+                      ? 'bg-[#F06B4F] text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                  )}
                 >
-                  <Monitor className="size-3 text-[#173F3A]" />
+                  <Monitor className="size-3" />
                   <span>PC</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewportMode('mobile')}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#F06B4F] text-white shadow-2xs transition"
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
+                    isMobileMode
+                      ? 'bg-[#F06B4F] text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                  )}
                 >
-                  <Smartphone className="size-3 text-white" />
+                  <Smartphone className="size-3" />
                   <span>모바일</span>
                 </button>
               </div>
@@ -258,7 +268,7 @@ export function MobilePage({
                     className={cn(
                       'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       !isMobileMode
-                        ? 'bg-[#173F3A] text-white shadow-2xs'
+                        ? 'bg-[#F06B4F] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                     )}
                   >

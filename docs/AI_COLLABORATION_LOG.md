@@ -16,18 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 외부 테두리 박스 높이 원복 및 컴팩트한 레이아웃 복원
+### [2026-08-11] PC 웹/모바일 토글 스위치 활성화 색상 대표 주황색(#F06B4F) 통일
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 화면 외부 프레임 박스 세로 높이 원복 (`Ui.tsx`, `LoginPage.tsx`)**:
-    - 인위적으로 설정되었던 최소 세로 높이 제한(`sm:min-h-[820px]`, `min-h-[calc(100vh-80px)]`)을 제거하여 본래의 콤팩트하고 입체감 있는 테두리 박스 형태 복원.
-    - 콘텐츠 상하 여백(`py-12`)을 깔끔하게 복원하고 중앙 정렬 유지.
+  - **상단 뷰포트 토글 버튼 활성화 컬러 개편 (`Ui.tsx`)**:
+    - 기존 'PC 웹' 활성화 시 다크 그린(`bg-[#173F3A]`) 색상에서 브랜드 시그니처 대표 주황색(`bg-[#F06B4F] text-white shadow-2xs`)으로 전면 통일.
+    - PC 웹 / 모바일 어떠한 모드를 선택하더라도 직관적인 오렌지 캡슐 스타일링 적용.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
