@@ -16,14 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 버전 '내 정보' 및 '회사 정보' 이동 시 상단 네비게이션 메뉴 사라짐 현상 보정
+### [2026-08-11] PC 버전 '내 정보' 및 '회사 정보' 이동 시 상단 네비게이션 메뉴 사라짐 현상 보정 및 배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
   - **원인 분석**: `BasicProfilePage` 및 `CompanyInfoPage`에서 `<MobilePage>`를 호출할 때 `role` 및 `activeNav` props가 누락되어, PC 대화면 상단 메뉴 렌더링 조건(`{role && activeNav ? ... : null}`)을 충족하지 못해 상단 네비게이션 바가 사라지던 버그 수정.
   - **수정 적용**:
     - `BasicProfilePage.tsx`: `<MobilePage role="senior" activeNav="profile" backTo="/senior" ...>` 적용.
     - `CompanyInfoPage.tsx`: `<MobilePage role="company" activeNav="profile" backTo="/company" ...>` 적용.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 25개 테스트 100% 통과, vite production build 완료) 성공.
+  - **GitHub BASIC 브랜치 업로드 완료**:
+    - `git push origin BASIC`으로 `origin/BASIC` 원격 브랜치 반영 완료.
+  - **Firebase Hosting 온라인 배포 완료**:
+    - `npm run build` 후 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
   - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
   - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
