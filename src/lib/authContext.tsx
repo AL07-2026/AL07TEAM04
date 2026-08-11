@@ -174,8 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (auth.currentUser) {
       try {
         await sendEmailVerification(auth.currentUser);
-      } catch (err) {
-        console.warn('sendEmailVerification failed:', err);
+      } catch (err: unknown) {
+        const authErr = err as { code?: string; message?: string };
+        console.warn('sendEmailVerification failed:', authErr);
+        if (authErr.code === 'auth/operation-not-allowed') {
+          throw new Error('파이어베이스 콘솔에서 이메일 인증 활성화가 필요합니다.', { cause: err });
+        }
+        if (authErr.code === 'auth/too-many-requests') {
+          throw new Error('인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.', { cause: err });
+        }
+        throw new Error(authErr.message || '인증 메일 발송에 실패했습니다.', { cause: err });
       }
     }
   };

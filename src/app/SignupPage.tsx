@@ -6,6 +6,14 @@ import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wirefram
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) return false;
+  const domain = email.split('@')[1] || '';
+  if (!domain.includes('.') || domain.endsWith('.')) return false;
+  return true;
+}
+
 export function SignupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,8 +43,12 @@ export function SignupPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setMessage('');
-    if (!form.name.trim() || !form.email.trim()) {
-      setMessage('이름과 이메일을 입력해 주세요.');
+    if (!form.name.trim()) {
+      setMessage('이름을 입력해 주세요.');
+      return;
+    }
+    if (!form.email.trim() || !isValidEmail(form.email.trim())) {
+      setMessage('유효하고 실제 존재하는 이메일 형식(예: user@gmail.com, user@naver.com)을 입력해 주세요.');
       return;
     }
     if (form.password.length < 6) {

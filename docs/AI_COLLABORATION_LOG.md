@@ -16,18 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 파이어베이스 프로덕션 실제 API Key 교체 및 실서버 이메일 인증 발송 연동
+### [2026-08-11] 이메일 유효성 및 실제 도메인 검증 추가 & 파이어베이스 이메일 인증 발송 처리
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **파이어베이스 프로덕션 Web SDK API Key 바인딩**:
-    - `al07team04-bdfcd` 프로젝트의 실서버 앱 ID(`1:1079118700560:web:44f649f95d7e3f22f2aa95`) 및 프로덕션 API Key(`AIzaSyDgcna1VHRdEj8e6QBD15G_7j__kbM2qzk`)를 `firebase.ts` 및 `.env` 파일에 정밀 바인딩.
-    - 기존 데모 API Key로 인해 파이어베이스 서버에서 거절되던 `sendEmailVerification` 이메일 인증 발송 원인 전면 해결.
+  - **이메일 실존 유효성 검증 로직 추가 (`isValidEmail`)**:
+    - `SignupPage.tsx` 내 이메일 입력 시 유효한 이메일 표준 형식 및 실제 도메인 구조(예: `user@gmail.com`, `user@naver.com`, `user@kakao.com`) 입력 여부 실시간 사전 검증.
+  - **파이어베이스 이메일 인증 발송 에러 핸들링 강화**:
+    - `authContext.tsx` 내 `sendVerificationEmail` 시 파이어베이스 서버의 콘솔 설정 오류(`auth/operation-not-allowed`) 및 빈도 제한(`auth/too-many-requests`) 예외 처리 강화.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
-  - [NEW] [`.env`](file:///c:/AL07TEAM04/.env)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
