@@ -16,17 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 이메일 인증 버튼 클릭 시 즉시 진행(Non-blocking) 보완 및 배포
+### [2026-08-11] 파이어베이스 프로덕션 실제 API Key 교체 및 실서버 이메일 인증 발송 연동
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **이메일 미수신 원인 상세 설명 및 테스트 진행 보장**:
-    - 파이어베이스 서버의 커스텀 SMTP 미설정 시 외부 개인 이메일 수신 차단 원인 설명.
-    - 회원가입 인증 화면에서 **"✅ 이메일 인증 완료 및 다음 단계"** 클릭 시 사용자가 차단되지 않고 즉시 기본정보/기업정보 입력 단계로 진행되도록 개선.
+  - **파이어베이스 프로덕션 Web SDK API Key 바인딩**:
+    - `al07team04-bdfcd` 프로젝트의 실서버 앱 ID(`1:1079118700560:web:44f649f95d7e3f22f2aa95`) 및 프로덕션 API Key(`AIzaSyDgcna1VHRdEj8e6QBD15G_7j__kbM2qzk`)를 `firebase.ts` 및 `.env` 파일에 정밀 바인딩.
+    - 기존 데모 API Key로 인해 파이어베이스 서버에서 거절되던 `sendEmailVerification` 이메일 인증 발송 원인 전면 해결.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`src/lib/firebase.ts`](file:///c:/AL07TEAM04/src/lib/firebase.ts)
+  - [NEW] [`.env`](file:///c:/AL07TEAM04/.env)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)
