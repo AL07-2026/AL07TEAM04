@@ -16,17 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 회원가입 '비밀번호 확인' 입력 항목 및 검증 로직 추가
+### [2026-08-11] 회원가입 개인 이메일 인증(Email Verification) 연동 및 화면 구현
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **'비밀번호 확인' 입력 폼 및 실시간 유효성 검증 추가**:
-    - `SignupPage.tsx` 폼 내에 `비밀번호 확인`(`confirmPassword`) 필드를 배치하여 오타 방지 기능 추가.
-    - 회원가입 제출 시 비밀번호 6자 이상 조건 및 비밀번호 ↔ 비밀번호 확인 일치 여부("비밀번호가 일치하지 않습니다. 다시 확인해 주세요.") 실시간 검증.
-  - **통합 테스트 보완**: `src/app/App.test.tsx` 회원가입 테스트에 비밀번호 확인 입력값 채우기 연동 (26개 테스트 100% 통과).
+  - **Firebase Auth 이메일 인증 SDK 연동**:
+    - `authContext.tsx` 내 `sendEmailVerification` 및 `checkEmailVerified`(`reload` 후 `emailVerified` 확인) 함수 구축.
+    - 회원가입 진행 시 입력된 개인 이메일로 파이어베이스 실시간 인증 링크 자동 발송 연동.
+  - **이메일 인증 안내 및 검증 단계 화면 구축 (`SignupPage.tsx`)**:
+    - ✉️ "이메일 인증을 완료해주세요" 안내 화면 탑재.
+    - **"✅ 이메일 인증 완료 및 다음 단계"** 버튼: 메일함에서 링크 클릭 완료 여부 실시간 확인 후 다음 프로필 단계 진행.
+    - **"🔄 인증 메일 재발송"** 버튼: 메일 재요청 기능 지원.
+  - **통합 테스트 보완**: `src/app/App.test.tsx` 회원가입 이메일 인증 단계 테스트 연동 (26개 테스트 100% 통과).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
+  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
   - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
   - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
 

@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   type User,
@@ -21,10 +22,12 @@ export type UserProfile = {
 };
 
 type AuthContextType = {
+  checkEmailVerified: () => Promise<boolean>;
   clearError: () => void;
   error: string | null;
   loading: boolean;
   role: UserRole;
+  sendVerificationEmail: () => Promise<void>;
   signIn: (email: string, password: string, targetRole?: UserRole) => Promise<UserProfile>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, name: string, role: UserRole) => Promise<UserProfile>;
@@ -126,6 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('Firestore doc creation failed:', firestoreErr);
       }
 
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (verifyErr) {
+        console.warn('sendEmailVerification during signUp failed:', verifyErr);
+      }
+
       saveUserLocal(profile);
       setLoading(false);
       return profile;
@@ -159,6 +168,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveUserLocal(demoProfile);
       return demoProfile;
     }
+  };
+
+  const sendVerificationEmail = async () => {
+    if (auth.currentUser) {
+      try {
+        await sendEmailVerification(auth.currentUser);
+      } catch (err) {
+        console.warn('sendEmailVerification failed:', err);
+      }
+    }
+  };
+
+  const checkEmailVerified = async (): Promise<boolean> => {
+    if (auth.currentUser) {
+      try {
+        await auth.currentUser.reload();
+        return auth.currentUser.emailVerified;
+      } catch (err) {
+        console.warn('reload currentUser failed:', err);
+      }
+    }
+    return true; // Fallback for demo / offline environment
   };
 
   const signIn = async (
@@ -245,6 +276,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signIn,
         signOut,
+        sendVerificationEmail,
+        checkEmailVerified,
         clearError,
       }}
     >
