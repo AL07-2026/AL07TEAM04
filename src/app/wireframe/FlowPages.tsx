@@ -86,17 +86,17 @@ export function ProcessOverviewGraphicCard() {
         </span>
         <span className="text-[11px] md:text-[14px] font-bold text-slate-400">쉽고 빠른 AI 인터뷰</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3.5 pt-0.5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3.5 pt-0.5">
         {/* Step 1 */}
-        <div className="flex items-center sm:justify-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
+        <div className="flex items-center md:justify-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Mic className="size-4.5" />
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 text-left min-w-0">
+          <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-1.5 text-left min-w-0">
             <span className="text-sm md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               1. 경험을 말해요
             </span>
-            <span className="hidden sm:inline-block text-slate-300 font-light text-xs select-none">|</span>
+            <span className="hidden md:inline-block text-slate-300 font-light text-xs select-none">|</span>
             <span className="text-xs md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               AI 음성 대화
             </span>
@@ -104,15 +104,15 @@ export function ProcessOverviewGraphicCard() {
         </div>
 
         {/* Step 2 */}
-        <div className="flex items-center sm:justify-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]">
+        <div className="flex items-center md:justify-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
             <Award className="size-4.5" />
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 text-left min-w-0">
+          <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-1.5 text-left min-w-0">
             <span className="text-sm md:text-[15px] font-extrabold text-[#F06B4F] leading-tight whitespace-nowrap">
               2. 카드로 확인
             </span>
-            <span className="hidden sm:inline-block text-slate-300 font-light text-xs select-none">|</span>
+            <span className="hidden md:inline-block text-slate-300 font-light text-xs select-none">|</span>
             <span className="text-xs md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               문제·역할·결과
             </span>
@@ -120,15 +120,15 @@ export function ProcessOverviewGraphicCard() {
         </div>
 
         {/* Step 3 */}
-        <div className="flex items-center sm:justify-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
+        <div className="flex items-center md:justify-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Target className="size-4.5" />
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 text-left min-w-0">
+          <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-1.5 text-left min-w-0">
             <span className="text-sm md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               3. 기업이 판단
             </span>
-            <span className="hidden sm:inline-block text-slate-300 font-light text-xs select-none">|</span>
+            <span className="hidden md:inline-block text-slate-300 font-light text-xs select-none">|</span>
             <span className="text-xs md:text-[13px] font-semibold text-slate-600 leading-tight whitespace-nowrap">
               프로젝트 근거 매칭
             </span>

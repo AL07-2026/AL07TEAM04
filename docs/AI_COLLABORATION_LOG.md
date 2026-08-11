@@ -16,11 +16,11 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] PC 웹 전용 경험매칭 3단계 프로세스 카드 한 줄(Single-Line) 텍스트 표현 개편
+### [2026-08-11] PC 웹 프로세스 카드 박스 중앙 정렬 및 스마트폰 모바일 반응형 최적화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **PC 웹 한 줄 텍스트 표기 개편**: 넓은 데스크톱 화면에서 텍스트 줄바꿈 없이 **`1. 경험을 말해요 | AI 음성 대화`** 형태로 한 줄에 수평 정렬되도록 레이아웃 수정 (`FlowPages.tsx`).
-  - 모바일 환경에서는 2줄 자동 세로 스택 레이아웃 유지 (`flex-col md:flex-row md:items-center`).
+  - **PC 웹 박스 중앙 정렬 적용**: 카드 박스 내 아이콘, 제목, 구분선, 보조설명이 **박스 한가운데 정중앙(`md:justify-center md:items-center`)**에 위치하도록 정렬 개편 (`FlowPages.tsx`).
+  - **스마트폰 모바일 화면 최적화**: 360px~430px 대표 스마트폰 스크린에서 아이콘 좌측 배치 + 제목(14px bold) & 설명(12px) 2줄 세로 스택으로 직관적인 터치 UX 제공.
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
   - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
