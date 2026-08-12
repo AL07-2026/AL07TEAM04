@@ -2,6 +2,7 @@ import {
   Briefcase,
   Building2,
   ChevronLeft,
+  Database,
   FolderKanban,
   Home,
   Inbox,
@@ -16,8 +17,8 @@ import { useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
-export type SeniorNav = 'home' | 'projects' | 'proposals' | 'profile';
-export type CompanyNav = 'home' | 'projects' | 'proposals' | 'profile';
+export type SeniorNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
+export type CompanyNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
 
 export type ViewportMode = 'pc' | 'mobile';
 
@@ -273,12 +274,14 @@ const navItems = {
   senior: [
     { id: 'home', label: '홈', path: '/senior', Icon: Home },
     { id: 'projects', label: '프로젝트', path: '/senior/projects', Icon: Briefcase },
+    { id: 'database', label: '공고 DB', path: '/senior/job-database', Icon: Database },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
     { id: 'profile', label: '내 정보', path: '/basic-profile', Icon: User },
   ],
   company: [
     { id: 'home', label: '홈', path: '/company', Icon: Home },
-    { id: 'projects', label: '프로젝트 관리', path: '/company/projects', Icon: FolderKanban },
+    { id: 'projects', label: '프로젝트', path: '/company/projects', Icon: FolderKanban },
+    { id: 'database', label: '공고 DB', path: '/company/job-database', Icon: Database },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
     { id: 'profile', label: '회사 정보', path: '/company-info', Icon: Building2 },
   ],

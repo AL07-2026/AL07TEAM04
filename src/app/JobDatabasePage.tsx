@@ -348,7 +348,7 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
 
   return (
     <MobilePage
-      activeNav="projects"
+      activeNav="database"
       contentClassName={cn(
         'flex flex-col gap-4',
         isMobile ? 'px-4 pb-5 pt-4' : 'px-6 pb-6 pt-7 md:px-10 md:py-8',
