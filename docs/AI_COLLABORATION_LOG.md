@@ -16,13 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] 모바일 4대 탭(홈/프로젝트/내 제안/내 정보) 디자인 시스템 100% 통일 규격화 완료
+### [2026-08-12] 모바일 프로젝트 카드 박스 내 '프로젝트 보기' 버튼 우측 배치 및 버튼 높이 규격 통일
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **모든 모바일 화면 좌우 여백 100% 동기화**: 모바일 뷰어(`isMobile`) 모드에서 홈, 프로젝트, 내 제안, 내 정보 등 **모든 화면의 좌우 여백을 `px-4` (16px)로 100% 동일하게 일치**시킴 (`FlowPages.tsx`).
-  - **4단계 타이포그래피 계층 시스템 적용**:
-    - Level 1 메인 타이틀: `text-[16px]`~`text-[18px]` (부담스러웠던 20~24px 메인 헤더 전면 축소 균형화)
-    - Level 2 섹션 헤더: `text-[15px]` font-extrabold
+  - **각 박스 카드 내 '프로젝트 보기' 버튼 우측 배치 & 밸런스 조정**:
+    - `ProjectCard` 내 모바일 뷰에서 왼쪽으로 쏠려있던 `프로젝트 보기 →` 버튼을 카드 박스 **우측 하단(`justify-end w-full pt-2 border-t`)으로 배치**하고 카드 전체 밸런스 조율.
+  - **모바일 버튼 높이 규격 통일 (`h-9` / `h-11`)**:
+    - 프로젝트 카드 보기 버튼 height를 `h-9` (36px), 칩 탭 height를 `h-9`, 폼/페이지 액션 버튼 height를 `h-11` (44px)로 정밀 통일.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
+  - **검증**: `npm run validate` (typecheck, eslint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
     - Level 3 본문/메타: `text-[13px]` font-medium
     - Level 4 캡션/뱃지: `text-[11px]` font-bold
   - **버튼 높이 48px(`h-12`) 및 카드 알약 우측 정렬 100% 표준화**: 모든 메인 액션 버튼 48px, 카드 내 `프로젝트 보기 →` 알약 버튼 우측 정렬(`justify-end`) (`Ui.tsx`).

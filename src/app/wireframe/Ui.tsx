@@ -488,13 +488,13 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        'flex w-full items-center justify-center rounded-full px-5 font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
-        isMobile ? 'h-11 text-[14px] shadow-md' : 'h-13 md:h-15 text-[16px] md:text-[19px]',
+        'flex w-full items-center justify-center rounded-full px-4 font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        isMobile ? 'h-9 text-xs shadow-xs' : 'h-13 md:h-15 text-[16px] md:text-[19px]',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
               roleStyles[role].background,
-              'text-white shadow-md shadow-[#173F3A]/20 hover:shadow-lg hover:scale-[1.005] active:scale-[0.995]',
+              'text-white shadow-xs shadow-[#173F3A]/20 hover:shadow-md hover:scale-[1.005] active:scale-[0.995]',
             ),
         className,
       )}
