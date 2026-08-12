@@ -482,14 +482,10 @@ export function ActionButton({
   secondary,
   ...props
 }: ActionButtonProps) {
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
-
   return (
     <button
       className={cn(
-        'flex w-full items-center justify-center rounded-full px-4 font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
-        isMobile ? 'h-9 text-xs shadow-xs' : 'h-13 md:h-15 text-[16px] md:text-[19px]',
+        'flex w-full h-9 items-center justify-center rounded-full px-4 text-xs font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40 shadow-xs',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
