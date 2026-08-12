@@ -85,18 +85,37 @@ export function ProcessOverviewGraphicCard() {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-5 shadow-xs">
       <div className="flex items-center justify-between">
-        <span className={cn('font-extrabold tracking-wide text-[#173F3A]', isMobile ? 'text-[13px]' : 'text-[17px]')}>
+        <span
+          className={cn(
+            'font-extrabold tracking-wide text-[#173F3A]',
+            isMobile ? 'text-[13px]' : 'text-[17px]',
+          )}
+        >
           ✨ 경험매칭 3단계 프로세스
         </span>
-        <span className={cn('font-bold text-slate-400', isMobile ? 'text-[11px]' : 'text-[14px]')}>쉽고 빠른 AI 인터뷰</span>
+        <span className={cn('font-bold text-slate-400', isMobile ? 'text-[11px]' : 'text-[14px]')}>
+          쉽고 빠른 AI 인터뷰
+        </span>
       </div>
-      <div className={cn('gap-2.5 pt-0.5', isMobile ? 'flex flex-col' : 'grid grid-cols-3 gap-3.5')}>
+      <div
+        className={cn('gap-2.5 pt-0.5', isMobile ? 'flex flex-col' : 'grid grid-cols-3 gap-3.5')}
+      >
         {/* Step 1 */}
-        <div className={cn('flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]', isMobile ? 'justify-start' : 'justify-center')}>
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]',
+            isMobile ? 'justify-start' : 'justify-center',
+          )}
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Mic className="size-4.5" />
           </div>
-          <div className={cn('flex text-left min-w-0', isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5')}>
+          <div
+            className={cn(
+              'flex text-left min-w-0',
+              isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5',
+            )}
+          >
             <span className="text-sm md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               1. 경험을 말해요
             </span>
@@ -108,11 +127,21 @@ export function ProcessOverviewGraphicCard() {
         </div>
 
         {/* Step 2 */}
-        <div className={cn('flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]', isMobile ? 'justify-start' : 'justify-center')}>
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]',
+            isMobile ? 'justify-start' : 'justify-center',
+          )}
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
             <Award className="size-4.5" />
           </div>
-          <div className={cn('flex text-left min-w-0', isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5')}>
+          <div
+            className={cn(
+              'flex text-left min-w-0',
+              isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5',
+            )}
+          >
             <span className="text-sm md:text-[15px] font-extrabold text-[#F06B4F] leading-tight whitespace-nowrap">
               2. 카드로 확인
             </span>
@@ -124,11 +153,21 @@ export function ProcessOverviewGraphicCard() {
         </div>
 
         {/* Step 3 */}
-        <div className={cn('flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]', isMobile ? 'justify-start' : 'justify-center')}>
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]',
+            isMobile ? 'justify-start' : 'justify-center',
+          )}
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white shadow-xs">
             <Target className="size-4.5" />
           </div>
-          <div className={cn('flex text-left min-w-0', isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5')}>
+          <div
+            className={cn(
+              'flex text-left min-w-0',
+              isMobile ? 'flex-col gap-0.5' : 'flex-row items-center gap-1.5',
+            )}
+          >
             <span className="text-sm md:text-[15px] font-extrabold text-[#173F3A] leading-tight whitespace-nowrap">
               3. 기업이 판단
             </span>
@@ -159,10 +198,17 @@ export function SeniorHomePage() {
       showBack={false}
       title="인재 홈"
     >
-      <div className={cn('flex justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3', isMobile ? 'flex-col items-start' : 'flex-row items-center')}>
+      <div
+        className={cn(
+          'flex justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3',
+          isMobile ? 'flex-col items-start' : 'flex-row items-center',
+        )}
+      >
         <div>
-          <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl')}>김인재님, 안녕하세요 👋</h2>
-          <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.</p>
+          <h2 className="ui-page-title">김인재님, 안녕하세요 👋</h2>
+          <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">
+            이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
+          </p>
         </div>
         {!isMobile && (
           <div className="flex items-center gap-2">
@@ -187,19 +233,31 @@ export function SeniorHomePage() {
           <span className="flex items-center gap-1.5 text-xs md:text-base font-extrabold text-[#F06B4F]">
             <Sparkles className="size-4 text-[#F06B4F]" /> 1/3 경험 등록 추천
           </span>
-          <strong className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-base' : 'text-lg md:text-xl lg:text-2xl')}>
+          <strong
+            className={cn(
+              'font-extrabold text-[#17212B]',
+              isMobile ? 'text-base' : 'text-lg md:text-xl lg:text-2xl',
+            )}
+          >
             AI 경험 인터뷰 시작하기
           </strong>
           <span className="text-xs md:text-base font-medium text-slate-600">
             말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
           </span>
         </div>
-        <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25', isMobile ? 'size-11' : 'size-14')}>
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25',
+            isMobile ? 'size-11' : 'size-14',
+          )}
+        >
           <Mic className={isMobile ? 'size-5' : 'size-7'} />
         </div>
       </button>
 
-      <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
+      <div
+        className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
+      >
         <SummaryCard label="새 추천 프로젝트" role="senior" value="12개" />
         <SummaryCard label="진행 중인 제안" role="senior" value="2건" />
         {!isMobile && <SummaryCard label="경험 카드 조회수" role="senior" value="38회" />}
@@ -207,11 +265,23 @@ export function SeniorHomePage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">추천 프로젝트</h3>
-        <div className={cn('grid gap-3', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4')}>
-          <ProjectCard onClick={() => void navigate('/senior/projects/1')} project={featuredProject} />
+        <h3 className="ui-section-title">추천 프로젝트</h3>
+        <div
+          className={cn(
+            'grid gap-3',
+            isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4',
+          )}
+        >
+          <ProjectCard
+            onClick={() => void navigate('/senior/projects/1')}
+            project={featuredProject}
+          />
           {projects.slice(1).map((proj) => (
-            <ProjectCard key={proj.title} onClick={() => void navigate('/senior/projects/1')} project={proj} />
+            <ProjectCard
+              key={proj.title}
+              onClick={() => void navigate('/senior/projects/1')}
+              project={proj}
+            />
           ))}
         </div>
       </div>
@@ -255,7 +325,7 @@ export function ExperienceSelectionPage() {
           🎙️ AI 경험 인터뷰 시작 →
         </button>
       </div>
-      <h2 className="text-2xl font-extrabold text-[#17212B]">경험 분야를 선택하세요</h2>
+      <h2 className="ui-section-title">경험 분야를 선택하세요</h2>
       <p className="text-[13px] font-medium text-slate-500">최대 3개까지 선택할 수 있어요.</p>
       <div className="flex flex-wrap gap-2.5">
         {experienceOptions.map((option) => (
@@ -265,15 +335,14 @@ export function ExperienceSelectionPage() {
         ))}
       </div>
       <div className="flex h-20 flex-col rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-        <strong className="text-[13px] font-extrabold text-[#17212B]">선택 {selected.length}개</strong>
+        <strong className="text-[13px] font-extrabold text-[#17212B]">
+          선택 {selected.length}개
+        </strong>
         <span className="text-xs font-medium text-slate-500">
           {selected.join(' · ') || '분야를 선택하세요'}
         </span>
       </div>
-      <ActionButton
-        onClick={() => void navigate('/senior/experience/interview')}
-        className="mb-1"
-      >
+      <ActionButton onClick={() => void navigate('/senior/experience/interview')} className="mb-1">
         AI 경험 인터뷰 진행 (추천)
       </ActionButton>
       <ActionButton
@@ -339,8 +408,10 @@ export function ExperienceInterviewPage() {
       <StepProgressBar current={1} total={3} />
 
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
-        <p className="text-xl font-extrabold tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
-        <p className="text-xs font-medium text-slate-500">편하게 말해 주세요. AI가 경험을 정리해 드립니다.</p>
+        <p className="ui-section-title">AI 경험 인터뷰</p>
+        <p className="text-xs font-medium text-slate-500">
+          편하게 말해 주세요. AI가 경험을 정리해 드립니다.
+        </p>
       </div>
 
       <div className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
@@ -402,11 +473,11 @@ export function ExperienceInterviewPage() {
             placeholder="✏️ 직접 입력하기"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
+            className="ui-field flex-1 rounded-xl border border-[#E0D9C8] bg-white px-4 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
           />
           <button
             type="submit"
-            className="flex h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE]"
+            className="ui-secondary-button flex items-center justify-center rounded-xl bg-[#DDEBE7] px-4 font-bold text-[#173F3A] hover:bg-[#BBD5CE]"
           >
             입력
           </button>
@@ -439,10 +510,10 @@ export function ExperienceCardPage() {
       <StepProgressBar current={2} total={3} />
 
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
-        <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">
-          경험 카드가 완성됐어요
-        </h2>
-        <p className="text-xs font-medium text-slate-500">내용을 확인하고 필요한 부분을 수정해 주세요.</p>
+        <h2 className="ui-section-title">경험 카드가 완성됐어요</h2>
+        <p className="text-xs font-medium text-slate-500">
+          내용을 확인하고 필요한 부분을 수정해 주세요.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-sm">
@@ -504,9 +575,7 @@ export function ExperienceCardPage() {
         <ActionButton secondary onClick={() => void navigate('/senior/experience/interview')}>
           수정하기
         </ActionButton>
-        <ActionButton onClick={() => void navigate('/senior/projects')}>
-          경험 저장하기
-        </ActionButton>
+        <ActionButton onClick={() => void navigate('/senior/projects')}>경험 저장하기</ActionButton>
       </div>
     </MobilePage>
   );
@@ -532,9 +601,7 @@ export function ProjectListPage() {
         <Chip selected>운영</Chip>
         <Chip selected>영업</Chip>
       </div>
-      <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-lg md:text-xl')}>
-        추천 프로젝트 12개
-      </h2>
+      <h2 className="ui-section-title">추천 프로젝트 12개</h2>
       {projects.map((project, index) => (
         <ProjectCard
           key={project.title}
@@ -561,7 +628,7 @@ export function ProjectDetailPage() {
       title="프로젝트 상세"
     >
       <p className="text-[13px] font-extrabold text-[#173F3A]">그로우랩</p>
-      <h2 className="text-[23px] font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</h2>
+      <h2 className="ui-section-title">신규 서비스 운영 체계 만들기</h2>
       <p className="text-[13px] font-medium text-slate-500">주 2회 · 원격 · 3개월</p>
       <InfoPanel label="프로젝트 내용">
         운영 기준을 정리하고, 팀이 바로 쓸 수 있는
@@ -620,7 +687,9 @@ export function ProposalPage() {
       <form className="flex flex-col gap-3" onSubmit={submit}>
         <div className="flex flex-col gap-1.5 rounded-xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
           <span className="text-[11px] font-extrabold text-[#173F3A]">그로우랩</span>
-          <strong className="text-sm font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</strong>
+          <strong className="text-sm font-extrabold text-[#17212B]">
+            신규 서비스 운영 체계 만들기
+          </strong>
         </div>
         <p className="text-[13px] font-medium text-slate-500">핵심만 적어도 충분합니다.</p>
         <TextAreaField
@@ -662,11 +731,13 @@ export function ProposalCompletePage() {
       <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
         ✓
       </div>
-      <h2 className="text-2xl font-extrabold text-[#17212B]">제안을 보냈어요</h2>
+      <h2 className="ui-section-title">제안을 보냈어요</h2>
       <p className="text-sm font-medium text-slate-500">회사가 확인하면 알려드릴게요.</p>
       <div className="flex h-24 w-full flex-col gap-2 rounded-[14px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <span className="text-[11px] font-extrabold text-[#173F3A]">그로우랩</span>
-        <strong className="text-sm font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</strong>
+        <strong className="text-sm font-extrabold text-[#17212B]">
+          신규 서비스 운영 체계 만들기
+        </strong>
       </div>
       <ActionButton onClick={() => void navigate('/senior/projects')}>
         프로젝트 목록으로
@@ -707,9 +778,7 @@ export function MyProposalsPage() {
         ))}
       </div>
       {/* STANDARDIZED MOBILE MAIN HEADER: DOWN-SCALED FROM 20px/24px TO 16px ON MOBILE FOR PERFECT VISUAL BALANCE */}
-      <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-xl md:text-2xl')}>
-        보낸 제안 {visible.length}건
-      </h2>
+      <h2 className="ui-section-title">보낸 제안 {visible.length}건</h2>
       <div className="flex flex-col gap-4">
         {visible.map((project) => (
           <ProjectCard
@@ -736,7 +805,7 @@ export function MyProposalDetailPage() {
     >
       <StatusBadge>{cancelled ? '취소됨' : '검토 중'}</StatusBadge>
       <p className="text-xs font-extrabold text-[#173F3A]">그로우랩</p>
-      <h2 className="text-[21px] font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</h2>
+      <h2 className="ui-section-title">신규 서비스 운영 체계 만들기</h2>
       <p className="text-xs font-medium text-slate-500">보낸 날짜 · 8월 4일</p>
       <InfoPanel label="한 줄 소개">운영 경험으로 빠르게 기준을 만들 수 있습니다.</InfoPanel>
       <InfoPanel label="진행 방법">현황 확인 → 기준 정리 → 문서와 교육</InfoPanel>
@@ -772,20 +841,24 @@ export function CompanyHomePage() {
       title="회사 홈"
     >
       <div className="flex flex-col gap-1 border-b border-[#E0D9C8]/60 pb-3">
-        <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl')}>그로우랩 담당자님 👋</h2>
-        <p className="text-xs md:text-base font-medium text-slate-500 mt-1">프로젝트와 새 제안을 확인하세요.</p>
+        <h2 className="ui-page-title">그로우랩 담당자님 👋</h2>
+        <p className="text-xs md:text-base font-medium text-slate-500 mt-1">
+          프로젝트와 새 제안을 확인하세요.
+        </p>
       </div>
 
       {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR COMPANY HOME */}
       <RollingBanner isCompact={isMobile} />
 
-      <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
+      <div
+        className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
+      >
         <SummaryCard label="등록 프로젝트" role="company" value="2개" />
         <SummaryCard label="새 제안" role="company" value="5건" />
         {!isMobile && <SummaryCard label="매칭 성공률" role="company" value="95%" />}
         {!isMobile && <SummaryCard label="평균 매칭 소요" role="company" value="3일" />}
       </div>
-      <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">최근 프로젝트</h3>
+      <h3 className="ui-section-title">최근 프로젝트</h3>
       <ProjectCard onClick={() => void navigate('/company/projects')} project={latest} />
       <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
         새 프로젝트 등록
@@ -820,7 +893,7 @@ export function ProjectRegisterPage() {
     >
       <form className="flex flex-col gap-[11px]" onSubmit={submit}>
         <p className="text-xs font-extrabold text-[#173F3A]">회사 프로젝트 작성</p>
-        <h2 className="text-[22px] font-extrabold text-[#17212B]">필요한 경험을 알려주세요</h2>
+        <h2 className="ui-section-title">필요한 경험을 알려주세요</h2>
         <p className="text-[13px] font-medium text-slate-500">핵심 정보만 입력하면 됩니다.</p>
         <Field
           label="프로젝트 제목"
@@ -873,11 +946,13 @@ export function ProjectCompletePage() {
       <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
         ✓
       </div>
-      <h2 className="text-2xl font-extrabold text-[#17212B]">프로젝트를 등록했어요</h2>
+      <h2 className="ui-section-title">프로젝트를 등록했어요</h2>
       <p className="text-sm font-medium text-slate-500">조건에 맞는 인재에게 공개됩니다.</p>
       <div className="flex h-[110px] w-full flex-col gap-2 rounded-[14px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <span className="text-[11px] font-extrabold text-[#173F3A]">등록됨</span>
-        <strong className="text-sm font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</strong>
+        <strong className="text-sm font-extrabold text-[#17212B]">
+          신규 서비스 운영 체계 만들기
+        </strong>
         <span className="text-xs font-medium text-slate-500">주 2회 · 원격 · 3개월</span>
       </div>
       <ActionButton onClick={() => void navigate('/company/projects')} role="company">
@@ -932,9 +1007,7 @@ export function ProjectManagementPage() {
           </Chip>
         ))}
       </div>
-      <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#17212B]">
-        등록 프로젝트 {filter === '마감' ? 0 : 2}개
-      </h2>
+      <h2 className="ui-page-title">등록 프로젝트 {filter === '마감' ? 0 : 2}개</h2>
       <div className="flex flex-col gap-4">
         {filter !== '마감' ? (
           managed.map((project) => (
@@ -977,7 +1050,9 @@ export function ReceivedProposalsPage() {
       showBack={false}
       title="받은 제안"
     >
-      <p className="text-[14px] md:text-[17px] font-extrabold text-[#173F3A]">신규 서비스 운영 체계 만들기</p>
+      <p className="text-[14px] md:text-[17px] font-extrabold text-[#173F3A]">
+        신규 서비스 운영 체계 만들기
+      </p>
       <div className="flex gap-2.5">
         {['전체', '검토 전', '연락함'].map((item) => (
           <Chip
@@ -990,7 +1065,7 @@ export function ReceivedProposalsPage() {
           </Chip>
         ))}
       </div>
-      <h2 className="text-lg font-extrabold text-[#17212B]">받은 제안 {visible.length}건</h2>
+      <h2 className="ui-section-title">받은 제안 {visible.length}건</h2>
       {visible.map((project) => (
         <ProjectCard
           key={project.company}
@@ -1022,14 +1097,14 @@ export function ReceivedProposalDetailPage() {
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">
-            이 인재가 적합한 이유
-          </h2>
+          <h2 className="ui-section-title">이 인재가 적합한 이유</h2>
           <span className="flex items-center gap-1 rounded-full border border-[#F06B4F]/40 bg-[#FDF0ED] px-2.5 py-1 text-[11px] font-extrabold text-[#F06B4F]">
             <ShieldCheck className="size-3.5 text-[#F06B4F]" /> 98% AI 매칭
           </span>
         </div>
-        <p className="text-xs font-medium text-slate-500">김인재 · 서비스 운영 15년 · 프로세스 설계</p>
+        <p className="text-xs font-medium text-slate-500">
+          김인재 · 서비스 운영 15년 · 프로세스 설계
+        </p>
       </div>
 
       {/* AI Match Score Gauge */}
@@ -1152,7 +1227,9 @@ export function SeniorProfilePage() {
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">김인재 님</strong>
+            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">
+              김인재 님
+            </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 본인 인증
             </span>
@@ -1175,7 +1252,9 @@ export function SeniorProfilePage() {
           </div>
           <div className="flex items-start gap-2.5">
             <span className="font-extrabold text-[#173F3A] shrink-0">핵심 성과:</span>
-            <span className="font-medium text-slate-700">반복 납기 지연 문제 개선 (준수율 향상)</span>
+            <span className="font-medium text-slate-700">
+              반복 납기 지연 문제 개선 (준수율 향상)
+            </span>
           </div>
         </div>
       </div>
@@ -1188,7 +1267,11 @@ export function SeniorProfilePage() {
         <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
           🎙️ AI 경험 인터뷰 재진행
         </ActionButton>
-        <ActionButton onClick={() => void navigate('/login')} secondary className="text-rose-500 border-rose-200 hover:bg-rose-50">
+        <ActionButton
+          onClick={() => void navigate('/login')}
+          secondary
+          className="text-rose-500 border-rose-200 hover:bg-rose-50"
+        >
           로그아웃
         </ActionButton>
       </div>
@@ -1255,7 +1338,11 @@ export function CompanyProfilePage() {
         <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
           + 새 프로젝트 등록
         </ActionButton>
-        <ActionButton onClick={() => void navigate('/login')} secondary className="text-rose-500 border-rose-200 hover:bg-rose-50">
+        <ActionButton
+          onClick={() => void navigate('/login')}
+          secondary
+          className="text-rose-500 border-rose-200 hover:bg-rose-50"
+        >
           로그아웃
         </ActionButton>
       </div>

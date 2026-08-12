@@ -16,13 +16,36 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] PC/모바일 반응형 UI 스케일링 체계(globals.css/button) 고도화 및 배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **PC/모바일 반응형 컨트롤 & 타이포그래피 스케일 시스템 구축 (`globals.css`)**:
+    - `.eojob-ui[data-viewport='pc']` 및 `[data-viewport='mobile']` 스케일 변수(`--ui-button-height`, `--ui-control-height`, `--ui-page-title-size` 등) 구현.
+    - `Button` 및 UI 요소에 `.ui-action-button`, `.ui-compact-button` 등 규격화된 CSS 클래스 및 버튼 밸런스 개선.
+  - **폼 및 페이지 레이아웃 가독성 강화**: `LoginPage`, `RoleSelectionPage`, `SignupPage`, `CompanyInfoPage`, `BasicProfilePage`, `FlowPages`, `Ui.tsx` 일관된 디자인 시스템 적용.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 진행.
+- **변경 파일**:
+  - [MODIFY] [`src/components/ui/button.tsx`](file:///c:/AL07TEAM04/src/components/ui/button.tsx)
+  - [MODIFY] [`src/styles/globals.css`](file:///c:/AL07TEAM04/src/styles/globals.css)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 모바일 프로젝트 카드 박스 내 '프로젝트 보기' 버튼 우측 배치 및 버튼 높이 규격 통일
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
   - **각 박스 카드 내 '프로젝트 보기' 버튼 우측 배치 & 밸런스 조정**:
     - `ProjectCard` 내 모바일 뷰에서 왼쪽으로 쏠려있던 `프로젝트 보기 →` 버튼을 카드 박스 **우측 하단(`justify-end w-full pt-2 border-t`)으로 배치**하고 카드 전체 밸런스 조율.
-  - **모든 뷰포트(PC/모바일 공통) `ActionButton` 높이 `h-9` (36px) 무조건 일과 통일**:
-    - PC/데스크톱 뷰포트 조건분기로 인해 여전히 52~60px(`h-13`)로 크게 출력되던 원인을 원천 차단하고, `ActionButton` 컴포넌트 높이를 **모든 화면 모드에서 예외 없이 `h-9` (36px, `text-xs font-extrabold`)로 100% 무조건 일괄 고정**.
+  - **`!h-9 !min-h-[36px] !max-h-[36px] py-0` 강제 고정 및 캐시 방지 적용**:
+    - 브라우저 캐시 및 부모 컨테이너 높이 상승을 원천 방지하기 위해 `!h-9 !min-h-[36px] !max-h-[36px] py-0 leading-none`으로 높이를 36px로 100% 미노출 방지 및 고정.
+    - `firebase.json`에 `index.html` 캐시 방지 헤더(`no-cache, no-store, must-revalidate`)를 추가하여 배포 후 즉시 최신 스타일이 로드되도록 조치.
   - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
   - **검증**: `npm run validate` (typecheck, eslint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
     - Level 3 본문/메타: `text-[13px]` font-medium

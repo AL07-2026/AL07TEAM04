@@ -2,7 +2,13 @@ import { FileText, LogOut, Pencil } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { ActionButton, Field, MobilePage, TextAreaField, useViewportMode } from '@/app/wireframe/Ui';
+import {
+  ActionButton,
+  Field,
+  MobilePage,
+  TextAreaField,
+  useViewportMode,
+} from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
@@ -78,7 +84,8 @@ export function BasicProfilePage() {
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
-          !isMobile && 'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
+          !isMobile &&
+            'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
         )}
       >
         {/* Account Header Badge & Logout */}
@@ -89,18 +96,22 @@ export function BasicProfilePage() {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-[#17212B]">{user?.name || '김인재'}</span>
+                <span className="text-base font-extrabold text-[#17212B]">
+                  {user?.name || '김인재'}
+                </span>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
                   🙋‍♂️ 인재 회원
                 </span>
               </div>
-              <span className="text-xs font-medium text-slate-500">{user?.email || form.email}</span>
+              <span className="text-xs font-medium text-slate-500">
+                {user?.email || form.email}
+              </span>
             </div>
           </div>
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-xs font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
+            className="ui-compact-button flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
           >
             <LogOut className="size-3.5" />
             <span>로그아웃</span>
@@ -112,9 +123,7 @@ export function BasicProfilePage() {
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
-                  저장된 내 경험 정보
-                </h2>
+                <h2 className="ui-section-title">저장된 내 경험 정보</h2>
                 <p className="text-xs font-medium text-slate-500 mt-0.5">
                   프로젝트 추천과 제안 프로필에 사용되는 기본 정보입니다.
                 </p>
@@ -122,7 +131,7 @@ export function BasicProfilePage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#173F3A] text-white text-xs font-extrabold shadow-xs hover:bg-[#12332F] transition-all"
+                className="ui-compact-button flex items-center gap-1.5 rounded-full bg-[#173F3A] text-white font-extrabold shadow-xs hover:bg-[#12332F] transition-all"
               >
                 <Pencil className="size-3.5" />
                 <span>정보 수정</span>
@@ -131,17 +140,23 @@ export function BasicProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경력 분야</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  경력 분야
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.field}</span>
               </div>
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경력 기간</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  경력 기간
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.period}</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">대표 경험</span>
+              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                대표 경험
+              </span>
               <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
                 {form.experience}
               </p>
@@ -149,11 +164,15 @@ export function BasicProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">연락처</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  연락처
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.phone}</span>
               </div>
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">이메일</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  이메일
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.email}</span>
               </div>
             </div>
@@ -175,14 +194,19 @@ export function BasicProfilePage() {
           <form className="flex flex-col gap-4" onSubmit={handleSave}>
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
-                  경험 정보 수정
-                </h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">수정 후 [변경사항 저장하기]를 눌러주세요.</p>
+                <h2 className="ui-section-title">경험 정보 수정</h2>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  수정 후 [변경사항 저장하기]를 눌러주세요.
+                </p>
               </div>
             </div>
 
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 label="경력 분야"
                 onChange={(e) => update('field')(e.target.value)}
@@ -204,7 +228,12 @@ export function BasicProfilePage() {
               value={form.experience}
             />
 
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 inputMode="tel"
                 label="연락처"
@@ -233,7 +262,9 @@ export function BasicProfilePage() {
               <ActionButton onClick={() => fileInputRef.current?.click()} secondary type="button">
                 {attachment ? attachment.name : '파일 선택'}
               </ActionButton>
-              <p className="text-[12px] font-medium text-slate-500">PDF·DOCX, 최대 10MB · 제안한 기업만 확인</p>
+              <p className="text-[12px] font-medium text-slate-500">
+                PDF·DOCX, 최대 10MB · 제안한 기업만 확인
+              </p>
             </div>
             {message ? (
               <p aria-live="polite" className="text-xs font-medium text-rose-500">
