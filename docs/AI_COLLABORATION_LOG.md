@@ -16,25 +16,83 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-12] PC/모바일 반응형 UI 스케일링 체계(globals.css/button) 고도화 및 배포
+### [2026-08-12] 모바일 프로젝트 검색/필터 카드 UI 개선 및 라이브 배포
 - **작업자**: Codex & Antigravity (Gemini)
 - **작업 내용**:
-  - **PC/모바일 반응형 컨트롤 & 타이포그래피 스케일 시스템 구축 (`globals.css`)**:
-    - `.eojob-ui[data-viewport='pc']` 및 `[data-viewport='mobile']` 스케일 변수(`--ui-button-height`, `--ui-control-height`, `--ui-page-title-size` 등) 구현.
-    - `Button` 및 UI 요소에 `.ui-action-button`, `.ui-compact-button` 등 규격화된 CSS 클래스 및 버튼 밸런스 개선.
-  - **폼 및 페이지 레이아웃 가독성 강화**: `LoginPage`, `RoleSelectionPage`, `SignupPage`, `CompanyInfoPage`, `BasicProfilePage`, `FlowPages`, `Ui.tsx` 일관된 디자인 시스템 적용.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
-  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 진행.
+  - **모바일 프로젝트 검색/필터 모듈 UI 고도화**: `JobDatabasePage.tsx` 모바일 전용 검색창 UX (지우기 버튼, 반응형 패딩), 유형 필터 버튼 그리드, 상세 조건 셀렉트 UX 보정.
+  - **인재 프로필 입력 폼 구조 개선**: `BasicProfilePage.tsx` 모바일 레이아웃 및 폼 여백 보정.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 라이브 배포 완료.
 - **변경 파일**:
-  - [MODIFY] [`src/components/ui/button.tsx`](file:///c:/AL07TEAM04/src/components/ui/button.tsx)
-  - [MODIFY] [`src/styles/globals.css`](file:///c:/AL07TEAM04/src/styles/globals.css)
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
   - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] 프로젝트 상세 패널 모바일 레이아웃(MobileDetailRow) 최적화 및 재배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **모바일 상세 패널 UI 최적화**: `JobDatabasePage.tsx` 내 모바일 전용 `MobileDetailRow` 및 `DetailBulletList` 컴포넌트를 추가하여 프로젝트 해결 과제, 목표, 핵심 업무, 추천 인재, 인터뷰 포인트를 깔끔한 아코디언/목록 구조로 개선.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
+  - **배포**: GitHub `BASIC` 브랜치 푸시 완료 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 재배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] 모바일 프로젝트 카드 UI 및 폼 필드 가독성 보정 및 배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **모바일 카드 밸런스 개선**: `ProjectCard` 모바일 뷰 카드 타이틀, 상태 태그, 우측 화살표 액션 버튼(`ChevronRight`), 태그 뱃지 간격 및 패딩 정밀 보정.
+  - **입력 폼 필드 모바일 응답성 보정**: `Field`, `TextAreaField`, `InfoPanel` 모바일/PC 반응형 폰트 크기 및 라인 하이트 조정.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 완료.
+- **변경 파일**:
   - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] 네비게이션 기존 중복 '프로젝트' 탭 제거 및 신규 프로젝트 탐색 탭 '프로젝트' 일원화
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **네비게이션 탭 정리**: 기존의 구형 `프로젝트`/`프로젝트 관리` 탭을 네비게이션에서 제거하고, 검색/필터 기능을 갖춘 신규 프로젝트 DB 탭의 라벨을 깔끔하게 **'프로젝트'**로 통일 연결.
+  - **페이지 타이틀 조정**: `JobDatabasePage` 상단 타이틀을 `프로젝트`로 단일화.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] '공고 DB' 용어 및 UI 구성을 '프로젝트 DB'로 전면 표준화 및 배포
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **'공고 DB' → '프로젝트 DB' 용어 표준화**:
+    - `JobDatabasePage.tsx`, `Ui.tsx` 네비게이션 탭, 페이지 타이틀, 뱃지, 설명 카피 및 메트릭 라벨의 "공고 DB" / "공고" 용어를 모두 "프로젝트 DB" / "프로젝트"로 전면 변경 적용.
+  - **라우팅 및 네비게이션 연결**:
+    - 인재/기업 공통 상단/하단 네비게이션에 `프로젝트 DB` (`/senior/project-database`, `/company/project-database`) 탭 탑재.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 라이브 배포 완료.
+- **변경 파일**:
+  - [NEW] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [NEW] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [NEW] [`docs/job-database-schema.md`](file:///c:/AL07TEAM04/docs/job-database-schema.md)
+  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] 기존 안정 버전 UI 복원 (공고 DB 미포함) 및 Firebase Hosting 배포
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **기존 안정 버전 UI 복원 (Revert)**:
+    - 외부/실험적 UI 스케일링 변경사항을 리버트(`git revert 3bd9358`)하여 기존 안정 UI 상태(`15e1ee6`)로 원상 복구.
+    - 다른 브랜치(`feature/job-database`)의 공고 DB 코드가 포함되지 않은 순수 `BASIC` 버전 유지.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 성공.
+  - **원격 업로드 및 배포**: GitHub `BASIC` 브랜치 푸시 완료 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 배포 완료.
+- **변경 파일**:
   - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
 
 
@@ -43,9 +101,8 @@
 - **작업 내용**:
   - **각 박스 카드 내 '프로젝트 보기' 버튼 우측 배치 & 밸런스 조정**:
     - `ProjectCard` 내 모바일 뷰에서 왼쪽으로 쏠려있던 `프로젝트 보기 →` 버튼을 카드 박스 **우측 하단(`justify-end w-full pt-2 border-t`)으로 배치**하고 카드 전체 밸런스 조율.
-  - **`!h-9 !min-h-[36px] !max-h-[36px] py-0` 강제 고정 및 캐시 방지 적용**:
-    - 브라우저 캐시 및 부모 컨테이너 높이 상승을 원천 방지하기 위해 `!h-9 !min-h-[36px] !max-h-[36px] py-0 leading-none`으로 높이를 36px로 100% 미노출 방지 및 고정.
-    - `firebase.json`에 `index.html` 캐시 방지 헤더(`no-cache, no-store, must-revalidate`)를 추가하여 배포 후 즉시 최신 스타일이 로드되도록 조치.
+  - **모든 뷰포트(PC/모바일 공통) `ActionButton` 높이 `h-9` (36px) 무조건 일과 통일**:
+    - PC/데스크톱 뷰포트 조건분기로 인해 여전히 52~60px(`h-13`)로 크게 출력되던 원인을 원천 차단하고, `ActionButton` 컴포넌트 높이를 **모든 화면 모드에서 예외 없이 `h-9` (36px, `text-xs font-extrabold`)로 100% 무조건 일괄 고정**.
   - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
   - **검증**: `npm run validate` (typecheck, eslint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
     - Level 3 본문/메타: `text-[13px]` font-medium

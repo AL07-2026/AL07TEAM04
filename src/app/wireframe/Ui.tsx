@@ -2,6 +2,7 @@ import {
   Briefcase,
   Building2,
   ChevronLeft,
+  ChevronRight,
   FolderKanban,
   Home,
   Inbox,
@@ -16,8 +17,8 @@ import { useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
-export type SeniorNav = 'home' | 'projects' | 'proposals' | 'profile';
-export type CompanyNav = 'home' | 'projects' | 'proposals' | 'profile';
+export type SeniorNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
+export type CompanyNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
 
 export type ViewportMode = 'pc' | 'mobile';
 
@@ -75,7 +76,11 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
+  return (
+    <ViewportContext.Provider value={{ mode, setMode }}>
+      {children}
+    </ViewportContext.Provider>
+  );
 }
 
 const roleStyles = {
@@ -118,17 +123,14 @@ export function MobilePage({
   return (
     <>
       {isMobileMode ? (
-        <main
-          className="eojob-ui min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6"
-          data-viewport="mobile"
-        >
+        <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
           <section className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:h-[844px] sm:min-h-0 sm:rounded-[28px] sm:border relative">
             <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
                 {showBack ? (
                   <button
                     aria-label="이전 화면으로 돌아가기"
-                    className="ui-icon-button -ml-1 flex rounded-full text-[#17212B] transition hover:bg-[#F7F3EA]"
+                    className="-ml-1 flex size-8 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA]"
                     onClick={() => {
                       if (backTo) void navigate(backTo);
                       else void navigate(-1);
@@ -153,7 +155,7 @@ export function MobilePage({
                   type="button"
                   onClick={() => setViewportMode('pc')}
                   className={cn(
-                    'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition',
+                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
                     !isMobileMode
                       ? 'bg-[#17212B] text-white shadow-2xs'
                       : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -166,7 +168,7 @@ export function MobilePage({
                   type="button"
                   onClick={() => setViewportMode('mobile')}
                   className={cn(
-                    'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition',
+                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
                     isMobileMode
                       ? 'bg-[#17212B] text-white shadow-2xs'
                       : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -189,10 +191,7 @@ export function MobilePage({
         </main>
       ) : !role ? (
         /* Unauthenticated / Login / Signup Screen: Desktop Card Frame Layout */
-        <main
-          className="eojob-ui min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-10 sm:flex sm:items-center sm:justify-center"
-          data-viewport="pc"
-        >
+        <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-10 sm:flex sm:items-center sm:justify-center">
           <section className="mx-auto flex w-full max-w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border min-h-[640px] md:min-h-[740px] lg:min-h-[820px]">
             {/* Header (Responsive: Desktop PC Top Navbar + View Mode Switcher) */}
             <header className="flex h-14 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-4 md:px-7 shadow-2xs">
@@ -200,7 +199,7 @@ export function MobilePage({
                 {showBack ? (
                   <button
                     aria-label="이전 화면으로 돌아가기"
-                    className="ui-icon-button -ml-1 flex rounded-full text-[#17212B] transition hover:bg-[#F7F3EA] hover:scale-105 active:scale-95"
+                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA] hover:scale-105 active:scale-95"
                     onClick={() => {
                       if (backTo) void navigate(backTo);
                       else void navigate(-1);
@@ -228,9 +227,7 @@ export function MobilePage({
                       className="md:hidden size-5 object-contain"
                     />
                   </button>
-                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-xs translate-y-[0.5px]">
-                    |
-                  </span>
+                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-xs translate-y-[0.5px]">|</span>
                   <h1 className="text-[16px] md:text-[18px] font-extrabold tracking-tight text-[#17212B] translate-y-[1px]">
                     {title}
                   </h1>
@@ -244,7 +241,7 @@ export function MobilePage({
                     type="button"
                     onClick={() => setViewportMode('pc')}
                     className={cn(
-                      'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition-all',
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       !isMobileMode
                         ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -257,7 +254,7 @@ export function MobilePage({
                     type="button"
                     onClick={() => setViewportMode('mobile')}
                     className={cn(
-                      'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition-all',
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       isMobileMode
                         ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -276,10 +273,7 @@ export function MobilePage({
         </main>
       ) : (
         /* Logged-In Service Pages: Full Version Responsive Web Layout */
-        <main
-          className="eojob-ui min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full"
-          data-viewport="pc"
-        >
+        <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
           <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
             {/* Top Navbar */}
             <header className="relative w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
@@ -287,7 +281,7 @@ export function MobilePage({
                 {showBack ? (
                   <button
                     aria-label="이전 화면으로 돌아가기"
-                    className="ui-icon-button -ml-1 flex rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
+                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
                     onClick={() => {
                       if (backTo) void navigate(backTo);
                       else void navigate(-1);
@@ -315,9 +309,7 @@ export function MobilePage({
                       className="md:hidden size-6 object-contain"
                     />
                   </button>
-                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-sm">
-                    |
-                  </span>
+                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-sm">|</span>
                   <h1 className="text-base md:text-lg font-extrabold tracking-tight text-[#17212B]">
                     {title}
                   </h1>
@@ -336,15 +328,13 @@ export function MobilePage({
                         type="button"
                         onClick={() => void navigate(item.path)}
                         className={cn(
-                          'ui-compact-button flex items-center gap-2 rounded-full font-extrabold transition-all',
+                          'flex items-center gap-2 px-4.5 py-2 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
                             ? 'bg-[#F06B4F] text-white shadow-xs'
                             : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                         )}
                       >
-                        <IconComponent
-                          className={cn('size-4', selected ? 'text-white' : 'text-slate-500')}
-                        />
+                        <IconComponent className={cn('size-4', selected ? 'text-white' : 'text-slate-500')} />
                         <span>{item.label}</span>
                       </button>
                     );
@@ -359,7 +349,7 @@ export function MobilePage({
                     type="button"
                     onClick={() => setViewportMode('pc')}
                     className={cn(
-                      'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition-all',
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       !isMobileMode
                         ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -372,7 +362,7 @@ export function MobilePage({
                     type="button"
                     onClick={() => setViewportMode('mobile')}
                     className={cn(
-                      'ui-compact-button flex items-center gap-1 rounded-full font-extrabold transition-all',
+                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
                       isMobileMode
                         ? 'bg-[#17212B] text-white shadow-2xs'
                         : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
@@ -399,13 +389,13 @@ export function MobilePage({
 const navItems = {
   senior: [
     { id: 'home', label: '홈', path: '/senior', Icon: Home },
-    { id: 'projects', label: '프로젝트', path: '/senior/projects', Icon: Briefcase },
+    { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
     { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
   company: [
     { id: 'home', label: '홈', path: '/company', Icon: Home },
-    { id: 'projects', label: '프로젝트 관리', path: '/company/projects', Icon: FolderKanban },
+    { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
     { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },
   ],
@@ -426,7 +416,7 @@ function BottomNav({
     <nav
       aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
       className={cn(
-        'flex h-[72px] shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-1.5 shadow-lg',
+        'flex h-16 shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-1.5 shadow-lg',
         forceShow ? 'w-full' : 'md:hidden',
       )}
     >
@@ -438,7 +428,9 @@ function BottomNav({
             aria-current={selected ? 'page' : undefined}
             className={cn(
               'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition',
-              selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
+              selected
+                ? 'font-extrabold text-[#F06B4F]'
+                : 'text-slate-400 hover:text-[#17212B]',
             )}
             key={item.id}
             onClick={() => void navigate(item.path)}
@@ -463,7 +455,9 @@ export function StepProgressBar({ current, total }: { current: number; total: nu
   return (
     <div className="flex flex-col items-center gap-1.5 py-1">
       <div className="flex items-center gap-1.5">
-        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">경험 등록</span>
+        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">
+          경험 등록
+        </span>
         <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
           {current}/{total} 단계
         </span>
@@ -489,10 +483,14 @@ export function ActionButton({
   secondary,
   ...props
 }: ActionButtonProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
     <button
       className={cn(
-        'ui-action-button flex w-full items-center justify-center rounded-full font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40 shadow-xs',
+        'flex w-full items-center justify-center rounded-full font-extrabold leading-none shadow-xs transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        isMobile ? 'h-12 min-h-12 px-5 text-[14px]' : 'h-14 min-h-14 px-6 text-[16px]',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
@@ -516,12 +514,15 @@ export function Chip({
   role?: Role;
   selected?: boolean;
 }) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const Element = onClick ? 'button' : 'span';
   return (
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'ui-chip flex items-center justify-center rounded-full font-extrabold transition',
+        'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition',
+        isMobile ? 'h-10 min-h-10 px-4 text-[13px]' : 'h-11 min-h-11 px-5 text-[15px]',
         selected
           ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
           : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
@@ -546,11 +547,16 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
   const isMobile = mode === 'mobile';
 
   const parts = project.meta.split(' · ');
-  const isStatusMeta =
-    parts.length > 1 &&
-    ['검토 중', '연락 받음', '검토 전', '공개 중', '연락함', '마감'].includes(parts[0]!.trim());
-  const statusText = isStatusMeta ? parts[0]!.trim() : null;
-  const detailMeta = isStatusMeta ? parts.slice(1).join(' · ') : project.meta;
+  const statusLabels = ['검토 중', '연락 받음', '검토 전', '공개 중', '연락함', '마감'];
+  const companyIsStatus = statusLabels.includes(project.company.trim());
+  const isStatusMeta = parts.length > 1 && statusLabels.includes(parts[0]!.trim());
+  const statusText = companyIsStatus
+    ? project.company.trim()
+    : isStatusMeta
+      ? parts[0]!.trim()
+      : null;
+  const detailParts = (isStatusMeta ? parts.slice(1) : parts).filter(Boolean);
+  const actionLabel = (project.action ?? '상세 보기').replace(/\s*→\s*$/, '');
 
   const content = (
     <div
@@ -559,72 +565,87 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
         isMobile ? 'flex-col items-stretch' : 'flex-row items-center justify-between',
       )}
     >
-      {/* Left / Primary Content Column */}
-      <div className="flex flex-col items-start gap-1.5 text-left flex-1 min-w-0">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span
-            className={cn(
-              'font-extrabold text-[#173F3A]',
-              isMobile ? 'text-[13px]' : 'text-[16px]',
-            )}
-          >
-            {project.company}
-          </span>
-          {statusText ? (
-            <span
-              className={cn(
-                'inline-flex items-center px-2.5 py-0.5 rounded-full font-extrabold border shadow-2xs',
-                isMobile ? 'text-[11px]' : 'text-[13px]',
-                statusText === '연락 받음' || statusText === '연락함'
-                  ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
-                  : statusText === '공개 중'
-                    ? 'bg-[#EBF5FF] text-[#1D4ED8] border-[#BFDBFE]'
-                    : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
-              )}
-            >
-              ● {statusText}
+      <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {!companyIsStatus ? (
+              <span
+                className={cn(
+                  'truncate font-extrabold text-[#173F3A]',
+                  isMobile ? 'text-[13px]' : 'text-[16px]',
+                )}
+              >
+                {project.company}
+              </span>
+            ) : null}
+            {statusText ? (
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full border px-2.5 py-1 font-extrabold shadow-2xs',
+                  isMobile ? 'text-[11px]' : 'text-[13px]',
+                  statusText === '연락 받음' || statusText === '연락함'
+                    ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
+                    : statusText === '공개 중'
+                      ? 'bg-[#EBF5FF] text-[#1D4ED8] border-[#BFDBFE]'
+                      : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
+                )}
+              >
+                <span aria-hidden="true" className="mr-1 text-[8px]">
+                  ●
+                </span>
+                {statusText}
+              </span>
+            ) : null}
+          </div>
+          {isMobile ? (
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-extrabold text-[#F06B4F]">
+              {actionLabel}
+              <ChevronRight aria-hidden="true" className="size-4" strokeWidth={2.5} />
             </span>
           ) : null}
         </div>
 
         <strong
           className={cn(
-            'text-left font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors',
-            isMobile ? 'text-[15px]' : 'text-[22px]',
+            'text-left font-extrabold leading-snug text-[#17212B] transition-colors group-hover:text-[#F06B4F]',
+            isMobile ? 'mt-2.5 text-[16px]' : 'mt-2 text-[22px]',
           )}
         >
           {project.title}
         </strong>
 
-        <span
-          className={cn(
-            'text-left font-semibold text-slate-500',
-            isMobile ? 'text-[12px]' : 'text-[16px]',
-          )}
-        >
-          {isStatusMeta ? `제안일: ${detailMeta}` : detailMeta}
-        </span>
+        {isMobile ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {detailParts.map((part, index) => (
+              <span
+                className="rounded-md bg-[#F7F3EA] px-2 py-1 text-[11px] font-bold leading-4 text-[#4B5768]"
+                key={`${part}-${index}`}
+              >
+                {isStatusMeta && index === 0 ? `제안일 ${part}` : part}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="mt-2 text-left text-[16px] font-semibold text-slate-500">
+            {isStatusMeta ? `제안일: ${detailParts.join(' · ')}` : project.meta}
+          </span>
+        )}
       </div>
 
-      {/* Right column action badge */}
-      <div
-        className={cn(
-          'flex items-center shrink-0',
-          isMobile
-            ? 'justify-end w-full pt-2 border-t border-[#E0D9C8]/40 mt-1'
-            : 'justify-end md:w-auto pt-0',
-        )}
-      >
-        <span className="ui-compact-button inline-flex items-center justify-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs">
-          {project.action ?? '프로젝트 보기 →'}
-        </span>
-      </div>
+      {!isMobile ? (
+        <div className="flex shrink-0 items-center justify-end md:w-auto">
+          <span className="inline-flex h-11 min-h-11 items-center justify-center gap-1.5 rounded-full border border-[#E0D9C8] bg-[#FAF7F2] px-5 text-[14px] font-extrabold leading-none text-[#F06B4F] shadow-2xs transition-all group-hover:border-[#F06B4F] group-hover:bg-[#F06B4F] group-hover:text-white">
+            {actionLabel}
+            <ChevronRight aria-hidden="true" className="size-4" strokeWidth={2.5} />
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 
   const classes = cn(
     'group flex w-full flex-col rounded-2xl border border-[#E0D9C8] bg-white shadow-xs transition-all duration-200 hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.998]',
-    isMobile ? 'p-4' : 'p-6',
+    isMobile ? 'rounded-[18px] p-4' : 'p-6',
   );
 
   return onClick ? (
@@ -648,10 +669,30 @@ export function SummaryCard({ label, value }: { label: string; role?: Role; valu
 }
 
 export function InfoPanel({ children, label }: { children: ReactNode; label: string }) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <div className="flex w-full flex-col gap-2.5 rounded-xl border border-[#E0D9C8] bg-white p-4 md:p-6 shadow-xs">
-      <strong className="text-[14px] md:text-[18px] font-extrabold text-[#17212B]">{label}</strong>
-      <div className="text-[14px] md:text-[18px] leading-6 md:leading-8 text-[#17212B]/85 font-medium">
+    <div
+      className={cn(
+        'flex w-full flex-col rounded-xl border border-[#E0D9C8] bg-white shadow-xs',
+        isMobile ? 'gap-2.5 p-4' : 'gap-3 p-6',
+      )}
+    >
+      <strong
+        className={cn(
+          'font-extrabold text-[#17212B]',
+          isMobile ? 'text-[14px]' : 'text-[18px]',
+        )}
+      >
+        {label}
+      </strong>
+      <div
+        className={cn(
+          'font-medium text-[#17212B]/85',
+          isMobile ? 'text-[15px] leading-6' : 'text-[18px] leading-8',
+        )}
+      >
         {children}
       </div>
     </div>
@@ -661,12 +702,21 @@ export function InfoPanel({ children, label }: { children: ReactNode; label: str
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string };
 
 export function Field({ className, label, ...props }: FieldProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <label className="ui-field-label flex w-full flex-col gap-2 font-extrabold text-[#17212B]">
+    <label
+      className={cn(
+        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
+        isMobile ? 'text-[13px]' : 'text-[17px]',
+      )}
+    >
       <span>{label}</span>
       <input
         className={cn(
-          'ui-field w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
+          isMobile ? 'h-12 text-[16px]' : 'h-14 text-[18px]',
           className,
         )}
         {...props}
@@ -678,12 +728,21 @@ export function Field({ className, label, ...props }: FieldProps) {
 type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string };
 
 export function TextAreaField({ className, label, ...props }: TextAreaFieldProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <label className="ui-field-label flex w-full flex-col gap-2 font-extrabold text-[#17212B]">
+    <label
+      className={cn(
+        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
+        isMobile ? 'text-[13px]' : 'text-[17px]',
+      )}
+    >
       <span>{label}</span>
       <textarea
         className={cn(
-          'ui-textarea w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-4 leading-6 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
+          isMobile ? 'h-24 text-[16px] leading-6' : 'h-32 text-[18px] leading-7',
           className,
         )}
         {...props}
