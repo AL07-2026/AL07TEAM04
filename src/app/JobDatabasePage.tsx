@@ -359,14 +359,14 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
     >
       <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
-          <Sparkles className="size-3.5" />팀 통합 플로우 기반 데이터베이스
+          <Sparkles className="size-3.5" />시니어 맞춤 공고
         </p>
         <h1 className="mt-3 text-[24px] font-extrabold leading-tight text-[#17212B] md:text-[32px]">
-          시니어 인재 매칭에 필요한 공고 데이터를 채용사이트처럼 정리했어요.
+          경력과 전문성을 살릴 수 있는 채용공고
         </h1>
         <p className="mt-2 text-[13px] font-medium leading-6 text-slate-600 md:text-[14px]">
-          회사 프로젝트 등록, 인재 프로젝트 탐색, AI 인터뷰 카드와 연결할 수 있도록 공고 기본
-          정보와 해결 문제, 매칭 신호, 인터뷰 포인트를 함께 담았습니다.
+          직무, 근무 형태, 프로젝트 기간, 마감일을 기준으로 시니어에게 적합한 공고를
+          한눈에 확인하세요.
         </p>
       </section>
 
