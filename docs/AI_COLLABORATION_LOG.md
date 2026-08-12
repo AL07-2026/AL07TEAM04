@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] 네비게이션 기존 중복 '프로젝트' 탭 제거 및 신규 프로젝트 탐색 탭 '프로젝트' 일원화
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **네비게이션 탭 정리**: 기존의 구형 `프로젝트`/`프로젝트 관리` 탭을 네비게이션에서 제거하고, 검색/필터 기능을 갖춘 신규 프로젝트 DB 탭의 라벨을 깔끔하게 **'프로젝트'**로 통일 연결.
+  - **페이지 타이틀 조정**: `JobDatabasePage` 상단 타이틀을 `프로젝트`로 단일화.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] '공고 DB' 용어 및 UI 구성을 '프로젝트 DB'로 전면 표준화 및 배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

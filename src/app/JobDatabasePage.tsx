@@ -355,7 +355,7 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
       )}
       role={role}
       showBack={false}
-      title="프로젝트 DB"
+      title="프로젝트"
     >
       <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">

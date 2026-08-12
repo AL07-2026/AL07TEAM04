@@ -2,7 +2,6 @@ import {
   Briefcase,
   Building2,
   ChevronLeft,
-  Database,
   FolderKanban,
   Home,
   Inbox,
@@ -389,15 +388,13 @@ export function MobilePage({
 const navItems = {
   senior: [
     { id: 'home', label: '홈', path: '/senior', Icon: Home },
-    { id: 'projects', label: '프로젝트', path: '/senior/projects', Icon: Briefcase },
-    { id: 'database', label: '프로젝트 DB', path: '/senior/project-database', Icon: Database },
+    { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
     { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
   company: [
     { id: 'home', label: '홈', path: '/company', Icon: Home },
-    { id: 'projects', label: '프로젝트 관리', path: '/company/projects', Icon: FolderKanban },
-    { id: 'database', label: '프로젝트 DB', path: '/company/project-database', Icon: Database },
+    { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
     { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },
   ],
