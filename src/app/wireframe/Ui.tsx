@@ -489,7 +489,7 @@ export function ActionButton({
     <button
       className={cn(
         'flex w-full items-center justify-center rounded-full px-5 font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40',
-        isMobile ? 'h-12 text-[14px] sm:text-[15px] shadow-md' : 'h-13 md:h-15 text-[16px] md:text-[19px]',
+        isMobile ? 'h-11 text-[14px] shadow-md' : 'h-13 md:h-15 text-[16px] md:text-[19px]',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
@@ -518,7 +518,7 @@ export function Chip({
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex h-[32px] md:h-[40px] items-center justify-center rounded-full px-4 text-[13px] md:text-[16px] font-extrabold transition',
+        'flex h-9 md:h-[40px] items-center justify-center rounded-full px-4 text-[13px] md:text-[16px] font-extrabold transition',
         selected
           ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
           : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
@@ -550,7 +550,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
   const detailMeta = isStatusMeta ? parts.slice(1).join(' · ') : project.meta;
 
   const content = (
-    <div className={cn('flex w-full gap-3.5', isMobile ? 'flex-col items-start' : 'flex-row items-center justify-between')}>
+    <div className={cn('flex w-full gap-3', isMobile ? 'flex-col items-stretch' : 'flex-row items-center justify-between')}>
       {/* Left / Primary Content Column */}
       <div className="flex flex-col items-start gap-1.5 text-left flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -574,7 +574,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
           ) : null}
         </div>
 
-        <strong className={cn('text-left font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors', isMobile ? 'text-[16px]' : 'text-[22px]')}>
+        <strong className={cn('text-left font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors', isMobile ? 'text-[15px]' : 'text-[22px]')}>
           {project.title}
         </strong>
 
@@ -583,9 +583,9 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
         </span>
       </div>
 
-      {/* Right Column: Action Button Badge - RIGHT-ALIGNED ON MOBILE AS REQUESTED BY USER */}
-      <div className={cn('flex items-center shrink-0 w-full md:w-auto', isMobile ? 'justify-end pt-1' : 'justify-end pt-0')}>
-        <span className={cn('inline-flex items-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs', isMobile ? 'px-3.5 py-1.5 text-xs' : 'px-5 py-2.5 text-[15px]')}>
+      {/* Right Column: Action Button Badge - RIGHT ALIGNED INSIDE BOX CARD WITH UNIFIED H-9 HEIGHT */}
+      <div className={cn('flex items-center shrink-0', isMobile ? 'justify-end w-full pt-2 border-t border-[#E0D9C8]/40 mt-1' : 'justify-end md:w-auto pt-0')}>
+        <span className={cn('inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs', isMobile ? 'px-3.5 text-xs' : 'px-5 text-[15px]')}>
           {project.action ?? '프로젝트 보기 →'}
         </span>
       </div>
