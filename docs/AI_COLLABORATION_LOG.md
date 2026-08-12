@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] 모바일 프로젝트 검색/필터 카드 UI 개선 및 라이브 배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **모바일 프로젝트 검색/필터 모듈 UI 고도화**: `JobDatabasePage.tsx` 모바일 전용 검색창 UX (지우기 버튼, 반응형 패딩), 유형 필터 버튼 그리드, 상세 조건 셀렉트 UX 보정.
+  - **인재 프로필 입력 폼 구조 개선**: `BasicProfilePage.tsx` 모바일 레이아웃 및 폼 여백 보정.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 라이브 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 프로젝트 상세 패널 모바일 레이아웃(MobileDetailRow) 최적화 및 재배포
 - **작업자**: Codex & Antigravity (Gemini)
 - **작업 내용**:

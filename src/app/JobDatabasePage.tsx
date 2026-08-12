@@ -8,6 +8,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Target,
+  X,
 } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 
@@ -80,20 +81,25 @@ function DatabaseMetric({
 
 function SelectField<T extends string>({
   label,
+  mobile = false,
   onChange,
   options,
   value,
 }: {
   label: string;
+  mobile?: boolean;
   onChange: (value: T) => void;
   options: { id: T; label: string }[];
   value: T;
 }) {
   return (
-    <label className="flex flex-col gap-2 text-[12px] font-extrabold text-[#17212B]">
+    <label className="flex min-w-0 flex-col gap-2 text-[12px] font-extrabold text-[#17212B]">
       <span>{label}</span>
       <select
-        className="h-11 rounded-xl border border-[#E0D9C8] bg-white px-3 text-[13px] font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
+        className={cn(
+          'w-full rounded-xl border border-[#E0D9C8] px-3 font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10',
+          mobile ? 'h-12 bg-[#FAF7F2] text-[14px]' : 'h-11 bg-white text-[13px]',
+        )}
         onChange={(event) => onChange(event.target.value as T)}
         value={value}
       >
@@ -507,6 +513,22 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
 
   const selectedPosting =
     filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
+  const activeFilterCount =
+    Number(selectedCategory !== all) +
+    Number(selectedWorkType !== all) +
+    Number(selectedHiringStage !== all) +
+    Number(sortBy !== 'fit-desc');
+  const hasActiveFilters = activeFilterCount > 0 || Boolean(query);
+  const selectedCategoryLabel =
+    categoryFilters.find((category) => category.id === selectedCategory)?.label ?? '전체';
+
+  function resetFilters() {
+    setQuery('');
+    setSelectedCategory(all);
+    setSelectedWorkType(all);
+    setSelectedHiringStage(all);
+    setSortBy('fit-desc');
+  }
 
   return (
     <MobilePage
@@ -555,63 +577,178 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
         />
       </div>
 
-      <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-        <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
-          <Filter className="size-4 text-[#173F3A]" />
-          프로젝트 유형 필터
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {categoryFilters.map((category) => (
-            <Chip
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              selected={selectedCategory === category.id}
+      {isMobile ? (
+        <section className="rounded-[20px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-[15px] font-extrabold text-[#17212B]">
+              <Filter className="size-[18px] text-[#173F3A]" />
+              프로젝트 찾기
+            </div>
+            <button
+              className="min-h-10 rounded-full px-2 text-[12px] font-extrabold text-[#F06B4F] disabled:opacity-35"
+              disabled={!hasActiveFilters}
+              onClick={resetFilters}
+              type="button"
             >
-              {category.label}
-            </Chip>
-          ))}
-        </div>
-      </section>
+              전체 초기화
+            </button>
+          </div>
 
-      <section className="grid gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs md:grid-cols-3">
-        <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B] md:col-span-3">
-          <SlidersHorizontal className="size-4 text-[#173F3A]" />
-          프로젝트 상세 조건
-        </div>
-        <SelectField
-          label="근무 형태"
-          onChange={setSelectedWorkType}
-          options={workTypeFilters}
-          value={selectedWorkType}
-        />
-        <SelectField
-          label="진행 단계"
-          onChange={setSelectedHiringStage}
-          options={hiringStageFilters}
-          value={selectedHiringStage}
-        />
-        <SelectField label="정렬" onChange={setSortBy} options={sortOptions} value={sortBy} />
-      </section>
+          <div className="mt-3">
+            <label
+              className="block text-[12px] font-extrabold text-[#17212B]"
+              htmlFor="mobile-project-search"
+            >
+              프로젝트 검색
+            </label>
+            <div className="mt-2 flex h-14 min-h-14 items-center gap-3 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] px-4 transition focus-within:border-[#173F3A] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/10">
+              <Search aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
+              <input
+                className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[16px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
+                id="mobile-project-search"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="회사명, 기술 또는 프로젝트 검색"
+                type="search"
+                value={query}
+              />
+              {query ? (
+                <button
+                  aria-label="검색어 지우기"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-[#F7F3EA] hover:text-[#17212B]"
+                  onClick={() => setQuery('')}
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </button>
+              ) : null}
+            </div>
+          </div>
 
-      <label className="flex h-12 items-center gap-3 rounded-2xl border border-[#E0D9C8] bg-white px-4 shadow-xs focus-within:border-[#173F3A]">
-        <Search className="size-5 text-slate-400" />
-        <input
-          className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="회사명, 기술스택, 해결 프로젝트 검색"
-          type="search"
-          value={query}
-        />
-      </label>
+          <div className="mt-5 border-t border-[#E0D9C8] pt-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13px] font-extrabold text-[#17212B]">프로젝트 유형</p>
+              <span className="text-[11px] font-bold text-slate-400">{selectedCategoryLabel}</span>
+            </div>
+            <div aria-label="프로젝트 유형" className="mt-3 grid grid-cols-2 gap-2" role="group">
+              {categoryFilters.map((category) => {
+                const selected = selectedCategory === category.id;
+                return (
+                  <button
+                    aria-pressed={selected}
+                    className={cn(
+                      'flex h-11 min-h-11 items-center justify-center rounded-xl border px-3 text-[13px] font-extrabold transition',
+                      selected
+                        ? 'border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
+                        : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
+                    )}
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    type="button"
+                  >
+                    {category.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-5 border-t border-[#E0D9C8] pt-4">
+            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
+              <SlidersHorizontal className="size-4 text-[#173F3A]" />
+              상세 조건
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <SelectField
+                label="근무 형태"
+                mobile
+                onChange={setSelectedWorkType}
+                options={workTypeFilters}
+                value={selectedWorkType}
+              />
+              <SelectField
+                label="진행 단계"
+                mobile
+                onChange={setSelectedHiringStage}
+                options={hiringStageFilters}
+                value={selectedHiringStage}
+              />
+              <div className="col-span-2">
+                <SelectField
+                  label="정렬 기준"
+                  mobile
+                  onChange={setSortBy}
+                  options={sortOptions}
+                  value={sortBy}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
+            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
+              <Filter className="size-4 text-[#173F3A]" />
+              프로젝트 유형 필터
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {categoryFilters.map((category) => (
+                <Chip
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  selected={selectedCategory === category.id}
+                >
+                  {category.label}
+                </Chip>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs md:grid-cols-3">
+            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B] md:col-span-3">
+              <SlidersHorizontal className="size-4 text-[#173F3A]" />
+              프로젝트 상세 조건
+            </div>
+            <SelectField
+              label="근무 형태"
+              onChange={setSelectedWorkType}
+              options={workTypeFilters}
+              value={selectedWorkType}
+            />
+            <SelectField
+              label="진행 단계"
+              onChange={setSelectedHiringStage}
+              options={hiringStageFilters}
+              value={selectedHiringStage}
+            />
+            <SelectField label="정렬" onChange={setSortBy} options={sortOptions} value={sortBy} />
+          </section>
+
+          <label className="flex h-12 items-center gap-3 rounded-2xl border border-[#E0D9C8] bg-white px-4 shadow-xs focus-within:border-[#173F3A]">
+            <Search className="size-5 text-slate-400" />
+            <input
+              className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="회사명, 기술스택, 해결 프로젝트 검색"
+              type="search"
+              value={query}
+            />
+          </label>
+        </>
+      )}
 
       <div className="flex items-center justify-between text-[13px] font-bold text-slate-500">
         <span>
           검색 결과 <strong className="text-[#173F3A]">{filteredPostings.length}</strong>건
         </span>
-        <span className="inline-flex items-center gap-1">
-          <Database className="size-4" />
-          DB MVP
-        </span>
+        {isMobile ? (
+          <span>{activeFilterCount ? `필터 ${activeFilterCount}개 적용` : '추천순으로 정렬'}</span>
+        ) : (
+          <span className="inline-flex items-center gap-1">
+            <Database className="size-4" />
+            DB MVP
+          </span>
+        )}
       </div>
 
       <div className={cn('grid gap-4', isMobile ? 'grid-cols-1' : 'lg:grid-cols-[0.9fr_1.1fr]')}>
