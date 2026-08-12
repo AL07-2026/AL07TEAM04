@@ -21,8 +21,8 @@
 - **작업 내용**:
   - **각 박스 카드 내 '프로젝트 보기' 버튼 우측 배치 & 밸런스 조정**:
     - `ProjectCard` 내 모바일 뷰에서 왼쪽으로 쏠려있던 `프로젝트 보기 →` 버튼을 카드 박스 **우측 하단(`justify-end w-full pt-2 border-t`)으로 배치**하고 카드 전체 밸런스 조율.
-  - **모바일 모든 버튼 높이 100% 통일 (`h-9` / 36px)**:
-    - 첨부된 이미지 지시사항("버튼 높이가 다 다르잖어 모두 프로젝트 보기 버튼 크기 높이로 다 바꿔줘")에 따라, `ActionButton`(프로젝트 전체 둘러보기, 제안하기, 기본 정보 수정, AI 경험 인터뷰 재진행, 로그아웃 등), 소셜 로그인, 폼 제출 등 **모든 모바일 버튼 높이를 '프로젝트 보기' 버튼과 100% 동일한 `h-9` (36px, `text-xs font-extrabold`)로 일괄 통일 보정**.
+  - **모든 뷰포트(PC/모바일 공통) `ActionButton` 높이 `h-9` (36px) 무조건 일과 통일**:
+    - PC/데스크톱 뷰포트 조건분기로 인해 여전히 52~60px(`h-13`)로 크게 출력되던 원인을 원천 차단하고, `ActionButton` 컴포넌트 높이를 **모든 화면 모드에서 예외 없이 `h-9` (36px, `text-xs font-extrabold`)로 100% 무조건 일괄 고정**.
   - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
   - **검증**: `npm run validate` (typecheck, eslint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
     - Level 3 본문/메타: `text-[13px]` font-medium

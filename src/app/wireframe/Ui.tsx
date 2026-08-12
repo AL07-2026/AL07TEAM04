@@ -485,7 +485,7 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        'flex w-full h-9 items-center justify-center rounded-full px-4 text-xs font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40 shadow-xs',
+        'flex w-full !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center rounded-full px-4 text-xs font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40 shadow-xs leading-none',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
@@ -514,7 +514,7 @@ export function Chip({
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex h-9 md:h-[40px] items-center justify-center rounded-full px-4 text-[13px] md:text-[16px] font-extrabold transition',
+        'flex !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center rounded-full px-4 text-xs font-extrabold transition leading-none',
         selected
           ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
           : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
@@ -581,7 +581,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
 
       {/* Right Column: Action Button Badge - RIGHT ALIGNED INSIDE BOX CARD WITH UNIFIED H-9 HEIGHT */}
       <div className={cn('flex items-center shrink-0', isMobile ? 'justify-end w-full pt-2 border-t border-[#E0D9C8]/40 mt-1' : 'justify-end md:w-auto pt-0')}>
-        <span className={cn('inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs', isMobile ? 'px-3.5 text-xs' : 'px-5 text-[15px]')}>
+        <span className={cn('inline-flex !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs leading-none', isMobile ? 'px-3.5 text-xs' : 'px-5 text-xs')}>
           {project.action ?? '프로젝트 보기 →'}
         </span>
       </div>
