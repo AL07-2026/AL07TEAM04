@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] 기존 안정 버전 UI 복원 (공고 DB 미포함) 및 Firebase Hosting 배포
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **기존 안정 버전 UI 복원 (Revert)**:
+    - 외부/실험적 UI 스케일링 변경사항을 리버트(`git revert 3bd9358`)하여 기존 안정 UI 상태(`15e1ee6`)로 원상 복구.
+    - 다른 브랜치(`feature/job-database`)의 공고 DB 코드가 포함되지 않은 순수 `BASIC` 버전 유지.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 성공.
+  - **원격 업로드 및 배포**: GitHub `BASIC` 브랜치 푸시 완료 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 모바일 프로젝트 카드 박스 내 '프로젝트 보기' 버튼 우측 배치 및 버튼 높이 규격 통일
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
