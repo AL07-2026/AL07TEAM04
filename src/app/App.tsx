@@ -10,6 +10,7 @@ import { RoleSelectionPage } from '@/app/RoleSelectionPage';
 import { SignupPage } from '@/app/SignupPage';
 import {
   CompanyHomePage,
+  CompanyProfilePage,
   ExperienceCardPage,
   ExperienceInterviewPage,
   ExperienceSelectionPage,
@@ -25,8 +26,10 @@ import {
   ReceivedProposalDetailPage,
   ReceivedProposalsPage,
   SeniorHomePage,
+  SeniorProfilePage,
 } from '@/app/wireframe/FlowPages';
 import { ViewportProvider } from '@/app/wireframe/Ui';
+import { AuthProvider } from '@/lib/authContext';
 
 function createAppRouter() {
   return createBrowserRouter([
@@ -47,6 +50,7 @@ function createAppRouter() {
     { path: '/senior/proposals', Component: MyProposalsPage },
     { path: '/senior/proposals/:proposalId', Component: MyProposalDetailPage },
     { path: '/senior/job-database', element: <JobDatabasePage role="senior" /> },
+    { path: '/senior/profile', Component: SeniorProfilePage },
     { path: '/company', Component: CompanyHomePage },
     { path: '/company/projects', Component: ProjectManagementPage },
     { path: '/company/projects/new', Component: ProjectRegisterPage },
@@ -54,6 +58,7 @@ function createAppRouter() {
     { path: '/company/proposals', Component: ReceivedProposalsPage },
     { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },
     { path: '/company/job-database', element: <JobDatabasePage role="company" /> },
+    { path: '/company/profile', Component: CompanyProfilePage },
     { path: '*', element: <Navigate replace to="/login" /> },
   ]);
 }
@@ -62,8 +67,10 @@ export function App() {
   const [router] = useState(createAppRouter);
 
   return (
-    <ViewportProvider>
-      <RouterProvider router={router} />
-    </ViewportProvider>
+    <AuthProvider>
+      <ViewportProvider>
+        <RouterProvider router={router} />
+      </ViewportProvider>
+    </AuthProvider>
   );
 }

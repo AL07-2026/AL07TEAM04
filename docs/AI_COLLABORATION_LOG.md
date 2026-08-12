@@ -16,21 +16,47 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-11] '내 정보' / '회사 정보' 메인 탭 헤더 네비게이션 및 불필요 뒤로가기 제거 개편
+### [2026-08-12] PC/모바일 반응형 UI 스케일링 체계(globals.css/button) 고도화 및 배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **PC/모바일 반응형 컨트롤 & 타이포그래피 스케일 시스템 구축 (`globals.css`)**:
+    - `.eojob-ui[data-viewport='pc']` 및 `[data-viewport='mobile']` 스케일 변수(`--ui-button-height`, `--ui-control-height`, `--ui-page-title-size` 등) 구현.
+    - `Button` 및 UI 요소에 `.ui-action-button`, `.ui-compact-button` 등 규격화된 CSS 클래스 및 버튼 밸런스 개선.
+  - **폼 및 페이지 레이아웃 가독성 강화**: `LoginPage`, `RoleSelectionPage`, `SignupPage`, `CompanyInfoPage`, `BasicProfilePage`, `FlowPages`, `Ui.tsx` 일관된 디자인 시스템 적용.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 진행.
+- **변경 파일**:
+  - [MODIFY] [`src/components/ui/button.tsx`](file:///c:/AL07TEAM04/src/components/ui/button.tsx)
+  - [MODIFY] [`src/styles/globals.css`](file:///c:/AL07TEAM04/src/styles/globals.css)
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/RoleSelectionPage.tsx`](file:///c:/AL07TEAM04/src/app/RoleSelectionPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-12] 모바일 프로젝트 카드 박스 내 '프로젝트 보기' 버튼 우측 배치 및 버튼 높이 규격 통일
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
-  - **상단 네비게이션 바 화면 폭 비의존 100% 지속 노출**:
-    - PC 모드에서 화면 미디어쿼리(`hidden md:flex`) 반응형 조건으로 인해 768px 미만 분할 창에서 메뉴가 숨겨지던 현상 보정 (`flex` 전환).
-  - **메인 탭 화면 불필요 뒤로가기(< ChevronLeft) 버튼 제거**:
-    - `내 정보`(`BasicProfilePage.tsx`) 및 `회사 정보`(`CompanyInfoPage.tsx`)는 서비스 주요 메인 4개 탭 중 하나이므로 온보딩 화면으로 되돌아가는 불필요한 뒤로가기 버튼(`showBack={false}`) 전면 제거.
-    - 이제 `홈`, `프로젝트`, `내 제안`, `내 정보` 4개 탭 모두 일관된 메인 탭 헤더 구조 및 지속 상단 네비게이션 탑재.
+  - **각 박스 카드 내 '프로젝트 보기' 버튼 우측 배치 & 밸런스 조정**:
+    - `ProjectCard` 내 모바일 뷰에서 왼쪽으로 쏠려있던 `프로젝트 보기 →` 버튼을 카드 박스 **우측 하단(`justify-end w-full pt-2 border-t`)으로 배치**하고 카드 전체 밸런스 조율.
+  - **`!h-9 !min-h-[36px] !max-h-[36px] py-0` 강제 고정 및 캐시 방지 적용**:
+    - 브라우저 캐시 및 부모 컨테이너 높이 상승을 원천 방지하기 위해 `!h-9 !min-h-[36px] !max-h-[36px] py-0 leading-none`으로 높이를 36px로 100% 미노출 방지 및 고정.
+    - `firebase.json`에 `index.html` 캐시 방지 헤더(`no-cache, no-store, must-revalidate`)를 추가하여 배포 후 즉시 최신 스타일이 로드되도록 조치.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting(`https://al07team04-bdfcd.web.app`) 배포 완료.
+  - **검증**: `npm run validate` (typecheck, eslint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
+    - Level 3 본문/메타: `text-[13px]` font-medium
+    - Level 4 캡션/뱃지: `text-[11px]` font-bold
+  - **버튼 높이 48px(`h-12`) 및 카드 알약 우측 정렬 100% 표준화**: 모든 메인 액션 버튼 48px, 카드 내 `프로젝트 보기 →` 알약 버튼 우측 정렬(`justify-end`) (`Ui.tsx`).
   - **GitHub BASIC 브랜치 업로드 완료**: `git push origin BASIC`
-  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app`
+  - **Firebase Hosting 온라인 배포 완료**: `https://al07team04-bdfcd.web.app/senior`
   - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build 완료) 성공.
 - **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
   - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
 
 ### [2026-08-10] 테두리 없는 깔끔한 롤링 배너 캐러셀(RollingBanner) 구축 및 로그인 화면 간소화
 - **작업자**: Antigravity (Gemini)

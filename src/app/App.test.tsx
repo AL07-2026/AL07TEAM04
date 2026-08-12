@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { App } from '@/app/App';
 
@@ -31,15 +31,24 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
   });
 
-  it('회원가입 후 인재 기본정보 입력으로 바로 이동한다', async () => {
+  it('회원가입 후 이메일 인증 및 인재 기본정보 입력으로 바로 이동한다', async () => {
     window.history.pushState({}, '', '/signup?role=senior');
     render(<App />);
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '김인재' } });
-    fireEvent.change(screen.getByLabelText('이메일'), { target: { value: 'senior@example.com' } });
+    const testEmail = `senior-${Date.now()}@example.com`;
+    fireEvent.change(screen.getByLabelText('이메일 (인증용 개인메일)'), { target: { value: testEmail } });
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByLabelText('비밀번호 확인'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button', { name: /인재 기본정보 입력/ }));
-    expect(await screen.findByRole('heading', { name: '인재 기본정보' })).toBeInTheDocument();
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /인증 메일 받기/ }));
+    });
+    expect(await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' }, { timeout: 5000 })).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
+    });
+    expect(await screen.findByRole('heading', { name: '저장된 내 경험 정보' })).toBeInTheDocument();
   });
 
   it('프로젝트 제안을 작성하고 완료 화면으로 이동한다', async () => {
