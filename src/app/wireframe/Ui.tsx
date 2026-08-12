@@ -2,6 +2,7 @@ import {
   Briefcase,
   Building2,
   ChevronLeft,
+  ChevronRight,
   FolderKanban,
   Home,
   Inbox,
@@ -482,10 +483,14 @@ export function ActionButton({
   secondary,
   ...props
 }: ActionButtonProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
     <button
       className={cn(
-        'flex w-full !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center rounded-full px-4 text-xs font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40 shadow-xs leading-none',
+        'flex w-full items-center justify-center rounded-full font-extrabold leading-none shadow-xs transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        isMobile ? 'h-12 min-h-12 px-5 text-[14px]' : 'h-14 min-h-14 px-6 text-[16px]',
         secondary
           ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
           : cn(
@@ -509,12 +514,15 @@ export function Chip({
   role?: Role;
   selected?: boolean;
 }) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const Element = onClick ? 'button' : 'span';
   return (
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center rounded-full px-4 text-xs font-extrabold transition leading-none',
+        'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition',
+        isMobile ? 'h-10 min-h-10 px-4 text-[13px]' : 'h-11 min-h-11 px-5 text-[15px]',
         selected
           ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
           : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
@@ -539,58 +547,105 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
   const isMobile = mode === 'mobile';
 
   const parts = project.meta.split(' · ');
-  const isStatusMeta =
-    parts.length > 1 &&
-    ['검토 중', '연락 받음', '검토 전', '공개 중', '연락함', '마감'].includes(parts[0]!.trim());
-  const statusText = isStatusMeta ? parts[0]!.trim() : null;
-  const detailMeta = isStatusMeta ? parts.slice(1).join(' · ') : project.meta;
+  const statusLabels = ['검토 중', '연락 받음', '검토 전', '공개 중', '연락함', '마감'];
+  const companyIsStatus = statusLabels.includes(project.company.trim());
+  const isStatusMeta = parts.length > 1 && statusLabels.includes(parts[0]!.trim());
+  const statusText = companyIsStatus
+    ? project.company.trim()
+    : isStatusMeta
+      ? parts[0]!.trim()
+      : null;
+  const detailParts = (isStatusMeta ? parts.slice(1) : parts).filter(Boolean);
+  const actionLabel = (project.action ?? '상세 보기').replace(/\s*→\s*$/, '');
 
   const content = (
-    <div className={cn('flex w-full gap-3', isMobile ? 'flex-col items-stretch' : 'flex-row items-center justify-between')}>
-      {/* Left / Primary Content Column */}
-      <div className="flex flex-col items-start gap-1.5 text-left flex-1 min-w-0">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className={cn('font-extrabold text-[#173F3A]', isMobile ? 'text-[13px]' : 'text-[16px]')}>
-            {project.company}
-          </span>
-          {statusText ? (
-            <span
-              className={cn(
-                'inline-flex items-center px-2.5 py-0.5 rounded-full font-extrabold border shadow-2xs',
-                isMobile ? 'text-[11px]' : 'text-[13px]',
-                statusText === '연락 받음' || statusText === '연락함'
-                  ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
-                  : statusText === '공개 중'
-                    ? 'bg-[#EBF5FF] text-[#1D4ED8] border-[#BFDBFE]'
-                    : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
-              )}
-            >
-              ● {statusText}
+    <div
+      className={cn(
+        'flex w-full gap-3',
+        isMobile ? 'flex-col items-stretch' : 'flex-row items-center justify-between',
+      )}
+    >
+      <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {!companyIsStatus ? (
+              <span
+                className={cn(
+                  'truncate font-extrabold text-[#173F3A]',
+                  isMobile ? 'text-[13px]' : 'text-[16px]',
+                )}
+              >
+                {project.company}
+              </span>
+            ) : null}
+            {statusText ? (
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full border px-2.5 py-1 font-extrabold shadow-2xs',
+                  isMobile ? 'text-[11px]' : 'text-[13px]',
+                  statusText === '연락 받음' || statusText === '연락함'
+                    ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
+                    : statusText === '공개 중'
+                      ? 'bg-[#EBF5FF] text-[#1D4ED8] border-[#BFDBFE]'
+                      : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
+                )}
+              >
+                <span aria-hidden="true" className="mr-1 text-[8px]">
+                  ●
+                </span>
+                {statusText}
+              </span>
+            ) : null}
+          </div>
+          {isMobile ? (
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-extrabold text-[#F06B4F]">
+              {actionLabel}
+              <ChevronRight aria-hidden="true" className="size-4" strokeWidth={2.5} />
             </span>
           ) : null}
         </div>
 
-        <strong className={cn('text-left font-extrabold text-[#17212B] leading-snug group-hover:text-[#F06B4F] transition-colors', isMobile ? 'text-[15px]' : 'text-[22px]')}>
+        <strong
+          className={cn(
+            'text-left font-extrabold leading-snug text-[#17212B] transition-colors group-hover:text-[#F06B4F]',
+            isMobile ? 'mt-2.5 text-[16px]' : 'mt-2 text-[22px]',
+          )}
+        >
           {project.title}
         </strong>
 
-        <span className={cn('text-left font-semibold text-slate-500', isMobile ? 'text-[12px]' : 'text-[16px]')}>
-          {isStatusMeta ? `제안일: ${detailMeta}` : detailMeta}
-        </span>
+        {isMobile ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {detailParts.map((part, index) => (
+              <span
+                className="rounded-md bg-[#F7F3EA] px-2 py-1 text-[11px] font-bold leading-4 text-[#4B5768]"
+                key={`${part}-${index}`}
+              >
+                {isStatusMeta && index === 0 ? `제안일 ${part}` : part}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="mt-2 text-left text-[16px] font-semibold text-slate-500">
+            {isStatusMeta ? `제안일: ${detailParts.join(' · ')}` : project.meta}
+          </span>
+        )}
       </div>
 
-      {/* Right Column: Action Button Badge - RIGHT ALIGNED INSIDE BOX CARD WITH UNIFIED H-9 HEIGHT */}
-      <div className={cn('flex items-center shrink-0', isMobile ? 'justify-end w-full pt-2 border-t border-[#E0D9C8]/40 mt-1' : 'justify-end md:w-auto pt-0')}>
-        <span className={cn('inline-flex !h-9 !min-h-[36px] !max-h-[36px] py-0 items-center justify-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#E0D9C8] text-[#F06B4F] font-extrabold group-hover:bg-[#F06B4F] group-hover:text-white group-hover:border-[#F06B4F] transition-all shadow-2xs leading-none', isMobile ? 'px-3.5 text-xs' : 'px-5 text-xs')}>
-          {project.action ?? '프로젝트 보기 →'}
-        </span>
-      </div>
+      {!isMobile ? (
+        <div className="flex shrink-0 items-center justify-end md:w-auto">
+          <span className="inline-flex h-11 min-h-11 items-center justify-center gap-1.5 rounded-full border border-[#E0D9C8] bg-[#FAF7F2] px-5 text-[14px] font-extrabold leading-none text-[#F06B4F] shadow-2xs transition-all group-hover:border-[#F06B4F] group-hover:bg-[#F06B4F] group-hover:text-white">
+            {actionLabel}
+            <ChevronRight aria-hidden="true" className="size-4" strokeWidth={2.5} />
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 
   const classes = cn(
     'group flex w-full flex-col rounded-2xl border border-[#E0D9C8] bg-white shadow-xs transition-all duration-200 hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.998]',
-    isMobile ? 'p-4' : 'p-6',
+    isMobile ? 'rounded-[18px] p-4' : 'p-6',
   );
 
   return onClick ? (
@@ -614,10 +669,32 @@ export function SummaryCard({ label, value }: { label: string; role?: Role; valu
 }
 
 export function InfoPanel({ children, label }: { children: ReactNode; label: string }) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <div className="flex w-full flex-col gap-2.5 rounded-xl border border-[#E0D9C8] bg-white p-4 md:p-6 shadow-xs">
-      <strong className="text-[14px] md:text-[18px] font-extrabold text-[#17212B]">{label}</strong>
-      <div className="text-[14px] md:text-[18px] leading-6 md:leading-8 text-[#17212B]/85 font-medium">{children}</div>
+    <div
+      className={cn(
+        'flex w-full flex-col rounded-xl border border-[#E0D9C8] bg-white shadow-xs',
+        isMobile ? 'gap-2.5 p-4' : 'gap-3 p-6',
+      )}
+    >
+      <strong
+        className={cn(
+          'font-extrabold text-[#17212B]',
+          isMobile ? 'text-[14px]' : 'text-[18px]',
+        )}
+      >
+        {label}
+      </strong>
+      <div
+        className={cn(
+          'font-medium text-[#17212B]/85',
+          isMobile ? 'text-[15px] leading-6' : 'text-[18px] leading-8',
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -625,12 +702,21 @@ export function InfoPanel({ children, label }: { children: ReactNode; label: str
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string };
 
 export function Field({ className, label, ...props }: FieldProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <label className="flex w-full flex-col gap-2 text-[13px] md:text-[17px] font-extrabold text-[#17212B]">
+    <label
+      className={cn(
+        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
+        isMobile ? 'text-[13px]' : 'text-[17px]',
+      )}
+    >
       <span>{label}</span>
       <input
         className={cn(
-          'h-12 md:h-14 w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 text-[14px] md:text-[18px] text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
+          isMobile ? 'h-12 text-[16px]' : 'h-14 text-[18px]',
           className,
         )}
         {...props}
@@ -642,12 +728,21 @@ export function Field({ className, label, ...props }: FieldProps) {
 type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string };
 
 export function TextAreaField({ className, label, ...props }: TextAreaFieldProps) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <label className="flex w-full flex-col gap-2 text-[13px] md:text-[17px] font-extrabold text-[#17212B]">
+    <label
+      className={cn(
+        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
+        isMobile ? 'text-[13px]' : 'text-[17px]',
+      )}
+    >
       <span>{label}</span>
       <textarea
         className={cn(
-          'h-24 md:h-32 w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-4 text-[14px] md:text-[18px] leading-5 md:leading-7 text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 font-medium',
+          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
+          isMobile ? 'h-24 text-[16px] leading-6' : 'h-32 text-[18px] leading-7',
           className,
         )}
         {...props}

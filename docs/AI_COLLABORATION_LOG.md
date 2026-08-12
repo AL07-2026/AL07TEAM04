@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] 모바일 프로젝트 카드 UI 및 폼 필드 가독성 보정 및 배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **모바일 카드 밸런스 개선**: `ProjectCard` 모바일 뷰 카드 타이틀, 상태 태그, 우측 화살표 액션 버튼(`ChevronRight`), 태그 뱃지 간격 및 패딩 정밀 보정.
+  - **입력 폼 필드 모바일 응답성 보정**: `Field`, `TextAreaField`, `InfoPanel` 모바일/PC 반응형 폰트 크기 및 라인 하이트 조정.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 라이브 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 네비게이션 기존 중복 '프로젝트' 탭 제거 및 신규 프로젝트 탐색 탭 '프로젝트' 일원화
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

@@ -516,6 +516,12 @@ export function ProjectListPage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [filter, setFilter] = useState('전체');
+  const visibleProjects = projects.filter((_, index) => {
+    if (filter === '전체') return true;
+    if (filter === '영업') return index === 1;
+    return index !== 1;
+  });
 
   return (
     <MobilePage
@@ -528,26 +534,71 @@ export function ProjectListPage() {
       role="senior"
       title="프로젝트 목록"
     >
-      <div className="flex gap-2">
-        <Chip selected>운영</Chip>
-        <Chip selected>영업</Chip>
+      {isMobile ? (
+        <section className="rounded-[20px] bg-[#173F3A] p-4 text-white shadow-sm">
+          <div className="flex items-center gap-1.5 text-[12px] font-extrabold text-[#DDEBE7]">
+            <Sparkles aria-hidden="true" className="size-4" />내 경험을 기준으로 찾았어요
+          </div>
+          <strong className="mt-2 block text-[22px] font-extrabold leading-[1.35] tracking-[-0.02em]">
+            잘 맞는 프로젝트를
+            <br />
+            한눈에 확인하세요
+          </strong>
+          <p className="mt-2 text-[13px] font-medium leading-5 text-white/70">
+            운영과 영업 경험을 우선 반영한 추천 결과입니다.
+          </p>
+        </section>
+      ) : null}
+
+      <div
+        aria-label="프로젝트 분야 필터"
+        className="flex gap-2 overflow-x-auto pb-0.5"
+        role="group"
+      >
+        {['전체', '운영', '영업'].map((item) => (
+          <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
+            {item}
+          </Chip>
+        ))}
       </div>
-      <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-lg md:text-xl')}>
-        추천 프로젝트 12개
-      </h2>
-      {projects.map((project, index) => (
-        <ProjectCard
-          key={project.title}
-          onClick={() => void navigate(`/senior/projects/${index + 1}`)}
-          project={project}
-        />
-      ))}
+
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-bold text-slate-500">경험 일치도 높은 순</p>
+          <h2
+            className={cn(
+              'mt-0.5 font-extrabold text-[#17212B]',
+              isMobile ? 'text-[18px]' : 'text-xl md:text-2xl',
+            )}
+          >
+            추천 프로젝트 {visibleProjects.length}개
+          </h2>
+        </div>
+        <span className="rounded-full bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+          맞춤 추천
+        </span>
+      </div>
+
+      <div className={cn('flex flex-col', isMobile ? 'gap-3' : 'gap-4')}>
+        {visibleProjects.map((project) => {
+          const projectIndex = projects.findIndex((item) => item.title === project.title);
+          return (
+            <ProjectCard
+              key={project.title}
+              onClick={() => void navigate(`/senior/projects/${projectIndex + 1}`)}
+              project={project}
+            />
+          );
+        })}
+      </div>
     </MobilePage>
   );
 }
 
 export function ProjectDetailPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const similar: Project[] = [
     projects[2]!,
     { company: '케어링크', title: '고객지원 운영 매뉴얼 구축', meta: '주 1회 · 원격 · 2개월' },
@@ -556,33 +607,84 @@ export function ProjectDetailPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/projects"
-      contentClassName="flex flex-col gap-3.5 px-6 pb-5 pt-6"
+      contentClassName={cn(
+        'flex flex-col',
+        isMobile ? 'gap-3 px-4 pb-20 pt-4' : 'mx-auto w-full max-w-5xl gap-5 px-10 py-8',
+      )}
       role="senior"
       title="프로젝트 상세"
     >
-      <p className="text-[13px] font-extrabold text-[#173F3A]">그로우랩</p>
-      <h2 className="text-[23px] font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</h2>
-      <p className="text-[13px] font-medium text-slate-500">주 2회 · 원격 · 3개월</p>
+      {isMobile ? (
+        <section className="rounded-[20px] bg-[#173F3A] p-4 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[13px] font-extrabold text-[#DDEBE7]">그로우랩</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-extrabold text-white">
+              <ShieldCheck aria-hidden="true" className="size-3.5" />
+              경험 일치
+            </span>
+          </div>
+          <h2 className="mt-3 text-[22px] font-extrabold leading-[1.35] tracking-[-0.02em]">
+            신규 서비스 운영 체계 만들기
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {['주 2회', '원격', '3개월'].map((item) => (
+              <span
+                className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-bold text-white/85"
+                key={item}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-[16px] font-extrabold text-[#173F3A]">그로우랩</p>
+          <h2 className="text-[32px] font-extrabold text-[#17212B]">
+            신규 서비스 운영 체계 만들기
+          </h2>
+          <p className="text-[17px] font-medium text-slate-500">주 2회 · 원격 · 3개월</p>
+        </div>
+      )}
+
       <InfoPanel label="프로젝트 내용">
-        운영 기준을 정리하고, 팀이 바로 쓸 수 있는
-        <br />
-        업무 흐름을 만들어 주세요.
+        <p>운영 기준을 정리하고, 팀이 바로 쓸 수 있는 업무 흐름을 만들어 주세요.</p>
       </InfoPanel>
       <InfoPanel label="필요 경험">
-        • 서비스 운영 5년 이상
-        <br />• 프로세스 설계 경험
-        <br />• 문서 작성과 협업 가능
+        <ul className="flex list-none flex-col gap-2">
+          {['서비스 운영 5년 이상', '프로세스 설계 경험', '문서 작성과 협업 가능'].map((item) => (
+            <li className="flex items-start gap-2" key={item}>
+              <span
+                aria-hidden="true"
+                className="mt-[9px] size-1.5 shrink-0 rounded-full bg-[#F06B4F]"
+              />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
       </InfoPanel>
-      <span className="w-fit rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-2 text-xs font-bold text-[#173F3A]">
-        선택한 경험과 잘 맞아요
-      </span>
-      <ActionButton onClick={() => void navigate('/senior/projects/1/proposal')}>
-        제안하기
-      </ActionButton>
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-extrabold text-[#17212B]">비슷한 프로젝트</h3>
+
+      <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] p-3 text-[13px] font-bold leading-5 text-[#173F3A]">
+        <Sparkles aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        선택한 운영 경험과 잘 맞는 프로젝트예요.
+      </div>
+
+      {!isMobile ? (
+        <ActionButton onClick={() => void navigate('/senior/projects/1/proposal')}>
+          제안하기
+        </ActionButton>
+      ) : (
+        <div className="sticky bottom-0 z-10 -mx-4 border-y border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm">
+          <ActionButton onClick={() => void navigate('/senior/projects/1/proposal')}>
+            이 프로젝트에 제안하기
+          </ActionButton>
+        </div>
+      )}
+
+      <div className="mt-1 flex items-center justify-between border-t border-[#E0D9C8] pt-4">
+        <h3 className="text-[17px] font-extrabold text-[#17212B]">비슷한 프로젝트</h3>
         <button
-          className="text-xs font-extrabold text-[#F06B4F]"
+          className="min-h-10 px-1 text-[13px] font-extrabold text-[#F06B4F]"
           onClick={() => void navigate('/senior/projects')}
           type="button"
         >
@@ -596,12 +698,15 @@ export function ProjectDetailPage() {
           project={project}
         />
       ))}
+
     </MobilePage>
   );
 }
 
 export function ProposalPage() {
   const navigate = useNavigate();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const [intro, setIntro] = useState('');
   const [method, setMethod] = useState('');
   const [date, setDate] = useState('');
@@ -613,37 +718,88 @@ export function ProposalPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/projects/1"
-      contentClassName="px-6 pb-[18px] pt-5"
+      contentClassName={cn(isMobile ? 'px-4 pb-0 pt-4' : 'mx-auto w-full max-w-4xl px-10 py-8')}
       role="senior"
       title="제안하기"
     >
-      <form className="flex flex-col gap-3" onSubmit={submit}>
-        <div className="flex flex-col gap-1.5 rounded-xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
-          <span className="text-[11px] font-extrabold text-[#173F3A]">그로우랩</span>
-          <strong className="text-sm font-extrabold text-[#17212B]">신규 서비스 운영 체계 만들기</strong>
+      <form className={cn('flex flex-col', isMobile ? 'gap-4' : 'gap-5')} onSubmit={submit}>
+        <div
+          className={cn(
+            'flex flex-col rounded-[18px] border shadow-xs',
+            isMobile
+              ? 'gap-2 border-[#173F3A] bg-[#173F3A] p-4 text-white'
+              : 'gap-2 border-[#E0D9C8] bg-white p-5',
+          )}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={cn(
+                'text-[12px] font-extrabold',
+                isMobile ? 'text-[#DDEBE7]' : 'text-[#173F3A]',
+              )}
+            >
+              그로우랩
+            </span>
+            <span
+              className={cn(
+                'rounded-full px-2.5 py-1 text-[11px] font-extrabold',
+                isMobile ? 'bg-white/12 text-white' : 'bg-[#DDEBE7] text-[#173F3A]',
+              )}
+            >
+              작성 항목 3개
+            </span>
+          </div>
+          <strong className={cn('font-extrabold', isMobile ? 'text-[17px]' : 'text-[22px]')}>
+            신규 서비스 운영 체계 만들기
+          </strong>
         </div>
-        <p className="text-[13px] font-medium text-slate-500">핵심만 적어도 충분합니다.</p>
-        <TextAreaField
-          label="한 줄 소개"
-          onChange={(e) => setIntro(e.target.value)}
-          placeholder="경험과 강점을 적어주세요"
-          value={intro}
-        />
-        <TextAreaField
-          label="진행 방법"
-          onChange={(e) => setMethod(e.target.value)}
-          placeholder="어떻게 해결할지 적어주세요"
-          value={method}
-        />
+        <div>
+          <p className="text-[15px] font-extrabold text-[#17212B]">경험을 간단히 알려주세요</p>
+          <p className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
+            핵심 경험과 해결 방법만 적어도 충분합니다.
+          </p>
+        </div>
+        <div>
+          <TextAreaField
+            label="한 줄 소개"
+            maxLength={80}
+            onChange={(e) => setIntro(e.target.value)}
+            placeholder="예: 서비스 운영 경험으로 빠르게 기준을 만들 수 있습니다"
+            value={intro}
+          />
+          <p className="mt-1.5 text-right text-[11px] font-bold text-slate-400">
+            {intro.length}/80
+          </p>
+        </div>
+        <div>
+          <TextAreaField
+            label="진행 방법"
+            maxLength={200}
+            onChange={(e) => setMethod(e.target.value)}
+            placeholder="예: 현황 확인 → 운영 기준 정리 → 팀 적용 순서로 진행합니다"
+            value={method}
+          />
+          <p className="mt-1.5 text-right text-[11px] font-bold text-slate-400">
+            {method.length}/200
+          </p>
+        </div>
         <Field
           label="시작 가능일"
           onChange={(e) => setDate(e.target.value)}
           placeholder="예: 8월 20일"
           value={date}
         />
-        <ActionButton disabled={!intro || !method || !date} type="submit">
-          제안 보내기
-        </ActionButton>
+        <div
+          className={cn(
+            isMobile
+              ? 'sticky bottom-0 z-10 -mx-4 border-t border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm'
+              : 'pt-1',
+          )}
+        >
+          <ActionButton disabled={!intro || !method || !date} type="submit">
+            제안 보내기
+          </ActionButton>
+        </div>
       </form>
     </MobilePage>
   );
