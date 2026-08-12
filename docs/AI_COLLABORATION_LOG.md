@@ -16,6 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] 프로젝트 상세 패널 모바일 레이아웃(MobileDetailRow) 최적화 및 재배포
+- **작업자**: Codex & Antigravity (Gemini)
+- **작업 내용**:
+  - **모바일 상세 패널 UI 최적화**: `JobDatabasePage.tsx` 내 모바일 전용 `MobileDetailRow` 및 `DetailBulletList` 컴포넌트를 추가하여 프로젝트 해결 과제, 목표, 핵심 업무, 추천 인재, 인터뷰 포인트를 깔끔한 아코디언/목록 구조로 개선.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
+  - **배포**: GitHub `BASIC` 브랜치 푸시 완료 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 재배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 모바일 프로젝트 카드 UI 및 폼 필드 가독성 보정 및 배포
 - **작업자**: Codex & Antigravity (Gemini)
 - **작업 내용**:
