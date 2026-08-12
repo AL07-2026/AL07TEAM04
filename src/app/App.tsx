@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router/dom';
 
 import { BasicProfilePage } from '@/app/BasicProfilePage';
 import { CompanyInfoPage } from '@/app/CompanyInfoPage';
+import { JobDatabasePage } from '@/app/JobDatabasePage';
 import { LoginPage } from '@/app/LoginPage';
 import { RoleSelectionPage } from '@/app/RoleSelectionPage';
 import { SignupPage } from '@/app/SignupPage';
@@ -49,6 +50,8 @@ function createAppRouter() {
     { path: '/senior/proposal-complete', Component: ProposalCompletePage },
     { path: '/senior/proposals', Component: MyProposalsPage },
     { path: '/senior/proposals/:proposalId', Component: MyProposalDetailPage },
+    { path: '/senior/project-database', element: <JobDatabasePage role="senior" /> },
+    { path: '/senior/job-database', element: <JobDatabasePage role="senior" /> },
     { path: '/senior/profile', Component: SeniorProfilePage },
     { path: '/company', Component: CompanyHomePage },
     { path: '/company/projects', Component: ProjectManagementPage },
@@ -56,6 +59,8 @@ function createAppRouter() {
     { path: '/company/project-complete', Component: ProjectCompletePage },
     { path: '/company/proposals', Component: ReceivedProposalsPage },
     { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },
+    { path: '/company/project-database', element: <JobDatabasePage role="company" /> },
+    { path: '/company/job-database', element: <JobDatabasePage role="company" /> },
     { path: '/company/profile', Component: CompanyProfilePage },
     { path: '*', element: <Navigate replace to="/login" /> },
   ]);

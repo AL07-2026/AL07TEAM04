@@ -16,6 +16,24 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-12] '공고 DB' 용어 및 UI 구성을 '프로젝트 DB'로 전면 표준화 및 배포
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **'공고 DB' → '프로젝트 DB' 용어 표준화**:
+    - `JobDatabasePage.tsx`, `Ui.tsx` 네비게이션 탭, 페이지 타이틀, 뱃지, 설명 카피 및 메트릭 라벨의 "공고 DB" / "공고" 용어를 모두 "프로젝트 DB" / "프로젝트"로 전면 변경 적용.
+  - **라우팅 및 네비게이션 연결**:
+    - 인재/기업 공통 상단/하단 네비게이션에 `프로젝트 DB` (`/senior/project-database`, `/company/project-database`) 탭 탑재.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+  - **배포**: GitHub `BASIC` 브랜치 업로드 및 Firebase Hosting (`https://al07team04-bdfcd.web.app`) 최종 라이브 배포 완료.
+- **변경 파일**:
+  - [NEW] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [NEW] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [NEW] [`docs/job-database-schema.md`](file:///c:/AL07TEAM04/docs/job-database-schema.md)
+  - [MODIFY] [`src/app/App.tsx`](file:///c:/AL07TEAM04/src/app/App.tsx)
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 기존 안정 버전 UI 복원 (공고 DB 미포함) 및 Firebase Hosting 배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
