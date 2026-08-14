@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 인재 프로필 '📍 희망 근무 지역' 선택 및 개인화 추천 엔진 가중치 연동 (`profileService.ts`, `recommendationEngine.ts`, `BasicProfilePage.tsx`, `JobDatabasePage.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **'희망 근무 지역' 데이터 모델 및 UI 탑재**: 인재 기본정보(`BasicProfilePage.tsx`)에 `📍 희망 근무 지역` (전국, 서울, 경기, 인천, 부산, 대구, 대전, 광주, 강원, 제주) 선택/수정 기능 구축 및 뱃지 표시.
+  - **추천 엔진 위치 가중치 연동 (`recommendationEngine.ts`)**: 공고 위치와 인재의 희망 근무 지역이 일치할 경우 추천 점수 가중치 부여 및 `희망 근무 지역 서울과 공고 위치(서울 마포구)가 일치합니다` 추천 매칭 사유 생성.
+  - **추천 필터 뱃지 표출 (`JobDatabasePage.tsx`)**: 공고 목록 추천 상단 조건 바에 `📍 희망지역: [서울]` 조건 뱃지가 즉시 표출되어 가독성 강화.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`src/services/recommendationEngine.test.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.test.ts)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 적합도 90점 이상 최우선 배지 컬러 선명한 주황색(#F06B4F) 시각적 개선 (`fitScoreTone.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
