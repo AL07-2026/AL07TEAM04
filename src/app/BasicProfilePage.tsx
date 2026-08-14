@@ -27,6 +27,7 @@ function createEmptyProfile(email = ''): ProfileForm {
     desiredCategory: undefined,
     desiredCategory2: undefined,
     desiredCategory3: undefined,
+    desiredLocation: '전국',
     field: '',
     keySkills: '',
     period: '',
@@ -271,6 +272,7 @@ export function BasicProfilePage() {
                     }
                   />
                 ) : null}
+                <ProfileInfoRow label="희망 근무지역" value={form.desiredLocation || '전국 (전체)'} />
                 <ProfileInfoRow label="경력 분야" value={form.field} />
                 <ProfileInfoRow label="경력 기간" value={form.period} />
                 <ProfileInfoRow
@@ -290,9 +292,14 @@ export function BasicProfilePage() {
             ) : (
               <>
                 <div className="flex flex-col gap-2 rounded-2xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-4 shadow-2xs">
-                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
-                    🎯 희망 직종 (1차 · 2차 · 3차 추천 순위)
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                      🎯 희망 직종 (1차 · 2차 · 3차 순위) 및 희망 지역
+                    </span>
+                    <span className="text-xs font-extrabold text-[#173F3A] bg-white border border-[#BBD5CE] px-2.5 py-0.5 rounded-full shadow-2xs">
+                      📍 희망지역: {form.desiredLocation || '전국'}
+                    </span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
                       <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
@@ -505,6 +512,30 @@ export function BasicProfilePage() {
                     <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
                     <option value="security">보안/리스크 (컴플라이언스)</option>
                     <option value="growth">성장/그로스 (세일즈/수익화)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#E0D9C8]">
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  <span className="text-[12px] font-extrabold text-[#173F3A]">
+                    📍 희망 근무 지역 (선택 / 기본값: 전국)
+                  </span>
+                  <select
+                    value={form.desiredLocation || '전국'}
+                    onChange={(e) => update('desiredLocation')(e.target.value)}
+                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                  >
+                    <option value="전국">전국 (전체 지역 무관)</option>
+                    <option value="서울">서울 특별시</option>
+                    <option value="경기">경기도</option>
+                    <option value="인천">인천 광역시</option>
+                    <option value="부산">부산 / 경남</option>
+                    <option value="대구">대구 / 경북</option>
+                    <option value="대전">대전 / 충청</option>
+                    <option value="광주">광주 / 전라</option>
+                    <option value="강원">강원도</option>
+                    <option value="제주">제주 특별자치도</option>
                   </select>
                 </div>
               </div>

@@ -116,4 +116,18 @@ describe('profile-based recommendations', () => {
       }),
     ).toEqual(['개발자', '소프트웨어', '엔지니어']);
   });
+
+  it('희망 근무 지역에 따라 적합도 점수와 사유를 반영한다', () => {
+    const seoulPosting = createPosting('seoul', 'dev-engineering', '서울 개발 리드');
+    seoulPosting.location = '서울 마포구';
+
+    const busanPosting = createPosting('busan', 'dev-engineering', '부산 개발 리드');
+    busanPosting.location = '부산 해운대구';
+
+    const matchSeoul = calculatePersonalizedMatch(seoulPosting, { ...profile, desiredLocation: '서울' });
+    const matchBusan = calculatePersonalizedMatch(busanPosting, { ...profile, desiredLocation: '서울' });
+
+    expect(matchSeoul.personalizedScore).toBeGreaterThan(matchBusan.personalizedScore);
+    expect(matchSeoul.matchReasons.some((r) => r.includes('희망 근무 지역 서울'))).toBe(true);
+  });
 });

@@ -152,6 +152,21 @@ export function calculatePersonalizedMatch(
     matchReasons.push(`입력한 경력 ${experienceYears}년을 반영했습니다.`);
   }
 
+  const desiredLocation = activeProfile.desiredLocation?.trim();
+  if (desiredLocation && desiredLocation !== '전국' && desiredLocation !== '전체') {
+    const postingLoc = posting.location || '';
+    const locKeyword = desiredLocation.replace(/(특별시|광역시|특별자치도|도|시)$/, '');
+    if (postingLoc.includes(locKeyword) || postingLoc.includes(desiredLocation)) {
+      baseScore += 2;
+      matchReasons.push(`희망 근무 지역 ${desiredLocation}과 공고 위치(${postingLoc})가 일치합니다.`);
+    } else {
+      baseScore -= 3;
+      matchReasons.push(`공고 위치(${postingLoc})가 희망 지역(${desiredLocation})과 다릅니다.`);
+    }
+  } else if (desiredLocation === '전국' || desiredLocation === '전체') {
+    matchReasons.push('전국 희망 근무 지역 조건이 적용되었습니다.');
+  }
+
   return {
     personalizedScore: Math.min(99, Math.max(0, baseScore)),
     matchReasons,

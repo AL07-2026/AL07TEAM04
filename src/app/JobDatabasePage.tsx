@@ -1183,6 +1183,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     경력 {seniorProfile.period}
                   </span>
                 ) : null}
+                <span className="rounded-full border border-[#BBD5CE] bg-white px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A]">
+                  📍 희망지역: {seniorProfile?.desiredLocation || '전국'}
+                </span>
               </div>
             ) : (
               <p className="mt-1 text-[13px] font-medium text-slate-600">

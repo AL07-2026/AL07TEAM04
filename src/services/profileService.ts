@@ -12,6 +12,7 @@ export type SeniorProfileData = {
   desiredCategory?: string;
   desiredCategory2?: string;
   desiredCategory3?: string;
+  desiredLocation?: string;
   email: string;
   experience: string;
   field: string;
@@ -54,6 +55,7 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     desiredCategory: stringValue(value.desiredCategory) || undefined,
     desiredCategory2: stringValue(value.desiredCategory2) || undefined,
     desiredCategory3: stringValue(value.desiredCategory3) || undefined,
+    desiredLocation: stringValue(value.desiredLocation) || undefined,
     field,
     period: stringValue(value.period),
     experience,
