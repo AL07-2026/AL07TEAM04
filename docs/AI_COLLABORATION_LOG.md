@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 추천 공고 매칭 엔진 폴백 알고리즘 보완 (`recommendationEngine.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **맞춤 추천 공고 상시 제공 폴백 구축 (`recommendationEngine.ts`)**: 구직자가 선택한 특정 희망 직종(예: 보안/리스크 등)이 실시간 API 30개 수신 결과 목록에 없는 경우, 추천 목록이 빈 화면(`0개`)으로 표출되던 문제를 보완.
+  - **적합도 순위 기반 자동 폴백**: 선택한 특정 카테고리 공고가 실시간 피드에 없는 경우에도 사용자의 근무 지역, 경력 연수, 스킬 키워드 기반으로 랭킹된 가장 적합한 추천 공고 Top 4가 항상 끊김 없이 안정적으로 추천 노출되도록 개선.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 홈 추천 리스트 '해결 과제' 바인딩 버그 수정 및 브라우저 CORS 우회 파이프라인 구축 (`FlowPages.tsx`, `worknetService.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
