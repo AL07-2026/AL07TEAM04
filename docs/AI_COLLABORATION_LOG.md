@@ -16,6 +16,37 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 인재 홈 추천 영역 중복 전체 보기 버튼 제거
+- **작업자**: Codex
+- **작업 내용**:
+  - 추천 프로젝트 제목 행의 `전체 보기 →` 동선과 중복되던 하단 `내 정보 기반 추천 공고 전체 보기 →` 버튼을 제거.
+  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 55개 테스트, Vite production build). 기존 대형 번들 경고는 유지.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+### [2026-08-14] 내 정보 실저장값 기반 고용24 프로젝트 추천 일원화
+- **작업자**: Codex
+- **작업 내용**:
+  - **예시 프로필 제거**: 추천 엔진과 인재 기본정보 화면에 남아 있던 이동욱·12년·서비스 운영 예시값을 제거. 신규 계정은 실제 필수 정보를 저장하기 전에 임의 공고를 받지 않음.
+  - **계정별 프로필 해결**: 로컬 저장소를 회원 UID별로 읽고, 없을 때만 Firestore `senior_profiles/{uid}`를 조회하여 같은 계정의 저장값을 화면에 반영.
+  - **내 정보 기반 조회·선별**: 1·2·3순위 희망 직종을 고용24 다중 키워드로 변환하고 입력 경력 기간을 요청 경력 월 조건에 반영. 응답 공고는 선택한 직종 1·2·3순위와 일치하는 항목만 남기고, 경력 분야·대표 경험·핵심 역량·해결 성과로 점수를 보정.
+  - **홈·목록 동일 기준 적용**: 인재 홈 추천 행과 프로젝트 목록이 같은 프로필 해결·검색·정렬 로직을 사용. 추천 조건을 칩으로 명시하고 정보 미입력 시 `내 정보 입력하기` 흐름을 제공.
+  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 55개 테스트, Vite production build). 추천 프로필·순위·중복 직종·고용24 검색 파라미터 테스트를 추가. 기존 대형 번들 경고는 유지.
+- **변경 파일**:
+  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [NEW] [`src/services/recommendationEngine.test.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.test.ts)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/services/worknetService.test.ts`](file:///c:/AL07TEAM04/src/services/worknetService.test.ts)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+- **전달 사항 / 다음 할 일**:
+  - 실시간 공고를 표시하려면 고용24 채용정보 API 사용 승인을 받은 기관·기업용 `WORKNET_JOB_API_KEY`가 필요함.
+
 ### [2026-08-14] 고용노동부 워크넷 OpenAPI 인증키 VITE_ 환경변수 설정 및 Firebase Hosting 라이브 연동 완료 (`.env`, `worknetService.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

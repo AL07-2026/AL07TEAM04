@@ -593,9 +593,6 @@ export function SeniorHomePage() {
         </div>
       </div>
 
-      <ActionButton onClick={() => void navigate('/senior/projects')}>
-        내 정보 기반 추천 공고 전체 보기 →
-      </ActionButton>
     </MobilePage>
   );
 }
