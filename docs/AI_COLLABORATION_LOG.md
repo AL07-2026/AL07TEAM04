@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 첫 접속 시 추천 공고 즉시 표출 구조로 전면 개선 (리프레시 필요 현상 완전 차단) (`FlowPages.tsx`, `recommendationEngine.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **초기 로딩 시 조건 분기 문제 수정 (`FlowPages.tsx`)**: 최초 페이지 접속 시 로그인 유저 프로필 비동기 로딩이 완료되기 전 `hasProfileRecommendationCriteria`가 `false`를 반환하여 공고 API 조회를 건너뛰고 `현재 추천 프로젝트 공고가 없습니다` 안내 상자가 표출된 후, 새로고침을 해야 공고가 뜨던 현상을 완전 차단.
+  - **무조건적 공고 피드 즉시 로드**: 프로필 로딩 상태와 상관없이 첫 진입 시 워크넷 공고 피드를 즉시 호출하고, 프로필이 로드되는 대로 실시간 랭킹을 자동 재반영하는 구조로 변경.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 추천 공고 로딩 스켈레톤 UI 및 스피너 탑재 (`FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
