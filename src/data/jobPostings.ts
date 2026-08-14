@@ -18,6 +18,7 @@ export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing';
 
 export type JobPosting = {
   id: string;
+  ownerId?: string;
   companyName: string;
   industry: string;
   companySize: string;
@@ -47,6 +48,12 @@ export type JobPosting = {
   interviewFocus: string[];
   seniorFitScore: number;
   postedAt: string;
+  source?: 'internal' | 'worknet';
+  sourceUrl?: string;
+  sourceProvider?: string;
+  workSchedule?: string;
+  deadlineLabel?: string;
+  registeredLabel?: string;
 };
 
 export const categoryLabels: Record<ProjectCategory, string> = {
@@ -84,8 +91,8 @@ export const employmentTypeLabels: Record<EmploymentType, string> = {
 
 export const hiringStageLabels: Record<HiringStage, string> = {
   open: '모집 중',
-  screening: '서류 검토',
-  interviewing: '인터뷰 중',
+  screening: '지원서 검토 중',
+  interviewing: '담당자 인터뷰 중',
   closing: '마감 임박',
 };
 

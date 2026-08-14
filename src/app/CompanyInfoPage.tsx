@@ -5,15 +5,15 @@ import { useNavigate } from 'react-router';
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
-import { getCompanyProfile, saveCompanyProfile } from '@/services/profileService';
+import {
+  getCompanyProfile,
+  getLocalCompanyProfile,
+  saveCompanyProfile,
+  saveLocalCompanyProfile,
+  type CompanyProfileData,
+} from '@/services/profileService';
 
-type CompanyForm = {
-  companyAddress: string;
-  companyName: string;
-  email: string;
-  managerName: string;
-  phone: string;
-};
+type CompanyForm = CompanyProfileData;
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
@@ -21,16 +21,8 @@ export function CompanyInfoPage() {
   const { user, signOut } = useAuth();
 
   const [form, setForm] = useState<CompanyForm>(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocal = localStorage.getItem('eojob_company_profile');
-      if (savedLocal) {
-        try {
-          return JSON.parse(savedLocal) as CompanyForm;
-        } catch {
-          // ignore
-        }
-      }
-    }
+    const savedLocal = getLocalCompanyProfile(user?.uid);
+    if (savedLocal) return savedLocal;
     return {
       companyName: '(주) 이어잡',
       companyAddress: '서울특별시 강남구 테헤란로 123',
@@ -48,20 +40,16 @@ export function CompanyInfoPage() {
     void (async () => {
       const data = await getCompanyProfile(user.uid);
       if (data) {
-        const loadedForm = {
-          companyName: data.companyName || '(주) 이어잡',
-          companyAddress: data.description || '서울특별시 강남구 테헤란로 123',
-          managerName: user.name || '김담당',
-          email: data.contactEmail || user.email || 'hr@eojob.com',
-          phone: data.contactPhone || '02-1234-5678',
+        const loadedForm: CompanyForm = {
+          ...data,
+          managerName: data.managerName || user.name || '김담당',
+          email: data.email || user.email || 'hr@eojob.com',
         };
         setForm(loadedForm);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('eojob_company_profile', JSON.stringify(loadedForm));
-        }
+        saveLocalCompanyProfile(loadedForm, user.uid);
       }
     })();
-  }, [user]);
+  }, [user?.email, user?.name, user?.uid]);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,21 +57,17 @@ export function CompanyInfoPage() {
       setMessage('회사명, 담당자명, 이메일은 필수 입력 사항입니다.');
       return;
     }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('eojob_company_profile', JSON.stringify(form));
-    }
+    saveLocalCompanyProfile(form, user?.uid);
     if (user?.uid) {
       try {
-        await saveCompanyProfile(user.uid, {
-          companyName: form.companyName,
-          industry: 'B2B Services',
-          companySize: '50-100명',
-          description: form.companyAddress,
-          contactEmail: form.email,
-          contactPhone: form.phone,
-        });
+        await saveCompanyProfile(user.uid, form);
       } catch (err) {
         console.error('Failed to save company profile to Firestore:', err);
+        setIsEditing(false);
+        setMessage(
+          '기기에는 저장했지만 서버 저장을 확인하지 못했습니다. 연결 후 다시 저장해 주세요.',
+        );
+        return;
       }
     }
     setIsEditing(false);
@@ -108,7 +92,8 @@ export function CompanyInfoPage() {
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
-          !isMobile && 'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
+          !isMobile &&
+            'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
         )}
       >
         {/* Account Header Badge & Logout */}
@@ -160,7 +145,9 @@ export function CompanyInfoPage() {
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
+                <h2
+                  className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}
+                >
                   저장된 회사 정보
                 </h2>
                 <p className="text-xs font-medium text-slate-500 mt-0.5">
@@ -179,27 +166,37 @@ export function CompanyInfoPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">회사명</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  회사명
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.companyName}</span>
               </div>
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">담당자명</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  담당자명
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.managerName}</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">회사 주소</span>
+              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                회사 주소
+              </span>
               <span className="text-sm font-extrabold text-[#17212B]">{form.companyAddress}</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">업무 이메일</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  업무 이메일
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.email}</span>
               </div>
               <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">담당자 연락처</span>
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  담당자 연락처
+                </span>
                 <span className="text-sm font-extrabold text-[#17212B]">{form.phone}</span>
               </div>
             </div>
@@ -221,14 +218,23 @@ export function CompanyInfoPage() {
           <form className="flex flex-col gap-4" onSubmit={handleSave}>
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
+                <h2
+                  className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}
+                >
                   회사 정보 수정
                 </h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">수정 후 [변경사항 저장하기]를 눌러주세요.</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  수정 후 [변경사항 저장하기]를 눌러주세요.
+                </p>
               </div>
             </div>
 
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 label="회사명"
                 onChange={(e) => setForm((curr) => ({ ...curr, companyName: e.target.value }))}
@@ -250,7 +256,12 @@ export function CompanyInfoPage() {
               value={form.companyAddress}
             />
 
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 label="업무 이메일"
                 onChange={(e) => setForm((curr) => ({ ...curr, email: e.target.value }))}

@@ -16,6 +16,74 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 고용노동부 워크넷 OpenAPI 인증키 VITE_ 환경변수 설정 및 Firebase Hosting 라이브 연동 완료 (`.env`, `worknetService.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **워크넷 OpenAPI 키 6종 VITE_ 전용 환경변수 등록 (`.env`, `worknetService.ts`)**: 고용노동부/한국고용정보원 채용, 훈련, 직무, 정보, 코드, 강소기업 API 키 6종을 Vite 번들러 접두사(`VITE_WORKNET_JOB_API_KEY` 등)로 `.env`에 완벽 설정하고, `worknetService.ts`에서 우선 감지하도록 연동.
+  - **Firebase Hosting 라이브 번들링 완료**: 빌드 과정에서 워크넷 API 인증키가 클라이언트 번들에 자동으로 바인딩되어 호스팅 웹사이트([https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app))에서도 워크넷 채용 API 연동이 바로 작동하도록 조치.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 55개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`.env`](file:///c:/AL07TEAM04/.env)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
+### [2026-08-14] 적합도 점수 박스 브랜드 컬러 3단계 규칙 통일
+- **작업자**: Codex
+- **작업 내용**:
+  - **공통 적합도 컬러 토큰 정의**: `90점 이상`은 브랜드 딥그린(매우 높음), `80점 이상`은 코랄(높음), `70점 이상`은 샌드 뉴트럴(보통), `70점 미만`은 슬레이트 중립색(참고)으로 구분하는 공통 함수를 추가.
+  - **색상 외 정보 병행**: 접근성을 위해 각 박스에 점수뿐 아니라 `90점 이상·매우 높음`, `80점 이상·높음`, `70점 이상·보통` 범위 라벨과 스크린리더용 설명을 함께 제공.
+  - **화면 전체 통일**: 프로젝트 목록 카드, 모바일·PC 상세 패널, 적합도 분석 배지, 지원 확인 모달, 인재 홈 추천 행, 내 지원 목록, 회사 제안 상세 배지와 게이지에 동일 규칙을 적용.
+  - **개인화 점수 일치화**: 인재 홈 추천 행이 공고 기본값이 아니라 목록과 동일한 개인화 추천 점수를 사용하도록 수정해 화면 간 점수와 컬러 불일치를 제거.
+  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 49개 테스트, Vite production build). 경계값 90/80/70점 포함 신규 컬러 규칙 테스트 7개 추가. 기존 대형 번들 경고는 유지.
+- **변경 파일**:
+  - [NEW] [`src/lib/fitScoreTone.ts`](file:///c:/AL07TEAM04/src/lib/fitScoreTone.ts)
+  - [NEW] [`src/lib/fitScoreTone.test.ts`](file:///c:/AL07TEAM04/src/lib/fitScoreTone.test.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+### [2026-08-14] 시니어 프로젝트 목록 고용24(워크넷) 실데이터 전용화 및 공고 상태 기준 정리
+- **작업자**: Codex
+- **작업 내용**:
+  - **시니어 목록 데이터 출처 단일화**: 인재 홈 추천 목록과 시니어 프로젝트 목록에서 Firestore 등록 프로젝트·정적 예시·워크넷 형태의 가공 목업을 제거하고 고용24 채용정보 Open API 응답만 사용하도록 변경. API 오류 시 가짜 공고 대신 원인 안내와 다시 불러오기 UI를 표시.
+  - **공식 XML 규격 반영**: 고용24 채용정보 목록 API의 XML 응답을 파싱해 회사명, 공고 제목, 업종, 지역, 임금, 경력, 근무 일정, 등록일, 마감일, 원문 URL을 그대로 변환. 기존의 임의 `40+` 제목, 인증 기업 표기, 가상 임금·마감일·근무 형태·프로젝트 과제를 삭제.
+  - **공고 상태 기준 정리**: 시니어 고용24 목록에서는 `모집 중`과 `마감 임박`만 제공하며, 마감일이 7일 이내인 공고만 `마감 임박`으로 계산. `지원서 검토 중`과 `담당자 인터뷰 중`은 회사 직접 등록 프로젝트의 내부 지원 관리 단계로만 분리.
+  - **출처와 계산값 구분**: 고용24 원문 공고 링크를 추가하고, Open API 원문 필드와 이어잡의 자동 직무 분류·추천 점수를 명시적으로 구분. 워크넷이 제공하지 않는 원격/하이브리드 필터와 표시를 시니어 목록에서 제거.
+  - **환경 및 오류 처리**: `WORKNET_JOB_API_KEY`만 클라이언트 빌드 환경에서 읽도록 제한하고 기관·기업 승인 키 요구사항을 `.env.example`에 문서화. 현재 로컬 키는 채용정보 API 사용 권한이 없어 실제 환경에서는 승인 키 교체 전까지 명확한 설정 오류가 표시됨.
+  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 42개 테스트, Vite production build). 신규 워크넷 XML/상태/변환 테스트 4개 포함. 기존 대형 번들 경고는 유지.
+- **변경 파일**:
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [NEW] [`src/services/worknetService.test.ts`](file:///c:/AL07TEAM04/src/services/worknetService.test.ts)
+  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`vite.config.ts`](file:///c:/AL07TEAM04/vite.config.ts)
+  - [MODIFY] [`.env.example`](file:///c:/AL07TEAM04/.env.example)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+- **전달 사항 / 다음 할 일**:
+  - 고용24 채용정보 API 사용 승인을 받은 기관·기업용 인증키를 `WORKNET_JOB_API_KEY`에 설정해야 실시간 공고가 표시됩니다. 개인회원 키는 해당 API에서 거부됩니다.
+
+### [2026-08-14] 대표 경험 카드 실데이터화 및 지원 직종 맞춤 AI 인터뷰 재진행 흐름 완성
+- **작업자**: Codex
+- **작업 내용**:
+  - **대표 경험 카드 실데이터 전환**: `SeniorProfilePage`의 고정 예시 문구를 제거하고 사용자별 로컬 저장소와 Firestore의 최신 AI 인터뷰 카드(문제·역할·실행·결과·직종·저장일)를 표시하도록 변경. 인터뷰 미진행 시 빈 상태와 시작 CTA를 제공.
+  - **실제 답변 기반 카드 생성**: AI 인터뷰를 4개 구조화 질문으로 재구성하고 사용자가 음성/텍스트로 입력한 답변만 경험 카드에 반영. 지원 프로젝트에서 진입한 경우 해당 프로젝트 직종과 제목을 인터뷰 기준으로 자동 전달.
+  - **지원 직종 적합성 검증**: 지원 모달에서 저장 카드 직종과 지원 직종을 `직종 적합 / 직종 불일치 / 확인 필요`로 판정. 불일치·미확인 상태에서는 최종 제출을 차단하고 해당 직종 맞춤 재인터뷰로 연결.
+  - **지원 흐름 복원 및 정리**: 인터뷰 이동 전 첨부파일(최대 2개)과 전달 메시지를 보존하고, 인터뷰 완료 또는 중단 후 지원 모달로 돌아왔을 때 복원. 지원 취소 시 임시 상태를 정리.
+  - **홈 지표 기준 보정**: 프로필 입력만으로 경험 카드가 완료된 것으로 계산하지 않고 실제 저장된 인터뷰 카드가 있을 때만 경험 카드 수와 관련 적합도 지표를 표시.
+  - **검증**: `npm run validate` 통과 (typecheck, eslint, Vitest 38개 테스트, Vite production build). 번들 크기 경고는 기존과 동일하게 남아 있음.
+- **변경 파일**:
+  - [MODIFY] [`src/lib/applicationFlow.ts`](file:///c:/AL07TEAM04/src/lib/applicationFlow.ts)
+  - [NEW] [`src/lib/applicationFlow.test.ts`](file:///c:/AL07TEAM04/src/lib/applicationFlow.test.ts)
+  - [MODIFY] [`src/services/interviewService.ts`](file:///c:/AL07TEAM04/src/services/interviewService.ts)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+- **전달 사항 / 다음 할 일**:
+  - Firestore에 저장된 구형 경험 카드 중 직종 메타데이터가 없는 데이터는 카드 본문 키워드로 판정하며, 불명확하면 지원 전 재인터뷰를 요구합니다.
+
 ### [2026-08-14] 로그인/회원가입 버튼 높이 `인재로 시작` 탭 버튼 높이(`h-11` = 44px)와 일치화 통일 (`LoginPage.tsx`, `SignupPage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

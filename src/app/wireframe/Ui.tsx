@@ -76,11 +76,7 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return (
-    <ViewportContext.Provider value={{ mode, setMode }}>
-      {children}
-    </ViewportContext.Provider>
-  );
+  return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
 }
 
 const roleStyles = {
@@ -227,8 +223,10 @@ export function MobilePage({
                       className="md:hidden size-[17px] object-contain"
                     />
                   </button>
-                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-xs translate-y-[0.5px]">|</span>
-                  <h1 className="text-[16px] md:text-[18px] font-extrabold tracking-tight text-[#17212B] translate-y-[1px]">
+                  <span className="hidden translate-y-[10%] text-xs font-light text-slate-300 select-none md:inline-block">
+                    |
+                  </span>
+                  <h1 className="translate-y-[10%] text-[16px] font-extrabold tracking-tight text-[#17212B] md:text-[18px]">
                     {title}
                   </h1>
                 </div>
@@ -309,8 +307,10 @@ export function MobilePage({
                       className="md:hidden size-[20px] object-contain"
                     />
                   </button>
-                  <span className="hidden md:inline-block text-slate-300 font-light select-none text-sm">|</span>
-                  <h1 className="text-base md:text-lg font-extrabold tracking-tight text-[#17212B]">
+                  <span className="hidden translate-y-[10%] text-sm font-light text-slate-300 select-none md:inline-block">
+                    |
+                  </span>
+                  <h1 className="translate-y-[10%] text-base font-extrabold tracking-tight text-[#17212B] md:text-lg">
                     {title}
                   </h1>
                 </div>
@@ -334,7 +334,9 @@ export function MobilePage({
                             : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                         )}
                       >
-                        <IconComponent className={cn('size-4', selected ? 'text-white' : 'text-slate-500')} />
+                        <IconComponent
+                          className={cn('size-4', selected ? 'text-white' : 'text-slate-500')}
+                        />
                         <span>{item.label}</span>
                       </button>
                     );
@@ -428,9 +430,7 @@ function BottomNav({
             aria-current={selected ? 'page' : undefined}
             className={cn(
               'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition',
-              selected
-                ? 'font-extrabold text-[#F06B4F]'
-                : 'text-slate-400 hover:text-[#17212B]',
+              selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
             )}
             key={item.id}
             onClick={() => void navigate(item.path)}
@@ -455,9 +455,7 @@ export function StepProgressBar({ current, total }: { current: number; total: nu
   return (
     <div className="flex flex-col items-center gap-1.5 py-1">
       <div className="flex items-center gap-1.5">
-        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">
-          경험 등록
-        </span>
+        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">경험 등록</span>
         <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
           {current}/{total} 단계
         </span>
@@ -657,13 +655,55 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
   );
 }
 
-export function SummaryCard({ label, value }: { label: string; role?: Role; value: string }) {
+export function SummaryCard({
+  caption,
+  label,
+  value,
+}: {
+  caption?: string;
+  label: string;
+  role?: Role;
+  value: string;
+}) {
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
+
   return (
-    <div className="flex h-[108px] md:h-34 flex-1 flex-col justify-between rounded-[20px] border border-[#E0D9C8] bg-white p-4 md:p-6 shadow-xs">
-      <span className="text-[13px] md:text-[17px] font-bold text-[#4B5768]">{label}</span>
-      <strong className="text-[26px] md:text-[38px] font-extrabold tracking-tight text-[#173F3A]">
-        {value}
-      </strong>
+    <div
+      className={cn(
+        'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs',
+        isMobile
+          ? caption
+            ? 'min-h-[126px] p-4'
+            : 'h-[108px] p-4'
+          : caption
+            ? 'min-h-[152px] p-6'
+            : 'h-[136px] p-6',
+      )}
+    >
+      <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13px]' : 'text-[17px]')}>
+        {label}
+      </span>
+      <div className="mt-auto">
+        <strong
+          className={cn(
+            'block font-extrabold tracking-tight text-[#173F3A]',
+            isMobile ? 'text-[26px]' : 'text-[38px]',
+          )}
+        >
+          {value}
+        </strong>
+        {caption ? (
+          <span
+            className={cn(
+              'mt-1 block font-semibold leading-5 text-slate-400',
+              isMobile ? 'text-[11px]' : 'text-[13px]',
+            )}
+          >
+            {caption}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -680,10 +720,7 @@ export function InfoPanel({ children, label }: { children: ReactNode; label: str
       )}
     >
       <strong
-        className={cn(
-          'font-extrabold text-[#17212B]',
-          isMobile ? 'text-[14px]' : 'text-[18px]',
-        )}
+        className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[14px]' : 'text-[18px]')}
       >
         {label}
       </strong>

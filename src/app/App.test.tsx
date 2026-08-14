@@ -12,7 +12,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/senior', '인재 홈'],
     ['/senior/experience', '경험 선택'],
     ['/senior/experience/interview', 'AI 경험 인터뷰'],
-    ['/senior/experience/card', '경험 카드가 완성됐어요'],
+    ['/senior/experience/card', '인터뷰 결과를 먼저 만들어 주세요'],
     ['/senior/projects', '프로젝트 목록'],
     ['/senior/projects/1', '프로젝트 상세'],
     ['/senior/projects/1/proposal', '제안하기'],
@@ -31,24 +31,52 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
   });
 
+  it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
+    sessionStorage.clear();
+    window.history.pushState({}, '', '/senior/experience/interview');
+    render(<App />);
+
+    const answerInput = await screen.findByLabelText('현재 인터뷰 답변');
+    for (const answer of [
+      '고객 문의 기준이 없어 응답이 지연되었습니다.',
+      '서비스 운영 책임자로 개선을 주도했습니다.',
+      '문의 유형을 분석하고 처리 절차를 표준화했습니다.',
+      '평균 응답 시간을 30% 줄였습니다.',
+    ]) {
+      fireEvent.change(answerInput, { target: { value: answer } });
+      fireEvent.click(screen.getByRole('button', { name: '입력' }));
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인 →' }));
+    expect(
+      await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('고객 문의 기준이 없어 응답이 지연되었습니다.')).toBeInTheDocument();
+    expect(screen.getByText('평균 응답 시간을 30% 줄였습니다.')).toBeInTheDocument();
+  });
+
   it('회원가입 후 이메일 인증 및 인재 기본정보 입력으로 바로 이동한다', async () => {
     window.history.pushState({}, '', '/signup?role=senior');
     render(<App />);
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '김인재' } });
     const testEmail = `senior-${Date.now()}@example.com`;
-    fireEvent.change(screen.getByLabelText('이메일 (인증용 개인메일)'), { target: { value: testEmail } });
+    fireEvent.change(screen.getByLabelText('이메일 (인증용 개인메일)'), {
+      target: { value: testEmail },
+    });
     fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
     fireEvent.change(screen.getByLabelText('비밀번호 확인'), { target: { value: 'password123' } });
     fireEvent.click(screen.getByRole('checkbox'));
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /인증 메일 받기/ }));
     });
-    expect(await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' }, { timeout: 5000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' }, { timeout: 5000 }),
+    ).toBeInTheDocument();
 
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
     });
-    expect(await screen.findByRole('heading', { name: '저장된 내 경험 정보' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
   });
 
   it('프로젝트 제안을 작성하고 완료 화면으로 이동한다', async () => {
@@ -79,6 +107,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
       fireEvent.change(screen.getByLabelText(label), { target: { value } });
     fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록하기' }));
     expect(await screen.findByRole('heading', { name: '등록 완료' })).toBeInTheDocument();
+    expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
     expect(window.location.pathname).toBe('/company/project-complete');
   });
 
@@ -94,16 +123,25 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it('인재 기본정보를 수정하고 정상적으로 저장되는지 확인한다', async () => {
     window.history.pushState({}, '', '/basic-profile');
     render(<App />);
-    expect(await screen.findByRole('heading', { name: '저장된 내 경험 정보' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '정보 수정' }));
-    expect(screen.getByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
-
+    fireEvent.change(screen.getAllByRole('combobox')[0]!, {
+      target: { value: 'ai-automation' },
+    });
     fireEvent.change(screen.getByLabelText('경력 분야'), { target: { value: 'AI 서비스 개발' } });
     fireEvent.change(screen.getByLabelText('경력 기간'), { target: { value: '15년' } });
+    fireEvent.change(screen.getByLabelText(/대표 실무 경험 요약/), {
+      target: { value: 'AI 서비스 개발과 운영 프로세스를 총괄했습니다.' },
+    });
+    fireEvent.change(screen.getByLabelText('연락처'), { target: { value: '010-0000-0000' } });
+    fireEvent.change(screen.getByLabelText('이메일'), {
+      target: { value: 'senior@example.com' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
 
-    expect(await screen.findByText('✓ 프로필 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('✓ 프로필 정보가 성공적으로 저장되었습니다.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('AI 서비스 개발')).toBeInTheDocument();
     expect(screen.getByText('15년')).toBeInTheDocument();
   });

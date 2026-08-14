@@ -1,0 +1,91 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import type { JobPosting } from '@/data/jobPostings';
+import {
+  beginApplicationInterview,
+  buildExperienceCardFromAnswers,
+  cancelApplicationInterview,
+  evaluateExperienceCardMatch,
+  getPendingApplicationInterview,
+  readPendingExperienceCard,
+  readStoredExperienceCard,
+  savePendingExperienceCard,
+  saveStoredExperienceCard,
+} from '@/lib/applicationFlow';
+
+const answers = {
+  action: '문의 유형을 분석하고 운영 기준과 담당자별 처리 절차를 새로 만들었습니다.',
+  problem: '고객 문의 처리 기준이 없어 응답 시간이 계속 지연되었습니다.',
+  result: '평균 응답 시간을 30% 줄이고 SLA 준수율을 95%로 높였습니다.',
+  role: '서비스 운영 책임자로 현황 분석과 개선 실행을 주도했습니다.',
+};
+
+const operationsPosting: Pick<
+  JobPosting,
+  'category' | 'problemStatement' | 'projectGoal' | 'requiredSkills' | 'title'
+> = {
+  category: 'operations',
+  problemStatement: '고객 문의 프로세스가 표준화되어 있지 않습니다.',
+  projectGoal: '서비스 운영 효율과 SLA 준수율을 높입니다.',
+  requiredSkills: ['서비스 운영', '프로세스 설계'],
+  title: '고객 서비스 운영 체계 개선',
+};
+
+describe('AI 인터뷰 경험 카드 흐름', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it('사용자가 입력한 네 가지 답변으로 경험 카드를 생성하고 계정별로 저장한다', () => {
+    const card = buildExperienceCardFromAnswers(answers, {
+      category: 'operations',
+      targetTitle: operationsPosting.title,
+    });
+    saveStoredExperienceCard(card, 'senior-a');
+
+    const stored = readStoredExperienceCard('senior-a');
+    expect(stored).toMatchObject({
+      action: answers.action,
+      category: 'operations',
+      problem: answers.problem,
+      result: answers.result,
+      role: answers.role,
+      targetTitle: operationsPosting.title,
+    });
+    expect(readStoredExperienceCard('senior-b')).toBeNull();
+  });
+
+  it('경험 카드 직종과 지원 직종이 일치할 때만 최종 지원 가능 상태로 판정한다', () => {
+    const matchingCard = buildExperienceCardFromAnswers(answers, { category: 'operations' });
+    const mismatchingCard = buildExperienceCardFromAnswers(answers, {
+      category: 'design-brand',
+    });
+
+    expect(evaluateExperienceCardMatch(matchingCard, operationsPosting).status).toBe('matched');
+    expect(evaluateExperienceCardMatch(mismatchingCard, operationsPosting).status).toBe('mismatch');
+  });
+
+  it('카드 확인 화면으로 이동하기 전 실제 인터뷰 결과를 임시 보관한다', () => {
+    const card = buildExperienceCardFromAnswers(answers, { category: 'operations' });
+    savePendingExperienceCard(card);
+
+    expect(readPendingExperienceCard()).toEqual(card);
+  });
+
+  it('지원 프로젝트 직종을 인터뷰에 전달하고 지원 취소 시 임시 상태를 정리한다', () => {
+    beginApplicationInterview('project-a', '/senior/project-database', {
+      targetCategory: 'operations',
+      targetTitle: operationsPosting.title,
+    });
+
+    expect(getPendingApplicationInterview()).toMatchObject({
+      projectId: 'project-a',
+      targetCategory: 'operations',
+      targetTitle: operationsPosting.title,
+    });
+
+    cancelApplicationInterview();
+    expect(getPendingApplicationInterview()).toBeNull();
+  });
+});

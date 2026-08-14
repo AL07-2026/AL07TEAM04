@@ -16,31 +16,31 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
-  
-  --color-evergreen: #173F3A;
-  --color-coral: #F06B4F;
-  --color-ivory: #F7F3EA;
-  --color-mint: #DDEBE7;
-  --color-ink: #17212B;
+
+  --color-evergreen: #173f3a;
+  --color-coral: #f06b4f;
+  --color-ivory: #f7f3ea;
+  --color-mint: #ddebe7;
+  --color-ink: #17212b;
 }
 
 :root {
   color-scheme: light;
-  --background: #F7F3EA; /* Background: Warm Ivory */
-  --foreground: #17212B; /* Text: Ink */
+  --background: #f7f3ea; /* Background: Warm Ivory */
+  --foreground: #17212b; /* Text: Ink */
   --card: #ffffff;
-  --card-foreground: #17212B;
-  --primary: #173F3A; /* Primary: Deep Evergreen */
+  --card-foreground: #17212b;
+  --primary: #173f3a; /* Primary: Deep Evergreen */
   --primary-foreground: #ffffff;
-  --accent: #F06B4F; /* Accent: Warm Coral */
+  --accent: #f06b4f; /* Accent: Warm Coral */
   --accent-foreground: #ffffff;
-  --secondary: #DDEBE7; /* Secondary: Soft Mint */
-  --secondary-foreground: #173F3A;
-  --muted: #EBE5D9;
-  --muted-foreground: #4B5768;
-  --border: #E0D9C8;
-  --input: #E0D9C8;
-  --ring: #173F3A;
+  --secondary: #ddebe7; /* Secondary: Soft Mint */
+  --secondary-foreground: #173f3a;
+  --muted: #ebe5d9;
+  --muted-foreground: #4b5768;
+  --border: #e0d9c8;
+  --input: #e0d9c8;
+  --ring: #173f3a;
 }
 
 * {
@@ -71,12 +71,74 @@ body {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #17212B;
-  box-shadow: 0 0 0 1000px #FAF7F2 inset;
-  caret-color: #17212B;
+  -webkit-text-fill-color: #17212b;
+  box-shadow: 0 0 0 1000px #faf7f2 inset;
+  caret-color: #17212b;
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Shared readable type scale for project, recommendation, and application flows. */
+.project-ui-readable [class~='text-[10px]'],
+.project-ui-readable [class~='text-[11px]'] {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.project-ui-readable .text-xs,
+.project-ui-readable [class~='text-[12px]'] {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.project-ui-readable .text-sm,
+.project-ui-readable [class~='text-[13px]'] {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.project-ui-readable [class~='text-[14px]'] {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .project-ui-readable [class~='md:text-[13px]'],
+  .project-ui-readable [class~='md:text-sm'] {
+    font-size: 15px;
+  }
+
+  .project-ui-readable [class~='md:text-[14px]'],
+  .project-ui-readable [class~='md:text-base'] {
+    font-size: 16px;
+  }
+
+  .project-ui-readable [class~='md:text-lg'] {
+    font-size: 18px;
+  }
+
+  .project-ui-readable [class~='md:text-xl'] {
+    font-size: 20px;
+  }
+
+  .project-ui-readable [class~='md:text-2xl'] {
+    font-size: 24px;
+  }
+
+  .project-ui-readable [class~='md:text-3xl'] {
+    font-size: 30px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .project-ui-readable [class~='lg:text-2xl'] {
+    font-size: 24px;
+  }
+
+  .project-ui-readable [class~='lg:text-4xl'] {
+    font-size: 36px;
+  }
 }

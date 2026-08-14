@@ -1,10 +1,19 @@
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
 
 import type { JobPosting } from '@/data/jobPostings';
+import {
+  createStableRecordId,
+  readVersionedStorage,
+  removeUndefinedValues,
+  uniqueByKey,
+  writeVersionedStorage,
+} from '@/lib/browserStorage';
 import { db } from '@/lib/firebase';
 
 export interface UserProposal {
   appliedAt: string;
+  applicantEmail?: string;
+  applicantName?: string;
   category: string;
   companyName: string;
   coverNote?: string;
@@ -12,104 +21,142 @@ export interface UserProposal {
   interviewSummary: string;
   location: string;
   problemStatement?: string;
+  projectOwnerId?: string;
   projectId: string;
   projectTitle: string;
   resumeFileName: string;
   salaryRange: string;
   seniorFitScore: number;
   status: '검토 중' | '연락 받음' | '승인';
+  updatedAt?: string;
   userId?: string;
 }
 
+const PROPOSALS_COLLECTION = 'user_proposals';
 const LOCAL_STORAGE_KEY = 'eojob_user_proposals';
 
-function isRealProposal(item: Partial<UserProposal>): boolean {
-  if (!item || !item.id) return false;
-  if (item.id.includes('SEED') || item.id === 'PROP-1' || item.id === 'PROP-2') return false;
-  if (
-    item.companyName === '(주) 디자인브릿지스튜디오 [워크넷 인증 강소기업]' ||
-    item.companyName === '(주) 세일즈위버 넥스트'
-  ) {
-    return false;
-  }
-  return true;
+function normalizeProposal(source: unknown, documentId?: string): UserProposal | null {
+  if (!source || typeof source !== 'object') return null;
+  const value = source as Partial<UserProposal>;
+  const id = documentId || value.id;
+  if (!id || !value.projectId || !value.projectTitle || !value.companyName) return null;
+  if (id.includes('SEED') || id === 'PROP-1' || id === 'PROP-2') return null;
+
+  return {
+    id,
+    userId: value.userId,
+    projectId: value.projectId,
+    projectTitle: value.projectTitle,
+    companyName: value.companyName,
+    category: value.category || 'operations',
+    location: value.location || '협의',
+    salaryRange: value.salaryRange || '협의',
+    seniorFitScore: typeof value.seniorFitScore === 'number' ? value.seniorFitScore : 0,
+    appliedAt: value.appliedAt || new Date().toISOString().slice(0, 10),
+    applicantName: value.applicantName,
+    applicantEmail: value.applicantEmail,
+    status: value.status === '연락 받음' || value.status === '승인' ? value.status : '검토 중',
+    resumeFileName: value.resumeFileName || '',
+    interviewSummary: value.interviewSummary || '',
+    coverNote: value.coverNote,
+    problemStatement: value.problemStatement,
+    projectOwnerId: value.projectOwnerId,
+    updatedAt: value.updatedAt,
+  };
+}
+
+function proposalIdentity(proposal: Pick<UserProposal, 'projectId' | 'userId'>) {
+  return `${proposal.userId || 'guest'}:${proposal.projectId}`;
+}
+
+function mergeProposals(...sources: UserProposal[][]) {
+  return uniqueByKey(
+    sources
+      .flat()
+      .sort((first, second) =>
+        (second.updatedAt || second.appliedAt).localeCompare(first.updatedAt || first.appliedAt),
+      ),
+    proposalIdentity,
+  );
 }
 
 export function clearLegacyProposals(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!data) return;
-    const parsed = JSON.parse(data) as UserProposal[];
-    const cleanList = parsed.filter(isRealProposal);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanList));
-  } catch {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-  }
+  const cleanList = uniqueByKey(getAllLocalProposals(), proposalIdentity);
+  writeVersionedStorage(LOCAL_STORAGE_KEY, cleanList);
 }
 
-export function getLocalProposals(): UserProposal[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!data) return [];
-    const parsed = JSON.parse(data) as UserProposal[];
-    const cleanList = parsed.filter(isRealProposal);
-    if (cleanList.length !== parsed.length) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanList));
-    }
-    return cleanList;
-  } catch {
-    return [];
-  }
+export function getLocalProposals(userId?: string): UserProposal[] {
+  const stored = readVersionedStorage<unknown[]>(LOCAL_STORAGE_KEY);
+  if (!Array.isArray(stored)) return [];
+
+  const proposals = stored
+    .map((item) => normalizeProposal(item))
+    .filter((item): item is UserProposal => Boolean(item));
+  const scoped = userId
+    ? proposals.filter((proposal) => proposal.userId === userId)
+    : proposals.filter((proposal) => !proposal.userId);
+
+  return uniqueByKey(scoped, proposalIdentity);
+}
+
+function getAllLocalProposals() {
+  const stored = readVersionedStorage<unknown[]>(LOCAL_STORAGE_KEY);
+  if (!Array.isArray(stored)) return [];
+  return stored
+    .map((item) => normalizeProposal(item))
+    .filter((item): item is UserProposal => Boolean(item));
 }
 
 export function saveLocalProposal(proposal: Omit<UserProposal, 'id'>): UserProposal {
-  const existing = getLocalProposals();
-  const newProposal: UserProposal = {
+  const id = createStableRecordId('PROPOSAL', proposal.userId || 'guest', proposal.projectId);
+  const savedProposal: UserProposal = {
     ...proposal,
-    id: `PROP-${Date.now()}`,
+    id,
+    updatedAt: new Date().toISOString(),
   };
-  const updated = [newProposal, ...existing];
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-  }
-  return newProposal;
+  const existing = getAllLocalProposals().filter(
+    (item) => proposalIdentity(item) !== proposalIdentity(savedProposal),
+  );
+  writeVersionedStorage(LOCAL_STORAGE_KEY, [savedProposal, ...existing]);
+  return savedProposal;
 }
 
 export async function getUserProposals(userId?: string): Promise<UserProposal[]> {
-  clearLegacyProposals();
-  const localList = getLocalProposals();
-
-  if (!db || !userId) {
-    return localList;
-  }
+  const localList = getLocalProposals(userId);
+  if (!userId) return localList;
 
   try {
-    const proposalsRef = collection(db, 'user_proposals');
-    const q = query(proposalsRef, where('userId', '==', userId));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(
+      query(collection(db, PROPOSALS_COLLECTION), where('userId', '==', userId)),
+    );
+    const firestoreList = snapshot.docs
+      .map((document) => normalizeProposal(document.data(), document.id))
+      .filter((item): item is UserProposal => Boolean(item));
 
-    if (snapshot.empty) {
-      return localList;
-    }
+    return mergeProposals(firestoreList, localList);
+  } catch (error) {
+    console.warn('Failed to fetch proposals from Firestore, using local storage:', error);
+    return localList;
+  }
+}
 
-    const firestoreList: UserProposal[] = snapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<UserProposal, 'id'>),
-      }))
-      .filter(isRealProposal);
+export async function getCompanyProposals(companyUserId?: string): Promise<UserProposal[]> {
+  if (!companyUserId) return [];
+  const localList = uniqueByKey(
+    getAllLocalProposals().filter((proposal) => proposal.projectOwnerId === companyUserId),
+    proposalIdentity,
+  );
 
-    const combined = [...firestoreList];
-    for (const item of localList) {
-      if (!combined.some((p) => p.projectId === item.projectId)) {
-        combined.push(item);
-      }
-    }
-    return combined;
-  } catch (err) {
-    console.warn('Failed to fetch proposals from Firestore, using local storage:', err);
+  try {
+    const snapshot = await getDocs(
+      query(collection(db, PROPOSALS_COLLECTION), where('projectOwnerId', '==', companyUserId)),
+    );
+    const firestoreList = snapshot.docs
+      .map((document) => normalizeProposal(document.data(), document.id))
+      .filter((item): item is UserProposal => Boolean(item));
+    return mergeProposals(firestoreList, localList);
+  } catch (error) {
+    console.warn('Failed to fetch company proposals from Firestore, using local storage:', error);
     return localList;
   }
 }
@@ -120,6 +167,7 @@ export async function createProposalFromPosting(
   interviewSummary: string,
   coverNote?: string,
   userId?: string,
+  applicant?: { email?: string; name?: string },
 ): Promise<UserProposal> {
   const proposalData: Omit<UserProposal, 'id'> = {
     userId,
@@ -130,29 +178,55 @@ export async function createProposalFromPosting(
     location: posting.location,
     salaryRange: posting.salaryRange,
     seniorFitScore: posting.seniorFitScore,
-    appliedAt: new Date().toISOString().split('T')[0] ?? '2026-08-14',
+    appliedAt: new Date().toISOString().slice(0, 10),
+    applicantName: applicant?.name,
+    applicantEmail: applicant?.email,
     status: '검토 중',
-    resumeFileName: resumeFileName || '2026_이동욱_경험이력서_포트폴리오.pdf',
+    resumeFileName,
     interviewSummary: interviewSummary || posting.recommendedTalentType,
-    coverNote: coverNote || '등록된 시니어 경험과 AI 인터뷰 결과를 바탕으로 프로젝트 지원서를 제출합니다.',
+    coverNote:
+      coverNote || '등록된 시니어 경험과 AI 인터뷰 결과를 바탕으로 프로젝트 지원서를 제출합니다.',
     problemStatement: posting.problemStatement,
+    projectOwnerId: posting.ownerId,
   };
+  return saveProposal(proposalData);
+}
 
+export async function saveProposal(proposalData: Omit<UserProposal, 'id'>): Promise<UserProposal> {
   const savedLocal = saveLocalProposal(proposalData);
-
-  if (!db || !userId) {
-    return savedLocal;
-  }
+  const userId = proposalData.userId;
+  if (!userId) return savedLocal;
 
   try {
-    const proposalsRef = collection(db, 'user_proposals');
-    const docRef = await addDoc(proposalsRef, {
-      ...proposalData,
-      createdAt: new Date().toISOString(),
-    });
-    return { ...savedLocal, id: docRef.id };
-  } catch (err) {
-    console.warn('Failed to save proposal to Firestore:', err);
+    await setDoc(
+      doc(db, PROPOSALS_COLLECTION, savedLocal.id),
+      removeUndefinedValues({
+        ...proposalData,
+        updatedAt: savedLocal.updatedAt,
+        createdAt: new Date().toISOString(),
+      }),
+      { merge: true },
+    );
     return savedLocal;
+  } catch (error) {
+    console.warn('Failed to save proposal to Firestore, using local storage:', error);
+    return savedLocal;
+  }
+}
+
+export async function updateProposalStatus(
+  proposalId: string,
+  status: UserProposal['status'],
+): Promise<void> {
+  const updatedAt = new Date().toISOString();
+  const proposals = getAllLocalProposals().map((proposal) =>
+    proposal.id === proposalId ? { ...proposal, status, updatedAt } : proposal,
+  );
+  writeVersionedStorage(LOCAL_STORAGE_KEY, proposals);
+
+  try {
+    await setDoc(doc(db, PROPOSALS_COLLECTION, proposalId), { status, updatedAt }, { merge: true });
+  } catch (error) {
+    console.warn('Failed to update proposal status in Firestore, using local status:', error);
   }
 }

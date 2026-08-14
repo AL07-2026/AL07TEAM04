@@ -2,24 +2,40 @@ import { FileText, LogOut, Pencil } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { ActionButton, Field, MobilePage, TextAreaField, useViewportMode } from '@/app/wireframe/Ui';
+import {
+  ActionButton,
+  Field,
+  MobilePage,
+  TextAreaField,
+  useViewportMode,
+} from '@/app/wireframe/Ui';
 import { categoryLabels, type ProjectCategory } from '@/data/jobPostings';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
-import { getSeniorProfile, saveSeniorProfile } from '@/services/profileService';
+import {
+  getLocalSeniorProfile,
+  getSeniorProfile,
+  saveLocalSeniorProfile,
+  saveSeniorProfile,
+  type SeniorProfileData,
+} from '@/services/profileService';
 
-type ProfileForm = {
-  desiredCategory?: string;
-  desiredCategory2?: string;
-  desiredCategory3?: string;
-  email: string;
-  experience: string;
-  field: string;
-  keySkills?: string;
-  period: string;
-  phone: string;
-  solvedExperiences?: string;
-};
+type ProfileForm = SeniorProfileData;
+
+function createEmptyProfile(email = ''): ProfileForm {
+  return {
+    desiredCategory: undefined,
+    desiredCategory2: undefined,
+    desiredCategory3: undefined,
+    field: '',
+    keySkills: '',
+    period: '',
+    experience: '',
+    solvedExperiences: '',
+    phone: '',
+    email,
+  };
+}
 
 function ProfileInfoRow({
   label,
@@ -52,30 +68,11 @@ export function BasicProfilePage() {
   const { mode } = useViewportMode();
   const { user, signOut } = useAuth();
   const [form, setForm] = useState<ProfileForm>(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocal = localStorage.getItem('eojob_senior_profile');
-      if (savedLocal) {
-        try {
-          return JSON.parse(savedLocal) as ProfileForm;
-        } catch {
-          // ignore
-        }
-      }
-    }
-    return {
-      desiredCategory: 'operations',
-      desiredCategory2: 'ai-automation',
-      desiredCategory3: 'dev-engineering',
-      field: '서비스 운영 / 프로세스 개선',
-      keySkills: '0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀 리더십',
-      period: '12년',
-      experience: '신규 서비스 운영 체계 구축, 프로세스 표준화 및 대규모 프로젝트 총괄 리딩',
-      solvedExperiences: '신규 서비스 출시 후 파편화된 운영 기준을 매뉴얼로 표준화하고 문의 처리 리드타임 30% 단축',
-      phone: '010-1234-5678',
-      email: user?.email || 'sehddnr2@gmail.com',
-    };
+    const savedLocal = getLocalSeniorProfile(user?.uid);
+    if (savedLocal) return savedLocal;
+    return createEmptyProfile(user?.email ?? '');
   });
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(() => !getLocalSeniorProfile(user?.uid));
   const [attachment, setAttachment] = useState<File | null>(null);
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,25 +82,16 @@ export function BasicProfilePage() {
     void (async () => {
       const data = await getSeniorProfile(user.uid);
       if (data) {
-        const loadedForm: ProfileForm = {
-          desiredCategory: data.desiredCategory || 'operations',
-          desiredCategory2: data.desiredCategory2 || 'ai-automation',
-          desiredCategory3: data.desiredCategory3 || 'dev-engineering',
-          field: data.field || '서비스 운영 / 프로세스 개선',
-          keySkills: data.keySkills || '0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀 리더십',
-          period: data.period || '12년',
-          experience: data.experience || '신규 서비스 운영 체계 구축, 프로세스 표준화 및 대규모 프로젝트 총괄 리딩',
-          solvedExperiences: data.solvedExperiences || '신규 서비스 출시 후 파편화된 운영 기준을 매뉴얼로 표준화하고 문의 처리 리드타임 30% 단축',
-          phone: data.phone || '010-1234-5678',
-          email: data.email || user.email || 'sehddnr2@gmail.com',
-        };
+        const loadedForm: ProfileForm = { ...data, email: data.email || user.email || '' };
         setForm(loadedForm);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('eojob_senior_profile', JSON.stringify(loadedForm));
-        }
+        saveLocalSeniorProfile(loadedForm, user.uid);
+        setIsEditing(false);
+        return;
       }
+      setForm(createEmptyProfile(user.email ?? ''));
+      setIsEditing(true);
     })();
-  }, [user]);
+  }, [user?.email, user?.uid]);
 
   const update = (key: keyof ProfileForm) => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -125,19 +113,31 @@ export function BasicProfilePage() {
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
-    if (!form.field.trim() || !form.experience.trim() || !form.phone.trim() || !form.email.trim()) {
-      setMessage('필수 정보(경력 분야, 대표 경험, 연락처, 이메일)를 모두 입력해 주세요.');
+    if (
+      !form.desiredCategory?.trim() ||
+      !form.field.trim() ||
+      !form.period.trim() ||
+      !form.experience.trim() ||
+      !form.phone.trim() ||
+      !form.email.trim()
+    ) {
+      setMessage(
+        '필수 정보(1순위 희망 직종, 경력 분야·기간, 대표 경험, 연락처, 이메일)를 모두 입력해 주세요.',
+      );
       return;
     }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('eojob_senior_profile', JSON.stringify(form));
-      window.dispatchEvent(new Event('eojob_senior_profile_updated'));
-    }
+    saveLocalSeniorProfile(form, user?.uid);
+    window.dispatchEvent(new Event('eojob_senior_profile_updated'));
     if (user?.uid) {
       try {
         await saveSeniorProfile(user.uid, form);
       } catch (err) {
         console.error('Failed to save senior profile to Firestore:', err);
+        setIsEditing(false);
+        setMessage(
+          '기기에는 저장했지만 서버 저장을 확인하지 못했습니다. 연결 후 다시 저장해 주세요.',
+        );
+        return;
       }
     }
     setIsEditing(false);
@@ -162,7 +162,8 @@ export function BasicProfilePage() {
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
-          !isMobile && 'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
+          !isMobile &&
+            'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
         )}
       >
         {/* Account Header Badge & Logout */}
@@ -186,7 +187,9 @@ export function BasicProfilePage() {
                       🙋‍♂️ 인재 회원
                     </span>
                   </div>
-                  <span className="text-xs font-medium text-slate-500">{user?.email || form.email}</span>
+                  <span className="text-xs font-medium text-slate-500">
+                    {user?.email || form.email}
+                  </span>
                 </div>
               </div>
               <button
@@ -220,7 +223,9 @@ export function BasicProfilePage() {
           <div className="flex flex-col gap-5">
             <div className="border-b border-[#E0D9C8]/60 pb-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
+                <h2
+                  className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}
+                >
                   {isMobile ? '내 경험 정보' : '저장된 내 경험 정보'}
                 </h2>
                 <button
@@ -246,24 +251,38 @@ export function BasicProfilePage() {
               <dl className="overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xs">
                 <ProfileInfoRow
                   label="1순위 희망직종"
-                  value={categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'}
+                  value={categoryLabels[form.desiredCategory as ProjectCategory] || '미입력'}
                 />
                 {form.desiredCategory2 ? (
                   <ProfileInfoRow
                     label="2순위 희망직종"
-                    value={categoryLabels[form.desiredCategory2 as ProjectCategory] || form.desiredCategory2}
+                    value={
+                      categoryLabels[form.desiredCategory2 as ProjectCategory] ||
+                      form.desiredCategory2
+                    }
                   />
                 ) : null}
                 {form.desiredCategory3 ? (
                   <ProfileInfoRow
                     label="3순위 희망직종"
-                    value={categoryLabels[form.desiredCategory3 as ProjectCategory] || form.desiredCategory3}
+                    value={
+                      categoryLabels[form.desiredCategory3 as ProjectCategory] ||
+                      form.desiredCategory3
+                    }
                   />
                 ) : null}
                 <ProfileInfoRow label="경력 분야" value={form.field} />
                 <ProfileInfoRow label="경력 기간" value={form.period} />
-                <ProfileInfoRow label="세부 강점" strong={false} value={form.keySkills || '미입력'} />
-                <ProfileInfoRow label="해결 성과" strong={false} value={form.solvedExperiences || form.experience} />
+                <ProfileInfoRow
+                  label="세부 강점"
+                  strong={false}
+                  value={form.keySkills || '미입력'}
+                />
+                <ProfileInfoRow
+                  label="해결 성과"
+                  strong={false}
+                  value={form.solvedExperiences || form.experience}
+                />
                 <ProfileInfoRow label="대표 경험" strong={false} value={form.experience} />
                 <ProfileInfoRow label="연락처" value={form.phone} />
                 <ProfileInfoRow label="이메일" value={form.email} />
@@ -278,19 +297,29 @@ export function BasicProfilePage() {
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
                       <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
                       <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
-                        {categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'}
+                        {categoryLabels[form.desiredCategory as ProjectCategory] || '미입력'}
                       </span>
                     </div>
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
-                      <span className="text-[10px] font-extrabold text-slate-400">2순위 (선택)</span>
+                      <span className="text-[10px] font-extrabold text-slate-400">
+                        2순위 (선택)
+                      </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
-                        {form.desiredCategory2 ? (categoryLabels[form.desiredCategory2 as ProjectCategory] || form.desiredCategory2) : '선택 안 함'}
+                        {form.desiredCategory2
+                          ? categoryLabels[form.desiredCategory2 as ProjectCategory] ||
+                            form.desiredCategory2
+                          : '선택 안 함'}
                       </span>
                     </div>
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
-                      <span className="text-[10px] font-extrabold text-slate-400">3순위 (선택)</span>
+                      <span className="text-[10px] font-extrabold text-slate-400">
+                        3순위 (선택)
+                      </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
-                        {form.desiredCategory3 ? (categoryLabels[form.desiredCategory3 as ProjectCategory] || form.desiredCategory3) : '선택 안 함'}
+                        {form.desiredCategory3
+                          ? categoryLabels[form.desiredCategory3 as ProjectCategory] ||
+                            form.desiredCategory3
+                          : '선택 안 함'}
                       </span>
                     </div>
                   </div>
@@ -298,18 +327,24 @@ export function BasicProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경험한 대표 분야</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                      경험한 대표 분야
+                    </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.field}</span>
                   </div>
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">총 경력 기간</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                      총 경력 기간
+                    </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.period}</span>
                   </div>
                 </div>
 
                 {form.keySkills ? (
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">💪 경력 분야 세부 핵심 강점</span>
+                    <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                      💪 경력 분야 세부 핵심 강점
+                    </span>
                     <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
                       {form.keySkills}
                     </p>
@@ -317,14 +352,18 @@ export function BasicProfilePage() {
                 ) : null}
 
                 <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">💡 해결했던 핵심 문제 및 성과 사례</span>
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    💡 해결했던 핵심 문제 및 성과 사례
+                  </span>
                   <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
                     {form.solvedExperiences || form.experience}
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">대표 실무 경험 요약</span>
+                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                    대표 실무 경험 요약
+                  </span>
                   <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
                     {form.experience}
                   </p>
@@ -332,11 +371,15 @@ export function BasicProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">연락처</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                      연락처
+                    </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.phone}</span>
                   </div>
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">이메일</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                      이메일
+                    </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.email}</span>
                   </div>
                 </div>
@@ -367,30 +410,42 @@ export function BasicProfilePage() {
           <form className="flex flex-col gap-4.5" onSubmit={handleSave}>
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
-                <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
+                <h2
+                  className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}
+                >
                   경험 정보 수정
                 </h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">희망 직종 1~3차 및 세부 강점을 설정해 주세요.</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  희망 직종 1~3차 및 세부 강점을 설정해 주세요.
+                </p>
               </div>
             </div>
 
             {/* Section 1: 희망 직종 1차 / 2차 / 3차 선택 */}
             <div className="flex flex-col gap-2.5 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
               <div className="flex flex-col gap-0.5">
-                <label className="text-[14px] font-extrabold text-[#173F3A]">🎯 희망 직종 선택 (1차 · 2차 · 3차)</label>
+                <label className="text-[14px] font-extrabold text-[#173F3A]">
+                  🎯 희망 직종 선택 (1차 · 2차 · 3차)
+                </label>
                 <p className="text-[12px] font-medium text-slate-500">
-                  희망 직종을 1순위부터 3순위까지 지정하면 프로젝트 DB 추천 순위에 순서대로 반영됩니다.
+                  희망 직종을 1순위부터 3순위까지 지정하면 프로젝트 DB 추천 순위에 순서대로
+                  반영됩니다.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
                 <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-extrabold text-[#173F3A]">1순위 희망 직종 (필수)</span>
+                  <span className="text-[12px] font-extrabold text-[#173F3A]">
+                    1순위 희망 직종 (필수)
+                  </span>
                   <select
-                    value={form.desiredCategory || 'operations'}
+                    value={form.desiredCategory || ''}
                     onChange={(e) => update('desiredCategory')(e.target.value)}
                     className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
                   >
+                    <option disabled value="">
+                      1순위 직종 선택
+                    </option>
                     <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
                     <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
                     <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
@@ -406,7 +461,9 @@ export function BasicProfilePage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-bold text-slate-600">2순위 희망 직종 (선택)</span>
+                  <span className="text-[12px] font-bold text-slate-600">
+                    2순위 희망 직종 (선택)
+                  </span>
                   <select
                     value={form.desiredCategory2 || ''}
                     onChange={(e) => update('desiredCategory2')(e.target.value)}
@@ -428,7 +485,9 @@ export function BasicProfilePage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-bold text-slate-600">3순위 희망 직종 (선택)</span>
+                  <span className="text-[12px] font-bold text-slate-600">
+                    3순위 희망 직종 (선택)
+                  </span>
                   <select
                     value={form.desiredCategory3 || ''}
                     onChange={(e) => update('desiredCategory3')(e.target.value)}
@@ -452,7 +511,12 @@ export function BasicProfilePage() {
             </div>
 
             {/* Section 2: 경력 분야 & 경력 기간 */}
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 label="경력 분야"
                 onChange={(e) => update('field')(e.target.value)}
@@ -492,7 +556,12 @@ export function BasicProfilePage() {
             />
 
             {/* Section 6: 연락처 & 이메일 */}
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+            <div
+              className={cn(
+                'grid gap-3.5',
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4',
+              )}
+            >
               <Field
                 inputMode="tel"
                 label="연락처"
@@ -522,7 +591,9 @@ export function BasicProfilePage() {
               <ActionButton onClick={() => fileInputRef.current?.click()} secondary type="button">
                 {attachment ? attachment.name : '파일 선택'}
               </ActionButton>
-              <p className="text-[12px] font-medium text-slate-500">PDF·DOCX, 최대 10MB · 제안한 기업만 확인</p>
+              <p className="text-[12px] font-medium text-slate-500">
+                PDF·DOCX, 최대 10MB · 제안한 기업만 확인
+              </p>
             </div>
             {message ? (
               <p aria-live="polite" className="text-xs font-medium text-rose-500">

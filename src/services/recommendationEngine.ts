@@ -1,4 +1,4 @@
-import { categoryLabels, type JobPosting } from '@/data/jobPostings';
+import { categoryLabels, type JobPosting, type ProjectCategory } from '@/data/jobPostings';
 import type { SeniorProfileData } from '@/services/profileService';
 
 export interface PersonalizedMatchResult {
@@ -8,191 +8,184 @@ export interface PersonalizedMatchResult {
   primaryCategoryMatch: boolean;
 }
 
-const DEFAULT_SENIOR_PROFILE: SeniorProfileData = {
-  desiredCategory: 'operations',
-  desiredCategory2: 'ai-automation',
-  desiredCategory3: 'dev-engineering',
-  email: 'sehddnr2@gmail.com',
-  experience: '신규 운영 체계 구축, 프로세스 표준화, 부서 간 협업 조율 및 팀 교육 리딩 경험 12년',
-  field: '서비스 운영 / 프로세스 개선',
-  keySkills: '0→1 프로세스 정립, VOC 분석, SLA 관리, AI 자동화 툴 도입, 팀 리더십',
-  period: '12년',
-  phone: '010-1234-5678',
-  solvedExperiences: '신규 서비스 출시 후 파편화된 운영 기준을 매뉴얼로 표준화하고 리드타임 30% 단축',
+const categorySearchKeywords: Record<ProjectCategory, string[]> = {
+  'dev-engineering': ['개발자', '소프트웨어', '엔지니어'],
+  'design-brand': ['디자인', 'UX', '브랜드'],
+  'marketing-sales': ['마케팅', '영업', 'B2B'],
+  'hr-strategy': ['인사', '경영기획', '조직'],
+  'r-and-d-manufacturing': ['제조', '생산', '품질'],
+  'legacy-modernization': ['ERP', '시스템 고도화', '전환'],
+  'ai-automation': ['AI', '자동화', 'RPA'],
+  'data-platform': ['데이터', 'DB', '분석'],
+  security: ['보안', '리스크', '컴플라이언스'],
+  growth: ['사업개발', '성장', '전략'],
+  operations: ['운영', '프로세스', '서비스'],
 };
 
-export function getActiveSeniorProfile(): SeniorProfileData {
-  if (typeof window !== 'undefined') {
-    const savedLocal = localStorage.getItem('eojob_senior_profile');
-    if (savedLocal) {
-      try {
-        const parsed = JSON.parse(savedLocal) as SeniorProfileData;
-        return {
-          ...DEFAULT_SENIOR_PROFILE,
-          ...parsed,
-        };
-      } catch {
-        // fallback
-      }
-    }
-  }
-  return DEFAULT_SENIOR_PROFILE;
+const solvedKeywords = [
+  '프로세스',
+  '운영',
+  '자동화',
+  '개선',
+  '영업',
+  '품질',
+  '아키텍처',
+  '전환',
+  '데이터',
+  '인사',
+  '컴플라이언스',
+  '리드',
+  '구축',
+  '표준화',
+  '디자인',
+  '개발',
+  '전략',
+  'b2b',
+  'cs',
+];
+
+function toProjectCategory(value?: string): ProjectCategory | null {
+  return value && value in categoryLabels ? (value as ProjectCategory) : null;
+}
+
+export function getProfilePreferredCategories(profile?: SeniorProfileData | null) {
+  const categories = [
+    profile?.desiredCategory,
+    profile?.desiredCategory2,
+    profile?.desiredCategory3,
+  ]
+    .map(toProjectCategory)
+    .filter((category): category is ProjectCategory => Boolean(category));
+  return [...new Set(categories)];
+}
+
+export function hasProfileRecommendationCriteria(profile?: SeniorProfileData | null) {
+  return Boolean(
+    profile &&
+    getProfilePreferredCategories(profile).length > 0 &&
+    profile.field.trim() &&
+    profile.period.trim() &&
+    profile.experience.trim(),
+  );
+}
+
+export function getProfileWorknetKeywords(profile?: SeniorProfileData | null) {
+  const keywords = getProfilePreferredCategories(profile).flatMap(
+    (category) => categorySearchKeywords[category],
+  );
+  return [...new Set(keywords)].slice(0, 9);
+}
+
+export function getProfileExperienceMonths(profile?: SeniorProfileData | null) {
+  const years = Number.parseInt(profile?.period ?? '', 10);
+  return Number.isFinite(years) && years > 0 ? years * 12 : undefined;
 }
 
 export function calculatePersonalizedMatch(
   posting: JobPosting,
-  profile?: SeniorProfileData,
+  profile?: SeniorProfileData | null,
 ): PersonalizedMatchResult {
-  const activeProfile = profile || getActiveSeniorProfile();
+  if (!hasProfileRecommendationCriteria(profile)) {
+    return {
+      personalizedScore: 0,
+      matchReasons: ['내 정보의 희망 직종과 경력 정보를 입력하면 적합도를 계산할 수 있습니다.'],
+      posting,
+      primaryCategoryMatch: false,
+    };
+  }
 
-  const userDesired1 = (activeProfile.desiredCategory || '').toLowerCase();
-  const userDesired2 = (activeProfile.desiredCategory2 || '').toLowerCase();
-  const userDesired3 = (activeProfile.desiredCategory3 || '').toLowerCase();
-  const userExpText = (activeProfile.experience + ' ' + (activeProfile.solvedExperiences || '') + ' ' + (activeProfile.keySkills || '')).toLowerCase();
-  const userFieldText = (activeProfile.field || '').toLowerCase();
-  const userSkillsText = (activeProfile.keySkills || '').toLowerCase();
-
-  const postingCatLabel = (categoryLabels[posting.category] || posting.category).toLowerCase();
-  const postingTitle = posting.title.toLowerCase();
-  const postingProblem = posting.problemStatement.toLowerCase();
-  const postingGoal = posting.projectGoal.toLowerCase();
-  const postingSkills = (posting.requiredSkills || []).join(' ').toLowerCase();
+  const activeProfile = profile!;
+  const desiredCategories = getProfilePreferredCategories(activeProfile);
+  const categoryPriority = desiredCategories.indexOf(posting.category);
+  const userExperienceText = [
+    activeProfile.field,
+    activeProfile.experience,
+    activeProfile.solvedExperiences,
+    activeProfile.keySkills,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  const postingText = [
+    posting.title,
+    posting.industry,
+    posting.problemStatement,
+    posting.projectGoal,
+    ...posting.requiredSkills,
+    ...posting.preferredSkills,
+    ...posting.matchingSignals,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
 
   const matchReasons: string[] = [];
+  let baseScore = 70;
 
-  // 1. Category Priority Base Score (1차/2차/3차 희망 직종 연동)
-  const cat1Match = Boolean(
-    userDesired1 &&
-      (userDesired1.includes(posting.category) ||
-        posting.category.includes(userDesired1) ||
-        postingCatLabel.includes(userDesired1) ||
-        userDesired1.includes(postingCatLabel) ||
-        postingTitle.includes(userDesired1)),
-  );
-  const cat2Match = Boolean(
-    userDesired2 &&
-      (userDesired2.includes(posting.category) ||
-        posting.category.includes(userDesired2) ||
-        postingCatLabel.includes(userDesired2) ||
-        userDesired2.includes(postingCatLabel) ||
-        postingTitle.includes(userDesired2)),
-  );
-  const cat3Match = Boolean(
-    userDesired3 &&
-      (userDesired3.includes(posting.category) ||
-        posting.category.includes(userDesired3) ||
-        postingCatLabel.includes(userDesired3) ||
-        userDesired3.includes(postingCatLabel) ||
-        postingTitle.includes(userDesired3)),
-  );
-  const fieldMatch = Boolean(
-    userFieldText &&
-      (userFieldText.includes(postingCatLabel) ||
-        postingCatLabel.includes(userFieldText) ||
-        postingTitle.includes(userFieldText)),
-  );
-
-  let baseScore: number;
-
-  if (cat1Match) {
-    baseScore = 95;
-    const catName = categoryLabels[posting.category] || posting.category;
-    matchReasons.push(`🎯 1순위 희망 직종 일치: [${catName}] 분야 최우선 맞춤 프로젝트`);
-  } else if (cat2Match) {
-    baseScore = 92;
-    const catName = categoryLabels[posting.category] || posting.category;
-    matchReasons.push(`🎯 2순위 희망 직종 부합: [${catName}] 분야 2순위 맞춤 프로젝트`);
-  } else if (cat3Match) {
-    baseScore = 89;
-    const catName = categoryLabels[posting.category] || posting.category;
-    matchReasons.push(`🎯 3순위 희망 직종 부합: [${catName}] 분야 3순위 맞춤 프로젝트`);
-  } else if (fieldMatch) {
-    baseScore = 86;
-    matchReasons.push(`💼 경력 분야 일치: [${categoryLabels[posting.category] || posting.category}] 실무 노하우 직접 활용 가능`);
+  if (categoryPriority === 0) {
+    baseScore = 94;
+    matchReasons.push(`1순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
+  } else if (categoryPriority === 1) {
+    baseScore = 87;
+    matchReasons.push(`2순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
+  } else if (categoryPriority === 2) {
+    baseScore = 82;
+    matchReasons.push(`3순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
   } else {
-    baseScore = 80;
-    matchReasons.push(`💼 전문 분야 매칭: [${categoryLabels[posting.category] || posting.category}] 직무 경험 확장 가능`);
+    matchReasons.push('선택한 희망 직종과 직접 일치하지 않아 참고 공고로 분류됩니다.');
   }
 
-  // 2. Key Skills & Solved Problem Experience Keyword Matching (+0 to +3 points)
-  const solvedKeywords = [
-    '프로세스',
-    '운영',
-    '자동화',
-    '개선',
-    '영업',
-    '품질',
-    '아키텍처',
-    '전환',
-    '데이터',
-    '인사',
-    '컴플라이언스',
-    '리드',
-    '구축',
-    '표준화',
-    '디자인',
-    '개발',
-    '전략',
-    'b2b',
-    'cs',
-  ];
-  let keywordHits = 0;
-  for (const kw of solvedKeywords) {
-    if (
-      (userExpText.includes(kw) || userSkillsText.includes(kw)) &&
-      (postingProblem.includes(kw) || postingGoal.includes(kw) || postingSkills.includes(kw) || postingTitle.includes(kw))
-    ) {
-      keywordHits++;
-    }
-  }
-
-  if (keywordHits >= 2) {
-    baseScore += 3;
-    matchReasons.push(`💡 세부 강점 & 과제 부합: 과거 성과/강점 노하우와 기업 과제(${posting.companyName}) 96%+ 강력 매칭`);
-  } else if (keywordHits >= 1) {
+  const matchedKeywords = solvedKeywords.filter(
+    (keyword) => userExperienceText.includes(keyword) && postingText.includes(keyword),
+  );
+  if (matchedKeywords.length >= 3) {
+    baseScore += 4;
+    matchReasons.push(`핵심 역량 ${matchedKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
+  } else if (matchedKeywords.length > 0) {
     baseScore += 2;
-    matchReasons.push(`⚡ 실무 강점 부합: 가입자 세부 강점 기반 즉시 문제 해결 투입 가능`);
-  } else {
-    matchReasons.push(`⚡ 실무 역량 보유: 10년+ 베테랑 책임 리더십 조건 충족`);
+    matchReasons.push(`경력 키워드 ${matchedKeywords.join(', ')}가 공고와 연결됩니다.`);
   }
 
-  // 3. Seniority Years Matching (+1 point)
-  const userYearsNum = parseInt(activeProfile.period || '12', 10) || 12;
-  if (userYearsNum >= 10) {
+  const experienceYears = Number.parseInt(activeProfile.period, 10) || 0;
+  if (experienceYears >= 10) {
     baseScore += 1;
+    matchReasons.push(`입력한 경력 ${experienceYears}년을 반영했습니다.`);
   }
-  matchReasons.push(`🏆 40+ 경력 부합: ${userYearsNum}년 차 전문성 및 책임 리더십 조건 충족`);
-
-  // Cap final score between 80 and 99
-  const finalScore = Math.min(99, Math.max(80, baseScore));
 
   return {
-    personalizedScore: finalScore,
+    personalizedScore: Math.min(99, Math.max(0, baseScore)),
     matchReasons,
     posting,
-    primaryCategoryMatch: Boolean(cat1Match || cat2Match || cat3Match || fieldMatch),
+    primaryCategoryMatch: categoryPriority >= 0,
   };
 }
 
 export function getPersonalizedRankedProjects(
   postings: JobPosting[],
-  profile?: SeniorProfileData,
+  profile?: SeniorProfileData | null,
 ): { matchResult: PersonalizedMatchResult; posting: JobPosting }[] {
-  const activeProfile = profile || getActiveSeniorProfile();
+  return postings
+    .map((posting) => {
+      const matchResult = calculatePersonalizedMatch(posting, profile);
+      return {
+        posting: {
+          ...posting,
+          seniorFitScore: matchResult.personalizedScore,
+        },
+        matchResult,
+      };
+    })
+    .sort(
+      (first, second) => second.matchResult.personalizedScore - first.matchResult.personalizedScore,
+    );
+}
 
-  const ranked = postings.map((posting) => {
-    const matchResult = calculatePersonalizedMatch(posting, activeProfile);
-    return {
-      posting: {
-        ...posting,
-        seniorFitScore: matchResult.personalizedScore,
-      },
-      matchResult,
-    };
-  });
-
-  // Sort descending by personalizedScore
-  ranked.sort((a, b) => b.matchResult.personalizedScore - a.matchResult.personalizedScore);
-
-  return ranked;
+export function getProfileMatchedRankedProjects(
+  postings: JobPosting[],
+  profile?: SeniorProfileData | null,
+) {
+  if (!hasProfileRecommendationCriteria(profile)) return [];
+  const preferredCategories = new Set(getProfilePreferredCategories(profile));
+  const matchedPostings = postings.filter((posting) => preferredCategories.has(posting.category));
+  return getPersonalizedRankedProjects(matchedPostings, profile);
 }

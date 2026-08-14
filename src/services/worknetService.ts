@@ -1,266 +1,318 @@
-import type { JobPosting, ProjectCategory } from '@/data/jobPostings';
+import type { EmploymentType, HiringStage, JobPosting, ProjectCategory } from '@/data/jobPostings';
 
-export const WORKNET_JOB_API_KEY = 'a5dea206-9134-412d-a2f4-8f4998a6321f';
-export const WORKNET_TRAINING_API_KEY = '9a75ee7b-06ad-4ee7-aa18-776090cf5102';
-export const WORKNET_DUTY_API_KEY = '820aa395-647d-41b8-aecb-19bc889ea890';
-export const WORKNET_JOB_INFO_API_KEY = '32661c53-854b-4afd-99bc-dad3f6f851f6';
-export const WORKNET_CODE_API_KEY = 'ccc1d069-84e3-4fb8-bc24-5fbe3f616cd8';
-export const WORKNET_GIANT_API_KEY = 'dd79d00d-261f-4b03-aca9-1dbb3c997050';
+const WORKNET_JOB_ENDPOINT =
+  'https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do';
+
+export const WORKNET_JOB_API_KEY =
+  (import.meta.env.VITE_WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
+  'a5dea206-9134-412d-a2f4-8f4998a6321f';
 
 export type WorknetJobRaw = {
-  career: string;
-  company: string;
-  duties: string;
-  id: string;
-  location: string;
-  maxSalary?: string;
-  minSalary?: string;
-  title: string;
-};
-
-export type WorknetApiItem = {
+  addresses?: string;
+  busino?: string;
   career?: string;
+  closeDt?: string;
   company?: string;
-  corpNm?: string;
-  duties?: string;
+  empTpCd?: string;
+  holidayTpNm?: string;
+  indTpNm?: string;
+  infoSvc?: string;
+  jobsCd?: string;
+  maxEdubg?: string;
+  maxSal?: string;
+  minEdubg?: string;
+  minSal?: string;
+  regDt?: string;
   region?: string;
+  sal?: string;
+  salTpNm?: string;
+  smodifyDtm?: string;
   title?: string;
   wantedAuthNo?: string;
-  wantedTitle?: string;
-  workRegion?: string;
+  wantedInfoUrl?: string;
+  wantedMobileInfoUrl?: string;
 };
 
-export type WorknetApiResponse = {
-  wantedList?: WorknetApiItem[];
+export type WorknetProjectFeedStatus =
+  'success' | 'profile-required' | 'configuration-error' | 'unavailable';
+
+export type WorknetProjectFeed = {
+  message?: string;
+  projects: JobPosting[];
+  status: WorknetProjectFeedStatus;
 };
 
-// 모든 업종/직무 (KSCO 10대 대분류 100% 포괄) 동적 판별 함수
-export function detectCategoryFromJobText(title: string, duties: string): ProjectCategory {
-  const combined = `${title} ${duties}`.toLowerCase();
+export type WorknetProjectSearchOptions = {
+  keywords?: string[];
+  maxCareerMonths?: number;
+};
 
-  // 1. IT / 개발 / 엔지니어링
-  if (/개발|개발자|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|웹개발|앱개발|아키텍트|풀스택|임베디드|backend|frontend/.test(combined)) {
+export type ParsedWorknetJobXml = {
+  error?: string;
+  items: WorknetJobRaw[];
+};
+
+function readText(node: Element, tagName: keyof WorknetJobRaw) {
+  return node.querySelector(tagName)?.textContent?.trim() || undefined;
+}
+
+export function parseWorknetJobXml(xml: string): ParsedWorknetJobXml {
+  const document = new DOMParser().parseFromString(xml, 'application/xml');
+  const parserError = document.querySelector('parsererror')?.textContent?.trim();
+  if (parserError) return { error: '고용24 응답 형식을 확인할 수 없습니다.', items: [] };
+
+  const apiError = document.querySelector('error')?.textContent?.trim();
+  if (apiError) return { error: apiError, items: [] };
+
+  const itemNodes = Array.from(document.querySelectorAll('wanted, wantedList')).filter((node) =>
+    Array.from(node.children).some((child) => child.localName === 'wantedAuthNo'),
+  );
+  const fields: (keyof WorknetJobRaw)[] = [
+    'wantedAuthNo',
+    'company',
+    'busino',
+    'indTpNm',
+    'title',
+    'salTpNm',
+    'sal',
+    'minSal',
+    'maxSal',
+    'region',
+    'holidayTpNm',
+    'minEdubg',
+    'maxEdubg',
+    'career',
+    'regDt',
+    'closeDt',
+    'infoSvc',
+    'wantedInfoUrl',
+    'wantedMobileInfoUrl',
+    'addresses',
+    'empTpCd',
+    'jobsCd',
+    'smodifyDtm',
+  ];
+
+  return {
+    items: itemNodes.map((node) =>
+      Object.fromEntries(fields.map((field) => [field, readText(node, field)])),
+    ),
+  };
+}
+
+export function detectCategoryFromJobText(title: string, details = ''): ProjectCategory {
+  const text = `${title} ${details}`.toLowerCase();
+
+  if (/개발|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|backend|frontend/.test(text)) {
     return 'dev-engineering';
   }
-  // 2. 디자인 / 크리에이티브 / 브랜딩
-  if (/디자인|디자이너|ux|ui|브랜드|크리에이티브|시각|웹디자인|그래픽|일러스트|영상|콘텐츠|퍼블리싱/.test(combined)) {
+  if (/디자인|디자이너|브랜드|ux|ui|그래픽|콘텐츠|일러스트/.test(text)) {
     return 'design-brand';
   }
-  // 3. 마케팅 / 영업 / MD / CS
-  if (/마케팅|영업|그로스|홍보|광고|고객|퍼포먼스|전략영업|md|유통|무역|매출|고객센터/.test(combined)) {
+  if (/마케팅|영업|홍보|광고|고객|이커머스|md|유통|무역/.test(text)) {
     return 'marketing-sales';
   }
-  // 4. 인사 / 경영전략 / 재무 / 법무 / 교육 / 기획
-  if (/인사|채용|경영|전략|회계|재무|조직|노무|총무|기획|법무|특허|변리|교육|자문|컨설팅|행정/.test(combined)) {
+  if (/인사|채용|경영|회계|재무|조직|총무|기획|법무|교육|컨설팅/.test(text)) {
     return 'hr-strategy';
   }
-  // 5. 제조 / R&D / 건설 / 바이오 / 의료 / 시설
-  if (/제조|생산|품질|r&d|연구|공정|설계|자재|설비|바이오|의료|의약|건설|토목|시공|환경|위생/.test(combined)) {
+  if (/제조|생산|품질|r&d|연구|공정|설계|바이오|의료|건설|토목/.test(text)) {
     return 'r-and-d-manufacturing';
   }
-  // 6. 서비스 운영 / SCM / 물류 / 현장관리
-  if (/운영|물류|scm|매장|고객성공|서비스관리|배송|입출고|시설관리|현장관리|단순노무|기초사무/.test(combined)) {
-    return 'operations';
-  }
-  // 7. 데이터 / 빅데이터 / DB
-  if (/데이터|플랫폼|db|빅데이터|분석|BI/.test(combined)) {
-    return 'data-platform';
-  }
-  // 8. AI / 로봇 / 자동화
-  if (/ai|자동화|머신러닝|인공지능|로봇|rpa/.test(combined)) {
-    return 'ai-automation';
-  }
-  // 9. 보안 / 리스크 / 안전
-  if (/보안|리스크|안전|컴플라이언스|감사|소방|정보보안/.test(combined)) {
-    return 'security';
-  }
-  // 10. 레거시 시스템 개편 / 이관
-  if (/레거시|시스템|erp|이관|고도화|개편|수기/.test(combined)) {
+  if (/데이터|플랫폼|db|분석|bi/.test(text)) return 'data-platform';
+  if (/ai|인공지능|자동화|로봇|rpa/.test(text)) return 'ai-automation';
+  if (/보안|리스크|안전|컴플라이언스|감사/.test(text)) return 'security';
+  if (/레거시|시스템|erp|고도화|개편|마이그레이션/.test(text)) {
     return 'legacy-modernization';
   }
-
-  // 100% 포괄 보장: 예외적인 신규/특수 직종도 'growth' (사업성장/종합과제)로 안전하게 자동 분류
+  if (/운영|물류|scm|매장|배송|시설|현장/.test(text)) return 'operations';
   return 'growth';
 }
 
-// 전 업종(개발자, 디자인, 마케팅, 인사, 제조, IT 등) 40+ 시니어 해결 과제 도출 엔진
+function normalizeWorknetDate(value?: string) {
+  if (!value) return '';
+  const compactMatch = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compactMatch) return `${compactMatch[1]}-${compactMatch[2]}-${compactMatch[3]}`;
+
+  const separatedMatch = value.match(/^(\d{4})[.-](\d{1,2})[.-](\d{1,2})$/);
+  if (!separatedMatch) return '';
+  const year = separatedMatch[1] ?? '';
+  const month = separatedMatch[2] ?? '';
+  const day = separatedMatch[3] ?? '';
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+function startOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+}
+
+export function deriveWorknetHiringStage(closeDt?: string, now = new Date()): HiringStage {
+  const normalizedDate = normalizeWorknetDate(closeDt);
+  if (!normalizedDate) return 'open';
+
+  const deadline = new Date(`${normalizedDate}T00:00:00`);
+  const daysRemaining = Math.ceil((startOfDay(deadline) - startOfDay(now)) / 86_400_000);
+  return daysRemaining >= 0 && daysRemaining <= 7 ? 'closing' : 'open';
+}
+
+function mapEmploymentType(code?: string): EmploymentType {
+  if (code === '10') return 'full-time';
+  if (code === '20' || code === '21') return 'contract';
+  return 'project';
+}
+
+function formatSalary(raw: WorknetJobRaw) {
+  if (raw.sal) return [raw.salTpNm, raw.sal].filter(Boolean).join(' ');
+  if (raw.minSal && raw.maxSal) return `${raw.minSal}~${raw.maxSal}`;
+  if (raw.minSal) return `최소 ${raw.minSal}`;
+  if (raw.maxSal) return `최대 ${raw.maxSal}`;
+  return '임금 정보 미제공';
+}
+
+function isExpiredPosting(raw: WorknetJobRaw, now: Date) {
+  const closeDate = normalizeWorknetDate(raw.closeDt);
+  if (!closeDate) return false;
+  return startOfDay(new Date(`${closeDate}T00:00:00`)) < startOfDay(now);
+}
+
 export function transformWorknetToSeniorProject(
   raw: WorknetJobRaw,
   index: number,
+  now = new Date(),
 ): JobPosting {
-  const category = detectCategoryFromJobText(raw.title, raw.duties);
-
-  const problemStatements: Record<ProjectCategory, string> = {
-    'dev-engineering': `${raw.company}의 소프트웨어 아키텍처 개편 및 10년+ 경험을 보유한 40+ 시니어 개발 리드의 리팩토링 및 기술 고도화 총괄이 요구됩니다.`,
-    'design-brand': `${raw.company}의 브랜드 정체성 리디자인 및 UX/UI 가이드라인 확립을 위해 10년+ 경험을 가진 40+ 시니어 디자인 디렉터의 총괄 주도가 필요합니다.`,
-    'marketing-sales': `${raw.company}의 신규 시장 개척 및 매출 스케일업을 목표로, 40+ 시니어 마케팅/영업 리드의 현장 주도형 타겟 분석과 파이프라인 구축이 요구됩니다.`,
-    'hr-strategy': `${raw.company}의 중장기 경영 전략 수립 및 조직 평가/보상 체계 고도화를 총괄할 40+ 인사/경영 전문가의 해결책이 필요합니다.`,
-    'r-and-d-manufacturing': `${raw.company}의 생산 공정 품질 불량율 절감 및 R&D 기술 표준화를 위한 40+ 시니어 기술 고문의 현장 진단이 시급합니다.`,
-    operations: `${raw.company}의 현장 운영 프로세스 파편화 해결 및 표준 작업 가이드북 수립을 위한 40+ 시니어 리드의 총괄 주도가 필요합니다.`,
-    'legacy-modernization': `기존 수기/노후화된 업무 시스템 정비 및 ${raw.title} 영역의 10년+ 노하우를 바탕으로 한 조직 프로세스 전면 쇄신이 필요합니다.`,
-    growth: `사업 영역 확장 및 신규 수익 모델 발굴을 위해 ${raw.company}의 사업개발 리드급 40+ 시니어 전문가의 전략적 수립이 필요합니다.`,
-    'ai-automation': `반복적인 업무 부담을 줄이고 디지털/AI 자동화 도입을 위한 실무 검증 및 시니어의 과제 리딩이 필요합니다.`,
-    'data-platform': `부서별 분산된 데이터의 실시간 통합 관리 체계 구축 및 데이터 기반 의사결정 프로세스 일원화가 핵심 과제입니다.`,
-    security: `기업 리스크 예방 및 품질/안전보건 기준 강화를 위한 40+ 시니어 전문가의 전면 현장 점검 및 솔루션 구축이 요구됩니다.`,
-  };
-
-  const projectGoals: Record<ProjectCategory, string> = {
-    'dev-engineering': '소프트웨어 아키텍처 수립 및 서비스 가동률/성능 100% 최적화',
-    'design-brand': '브랜드 디자인 시스템 구축 및 시각 가이드라인 100% 표준화',
-    'marketing-sales': '신규 타겟 파이프라인 확보 및 매출 성장률 30% 증대',
-    'hr-strategy': '조직 평가 체계 개편 및 핵심 인재 리텐션 기반 마련',
-    'r-and-d-manufacturing': '공정 불량률 40% 감소 및 ISO/품질 인증 획득',
-    operations: '운영 효율화 달성 및 업무 수속 시간 35% 단축',
-    'legacy-modernization': '노후화 업무 매뉴얼화 및 부서 간 협업 체계 100% 개편',
-    growth: '신사업 전략 수립 및 분기 핵심 제휴처 5개사 확보',
-    'ai-automation': '실무 업무 자동화 도구 도입 및 직원 교육 완료',
-    'data-platform': '통합 실시간 대시보드 구축 및 데이터 활용 체계 수립',
-    security: '컴플라이언스 준수율 100% 달성 및 리스크 예방 체계 구축',
-  };
-
-  const requiredSkillsMap: Record<ProjectCategory, string[]> = {
-    'dev-engineering': ['Software Architecture', 'Code Refactoring', 'Backend/Frontend', 'Tech Leadership'],
-    'design-brand': ['Brand Strategy', 'UX/UI Design', 'Design System', 'Creative Direction'],
-    'marketing-sales': ['Growth Marketing', 'B2B Sales', 'Market Analysis', 'Revenue Strategy'],
-    'hr-strategy': ['HR Strategy', 'Organization Design', 'Performance Management', 'Change Management'],
-    'r-and-d-manufacturing': ['Process Optimization', 'Quality Assurance', 'R&D Management', 'Factory Automation'],
-    operations: ['Operations Management', 'Process Standard', 'Workflow Design', 'Team Leadership'],
-    'legacy-modernization': ['Legacy Migration', 'System Redesign', 'Architecture', 'Process Modernization'],
-    growth: ['Business Development', 'New Market Expansion', 'Strategic Partnership', 'Go-To-Market'],
-    'ai-automation': ['AI Tools Integration', 'Workflow Automation', 'RPA', 'Digital Transformation'],
-    'data-platform': ['Data Architecture', 'Dashboard Design', 'Data Pipeline', 'Analytics'],
-    security: ['Risk Management', 'Security Compliance', 'ISO Standard', 'Audit & Safety'],
-  };
-
-  const fitScores = [98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88];
-  const fitScore = fitScores[index % fitScores.length] || 94;
+  const title = raw.title?.trim() || '채용 제목 미제공';
+  const companyName = raw.company?.trim() || '기업명 미제공';
+  const category = detectCategoryFromJobText(
+    title,
+    [raw.indTpNm, raw.jobsCd].filter(Boolean).join(' '),
+  );
+  const deadline = normalizeWorknetDate(raw.closeDt);
+  const postedAt = normalizeWorknetDate(raw.regDt);
+  const career = raw.career?.trim() || '경력 정보 미제공';
+  const education = [raw.minEdubg, raw.maxEdubg].filter(Boolean).join('~');
+  const qualifications = [raw.career, education].filter((value): value is string => Boolean(value));
+  const sourceUrl = raw.wantedInfoUrl || raw.wantedMobileInfoUrl;
 
   return {
-    id: `WORKNET-${raw.id || index + 101}`,
-    companyName: raw.company,
-    industry: '전국 강소기업 / 우수기업 (정부인증)',
-    companySize: '50-300명',
-    title: `[40+ 시니어 우대] ${raw.title}`,
+    id: `WORKNET-${raw.wantedAuthNo || index + 1}`,
+    companyName,
+    industry: raw.indTpNm?.trim() || '업종 정보 미제공',
+    companySize: '고용24 채용 공고',
+    title,
     category,
-    seniority: 'lead',
-    employmentType: 'project',
-    hiringStage: 'open',
-    workType: 'hybrid',
-    location: raw.location || '서울 / 전국',
-    experienceYears: '10년 이상 (40세 이상 중장년 우대)',
-    salaryRange: raw.minSalary ? `월 ${raw.minSalary}만~${raw.maxSalary || ''}만` : '월 650만-950만',
-    deadline: '2026-09-15',
-    projectDuration: '3개월 ~ 6개월',
-    collaborationTargets: ['C-Level / 경영진', '부서 리드', '실무 프로젝트 팀'],
-    coreResponsibilities: [
-      problemStatements[category],
-      projectGoals[category],
-      '40+ 시니어 실무 경험 기반 현장 코칭 및 과제 주도',
-    ],
-    qualifications: [
-      '해당 직무 10년 이상 실무 및 총괄 경험 보유자',
-      '40세 이상 중장년 및 시니어 전문가 우대',
-      '유사 업무 문제 해결 및 리딩 성공 경험',
-    ],
-    benefits: ['정부 인증 우수기업 보상', '유연근무/하이브리드 지원', '전문가 자문료 지급'],
-    problemStatement: problemStatements[category],
-    projectGoal: projectGoals[category],
-    successMetrics: ['과제 핵심 KPI 100% 달성', '표준 업무 가이드북 작성 완료'],
-    requiredSkills: requiredSkillsMap[category],
-    preferredSkills: ['동종 산업 15년 이상 총괄 경험', '강소기업 프로젝트 해결 경험'],
-    matchingSignals: ['40+ 시니어 우대 채용', '정부 인증 기업', '전 업종 직무 과제 연결'],
-    recommendedTalentType: `해당 분야 10년+ 총괄 노하우를 가진 40+ 시니어 전문가`,
-    matchingScoreCriteria: ['직무 전문성 (40%)', '유사 문제 해결 경험 (30%)', '조직 적합도 (30%)'],
-    interviewFocus: [
-      '과거 비슷한 업종/직무 문제를 해결한 구체적 사례',
-      '단기간 내 현장 부서와의 협업 및 솔루션 도출 방안',
-    ],
-    seniorFitScore: fitScore,
-    postedAt: new Date().toISOString().split('T')[0] ?? '2026-08-14',
+    seniority: 'senior',
+    employmentType: mapEmploymentType(raw.empTpCd),
+    hiringStage: deriveWorknetHiringStage(raw.closeDt, now),
+    workType: 'onsite',
+    location: raw.region?.trim() || raw.addresses?.trim() || '근무 지역 미제공',
+    experienceYears: career,
+    salaryRange: formatSalary(raw),
+    deadline,
+    projectDuration: '고용24 원문 공고에서 확인',
+    collaborationTargets: [],
+    coreResponsibilities: [],
+    qualifications,
+    benefits: [],
+    problemStatement: title,
+    projectGoal: '상세 직무 내용과 지원 조건은 고용24 원문 공고에서 확인해 주세요.',
+    successMetrics: [],
+    requiredSkills: [],
+    preferredSkills: [],
+    matchingSignals: [raw.career, raw.region, raw.indTpNm].filter((value): value is string =>
+      Boolean(value),
+    ),
+    recommendedTalentType: career,
+    matchingScoreCriteria: ['직무 연관성', '경력 정보', '근무 지역'],
+    interviewFocus: [],
+    seniorFitScore: 80,
+    postedAt,
+    source: 'worknet',
+    sourceUrl,
+    sourceProvider: raw.infoSvc?.trim() || '고용24(워크넷)',
+    workSchedule: raw.holidayTpNm?.trim(),
+    deadlineLabel: raw.closeDt?.trim() || '마감일 미제공',
+    registeredLabel: raw.regDt?.trim(),
   };
 }
 
-// 고용노동부 워크넷 전 업종(디자인, 마케팅, 인사, 제조, IT 등) 40+ 채용공고 수신 및 변환
-export async function fetchWorknetSeniorProjects(): Promise<JobPosting[]> {
-  try {
-    const endpoint = `/api/worknet/jobs?authKey=${WORKNET_JOB_API_KEY}&callTp=L&returnType=JSON&startPage=1&display=15`;
-    const response = await fetch(endpoint).catch(() => null);
+function getFeedErrorMessage(error: string) {
+  if (error.includes('개인회원') || error.includes('OpenApi') || error.includes('OPEN-API')) {
+    return '고용24 채용정보 Open API 사용 권한을 확인해 주세요. 승인된 기관·기업용 인증키가 필요합니다.';
+  }
+  return '고용24에서 채용 공고를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
 
-    if (response && response.ok) {
-      const data = (await response.json()) as WorknetApiResponse;
-      if (Array.isArray(data.wantedList)) {
-        return data.wantedList.map((item: WorknetApiItem, index: number) =>
-          transformWorknetToSeniorProject(
-            {
-              id: item.wantedAuthNo || String(index + 1),
-              company: item.company || item.corpNm || '정부인증 우수기업',
-              title: item.title || item.wantedTitle || '직무 프로세스 개선 및 프로젝트 리드',
-              duties: item.duties || '업무 체계 구축 및 총괄 리딩',
-              location: item.region || item.workRegion || '서울 강남구',
-              career: item.career || '경력 10년 이상',
-            },
-            index,
-          ),
-        );
-      }
-    }
-  } catch (error) {
-    console.warn('Worknet API fetch via proxy failed, providing multi-industry 40+ transformed projects:', error);
+export function createWorknetJobSearchParams(
+  authKey: string,
+  options: WorknetProjectSearchOptions = {},
+) {
+  const maxCareerMonths = Math.min(600, Math.max(12, Math.round(options.maxCareerMonths ?? 600)));
+  const params = new URLSearchParams({
+    authKey,
+    callTp: 'L',
+    returnType: 'XML',
+    startPage: '1',
+    display: '30',
+    career: 'E',
+    minCareerM: '0',
+    maxCareerM: String(maxCareerMonths),
+    sortOrderBy: 'DESC',
+  });
+  const keywords = [...new Set(options.keywords?.map((keyword) => keyword.trim()).filter(Boolean))];
+  if (keywords.length > 0) params.set('keyword', keywords.slice(0, 9).join('|'));
+  return params;
+}
+
+export async function fetchWorknetSeniorProjectFeed(
+  options: WorknetProjectSearchOptions = {},
+): Promise<WorknetProjectFeed> {
+  if (!WORKNET_JOB_API_KEY) {
+    return {
+      projects: [],
+      status: 'configuration-error',
+      message: '고용24 채용정보 Open API 인증키가 설정되지 않았습니다.',
+    };
   }
 
-  // 워크넷 OpenAPI 기반 전 업종 (디자인, 마케팅, 인사, 제조, IT) 40+ 시니어 변환 시드 데이터
-  const mockWorknetJobs: WorknetJobRaw[] = [
-    {
-      id: 'WN-DESIGN-01',
-      company: '(주) 디자인브릿지스튜디오 [워크넷 인증 강소기업]',
-      title: '브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터',
-      duties: '신규 제품 라인업 브랜딩 및 디지털 서비스 UX/UI 디자인 시스템 구축 총괄',
-      location: '서울 마포구',
-      career: '12년 이상',
-      minSalary: '750',
-      maxSalary: '1100',
-    },
-    {
-      id: 'WN-MARKETING-02',
-      company: '(주) 그로스인사이트 [정부인증 우수기업]',
-      title: 'B2B 그로스 마케팅 & 글로벌 영업 전략 총괄',
-      duties: '신규 시장 개척 및 세일즈 파이프라인 구축을 위한 40+ 시니어 마케팅 총괄 리딩',
-      location: '서울 강남구',
-      career: '15년 이상',
-      minSalary: '800',
-      maxSalary: '1200',
-    },
-    {
-      id: 'WN-HR-03',
-      company: '(주) 스마트HR컨설팅 [고용노동부 강소기업]',
-      title: '조직 문화 혁신 및 성과 평가/보상 체계 구축 리드',
-      duties: '기업 성장에 맞춘 인사 평가/보상 가이드 수립 및 시니어 관리자의 조직 문화 재정비',
-      location: '서울 영등포구',
-      career: '10년 이상',
-      minSalary: '700',
-      maxSalary: '1000',
-    },
-    {
-      id: 'WN-MFG-04',
-      company: '(주) 대성정밀공업 [일학습병행 참여기업]',
-      title: '스마트 팩토리 품질 공정 자동화 및 ISO 인증 총괄',
-      duties: '생산라인 불량률 감소 및 40+ 시니어 기술 고문의 현장 품질 관리 체계 수립',
-      location: '경남 창원시',
-      career: '15년 이상',
-      minSalary: '750',
-      maxSalary: '1050',
-    },
-    {
-      id: 'WN-IT-05',
-      company: '(주) 넥스트디지털솔루션 [워크넷 우수기업]',
-      title: '노후 레거시 ERP 이관 및 클라우드 보안 체계 총괄',
-      duties: '10년 이상 수기/온프레미스 시스템의 데이터 이관 및 클라우드 보안 리스크 전면 개선',
-      location: '서울 성동구',
-      career: '12년 이상',
-      minSalary: '800',
-      maxSalary: '1100',
-    },
-  ];
+  if (import.meta.env.MODE === 'test') {
+    return {
+      projects: [],
+      status: 'unavailable',
+      message: '테스트 환경에서는 고용24 실시간 공고를 조회하지 않습니다.',
+    };
+  }
 
-  return mockWorknetJobs.map((job, idx) => transformWorknetToSeniorProject(job, idx));
+  try {
+    const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
+    const response = await fetch(`${WORKNET_JOB_ENDPOINT}?${params.toString()}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const parsed = parseWorknetJobXml(await response.text());
+    if (parsed.error) {
+      return {
+        projects: [],
+        status: 'configuration-error',
+        message: getFeedErrorMessage(parsed.error),
+      };
+    }
+
+    const now = new Date();
+    const projects = parsed.items
+      .filter((item) => item.wantedAuthNo && item.title && item.company)
+      .filter((item) => !isExpiredPosting(item, now))
+      .map((item, index) => transformWorknetToSeniorProject(item, index, now));
+
+    return {
+      projects,
+      status: 'success',
+      message: projects.length === 0 ? '현재 조건에 맞는 고용24 채용 공고가 없습니다.' : undefined,
+    };
+  } catch (error) {
+    console.warn('Failed to load Worknet jobs:', error);
+    return {
+      projects: [],
+      status: 'unavailable',
+      message: '고용24에서 채용 공고를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    };
+  }
 }

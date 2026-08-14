@@ -1,0 +1,119 @@
+import { describe, expect, it } from 'vitest';
+
+import type { JobPosting, ProjectCategory } from '@/data/jobPostings';
+import type { SeniorProfileData } from '@/services/profileService';
+import {
+  calculatePersonalizedMatch,
+  getProfileExperienceMonths,
+  getProfileMatchedRankedProjects,
+  getProfileWorknetKeywords,
+  hasProfileRecommendationCriteria,
+} from '@/services/recommendationEngine';
+
+const profile: SeniorProfileData = {
+  desiredCategory: 'dev-engineering',
+  desiredCategory2: 'operations',
+  email: 'senior@example.com',
+  experience: '소프트웨어 개발과 서비스 운영 프로세스 개선 경험',
+  field: '소프트웨어 개발',
+  keySkills: '개발, 자동화, 프로세스 개선',
+  period: '15년',
+  phone: '010-0000-0000',
+  solvedExperiences: '개발 프로세스를 표준화하고 운영 업무를 자동화함',
+};
+
+function createPosting(id: string, category: ProjectCategory, title: string): JobPosting {
+  return {
+    id,
+    companyName: '테스트 기업',
+    industry: '소프트웨어 개발업',
+    companySize: '고용24 채용 공고',
+    title,
+    category,
+    seniority: 'senior',
+    employmentType: 'full-time',
+    hiringStage: 'open',
+    workType: 'onsite',
+    location: '서울',
+    experienceYears: '경력 10년 이상',
+    salaryRange: '연봉 5,000만원',
+    deadline: '2026-09-30',
+    projectDuration: '원문 확인',
+    collaborationTargets: [],
+    coreResponsibilities: [],
+    qualifications: [],
+    benefits: [],
+    problemStatement: title,
+    projectGoal: `${title} 업무 수행`,
+    successMetrics: [],
+    requiredSkills: ['개발', '프로세스'],
+    preferredSkills: [],
+    matchingSignals: [],
+    recommendedTalentType: '경력자',
+    matchingScoreCriteria: [],
+    interviewFocus: [],
+    seniorFitScore: 0,
+    postedAt: '2026-08-14',
+  };
+}
+
+describe('profile-based recommendations', () => {
+  it('희망 직종과 핵심 경력 정보가 있어야 추천을 시작한다', () => {
+    expect(hasProfileRecommendationCriteria(profile)).toBe(true);
+    expect(hasProfileRecommendationCriteria(null)).toBe(false);
+    expect(
+      hasProfileRecommendationCriteria({
+        ...profile,
+        desiredCategory: undefined,
+        desiredCategory2: undefined,
+        desiredCategory3: undefined,
+      }),
+    ).toBe(false);
+  });
+
+  it('희망 직종에 포함된 공고만 남기고 1순위를 먼저 배치한다', () => {
+    const ranked = getProfileMatchedRankedProjects(
+      [
+        createPosting('hr', 'hr-strategy', '인사 제도 설계'),
+        createPosting('operations', 'operations', '서비스 운영 개선'),
+        createPosting('development', 'dev-engineering', '소프트웨어 개발 리드'),
+      ],
+      profile,
+    );
+
+    expect(ranked.map(({ posting }) => posting.id)).toEqual(['development', 'operations']);
+    expect(ranked[0]?.matchResult.primaryCategoryMatch).toBe(true);
+    expect(ranked[0]?.matchResult.personalizedScore).toBeGreaterThan(
+      ranked[1]?.matchResult.personalizedScore ?? 0,
+    );
+  });
+
+  it('프로필이 없으면 임의 기본값으로 공고를 추천하지 않는다', () => {
+    const posting = createPosting('development', 'dev-engineering', '소프트웨어 개발 리드');
+
+    expect(getProfileMatchedRankedProjects([posting], null)).toEqual([]);
+    expect(calculatePersonalizedMatch(posting, null).personalizedScore).toBe(0);
+  });
+
+  it('희망 직종을 고용24 키워드 검색 조건으로 변환한다', () => {
+    expect(getProfileWorknetKeywords(profile)).toEqual([
+      '개발자',
+      '소프트웨어',
+      '엔지니어',
+      '운영',
+      '프로세스',
+      '서비스',
+    ]);
+    expect(getProfileExperienceMonths(profile)).toBe(180);
+  });
+
+  it('같은 희망 직종을 여러 순위에 선택해도 검색 조건은 중복하지 않는다', () => {
+    expect(
+      getProfileWorknetKeywords({
+        ...profile,
+        desiredCategory2: 'dev-engineering',
+        desiredCategory3: 'dev-engineering',
+      }),
+    ).toEqual(['개발자', '소프트웨어', '엔지니어']);
+  });
+});

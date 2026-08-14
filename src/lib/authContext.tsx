@@ -11,6 +11,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { auth, db } from '@/lib/firebase';
 
 export type UserRole = 'senior' | 'company';
@@ -38,20 +39,23 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
+
+function canUseDemoAuth(email = '') {
+  return (
+    import.meta.env.MODE === 'test' ||
+    import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true' ||
+    email.endsWith('@example.com') ||
+    email.includes('test')
+  );
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('eojob_current_user');
-      if (saved) {
-        try {
-          return JSON.parse(saved) as UserProfile;
-        } catch {
-          // ignore error
-        }
-      }
-    }
-    return null;
+    const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
+    return saved?.uid && saved.email && (saved.role === 'senior' || saved.role === 'company')
+      ? saved
+      : null;
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(profile);
     if (typeof window !== 'undefined') {
       if (profile) {
-        localStorage.setItem('eojob_current_user', JSON.stringify(profile));
+        writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
       } else {
-        localStorage.removeItem('eojob_current_user');
+        localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
       }
     }
   };
@@ -175,16 +179,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(msg, { cause: err });
       }
 
-      // Smooth fallback for offline/demo/testing environment
-      const demoProfile: UserProfile = {
-        uid: 'user-' + Date.now(),
-        email,
-        name,
-        role,
-        createdAt: new Date().toISOString(),
-      };
-      saveUserLocal(demoProfile);
-      return demoProfile;
+      if (canUseDemoAuth(email)) {
+        const demoProfile: UserProfile = {
+          uid: 'user-' + Date.now(),
+          email,
+          name,
+          role,
+          createdAt: new Date().toISOString(),
+        };
+        saveUserLocal(demoProfile);
+        return demoProfile;
+      }
+      const message = '회원가입 정보를 저장하지 못했습니다. 네트워크 연결 후 다시 시도해 주세요.';
+      setError(message);
+      throw new Error(message, { cause: err });
     }
   };
 
@@ -199,7 +207,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error('파이어베이스 콘솔에서 이메일 인증 활성화가 필요합니다.', { cause: err });
         }
         if (authErr.code === 'auth/too-many-requests') {
-          throw new Error('인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.', { cause: err });
+          throw new Error('인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.', {
+            cause: err,
+          });
         }
         throw new Error(authErr.message || '인증 메일 발송에 실패했습니다.', { cause: err });
       }
@@ -256,7 +266,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       setLoading(false);
       const authErr = err as { code?: string; message?: string };
-      if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/wrong-password' || authErr.code === 'auth/invalid-credential') {
+      if (
+        authErr.code === 'auth/user-not-found' ||
+        authErr.code === 'auth/wrong-password' ||
+        authErr.code === 'auth/invalid-credential'
+      ) {
         const msg = '이메일 또는 비밀번호가 일치하지 않습니다.';
         setError(msg);
         throw new Error(msg, { cause: err });
@@ -267,19 +281,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(msg, { cause: err });
       }
 
-      // Smooth fallback for offline/demo/testing environment
-      const defaultName =
-        email === 'sehddnr2@gmail.com'
-          ? '이동욱'
-          : email?.split('@')[0] || (targetRole === 'senior' ? '이동욱' : '채용담당자');
-      const demoProfile: UserProfile = {
-        uid: 'user-' + Date.now(),
-        email: email || 'demo@eojob.com',
-        name: defaultName,
-        role: targetRole,
-      };
-      saveUserLocal(demoProfile);
-      return demoProfile;
+      if (canUseDemoAuth(email)) {
+        const defaultName =
+          email === 'sehddnr2@gmail.com'
+            ? '이동욱'
+            : email?.split('@')[0] || (targetRole === 'senior' ? '이동욱' : '채용담당자');
+        const demoProfile: UserProfile = {
+          uid: 'user-' + Date.now(),
+          email: email || 'demo@eojob.com',
+          name: defaultName,
+          role: targetRole,
+        };
+        saveUserLocal(demoProfile);
+        return demoProfile;
+      }
+      const message = '로그인할 수 없습니다. 네트워크 연결과 계정 정보를 확인해 주세요.';
+      setError(message);
+      throw new Error(message, { cause: err });
     }
   };
 
@@ -301,7 +319,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const googleUser = result.user;
       const computedName =
         googleUser.displayName ||
-        (googleUser.email === 'sehddnr2@gmail.com' ? '이동욱' : googleUser.email?.split('@')[0] || '이동욱');
+        (googleUser.email === 'sehddnr2@gmail.com'
+          ? '이동욱'
+          : googleUser.email?.split('@')[0] || '이동욱');
       const profile: UserProfile = {
         uid: googleUser.uid,
         email: googleUser.email || '',
@@ -341,16 +361,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(msg);
         throw new Error(msg, { cause: err });
       }
-      // Demo / fallback environment handling
-      const demoProfile: UserProfile = {
-        uid: 'google-user-' + Date.now(),
-        email: 'google.user@gmail.com',
-        name: '구글 회원',
-        role: targetRole,
-        createdAt: new Date().toISOString(),
-      };
-      saveUserLocal(demoProfile);
-      return demoProfile;
+      if (canUseDemoAuth()) {
+        const demoProfile: UserProfile = {
+          uid: 'google-user-' + Date.now(),
+          email: 'google.user@gmail.com',
+          name: '구글 회원',
+          role: targetRole,
+          createdAt: new Date().toISOString(),
+        };
+        saveUserLocal(demoProfile);
+        return demoProfile;
+      }
+      const message = '구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      setError(message);
+      throw new Error(message, { cause: err });
     }
   };
 
