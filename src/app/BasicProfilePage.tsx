@@ -131,6 +131,7 @@ export function BasicProfilePage() {
     }
     if (typeof window !== 'undefined') {
       localStorage.setItem('eojob_senior_profile', JSON.stringify(form));
+      window.dispatchEvent(new Event('eojob_senior_profile_updated'));
     }
     if (user?.uid) {
       try {

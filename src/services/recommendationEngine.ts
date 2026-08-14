@@ -58,56 +58,113 @@ export function calculatePersonalizedMatch(
   const postingGoal = posting.projectGoal.toLowerCase();
   const postingSkills = (posting.requiredSkills || []).join(' ').toLowerCase();
 
-  let score = posting.seniorFitScore || 90;
   const matchReasons: string[] = [];
 
-  // 1. Desired Category (1차/2차/3차) & Field Matching
-  const cat1Match = userDesired1 && (userDesired1.includes(posting.category) || postingCatLabel.includes(userDesired1) || postingTitle.includes(userDesired1));
-  const cat2Match = userDesired2 && (userDesired2.includes(posting.category) || postingCatLabel.includes(userDesired2) || postingTitle.includes(userDesired2));
-  const cat3Match = userDesired3 && (userDesired3.includes(posting.category) || postingCatLabel.includes(userDesired3) || postingTitle.includes(userDesired3));
-  const fieldMatch = userFieldText.includes(postingCatLabel) || postingTitle.includes(userFieldText);
+  // 1. Category Priority Base Score (1차/2차/3차 희망 직종 연동)
+  const cat1Match = Boolean(
+    userDesired1 &&
+      (userDesired1.includes(posting.category) ||
+        posting.category.includes(userDesired1) ||
+        postingCatLabel.includes(userDesired1) ||
+        userDesired1.includes(postingCatLabel) ||
+        postingTitle.includes(userDesired1)),
+  );
+  const cat2Match = Boolean(
+    userDesired2 &&
+      (userDesired2.includes(posting.category) ||
+        posting.category.includes(userDesired2) ||
+        postingCatLabel.includes(userDesired2) ||
+        userDesired2.includes(postingCatLabel) ||
+        postingTitle.includes(userDesired2)),
+  );
+  const cat3Match = Boolean(
+    userDesired3 &&
+      (userDesired3.includes(posting.category) ||
+        posting.category.includes(userDesired3) ||
+        postingCatLabel.includes(userDesired3) ||
+        userDesired3.includes(postingCatLabel) ||
+        postingTitle.includes(userDesired3)),
+  );
+  const fieldMatch = Boolean(
+    userFieldText &&
+      (userFieldText.includes(postingCatLabel) ||
+        postingCatLabel.includes(userFieldText) ||
+        postingTitle.includes(userFieldText)),
+  );
+
+  let baseScore: number;
 
   if (cat1Match) {
-    score += 5;
+    baseScore = 95;
     const catName = categoryLabels[posting.category] || posting.category;
     matchReasons.push(`🎯 1순위 희망 직종 일치: [${catName}] 분야 최우선 맞춤 프로젝트`);
   } else if (cat2Match) {
-    score += 4;
+    baseScore = 92;
     const catName = categoryLabels[posting.category] || posting.category;
     matchReasons.push(`🎯 2순위 희망 직종 부합: [${catName}] 분야 2순위 맞춤 프로젝트`);
   } else if (cat3Match) {
-    score += 3;
+    baseScore = 89;
     const catName = categoryLabels[posting.category] || posting.category;
     matchReasons.push(`🎯 3순위 희망 직종 부합: [${catName}] 분야 3순위 맞춤 프로젝트`);
   } else if (fieldMatch) {
-    score += 2;
+    baseScore = 86;
     matchReasons.push(`💼 경력 분야 일치: [${categoryLabels[posting.category] || posting.category}] 실무 노하우 직접 활용 가능`);
   } else {
+    baseScore = 80;
     matchReasons.push(`💼 전문 분야 매칭: [${categoryLabels[posting.category] || posting.category}] 직무 경험 확장 가능`);
   }
 
-  // 2. Key Skills & Solved Problem Experience Keyword Matching (+4 points)
-  const solvedKeywords = ['프로세스', '운영', '자동화', '개선', '영업', '품질', '아키텍처', '전환', '데이터', '인사', '컴플라이언스', '리드', '구축', '표준화', '디자인', '개발', '전략'];
+  // 2. Key Skills & Solved Problem Experience Keyword Matching (+0 to +3 points)
+  const solvedKeywords = [
+    '프로세스',
+    '운영',
+    '자동화',
+    '개선',
+    '영업',
+    '품질',
+    '아키텍처',
+    '전환',
+    '데이터',
+    '인사',
+    '컴플라이언스',
+    '리드',
+    '구축',
+    '표준화',
+    '디자인',
+    '개발',
+    '전략',
+    'b2b',
+    'cs',
+  ];
   let keywordHits = 0;
   for (const kw of solvedKeywords) {
-    if ((userExpText.includes(kw) || userSkillsText.includes(kw)) && (postingProblem.includes(kw) || postingGoal.includes(kw) || postingSkills.includes(kw))) {
+    if (
+      (userExpText.includes(kw) || userSkillsText.includes(kw)) &&
+      (postingProblem.includes(kw) || postingGoal.includes(kw) || postingSkills.includes(kw) || postingTitle.includes(kw))
+    ) {
       keywordHits++;
     }
   }
 
   if (keywordHits >= 2) {
-    score += 3;
+    baseScore += 3;
     matchReasons.push(`💡 세부 강점 & 과제 부합: 과거 성과/강점 노하우와 기업 과제(${posting.companyName}) 96%+ 강력 매칭`);
-  } else {
+  } else if (keywordHits >= 1) {
+    baseScore += 2;
     matchReasons.push(`⚡ 실무 강점 부합: 가입자 세부 강점 기반 즉시 문제 해결 투입 가능`);
+  } else {
+    matchReasons.push(`⚡ 실무 역량 보유: 10년+ 베테랑 책임 리더십 조건 충족`);
   }
 
-  // 3. Seniority Years Matching (+2 points)
+  // 3. Seniority Years Matching (+1 point)
   const userYearsNum = parseInt(activeProfile.period || '12', 10) || 12;
+  if (userYearsNum >= 10) {
+    baseScore += 1;
+  }
   matchReasons.push(`🏆 40+ 경력 부합: ${userYearsNum}년 차 전문성 및 책임 리더십 조건 충족`);
 
-  // Cap final score between 88 and 99
-  const finalScore = Math.min(99, Math.max(88, score));
+  // Cap final score between 80 and 99
+  const finalScore = Math.min(99, Math.max(80, baseScore));
 
   return {
     personalizedScore: finalScore,

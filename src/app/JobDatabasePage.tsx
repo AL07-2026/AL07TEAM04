@@ -574,7 +574,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
-    void (async () => {
+    async function loadDatabaseProjects() {
       const userProjects = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...userProjects];
@@ -582,9 +582,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       const rankedPostings = ranked.map((r) => r.posting);
       setPostings(rankedPostings);
       if (rankedPostings[0]) {
-        setSelectedId(rankedPostings[0].id);
+        const topId = rankedPostings[0].id;
+        setSelectedId((current) => current || topId);
       }
-    })();
+    }
+    void loadDatabaseProjects();
+
+    const handleProfileUpdate = () => {
+      void loadDatabaseProjects();
+    };
+
+    window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
+    window.addEventListener('storage', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
+      window.removeEventListener('storage', handleProfileUpdate);
+    };
   }, []);
 
   function handleApply(posting: JobPosting) {

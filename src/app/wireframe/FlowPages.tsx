@@ -156,14 +156,26 @@ export function SeniorHomePage() {
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
 
   useEffect(() => {
-    void (async () => {
+    async function loadAndRankProjects() {
       await seedProjectsIfEmpty();
       const loaded = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...loaded];
       const ranked = getPersonalizedRankedProjects(combined);
       setRecommendedJobs(ranked.slice(0, 4).map((r) => r.posting));
-    })();
+    }
+    void loadAndRankProjects();
+
+    const handleProfileUpdate = () => {
+      void loadAndRankProjects();
+    };
+
+    window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
+    window.addEventListener('storage', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
+      window.removeEventListener('storage', handleProfileUpdate);
+    };
   }, []);
 
   const { user } = useAuth();

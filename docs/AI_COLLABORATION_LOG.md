@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 가입자 재입력 프로필 정보 (1차/2차/3차 희망직종) 기반 실시간 동적 추천 점수 우선순위 알고리즘 적용
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **가입자 선택 1차/2차/3차 희망직종 최우선 점수 계산 (`recommendationEngine.ts`)**: 공고의 고정 시드 점수가 가입자의 희망직종 선택을 덮어쓰던 문제를 개선. 가입자가 새로 수정한 **1순위 희망 직종 공고에 95~99점 기본 점수를 부여**하여 무조건 상단 1위 추천으로 올라오도록 알고리즘 재설계 (2순위: 92~95점, 3순위: 89~92점).
+  - **프로필 수정 시 실시간 홈/DB 재추천 동기화 (`eojob_senior_profile_updated`)**: 프로필 변경 시 `window.dispatchEvent` 이벤트를 발생시키고, `SeniorHomePage` 및 `JobDatabasePage`에서 즉시 이벤트 리스너를 감지해 온스크린 추천 순위를 재계산하도록 연결.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 사용자 브라우저 캐시 잔여 시드 자동 소탕 스크러버 탑재 및 코드 중복 최적화 (`proposalService.ts`, `FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
