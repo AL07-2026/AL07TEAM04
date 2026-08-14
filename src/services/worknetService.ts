@@ -34,40 +34,52 @@ export type WorknetApiResponse = {
   wantedList?: WorknetApiItem[];
 };
 
-// 모든 업종/직무 동적 판별 함수
+// 모든 업종/직무 (KSCO 10대 대분류 100% 포괄) 동적 판별 함수
 export function detectCategoryFromJobText(title: string, duties: string): ProjectCategory {
   const combined = `${title} ${duties}`.toLowerCase();
 
-  if (/개발|개발자|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|웹개발|앱개발|아키텍트|풀스택|backend|frontend/.test(combined)) {
+  // 1. IT / 개발 / 엔지니어링
+  if (/개발|개발자|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|웹개발|앱개발|아키텍트|풀스택|임베디드|backend|frontend/.test(combined)) {
     return 'dev-engineering';
   }
-  if (/디자인|디자이너|ux|ui|브랜드|크리에이티브|시각|웹디자인|그래픽|일러스트/.test(combined)) {
+  // 2. 디자인 / 크리에이티브 / 브랜딩
+  if (/디자인|디자이너|ux|ui|브랜드|크리에이티브|시각|웹디자인|그래픽|일러스트|영상|콘텐츠|퍼블리싱/.test(combined)) {
     return 'design-brand';
   }
-  if (/마케팅|영업|그로스|홍보|광고|고객|퍼포먼스|전략영업/.test(combined)) {
+  // 3. 마케팅 / 영업 / MD / CS
+  if (/마케팅|영업|그로스|홍보|광고|고객|퍼포먼스|전략영업|md|유통|무역|매출|고객센터/.test(combined)) {
     return 'marketing-sales';
   }
-  if (/인사|채용|경영|전략|회계|재무|조직|노무|총무|기획/.test(combined)) {
+  // 4. 인사 / 경영전략 / 재무 / 법무 / 교육 / 기획
+  if (/인사|채용|경영|전략|회계|재무|조직|노무|총무|기획|법무|특허|변리|교육|자문|컨설팅|행정/.test(combined)) {
     return 'hr-strategy';
   }
-  if (/제조|생산|품질|r&d|연구|공정|설계|자재|설비|바이오/.test(combined)) {
+  // 5. 제조 / R&D / 건설 / 바이오 / 의료 / 시설
+  if (/제조|생산|품질|r&d|연구|공정|설계|자재|설비|바이오|의료|의약|건설|토목|시공|환경|위생/.test(combined)) {
     return 'r-and-d-manufacturing';
   }
-  if (/운영|물류|scm|매장|고객성공|서비스관리/.test(combined)) {
+  // 6. 서비스 운영 / SCM / 물류 / 현장관리
+  if (/운영|물류|scm|매장|고객성공|서비스관리|배송|입출고|시설관리|현장관리|단순노무|기초사무/.test(combined)) {
     return 'operations';
   }
-  if (/데이터|플랫폼|db|빅데이터|분석/.test(combined)) {
+  // 7. 데이터 / 빅데이터 / DB
+  if (/데이터|플랫폼|db|빅데이터|분석|BI/.test(combined)) {
     return 'data-platform';
   }
-  if (/ai|자동화|머신러닝|인공지능|로봇/.test(combined)) {
+  // 8. AI / 로봇 / 자동화
+  if (/ai|자동화|머신러닝|인공지능|로봇|rpa/.test(combined)) {
     return 'ai-automation';
   }
-  if (/보안|리스크|안전|컴플라이언스|감사/.test(combined)) {
+  // 9. 보안 / 리스크 / 안전
+  if (/보안|리스크|안전|컴플라이언스|감사|소방|정보보안/.test(combined)) {
     return 'security';
   }
-  if (/레거시|시스템|erp|이관|고도화|개편/.test(combined)) {
+  // 10. 레거시 시스템 개편 / 이관
+  if (/레거시|시스템|erp|이관|고도화|개편|수기/.test(combined)) {
     return 'legacy-modernization';
   }
+
+  // 100% 포괄 보장: 예외적인 신규/특수 직종도 'growth' (사업성장/종합과제)로 안전하게 자동 분류
   return 'growth';
 }
 
