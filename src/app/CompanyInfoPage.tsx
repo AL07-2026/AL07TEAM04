@@ -205,9 +205,16 @@ export function CompanyInfoPage() {
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
-              <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
-                프로젝트 등록하기 →
+              <ActionButton onClick={() => void navigate('/company')} role="company">
+                홈으로 이동하여 관리 현황 보기 →
               </ActionButton>
+              <button
+                type="button"
+                onClick={() => void navigate('/company/projects/new')}
+                className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
+              >
+                🏢 새 프로젝트 등록하기 →
+              </button>
             </div>
           </div>
         ) : (

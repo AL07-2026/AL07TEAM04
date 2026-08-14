@@ -264,9 +264,16 @@ export function BasicProfilePage() {
             ) : null}
 
             <div className="pt-2 flex flex-col gap-2">
-              <ActionButton onClick={() => void navigate('/senior/experience')} role="senior">
-                AI 경험 인터뷰 시작하기 (1/3) →
+              <ActionButton onClick={() => void navigate('/senior')} role="senior">
+                홈으로 이동하여 맞춤 추천 프로젝트 보기 →
               </ActionButton>
+              <button
+                type="button"
+                onClick={() => void navigate('/senior/experience')}
+                className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
+              >
+                🎙️ AI 경험 인터뷰 진행하기 (1/3) →
+              </button>
             </div>
           </div>
         ) : (

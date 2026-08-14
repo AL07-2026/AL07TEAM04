@@ -155,9 +155,9 @@ export function LoginPage() {
     try {
       const userProfile = await signInWithGoogle(role);
       if (userProfile.role === 'company') {
-        void navigate('/company-info');
+        void navigate('/company');
       } else {
-        void navigate('/basic-profile');
+        void navigate('/senior');
       }
     } catch (err: unknown) {
       const error = err as Error;

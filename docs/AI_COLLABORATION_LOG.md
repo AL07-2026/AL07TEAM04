@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 기존 가입자 로그인 직행 홈 랜딩 & 신규 가입자 프로필 입력 이원화 이탈 방지 구축
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **기존 가입자 직행 홈 랜딩 (`LoginPage.tsx`)**: 기존 등록 유저가 로그인(이메일/비밀번호 및 구글 로그인) 시 내정보 페이지가 아닌 **홈 화면 (`/senior`, `/company`)으로 100% 직행**되도록 보정.
+  - **신규 가입자 플로우 유지 (`SignupPage.tsx`, `RoleSelectionPage.tsx`)**: 신규 회원가입 유저에 한해서만 초기 필수 정보 입력 페이지(`/basic-profile`, `/company-info`)로 이동하며, 입력 완료 후 바로 **`홈으로 이동하여 맞춤 추천 프로젝트 보기 →`** 버튼을 통해 홈으로 진입하도록 유저 스토어 동선 이원화 완성.
+  - **Firebase Hosting 라이브 배포 완료**: `https://al07team04-bdfcd.web.app`에 최신 프로덕션 빌드 성공적으로 배포 완료.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 로그인 후 홈 화면 착륙 및 맞춤 40+ 시니어 추천 프로젝트 실시간 노출 구조 완성
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
