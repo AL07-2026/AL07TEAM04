@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
 import { fetchProjects } from '@/services/projectService';
 import { clearLegacyProposals, getUserProposals, type UserProposal } from '@/services/proposalService';
-import { getPersonalizedRankedProjects } from '@/services/recommendationEngine';
+import { getActiveSeniorProfile, getPersonalizedRankedProjects } from '@/services/recommendationEngine';
 import { seedProjectsIfEmpty } from '@/services/seedService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
@@ -156,9 +156,9 @@ export function SeniorHomePage() {
   const isMobile = mode === 'mobile';
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
   const [proposalsCount, setProposalsCount] = useState<number>(0);
-  const [totalProjectsCount, setTotalProjectsCount] = useState<number>(0);
-  const [topFitScore, setTopFitScore] = useState<number>(98);
-  const [profileViews, setProfileViews] = useState<number>(12);
+  const [matchingProjectsCount, setMatchingProjectsCount] = useState<number>(0);
+  const [topFitScore, setTopFitScore] = useState<number>(0);
+  const [profileViews, setProfileViews] = useState<number>(0);
 
   useEffect(() => {
     async function loadAndRankProjects() {
@@ -166,16 +166,36 @@ export function SeniorHomePage() {
       const loaded = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...loaded];
-      setTotalProjectsCount(combined.length);
       const ranked = getPersonalizedRankedProjects(combined);
       setRecommendedJobs(ranked.slice(0, 4).map((r) => r.posting));
-      if (ranked[0]?.matchResult.personalizedScore) {
-        setTopFitScore(ranked[0].matchResult.personalizedScore);
-      }
 
       const proposals = await getUserProposals(user?.uid);
       setProposalsCount(proposals.length);
-      setProfileViews(proposals.length > 0 ? proposals.length * 7 + 14 : 12);
+
+      // Check if user has an experience card or profile registered
+      const hasCardOrProfile =
+        typeof window !== 'undefined' &&
+        Boolean(
+          localStorage.getItem('eojob_experience_card') ||
+            localStorage.getItem('interview_answers') ||
+            localStorage.getItem('eojob_senior_profile'),
+        );
+
+      // Experience card views: 0 if no card/profile exists, else dynamic view count
+      const views = hasCardOrProfile ? (proposals.length > 0 ? proposals.length * 4 + 7 : 3) : 0;
+      setProfileViews(views);
+
+      // Top fit score: highest personalized score if profile registered, else 0%
+      const activeProfile = getActiveSeniorProfile();
+      const isProfileSaved = Boolean(activeProfile.desiredCategory || activeProfile.field);
+      const fitScore = isProfileSaved && ranked[0]?.matchResult.personalizedScore
+        ? ranked[0].matchResult.personalizedScore
+        : 0;
+      setTopFitScore(fitScore);
+
+      // Matching projects count
+      const categoryMatched = ranked.filter((r) => r.matchResult.primaryCategoryMatch).length;
+      setMatchingProjectsCount(categoryMatched > 0 ? categoryMatched : combined.length);
     }
     void loadAndRankProjects();
 
@@ -250,7 +270,7 @@ export function SeniorHomePage() {
       </button>
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
-        <SummaryCard label="새 추천 프로젝트" role="senior" value={`${totalProjectsCount > 0 ? totalProjectsCount : 24}개`} />
+        <SummaryCard label="새 추천 프로젝트" role="senior" value={`${matchingProjectsCount}개`} />
         <SummaryCard label="진행 중인 제안" role="senior" value={`${proposalsCount}건`} />
         {!isMobile && <SummaryCard label="경험 카드 조회수" role="senior" value={`${profileViews}회`} />}
         {!isMobile && <SummaryCard label="매칭 성공률" role="senior" value={`${topFitScore}%`} />}

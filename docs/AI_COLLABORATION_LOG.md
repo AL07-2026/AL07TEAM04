@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 요약 카드 4종 (경험 카드 조회수, 매칭 성공률 등) 순수 회원 데이터 기준 완전 동적화 (`FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **경험 카드 조회수 0회/동적 전환 (`FlowPages.tsx`)**: AI 경험 인터뷰 및 카드 생성 전 신규 가입자 상태에서는 **`0회`**로 표시되며, 전용 경험 카드가 생성되면 실제 기업 담당자 조회수를 동적 반영하도록 산출 로직 개선.
+  - **매칭 성공률(적합도) 0%/실점수 동적 전환 (`FlowPages.tsx`)**: 프로필 희망 직종/경력 정보 미입력 상태에서는 **`0%`**로 표시되며, 프로필 정보가 입력되는 즉시 1순위 추천 공고의 실시간 적합도 최고점(`topFitScore%`, 예: `98%`)을 반영하도록 정밀 연동.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] GNB 상단 이어잡 로고 15% 축소 및 홈 요약 카드 실시간 실제 데이터 연동 (`Ui.tsx`, `FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
