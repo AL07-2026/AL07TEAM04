@@ -17,7 +17,32 @@ const WORKNET_FEED_CACHE_TTL_MS = 5 * 60 * 1_000;
 export const WORKNET_JOB_API_KEY =
   (import.meta.env.VITE_WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
   (import.meta.env.WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
-  '';
+  'a5dea206-9134-412d-a2f4-8f4998a6321f';
+
+export const WORKNET_TRAINING_API_KEY =
+  (import.meta.env.VITE_WORKNET_TRAINING_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_TRAINING_API_KEY as string | undefined)?.trim() ??
+  '9a75ee7b-06ad-4ee7-aa18-776090cf5102';
+
+export const WORKNET_DUTY_API_KEY =
+  (import.meta.env.VITE_WORKNET_DUTY_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_DUTY_API_KEY as string | undefined)?.trim() ??
+  '820aa395-647d-41b8-aecb-19bc889ea890';
+
+export const WORKNET_JOB_INFO_API_KEY =
+  (import.meta.env.VITE_WORKNET_JOB_INFO_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_JOB_INFO_API_KEY as string | undefined)?.trim() ??
+  '32661c53-854b-4afd-99bc-dad3f6f851f6';
+
+export const WORKNET_CODE_API_KEY =
+  (import.meta.env.VITE_WORKNET_CODE_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_CODE_API_KEY as string | undefined)?.trim() ??
+  'ccc1d069-84e3-4fb8-bc24-5fbe3f616cd8';
+
+export const WORKNET_GIANT_API_KEY =
+  (import.meta.env.VITE_WORKNET_GIANT_API_KEY as string | undefined)?.trim() ??
+  (import.meta.env.WORKNET_GIANT_API_KEY as string | undefined)?.trim() ??
+  'dd79d00d-261f-4b03-aca9-1dbb3c997050';
 
 export type WorknetJobRaw = {
   addresses?: string;
