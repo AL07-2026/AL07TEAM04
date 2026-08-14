@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] origin/STT 브랜치 병합 (AssemblyAI 인터뷰 STT 플로우 통합)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **`origin/STT` 브랜치 병합**: AssemblyAI 음성 인식(STT) 인터뷰 플로우 기반 서브 모듈, 서버(`server/interviewTranscribeServer.mjs`), `FlowPages.tsx` 병합 및 충돌 해결.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
+- **변경 파일**:
+  - [NEW] [`server/interviewTranscribeServer.mjs`](file:///c:/AL07TEAM04/server/interviewTranscribeServer.mjs)
+  - [MODIFY] [`.env.example`](file:///c:/AL07TEAM04/.env.example)
+  - [MODIFY] [`package.json`](file:///c:/AL07TEAM04/package.json)
+  - [MODIFY] [`vite.config.ts`](file:///c:/AL07TEAM04/vite.config.ts)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-12] 모바일 프로젝트 검색/필터 카드 UI 개선 및 라이브 배포
 - **작업자**: Codex & Antigravity (Gemini)
 - **작업 내용**:
