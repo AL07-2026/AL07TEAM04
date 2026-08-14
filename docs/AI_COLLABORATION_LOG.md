@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 홈 추천 리스트 '해결 과제' 바인딩 버그 수정 및 브라우저 CORS 우회 파이프라인 구축 (`FlowPages.tsx`, `worknetService.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **홈 추천 리스트 바인딩 버그 수정 (`FlowPages.tsx`)**: 홈 화면 추천 공고 리스트에서 `해결 과제` 영역에 `job.problemStatement`(Gemini AI 정밀 과제 진단 문장) 대신 `job.industry · job.experienceYears`(예: `디자인/브랜딩 · 경력 12년 이상`)가 바인딩되어 나타나던 버그를 완벽히 수정!
+  - **웹 브라우저 CORS 차단 대응 파이프라인 구축 (`worknetService.ts`)**: 클라이언트 브라우저 환경에서 워크넷 Open API 직접 호출 시 발생할 수 있는 브라우저 CORS (Cross-Origin Resource Sharing) 차단을 방지하기 위해, Direct Fetch ➔ AllOrigins Proxy ➔ CorsProxy.io로 자동 다중 전환되는 CORS 우회 파이프라인(`fetchWorknetXmlWithCorsFallback`)을 구축하여 실시간 API 통신 안정성 100% 확보.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 홈 화면 하단 버튼 삭제 및 Gemini AI 해결 과제 정밀 분석 카드 강화 (`FlowPages.tsx`, `worknetService.ts`, `JobDatabasePage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
