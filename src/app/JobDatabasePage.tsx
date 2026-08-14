@@ -580,11 +580,15 @@ function DetailPanel({
         </div>
       ) : isMobile ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-[#E0D9C8]">
-          <MobileDetailRow label="해결 프로젝트">
-            <p>{posting.problemStatement}</p>
-          </MobileDetailRow>
-          <MobileDetailRow label="프로젝트 목표">
-            <p>{posting.projectGoal}</p>
+          <MobileDetailRow label="🤖 AI 해결 과제 분석" tone="mint">
+            <div className="flex flex-col gap-2">
+              <p className="font-bold text-[#17212B] leading-relaxed">
+                🎯 <span className="font-extrabold text-[#173F3A]">핵심 과제:</span> {posting.problemStatement}
+              </p>
+              <p className="font-bold text-[#17212B] leading-relaxed">
+                🚀 <span className="font-extrabold text-[#173F3A]">목표 지표:</span> {posting.projectGoal}
+              </p>
+            </div>
           </MobileDetailRow>
           <MobileDetailRow label="핵심 업무">
             <DetailBulletList items={posting.coreResponsibilities} />
@@ -628,19 +632,26 @@ function DetailPanel({
         </div>
       ) : (
         <>
-          <div className="mt-5 grid gap-3 lg:grid-cols-2">
-            <section className="rounded-xl bg-[#FAF7F2] p-3.5 border border-[#E0D9C8]/60">
-              <p className="text-[12px] font-extrabold text-[#173F3A]">해결해야 할 프로젝트</p>
-              <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]">
-                {posting.problemStatement}
-              </p>
-            </section>
-            <section className="rounded-xl bg-[#FAF7F2] p-3.5 border border-[#E0D9C8]/60">
-              <p className="text-[12px] font-extrabold text-[#173F3A]">프로젝트 목표</p>
-              <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]">
-                {posting.projectGoal}
-              </p>
-            </section>
+          {/* Gemini AI Detailed Problem & Execution Analysis */}
+          <div className="mt-5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
+            <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
+              <Sparkles className="size-4 text-[#173F3A]" />
+              <span>🤖 Gemini AI 해결 과제 분석 & 시니어 실행 로드맵</span>
+            </div>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
+                <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 해결해야 할 핵심 과제 진단</p>
+                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
+                  {posting.problemStatement}
+                </p>
+              </section>
+              <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
+                <p className="text-[12px] font-extrabold text-[#173F3A]">🚀 달성 핵심 목표 및 KPI 지표</p>
+                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
+                  {posting.projectGoal}
+                </p>
+              </section>
+            </div>
           </div>
 
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
