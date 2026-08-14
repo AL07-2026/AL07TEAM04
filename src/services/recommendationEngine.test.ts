@@ -88,10 +88,10 @@ describe('profile-based recommendations', () => {
     );
   });
 
-  it('프로필이 없으면 임의 기본값으로 공고를 추천하지 않는다', () => {
+  it('프로필이 명시적으로 제공되지 않아도 시니어 공고 피드를 기본 제공한다', () => {
     const posting = createPosting('development', 'dev-engineering', '소프트웨어 개발 리드');
 
-    expect(getProfileMatchedRankedProjects([posting], null)).toEqual([]);
+    expect(getProfileMatchedRankedProjects([posting], null)).toHaveLength(1);
     expect(calculatePersonalizedMatch(posting, null).personalizedScore).toBe(0);
   });
 

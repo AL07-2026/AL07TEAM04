@@ -199,7 +199,9 @@ export function getProfileMatchedRankedProjects(
   postings: JobPosting[],
   profile?: SeniorProfileData | null,
 ) {
-  if (!hasProfileRecommendationCriteria(profile)) return [];
+  if (!hasProfileRecommendationCriteria(profile)) {
+    return getPersonalizedRankedProjects(postings, profile);
+  }
 
   const preferredCategories = new Set(getProfilePreferredCategories(profile));
   const matchedPostings = postings.filter((posting) => preferredCategories.has(posting.category));

@@ -346,16 +346,10 @@ export function SeniorHomePage() {
       setIsLoadingRecommendations(true);
       const profilePromise = resolveSeniorProfile(user?.uid);
       const worknetFeedPromise = profilePromise.then((profile) => {
-        if (!hasProfileRecommendationCriteria(profile)) {
-          return {
-            projects: [],
-            status: 'profile-required' as const,
-            message: '내 정보의 희망 직종과 경력 정보를 먼저 입력해 주세요.',
-          };
-        }
+        const hasCriteria = hasProfileRecommendationCriteria(profile);
         return fetchWorknetSeniorProjectFeed({
-          keywords: getProfileWorknetKeywords(profile),
-          maxCareerMonths: getProfileExperienceMonths(profile),
+          keywords: hasCriteria ? getProfileWorknetKeywords(profile) : undefined,
+          maxCareerMonths: hasCriteria ? getProfileExperienceMonths(profile) : undefined,
         });
       });
       const [profile, worknetFeed, proposals, experienceCard] = await Promise.all([
