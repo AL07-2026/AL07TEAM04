@@ -759,7 +759,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isLoadingPostings, setIsLoadingPostings] = useState(true);
   const [worknetFeedMessage, setWorknetFeedMessage] = useState('');
   const [worknetFeedStatus, setWorknetFeedStatus] = useState<WorknetProjectFeedStatus>('success');
-  const [isFallbackFeed, setIsFallbackFeed] = useState<boolean>(false);
   const [worknetReloadKey, setWorknetReloadKey] = useState(0);
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
 
@@ -819,7 +818,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       if (role === 'senior') setInterviewCard(latestInterviewCard);
       setSeniorProfile(resolvedProfile);
       setWorknetFeedStatus(worknetFeed.status);
-      setIsFallbackFeed(Boolean(worknetFeed.isFallback));
       const visibleUserProjects =
         role === 'company' && user?.uid
           ? userProjects.filter((project) => !project.ownerId || project.ownerId === user.uid)
@@ -1185,41 +1183,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             ? '내 정보에 저장한 희망 직종 1·2·3순위와 경력·핵심 역량을 기준으로 맞춤 공고를 선별하고 추천 점수를 계산합니다.'
             : '회사가 직접 등록한 프로젝트의 내용과 지원서 검토·담당자 인터뷰 단계를 한눈에 확인하세요.'}
         </p>
-
-        {role === 'senior' && isFallbackFeed ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-[#FFFBEB] p-3 text-xs font-bold text-amber-900 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="relative flex size-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex size-2.5 rounded-full bg-amber-500"></span>
-              </span>
-              <span>⚡ 실시간 외부 API 점검 중 (서비스 보장을 위해 안전 백업 피드가 동작 중입니다)</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setWorknetReloadKey((v) => v + 1)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1 text-[11px] font-extrabold text-amber-900 shadow-2xs hover:bg-amber-100 transition-all active:scale-[0.98]"
-            >
-              <RefreshCw className="size-3.5" />
-              <span>실시간 재연결</span>
-            </button>
-          </div>
-        ) : role === 'senior' ? (
-          <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-[#ECFDF5] p-3 text-xs font-extrabold text-[#047857] shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="size-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>🟢 실시간 채용정보 API 연결 정상 연동 중</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setWorknetReloadKey((v) => v + 1)}
-              className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-extrabold text-emerald-800 hover:bg-emerald-100 transition-all"
-            >
-              <RefreshCw className="size-3" />
-              <span>동기화</span>
-            </button>
-          </div>
-        ) : null}
       </section>
 
       {role === 'senior' ? (

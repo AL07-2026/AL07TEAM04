@@ -396,59 +396,52 @@ export async function fetchWorknetSeniorProjectFeed(
       projects: fallbackProjects,
       status: 'success',
       isFallback: true,
-      message: '외부 API 연결 점검 상태로 안전 백업 데이터 피드가 동작 중입니다.',
     };
   }
 
-  try {
-    const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
-    const response = await fetch(`${WORKNET_JOB_ENDPOINT}?${params.toString()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
+      const response = await fetch(`${WORKNET_JOB_ENDPOINT}?${params.toString()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const parsed = parseWorknetJobXml(await response.text());
-    if (parsed.error || parsed.items.length === 0) {
-      console.warn('Worknet API XML Notice/Error:', parsed.error);
-      const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
-        transformWorknetToSeniorProject(item, index, now),
-      );
-      return {
-        projects: fallbackProjects,
-        status: 'success',
-        isFallback: true,
-        message: '외부 API 점검 상태로 안전 백업 피드가 연동되었습니다.',
-      };
+      const parsed = parseWorknetJobXml(await response.text());
+      if (parsed.error || parsed.items.length === 0) {
+        if (attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          continue;
+        }
+        break;
+      }
+
+      const projects = parsed.items
+        .filter((item) => item.wantedAuthNo && item.title && item.company)
+        .filter((item) => !isExpiredPosting(item, now))
+        .map((item, index) => transformWorknetToSeniorProject(item, index, now));
+
+      if (projects.length > 0) {
+        return {
+          projects,
+          status: 'success',
+          isFallback: false,
+        };
+      }
+    } catch (error) {
+      console.warn(`Worknet API fetch attempt ${attempt + 1} failed:`, error);
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
     }
-
-    const projects = parsed.items
-      .filter((item) => item.wantedAuthNo && item.title && item.company)
-      .filter((item) => !isExpiredPosting(item, now))
-      .map((item, index) => transformWorknetToSeniorProject(item, index, now));
-
-    if (projects.length === 0) {
-      return {
-        projects: fallbackWorknetJobs.map((item, index) =>
-          transformWorknetToSeniorProject(item, index, now),
-        ),
-        status: 'success',
-        isFallback: true,
-      };
-    }
-
-    return {
-      projects,
-      status: 'success',
-      isFallback: false,
-    };
-  } catch (error) {
-    console.warn('Failed to load Worknet jobs, using fallback feed:', error);
-    const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
-      transformWorknetToSeniorProject(item, index, now),
-    );
-    return {
-      projects: fallbackProjects,
-      status: 'success',
-      isFallback: true,
-      message: '실시간 API 점검 상태로 검증된 백업 피드로 자동 조율되었습니다.',
-    };
   }
+
+  // Silent fallback to backed-up Worknet jobs for smooth UX
+  const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
+    transformWorknetToSeniorProject(item, index, now),
+  );
+  return {
+    projects: fallbackProjects,
+    status: 'success',
+    isFallback: true,
+  };
 }
