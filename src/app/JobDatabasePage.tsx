@@ -26,6 +26,7 @@ import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/
 import { cn } from '@/lib/utils';
 import { createProject, fetchProjects } from '@/services/projectService';
 import { seedProjectsIfEmpty } from '@/services/seedService';
+import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
 import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
 
@@ -478,11 +479,11 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
     void (async () => {
       await seedProjectsIfEmpty();
       const loaded = await fetchProjects();
-      if (loaded.length > 0) {
-        setPostings(loaded);
-        if (loaded[0]) {
-          setSelectedId(loaded[0].id);
-        }
+      const worknetProjects = await fetchWorknetSeniorProjects();
+      const combined = [...worknetProjects, ...loaded];
+      setPostings(combined);
+      if (combined[0]) {
+        setSelectedId(combined[0].id);
       }
     })();
   }, []);
@@ -615,10 +616,15 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
       title="프로젝트"
     >
       <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-3">
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
-            <Sparkles className="size-3.5" />시니어 맞춤 프로젝트
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
+              <Sparkles className="size-3.5" />시니어 맞춤 프로젝트
+            </p>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-3 py-1 text-[12px] font-extrabold text-[#F06B4F]">
+              🏛️ 정부 워크넷 40+ 연동
+            </span>
+          </div>
           {role === 'company' && (
             <button
               onClick={() => setIsRegisterOpen(true)}
