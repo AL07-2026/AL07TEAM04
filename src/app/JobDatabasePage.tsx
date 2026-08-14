@@ -341,8 +341,8 @@ function PostingCard({
             fitTone.containerClassName,
           )}
         >
-          <p className={cn('text-[10px] font-bold', fitTone.labelClassName)}>
-            {fitTone.rangeLabel} · {fitTone.label}
+          <p className={cn('text-[11px] font-bold', fitTone.labelClassName)}>
+            {fitTone.label}
           </p>
           <p className={cn('text-[18px] font-extrabold', fitTone.scoreClassName)}>
             {displayScore}점
@@ -440,8 +440,8 @@ function DetailPanel({
                 fitTone.containerClassName,
               )}
             >
-              <span className={cn('text-[10px] font-extrabold', fitTone.labelClassName)}>
-                {fitTone.rangeLabel} · {fitTone.label}
+              <span className={cn('text-[11px] font-extrabold', fitTone.labelClassName)}>
+                {fitTone.label}
               </span>
               <strong className={cn('text-[16px] font-extrabold', fitTone.scoreClassName)}>
                 {displayScore}점
@@ -492,8 +492,8 @@ function DetailPanel({
             aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
             className={cn('rounded-xl border px-3 py-2 text-center', fitTone.containerClassName)}
           >
-            <p className={cn('text-[11px] font-extrabold', fitTone.labelClassName)}>
-              {fitTone.rangeLabel} · {fitTone.label}
+            <p className={cn('text-[12px] font-bold', fitTone.labelClassName)}>
+              {fitTone.label}
             </p>
             <p className={cn('text-[24px] font-extrabold', fitTone.scoreClassName)}>
               {displayScore}점
@@ -518,19 +518,9 @@ function DetailPanel({
       {/* Personalized Profile Match Analysis */}
       {role === 'senior' ? (
         <div className="mt-4 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-3.5 flex flex-col gap-2 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#173F3A]">
-              <Sparkles className="size-4 text-[#173F3A]" />
-              🎯 내 정보 기반 적합도 분석
-            </div>
-            <span
-              className={cn(
-                'rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold',
-                fitTone.containerClassName,
-              )}
-            >
-              {displayScore}점 · {fitTone.label}
-            </span>
+          <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#173F3A]">
+            <Sparkles className="size-4 text-[#173F3A]" />
+            🎯 내 정보 기반 적합도 분석
           </div>
           <div className="flex flex-col gap-1 text-xs">
             {matchResult.matchReasons.map((reason, idx) => (

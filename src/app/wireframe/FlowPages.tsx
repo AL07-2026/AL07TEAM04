@@ -308,7 +308,7 @@ function HomeRecommendationRow({
             )}
           >
             <span className={cn('text-[11px] font-bold', fitTone.labelClassName)}>
-              {fitTone.rangeLabel} · {fitTone.label}
+              {fitTone.label}
             </span>
             <strong className={cn('text-[18px] font-black', fitTone.scoreClassName)}>
               {fitScore}점
