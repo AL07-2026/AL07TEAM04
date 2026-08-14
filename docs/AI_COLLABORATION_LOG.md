@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 추천 공고 로딩 스켈레톤 UI 및 스피너 탑재 (`FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **추천 공고 섹션 로딩 스켈레톤 구축 (`FlowPages.tsx`)**: 실시간 공고 조회 및 적합도 랭킹 계산 중일 때 화면이 멈춰있거나 비어 보이지 않도록 **`Loader2` 스피너 및 고급 스켈레톤 쉬머(Shimmer) 카드 3종**을 즉각 표출.
+  - **사용자 경험(UX) 개선**: 데이터 로딩 중임을 직관적이고 감각적으로 전달하여 인터랙티브하고 반응성 높은 UI 구현.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 추천 공고 매칭 엔진 폴백 알고리즘 보완 (`recommendationEngine.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
