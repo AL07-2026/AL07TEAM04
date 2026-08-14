@@ -4,6 +4,8 @@ import { db } from '@/lib/firebase';
 
 export type SeniorProfileData = {
   desiredCategory?: string;
+  desiredCategory2?: string;
+  desiredCategory3?: string;
   email: string;
   experience: string;
   field: string;

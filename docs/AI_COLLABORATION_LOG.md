@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 희망 직종 1차/2차/3차 다중 선택 및 경력 분야 세부 핵심 강점 입력 보완 (`BasicProfilePage.tsx`, `recommendationEngine.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **희망 직종 1차 · 2차 · 3차 다중 선택 및 세부 강점 입력 구현 (`BasicProfilePage.tsx`, `profileService.ts`)**: 프로필 수정 폼에 1순위(필수), 2순위(선택), 3순위(선택) 희망 직종 셀렉트 박스 3종 및 `💪 경력 분야 세부 핵심 강점 및 주력 역량(`keySkills`)` 입력란을 신설.
+  - **개인화 추천 매칭 알고리즘 고도화 (`recommendationEngine.ts`)**: 1차 희망 직종(+5점), 2차 희망 직종(+4점), 3차 희망 직종(+3점) 및 세부 핵심 강점 키워드 부합도를 종합 평가하여 실시간 적합도(88~99점) 및 사유 뱃지를 세분화하여 산출.
+  - **레이아웃 반응형 그리드 완벽 보완 (`BasicProfilePage.tsx`)**: 모바일 및 데스크톱 환경에서 입력란 겹침, 넘침, 텍스트 잘림 현상이 없도록 `grid-cols-1 md:grid-cols-3 gap-3` 반응형 레이아웃 및 텍스트 줄바꿈 처리 완벽 보완.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] '내 제안' 화면 미지원 상태 시 더미 시드 제거 및 순수 실제 지원 내역 연동 (`proposalService.ts`, `FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

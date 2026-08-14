@@ -10,9 +10,12 @@ import { getSeniorProfile, saveSeniorProfile } from '@/services/profileService';
 
 type ProfileForm = {
   desiredCategory?: string;
+  desiredCategory2?: string;
+  desiredCategory3?: string;
   email: string;
   experience: string;
   field: string;
+  keySkills?: string;
   period: string;
   phone: string;
   solvedExperiences?: string;
@@ -61,7 +64,10 @@ export function BasicProfilePage() {
     }
     return {
       desiredCategory: 'operations',
+      desiredCategory2: 'ai-automation',
+      desiredCategory3: 'dev-engineering',
       field: '서비스 운영 / 프로세스 개선',
+      keySkills: '0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀 리더십',
       period: '12년',
       experience: '신규 서비스 운영 체계 구축, 프로세스 표준화 및 대규모 프로젝트 총괄 리딩',
       solvedExperiences: '신규 서비스 출시 후 파편화된 운영 기준을 매뉴얼로 표준화하고 문의 처리 리드타임 30% 단축',
@@ -81,7 +87,10 @@ export function BasicProfilePage() {
       if (data) {
         const loadedForm: ProfileForm = {
           desiredCategory: data.desiredCategory || 'operations',
+          desiredCategory2: data.desiredCategory2 || 'ai-automation',
+          desiredCategory3: data.desiredCategory3 || 'dev-engineering',
           field: data.field || '서비스 운영 / 프로세스 개선',
+          keySkills: data.keySkills || '0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀 리더십',
           period: data.period || '12년',
           experience: data.experience || '신규 서비스 운영 체계 구축, 프로세스 표준화 및 대규모 프로젝트 총괄 리딩',
           solvedExperiences: data.solvedExperiences || '신규 서비스 출시 후 파편화된 운영 기준을 매뉴얼로 표준화하고 문의 처리 리드타임 30% 단축',
@@ -116,8 +125,8 @@ export function BasicProfilePage() {
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
-    if (Object.values(form).some((value) => !value.trim())) {
-      setMessage('필수 정보를 모두 입력해 주세요.');
+    if (!form.field.trim() || !form.experience.trim() || !form.phone.trim() || !form.email.trim()) {
+      setMessage('필수 정보(경력 분야, 대표 경험, 연락처, 이메일)를 모두 입력해 주세요.');
       return;
     }
     if (typeof window !== 'undefined') {
@@ -234,9 +243,25 @@ export function BasicProfilePage() {
 
             {isMobile ? (
               <dl className="overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xs">
-                <ProfileInfoRow label="희망 직종" value={categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'} />
+                <ProfileInfoRow
+                  label="1순위 희망직종"
+                  value={categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'}
+                />
+                {form.desiredCategory2 ? (
+                  <ProfileInfoRow
+                    label="2순위 희망직종"
+                    value={categoryLabels[form.desiredCategory2 as ProjectCategory] || form.desiredCategory2}
+                  />
+                ) : null}
+                {form.desiredCategory3 ? (
+                  <ProfileInfoRow
+                    label="3순위 희망직종"
+                    value={categoryLabels[form.desiredCategory3 as ProjectCategory] || form.desiredCategory3}
+                  />
+                ) : null}
                 <ProfileInfoRow label="경력 분야" value={form.field} />
                 <ProfileInfoRow label="경력 기간" value={form.period} />
+                <ProfileInfoRow label="세부 강점" strong={false} value={form.keySkills || '미입력'} />
                 <ProfileInfoRow label="해결 성과" strong={false} value={form.solvedExperiences || form.experience} />
                 <ProfileInfoRow label="대표 경험" strong={false} value={form.experience} />
                 <ProfileInfoRow label="연락처" value={form.phone} />
@@ -244,22 +269,51 @@ export function BasicProfilePage() {
               </dl>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60">
-                    <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">🎯 원하는 희망 직종 (추천 1순위)</span>
-                    <span className="text-sm font-extrabold text-[#173F3A]">
-                      {categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'}
-                    </span>
+                <div className="flex flex-col gap-2 rounded-2xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-4 shadow-2xs">
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    🎯 희망 직종 (1차 · 2차 · 3차 추천 순위)
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
+                      <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
+                      <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
+                        {categoryLabels[form.desiredCategory as ProjectCategory] || '운영 효율화'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
+                      <span className="text-[10px] font-extrabold text-slate-400">2순위 (선택)</span>
+                      <span className="text-xs md:text-sm font-bold text-slate-700">
+                        {form.desiredCategory2 ? (categoryLabels[form.desiredCategory2 as ProjectCategory] || form.desiredCategory2) : '선택 안 함'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
+                      <span className="text-[10px] font-extrabold text-slate-400">3순위 (선택)</span>
+                      <span className="text-xs md:text-sm font-bold text-slate-700">
+                        {form.desiredCategory3 ? (categoryLabels[form.desiredCategory3 as ProjectCategory] || form.desiredCategory3) : '선택 안 함'}
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경험한 세부 분야</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경험한 대표 분야</span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.field}</span>
                   </div>
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">경력 기간</span>
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">총 경력 기간</span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.period}</span>
                   </div>
                 </div>
+
+                {form.keySkills ? (
+                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                    <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">💪 경력 분야 세부 핵심 강점</span>
+                    <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
+                      {form.keySkills}
+                    </p>
+                  </div>
+                ) : null}
 
                 <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">💡 해결했던 핵심 문제 및 성과 사례</span>
@@ -309,37 +363,101 @@ export function BasicProfilePage() {
             </div>
           </div>
         ) : (
-          <form className="flex flex-col gap-4" onSubmit={handleSave}>
+          <form className="flex flex-col gap-4.5" onSubmit={handleSave}>
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <div>
                 <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}>
                   경험 정보 수정
                 </h2>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">수정 후 [변경사항 저장하기]를 눌러주세요.</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">희망 직종 1~3차 및 세부 강점을 설정해 주세요.</p>
               </div>
             </div>
 
-            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-extrabold text-[#17212B]">원하는 희망 직종 (추천 1순위)</label>
-                <select
-                  value={form.desiredCategory || 'operations'}
-                  onChange={(e) => update('desiredCategory')(e.target.value)}
-                  className="h-12 rounded-xl border border-[#E0D9C8] px-3.5 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white"
-                >
-                  <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
-                  <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
-                  <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
-                  <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
-                  <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
-                  <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
-                  <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
-                  <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
-                  <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
-                  <option value="security">보안/리스크 (컴플라이언스)</option>
-                  <option value="growth">성장/그로스 (세일즈/수익화)</option>
-                </select>
+            {/* Section 1: 희망 직종 1차 / 2차 / 3차 선택 */}
+            <div className="flex flex-col gap-2.5 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[14px] font-extrabold text-[#173F3A]">🎯 희망 직종 선택 (1차 · 2차 · 3차)</label>
+                <p className="text-[12px] font-medium text-slate-500">
+                  희망 직종을 1순위부터 3순위까지 지정하면 프로젝트 DB 추천 순위에 순서대로 반영됩니다.
+                </p>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  <span className="text-[12px] font-extrabold text-[#173F3A]">1순위 희망 직종 (필수)</span>
+                  <select
+                    value={form.desiredCategory || 'operations'}
+                    onChange={(e) => update('desiredCategory')(e.target.value)}
+                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                  >
+                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
+                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
+                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
+                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
+                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
+                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
+                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
+                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
+                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
+                    <option value="security">보안/리스크 (컴플라이언스)</option>
+                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  <span className="text-[12px] font-bold text-slate-600">2순위 희망 직종 (선택)</span>
+                  <select
+                    value={form.desiredCategory2 || ''}
+                    onChange={(e) => update('desiredCategory2')(e.target.value)}
+                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                  >
+                    <option value="">선택 안 함</option>
+                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
+                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
+                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
+                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
+                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
+                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
+                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
+                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
+                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
+                    <option value="security">보안/리스크 (컴플라이언스)</option>
+                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  <span className="text-[12px] font-bold text-slate-600">3순위 희망 직종 (선택)</span>
+                  <select
+                    value={form.desiredCategory3 || ''}
+                    onChange={(e) => update('desiredCategory3')(e.target.value)}
+                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                  >
+                    <option value="">선택 안 함</option>
+                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
+                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
+                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
+                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
+                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
+                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
+                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
+                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
+                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
+                    <option value="security">보안/리스크 (컴플라이언스)</option>
+                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: 경력 분야 & 경력 기간 */}
+            <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
+              <Field
+                label="경력 분야"
+                onChange={(e) => update('field')(e.target.value)}
+                placeholder="예: 서비스 운영, 프로세스 개선, CS 표준화"
+                value={form.field}
+              />
               <Field
                 label="경력 기간"
                 onChange={(e) => update('period')(e.target.value)}
@@ -348,27 +466,31 @@ export function BasicProfilePage() {
               />
             </div>
 
-            <Field
-              label="경력 분야"
-              onChange={(e) => update('field')(e.target.value)}
-              placeholder="예: 서비스 운영, 프로세스 표준화, CS 개선"
-              value={form.field}
+            {/* Section 3: 경력 분야 세부 핵심 강점 */}
+            <TextAreaField
+              label="💪 경력 분야 세부 핵심 강점 및 주력 역량"
+              onChange={(e) => update('keySkills')(e.target.value)}
+              placeholder="예: 0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀원 리더십 등 본인의 핵심 강점을 입력해주세요."
+              value={form.keySkills || ''}
             />
 
+            {/* Section 4: 해결했던 핵심 문제 및 성과 사례 */}
             <TextAreaField
-              label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
+              label="💡 해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
               placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해주세요."
               value={form.solvedExperiences || ''}
             />
 
+            {/* Section 5: 대표 실무 경험 요약 */}
             <TextAreaField
-              label="대표 실무 경험 요약"
+              label="📝 대표 실무 경험 요약"
               onChange={(e) => update('experience')(e.target.value)}
               placeholder="주요 실무 경험과 역량 요약을 입력해주세요"
               value={form.experience}
             />
 
+            {/* Section 6: 연락처 & 이메일 */}
             <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-4')}>
               <Field
                 inputMode="tel"
@@ -386,6 +508,7 @@ export function BasicProfilePage() {
               />
             </div>
 
+            {/* Section 7: 이력서 첨부 */}
             <div className="flex flex-col gap-2">
               <span className="text-[13px] font-extrabold text-[#17212B]">이력서 첨부 (선택)</span>
               <input
