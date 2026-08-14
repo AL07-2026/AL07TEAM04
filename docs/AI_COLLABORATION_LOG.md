@@ -16,6 +16,78 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] STT 브랜치 Gemini AI 인터뷰 및 경험카드 생성 V2 구현 히스토리
+- **작업자**: Codex
+- **브랜치 / 태그**:
+  - 작업 브랜치: `STT`
+  - V1 태그: `ai인터뷰,경험카드구현V1` (`a94ac7c`)
+  - V2 태그: `ai인터뷰,경험카드구현V2` (`47956ed`)
+  - 원격 반영: `origin/STT`
+- **작업 목적**:
+  - 기존 AI 경험 인터뷰 화면과 AssemblyAI STT, 직접 텍스트 입력 UI를 유지하면서 Gemini 서버 API로 실제 질문 생성 및 경험카드 생성을 연결.
+  - 인터뷰 완료 후 `problem`, `role`, `action`, `result` 기준으로 경험카드 초안을 생성.
+- **Gemini / 보안 구조**:
+  - 공식 SDK `@google/genai` 사용.
+  - Gemini API Key는 서버 환경변수 `GEMINI_API_KEY`만 사용.
+  - `NEXT_PUBLIC_GEMINI_API_KEY` 사용 금지 및 클라이언트 코드에 Gemini Key 노출 금지.
+  - Firebase Functions 배포 시 Secret Manager의 `GEMINI_API_KEY` 접근 권한이 `api(asia-northeast3)` 함수에 부여됨.
+- **서버 API**:
+  - `POST /api/interview/next-question`
+    - 입력: `{ selectedFields: string[], history: { question: string, answer: string }[] }`
+    - 역할: 선택 분야와 이전 답변을 바탕으로 다음 인터뷰 질문 생성.
+    - Gemini Structured Output JSON 검증 사용.
+    - Gemini 실패, rate limit, 빈 응답, 잘못된 structured output 발생 시 서버 fallback 질문 반환.
+  - `POST /api/interview/experience-card`
+    - 입력: 선택 분야와 인터뷰 history.
+    - 역할: 인터뷰 답변을 바탕으로 경험카드 `{ title, problem, role, action, result, skills, jobKeywords }` 생성.
+    - Gemini 실패 시 질문 target/문구 기반 fallback 분류 로직 사용.
+- **인터뷰 질문 로직 핵심**:
+  - 최대 질문 수: `MAX_INTERVIEW_QUESTIONS = 5`.
+  - 첫 질문은 어려웠던 문제부터 묻지 않고, 사용자가 자신 있게 해온 일/잘하는 일을 먼저 묻도록 변경.
+  - 이후 경험카드 네 칸을 채우기 위해 `problem`, `role`, `action`, `result`가 빠진 항목을 우선 질문.
+  - 같은 target을 반복 질문하지 않도록 서버에서 질문 target과 이전 질문 패턴을 함께 검사.
+  - `result` 항목 답변이 없으면 2개 질문만 하고 종료하지 않도록 보정.
+  - V2에서 `"문제 부분을 정리하려고 해요"`, `"역할 부분을 정리하려고 해요"` 같은 내부 분류 설명을 사용자 질문 문구에서 제거.
+- **경험카드 분류 로직 핵심**:
+  - 카드 생성 시 답변 전체를 단순 복사하지 않고 질문 target과 답변 의미를 기준으로 분류.
+  - `problem`: 어떤 어려움/문제가 있었는지만 넣음.
+  - `role`: 사용자가 맡은 역할, 담당 업무, 책임 범위를 넣음.
+  - `action`: 사용자가 직접 실행하거나 바꾼 일을 넣음.
+  - `result`: 실제 달라진 점, 성과, 변화가 확인될 때만 넣음.
+  - 확인되지 않은 항목은 `"인터뷰에서 확인되지 않았어요."`로 표시.
+- **프론트 연결**:
+  - 주요 화면 파일: `src/app/wireframe/FlowPages.tsx`
+  - 선택 분야 저장: `sessionStorage`의 `selectedExperienceFields`
+  - 인터뷰 history 저장: React state 및 `sessionStorage`의 `experienceInterviewHistory`
+  - 생성된 경험카드 저장: `sessionStorage`의 `experienceCard`
+  - STT 답변과 직접 입력 답변은 동일 제출 로직을 사용.
+  - Gemini 응답 대기 중 중복 제출 방지를 위해 loading 상태와 버튼 비활성화 적용.
+- **주요 생성/수정 파일**:
+  - [NEW] `functions/index.mjs`
+  - [NEW] `functions/package.json`
+  - [NEW] `functions/package-lock.json`
+  - [NEW] `functions/lib/gemini.mjs`
+  - [NEW] `functions/lib/interviewPrompt.mjs`
+  - [NEW] `functions/lib/interviewQuestion.mjs`
+  - [NEW] `functions/lib/experienceCardPrompt.mjs`
+  - [NEW] `functions/lib/experienceCard.mjs`
+  - [MODIFY] `server/interviewTranscribeServer.mjs`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `firebase.json`
+- **검증 이력**:
+  - `npm run typecheck` 통과.
+  - `npm run lint` 통과.
+  - `npm run build` 통과. Vite chunk size warning은 존재하지만 빌드는 성공.
+  - Firebase 배포 완료: `https://al07team04-bdfcd.web.app`
+  - 배포 API 확인: `/api/interview/next-question`이 내부 분류 문구 없이 질문만 반환하는 것 확인.
+- **주의사항 / 다음 AI에게 전달**:
+  - Gemini 모델은 `functions/lib/gemini.mjs`의 `GEMINI_FLASH_MODEL`에서 관리한다. 임의 모델명으로 바꾸지 말고 공식 문서와 실제 계정 지원 여부를 확인해야 한다.
+  - 기존 테스트에서 `gemini-2.5-flash`는 현재 계정에서 404가 발생했고, 현재 모델은 사용 가능하지만 free tier rate limit이 날 수 있다. fallback 로직을 제거하지 말 것.
+  - `functions/lib/interviewQuestion.mjs`의 target 질문 템플릿은 Gemini 실패 시에도 사용자에게 보이는 문구다. UX 문구 수정 시 이 파일을 반드시 함께 확인할 것.
+  - `functions/lib/experienceCard.mjs`의 fallback 분류는 Gemini 실패 시 카드 품질을 좌우한다. 질문 문구를 바꾸면 question pattern도 같이 점검할 것.
+  - Firebase 배포는 `origin/STT` 푸시만으로 자동 실행되지 않는다. 현재는 `firebase.cmd deploy --only functions,hosting` 수동 배포가 필요하다.
+  - `.env.local`과 API Key 값은 절대 커밋하거나 로그에 출력하지 말 것.
+
 ### [2026-08-12] 모바일 프로젝트 검색/필터 카드 UI 개선 및 라이브 배포
 - **작업자**: Codex & Antigravity (Gemini)
 - **작업 내용**:
