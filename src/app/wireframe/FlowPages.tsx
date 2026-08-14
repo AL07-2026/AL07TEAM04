@@ -12,7 +12,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
@@ -85,6 +85,57 @@ type InterviewAnswer = {
   createdAt: string;
 };
 
+type InterviewHistoryItem = {
+  question: string;
+  answer: string;
+};
+
+type InterviewMessage = {
+  id: number;
+  sender: 'ai' | 'user';
+  text: string;
+};
+
+type InterviewTarget = 'problem' | 'role' | 'action' | 'result' | null;
+
+type InterviewNextQuestionResponse = {
+  complete: boolean;
+  question: string | null;
+  target: InterviewTarget;
+  collected: {
+    problem: boolean;
+    role: boolean;
+    action: boolean;
+    result: boolean;
+  };
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+type ExperienceCard = {
+  title: string;
+  problem: string | null;
+  role: string | null;
+  action: string | null;
+  result: string | null;
+  skills: string[];
+  jobKeywords: string[];
+};
+
+type ExperienceCardResponse = {
+  success: boolean;
+  card?: ExperienceCard;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+const selectedExperienceFieldsStorageKey = 'selectedExperienceFields';
+const interviewHistoryStorageKey = 'experienceInterviewHistory';
+const experienceCardStorageKey = 'experienceCard';
 const currentInterviewQuestionId = 'q1';
 
 function createInterviewAnswer(answerText: string, inputType: InterviewAnswer['inputType']): InterviewAnswer {
@@ -243,9 +294,93 @@ export function SeniorHomePage() {
 
 const experienceOptions = ['기획', '운영', '영업', '마케팅', '재무', '인사', '기술', '교육'];
 
+function readSelectedExperienceFields() {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = window.sessionStorage.getItem(selectedExperienceFieldsStorageKey);
+    if (!stored) return [];
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string').slice(0, 3) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSelectedExperienceFields(fields: string[]) {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(selectedExperienceFieldsStorageKey, JSON.stringify(fields.slice(0, 3)));
+}
+
+function readInterviewHistory() {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = window.sessionStorage.getItem(interviewHistoryStorageKey);
+    if (!stored) return [];
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item): item is InterviewHistoryItem => {
+        if (!item || typeof item !== 'object') return false;
+        const value = item as Partial<InterviewHistoryItem>;
+        return typeof value.question === 'string' && typeof value.answer === 'string';
+      })
+      .map((item) => ({ question: item.question, answer: item.answer }));
+  } catch {
+    return [];
+  }
+}
+
+function saveInterviewHistory(history: InterviewHistoryItem[]) {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(interviewHistoryStorageKey, JSON.stringify(history));
+}
+
+function readExperienceCard() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = window.sessionStorage.getItem(experienceCardStorageKey);
+    if (!stored) return null;
+    const parsed: unknown = JSON.parse(stored);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const value = parsed as Partial<ExperienceCard>;
+    if (typeof value.title !== 'string') return null;
+
+    return {
+      title: value.title,
+      problem: typeof value.problem === 'string' ? value.problem : null,
+      role: typeof value.role === 'string' ? value.role : null,
+      action: typeof value.action === 'string' ? value.action : null,
+      result: typeof value.result === 'string' ? value.result : null,
+      skills: Array.isArray(value.skills) ? value.skills.filter((item): item is string => typeof item === 'string') : [],
+      jobKeywords: Array.isArray(value.jobKeywords) ? value.jobKeywords.filter((item): item is string => typeof item === 'string') : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveExperienceCard(card: ExperienceCard) {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(experienceCardStorageKey, JSON.stringify(card));
+}
+
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(['운영', '영업']);
+  const [selected, setSelected] = useState(() => {
+    const stored = readSelectedExperienceFields();
+    return stored.length ? stored : ['운영', '영업'];
+  });
+
+  function startInterview() {
+    if (!selected.length) return;
+    saveSelectedExperienceFields(selected);
+    void navigate('/senior/experience/interview');
+  }
+
   function toggle(option: string) {
     setSelected((current) =>
       current.includes(option)
@@ -266,7 +401,7 @@ export function ExperienceSelectionPage() {
       <div className="flex items-center justify-between">
         <p className="text-xs font-extrabold text-[#173F3A]">분야 선택</p>
         <button
-          onClick={() => void navigate('/senior/experience/interview')}
+          onClick={startInterview}
           className="text-xs font-extrabold text-[#F06B4F] underline"
           type="button"
         >
@@ -289,7 +424,8 @@ export function ExperienceSelectionPage() {
         </span>
       </div>
       <ActionButton
-        onClick={() => void navigate('/senior/experience/interview')}
+        disabled={!selected.length}
+        onClick={startInterview}
         className="mb-1"
       >
         AI 경험 인터뷰 진행 (추천)
@@ -307,24 +443,87 @@ export function ExperienceSelectionPage() {
 
 export function ExperienceInterviewPage() {
   const navigate = useNavigate();
+  const messageIdRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSecondsRef = useRef(0);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recordingMimeTypeRef = useRef('audio/webm');
-  const [messages, setMessages] = useState([
-    { id: 1, sender: 'ai', text: '가장 해결하기 어려웠던 업무 문제는 무엇이었나요?' },
-    { id: 2, sender: 'user', text: '반복되는 납기 지연 문제를 개선했습니다.' },
-    { id: 3, sender: 'ai', text: '직접 바꾼 방법과 결과를 알려주세요.' },
-  ]);
+  const requestStartedRef = useRef(false);
+  const submittingRef = useRef(false);
+  const [selectedFields] = useState(readSelectedExperienceFields);
+  const [messages, setMessages] = useState<InterviewMessage[]>([]);
+  const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isPreparingQuestion, setIsPreparingQuestion] = useState(false);
+  const [isGeneratingCard, setIsGeneratingCard] = useState(false);
+  const [isInterviewComplete, setIsInterviewComplete] = useState(false);
+  const [interviewError, setInterviewError] = useState('');
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [voiceNotice, setVoiceNotice] = useState('버튼을 누르면 마이크 권한을 요청합니다.');
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [currentAnswer, setCurrentAnswer] = useState<InterviewAnswer | null>(null);
+
+  const createMessage = useCallback((sender: InterviewMessage['sender'], text: string): InterviewMessage => {
+    messageIdRef.current += 1;
+    return {
+      id: messageIdRef.current,
+      sender,
+      text,
+    };
+  }, []);
+
+  const requestNextQuestion = useCallback(async (nextHistory: InterviewHistoryItem[]) => {
+    if (!selectedFields.length) {
+      setInterviewError('경험 분야를 먼저 선택해 주세요.');
+      return;
+    }
+
+    setIsPreparingQuestion(true);
+    setInterviewError('');
+
+    try {
+      const response = await fetch('/api/interview/next-question', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedFields,
+          history: nextHistory,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as InterviewNextQuestionResponse | null;
+
+      if (!response.ok || !data) {
+        throw new Error(data?.error?.message ?? '질문을 준비하는 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+      }
+
+      if (data.complete) {
+        setIsInterviewComplete(true);
+        setCurrentQuestion(null);
+        setMessages((prev) => [...prev, createMessage('ai', '경험을 정리할 준비가 됐어요.')]);
+        return;
+      }
+
+      const nextQuestion = data.question?.trim();
+      if (!nextQuestion) {
+        throw new Error('질문을 준비하는 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+      }
+
+      setCurrentQuestion(nextQuestion);
+      setMessages((prev) => [...prev, createMessage('ai', nextQuestion)]);
+    } catch {
+      setInterviewError('질문을 준비하는 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsPreparingQuestion(false);
+      submittingRef.current = false;
+    }
+  }, [createMessage, selectedFields]);
 
   function clearRecordingTimer() {
     if (recordingTimerRef.current !== null) {
@@ -404,6 +603,11 @@ export function ExperienceInterviewPage() {
   }
 
   useEffect(() => {
+    if (!requestStartedRef.current) {
+      requestStartedRef.current = true;
+      void requestNextQuestion([]);
+    }
+
     return () => {
       clearRecordingTimer();
       stopMicStream();
@@ -412,10 +616,10 @@ export function ExperienceInterviewPage() {
         recorder.stop();
       }
     };
-  }, []);
+  }, [requestNextQuestion]);
 
   async function handleVoiceInput() {
-    if (isTranscribing) return;
+    if (isTranscribing || isPreparingQuestion || isInterviewComplete) return;
 
     if (isRecording) {
       stopRecording();
@@ -502,11 +706,16 @@ export function ExperienceInterviewPage() {
   }
 
   function submitInterviewAnswer(answer: InterviewAnswer) {
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), sender: 'user', text: answer.answerText },
-      { id: Date.now() + 1, sender: 'ai', text: '입력하신 내용으로 경험 카드가 생성되었습니다.' },
-    ]);
+    if (submittingRef.current || isPreparingQuestion || isInterviewComplete || !currentQuestion) return;
+
+    submittingRef.current = true;
+    const nextHistory = [...history, { question: currentQuestion, answer: answer.answerText }];
+
+    setHistory(nextHistory);
+    saveInterviewHistory(nextHistory);
+    setMessages((prev) => [...prev, createMessage('user', answer.answerText)]);
+    setCurrentQuestion(null);
+    void requestNextQuestion(nextHistory);
   }
 
   function handleAnswerTextChange(answerText: string) {
@@ -517,7 +726,7 @@ export function ExperienceInterviewPage() {
   function handleTextSubmit(e: FormEvent) {
     e.preventDefault();
     const answerText = inputText.trim();
-    if (!answerText) return;
+    if (!answerText || isPreparingQuestion || isInterviewComplete) return;
 
     const answer = currentAnswer
       ? {
@@ -530,6 +739,44 @@ export function ExperienceInterviewPage() {
     submitInterviewAnswer(answer);
     setInputText('');
     setCurrentAnswer(null);
+  }
+
+  async function handleExperienceCardClick() {
+    if (isGeneratingCard || !isInterviewComplete) return;
+
+    const latestHistory = history.length ? history : readInterviewHistory();
+    if (!selectedFields.length || !latestHistory.length) {
+      setInterviewError('경험카드를 만들 인터뷰 내용이 부족해요.');
+      return;
+    }
+
+    setIsGeneratingCard(true);
+    setInterviewError('');
+
+    try {
+      const response = await fetch('/api/interview/experience-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedFields,
+          history: latestHistory,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as ExperienceCardResponse | null;
+
+      if (!response.ok || !data?.card) {
+        throw new Error(data?.error?.message ?? '경험을 정리하는 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+      }
+
+      saveExperienceCard(data.card);
+      void navigate('/senior/experience/card');
+    } catch {
+      setInterviewError('경험을 정리하는 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsGeneratingCard(false);
+    }
   }
 
   return (
@@ -545,6 +792,9 @@ export function ExperienceInterviewPage() {
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
         <p className="text-xl font-extrabold tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
         <p className="text-xs font-medium text-slate-500">편하게 말해 주세요. AI가 경험을 정리해 드립니다.</p>
+        {selectedFields.length ? (
+          <p className="text-[11px] font-extrabold text-[#173F3A]">{selectedFields.join(' · ')}</p>
+        ) : null}
       </div>
 
       <div className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
@@ -569,6 +819,16 @@ export function ExperienceInterviewPage() {
             </div>
           </div>
         ))}
+        {isPreparingQuestion ? (
+          <div className="flex items-start justify-start gap-2.5">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
+              <Sparkles className="size-3.5" />
+            </div>
+            <div className="max-w-[82%] rounded-2xl rounded-tl-xs border border-[#BBD5CE] bg-[#DDEBE7]/70 px-3.5 py-2.5 text-[13px] font-medium leading-relaxed text-[#17212B]">
+              다음 질문을 준비하고 있어요...
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-col items-center justify-center gap-2.5 pt-1">
@@ -582,12 +842,14 @@ export function ExperienceInterviewPage() {
           <button
             onClick={handleVoiceInput}
             aria-pressed={isRecording}
-            disabled={isTranscribing}
+            disabled={isTranscribing || isPreparingQuestion || isInterviewComplete || !selectedFields.length}
             type="button"
             className={cn(
               'group relative flex size-20 flex-col items-center justify-center gap-1 rounded-full text-white shadow-xl transition-all active:scale-95 hover:scale-105',
               isTranscribing
                 ? 'bg-slate-400 shadow-slate-300'
+                : isPreparingQuestion || isInterviewComplete || !selectedFields.length
+                  ? 'bg-slate-300 shadow-slate-200'
                 : isRecording
                 ? 'bg-[#173F3A] shadow-[#173F3A]/25 hover:bg-[#21544E]'
                 : 'bg-[#F06B4F] shadow-[#F06B4F]/25 hover:bg-[#E05A3E]',
@@ -612,9 +874,13 @@ export function ExperienceInterviewPage() {
           <span className="text-[11px] font-extrabold text-[#173F3A]">
             {isTranscribing
               ? '음성을 글자로 바꾸고 있어요...'
+              : isPreparingQuestion
+                ? '다음 질문을 준비하고 있어요...'
               : isRecording
                 ? `녹음 중 · ${formatRecordingTime(recordingSeconds)}`
-                : '버튼을 누르면 마이크 권한을 요청합니다.'}
+                : isInterviewComplete
+                  ? '인터뷰가 완료되었습니다.'
+                  : '버튼을 누르면 마이크 권한을 요청합니다.'}
           </span>
           {voiceNotice ? (
             <span aria-live="polite" className="text-[11px] font-semibold text-[#F06B4F]">
@@ -631,26 +897,34 @@ export function ExperienceInterviewPage() {
         <form onSubmit={handleTextSubmit} className="flex w-full items-center gap-2">
           <input
             type="text"
-            placeholder="✏️ 직접 입력하기"
+            disabled={isPreparingQuestion || isInterviewComplete || !selectedFields.length}
+            placeholder={isInterviewComplete ? '인터뷰가 완료되었습니다' : '✏️ 직접 입력하기'}
             value={inputText}
             onChange={(e) => handleAnswerTextChange(e.target.value)}
-            className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
+            className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] disabled:bg-slate-100 disabled:text-slate-400"
           />
           <button
             type="submit"
-            className="flex h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE]"
+            disabled={!inputText.trim() || isPreparingQuestion || isInterviewComplete || !selectedFields.length}
+            className="flex h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:bg-slate-100 disabled:text-slate-400"
           >
             입력
           </button>
         </form>
 
+        {interviewError ? (
+          <p aria-live="polite" className="text-center text-[11px] font-bold text-[#F06B4F]">
+            {interviewError}
+          </p>
+        ) : null}
+
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#173F3A]">
           <Zap className="size-3.5 text-[#F06B4F]" />
-          <span>약 5분 소요 · AI 음성 분석 중</span>
+          <span>{isGeneratingCard ? '경험을 정리하고 있어요...' : isInterviewComplete ? '경험 정리 준비 완료' : '약 5분 소요 · AI 경험 분석 중'}</span>
         </div>
 
-        <ActionButton onClick={() => void navigate('/senior/experience/card')} className="mt-1">
-          경험 카드로 확인해요 →
+        <ActionButton disabled={!isInterviewComplete || isGeneratingCard} onClick={handleExperienceCardClick} className="mt-1">
+          {isGeneratingCard ? '경험을 정리하고 있어요...' : '경험 카드로 확인해요 →'}
         </ActionButton>
       </div>
     </MobilePage>
@@ -659,6 +933,64 @@ export function ExperienceInterviewPage() {
 
 export function ExperienceCardPage() {
   const navigate = useNavigate();
+  const [card, setCard] = useState<ExperienceCard | null>(() => readExperienceCard());
+  const [isEditing, setIsEditing] = useState(false);
+
+  const visibleCard =
+    card ??
+    ({
+      title: '경험카드가 아직 생성되지 않았어요',
+      problem: null,
+      role: null,
+      action: null,
+      result: null,
+      skills: [],
+      jobKeywords: [],
+    } satisfies ExperienceCard);
+
+  function updateCard(key: keyof Pick<ExperienceCard, 'title' | 'problem' | 'role' | 'action' | 'result'>, value: string) {
+    setCard((current) => {
+      const next = {
+        ...(current ?? visibleCard),
+        [key]: value.trim() ? value : null,
+      };
+      if (key === 'title') {
+        next.title = value;
+      }
+      saveExperienceCard(next);
+      return next;
+    });
+  }
+
+  function renderCardField(
+    label: string,
+    key: keyof Pick<ExperienceCard, 'problem' | 'role' | 'action' | 'result'>,
+    Icon: typeof AlertTriangle,
+  ) {
+    const value = visibleCard[key];
+
+    return (
+      <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
+          <Icon className="size-4" />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+          <strong className="font-extrabold text-[#173F3A]">{label}</strong>
+          {isEditing ? (
+            <textarea
+              className="min-h-16 rounded-lg border border-[#E0D9C8] bg-white px-2.5 py-2 text-xs font-medium text-[#17212B] outline-none focus:border-[#173F3A]"
+              onChange={(event) => updateCard(key, event.target.value)}
+              value={value ?? ''}
+            />
+          ) : (
+            <span className={cn('font-medium', value ? 'text-[#17212B]/80' : 'text-slate-400')}>
+              {value ?? '인터뷰에서 확인되지 않았어요.'}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <MobilePage
@@ -687,54 +1019,37 @@ export function ExperienceCardPage() {
           </span>
         </div>
 
-        <h3 className="text-base font-extrabold text-[#17212B]">반복되는 납기 지연 문제 개선</h3>
+        {isEditing ? (
+          <input
+            className="rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-base font-extrabold text-[#17212B] outline-none focus:border-[#173F3A]"
+            onChange={(event) => updateCard('title', event.target.value)}
+            value={visibleCard.title}
+          />
+        ) : (
+          <h3 className="text-base font-extrabold text-[#17212B]">{visibleCard.title}</h3>
+        )}
 
         <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-              <AlertTriangle className="size-4" />
-            </div>
-            <div className="flex flex-col text-xs">
-              <strong className="font-extrabold text-[#173F3A]">문제 (Problem)</strong>
-              <span className="font-medium text-[#17212B]/80">생산 일정과 부서 간 협업 불일치</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-              <User className="size-4" />
-            </div>
-            <div className="flex flex-col text-xs">
-              <strong className="font-extrabold text-[#173F3A]">역할 (Role)</strong>
-              <span className="font-medium text-[#17212B]/80">생산관리 책임자로 개선 주도</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-              <Settings className="size-4" />
-            </div>
-            <div className="flex flex-col text-xs">
-              <strong className="font-extrabold text-[#173F3A]">행동 (Action)</strong>
-              <span className="font-medium text-[#17212B]/80">공정 점검과 협업 방식을 재설계</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-              <BarChart2 className="size-4" />
-            </div>
-            <div className="flex flex-col text-xs">
-              <strong className="font-extrabold text-[#173F3A]">결과 (Result)</strong>
-              <span className="font-medium text-[#17212B]/80">납기 준수율 향상</span>
-            </div>
-          </div>
+          {renderCardField('문제 (Problem)', 'problem', AlertTriangle)}
+          {renderCardField('역할 (Role)', 'role', User)}
+          {renderCardField('행동 (Action)', 'action', Settings)}
+          {renderCardField('결과 (Result)', 'result', BarChart2)}
         </div>
+
+        {visibleCard.skills.length ? (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {visibleCard.skills.map((skill) => (
+              <span key={skill} className="rounded-full bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+                #{skill.replace(/\s+/g, '')}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2.5 pt-1">
-        <ActionButton secondary onClick={() => void navigate('/senior/experience/interview')}>
-          수정하기
+        <ActionButton secondary onClick={() => setIsEditing((current) => !current)}>
+          {isEditing ? '수정 완료' : '수정하기'}
         </ActionButton>
         <ActionButton onClick={() => void navigate('/senior/projects')}>
           경험 저장하기
