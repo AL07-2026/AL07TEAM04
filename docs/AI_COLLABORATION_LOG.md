@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] Codex 업데이트 검증 및 Firebase Hosting 배포 완료 (`al07team04-bdfcd.web.app`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **전체 파이프라인 검증**: Codex의 21개 희망 직종 체계 통합, 고용24 공고 분류 및 프로필 연동 변경사항 전체 검증 (`npm run validate` 통과: TypeCheck 0 error, ESLint 0 warning, Vitest 10개 파일 72개 테스트 100% 통과, Vite build 성공).
+  - **Git 커밋 및 Push**: `origin/develop` 브랜치로 최신 변경사항 커밋 및 푸시 완료 (`88234bd`).
+  - **Firebase Hosting 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app) 라이브 배포 완료.
+- **변경 파일**:
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 희망 직종 1·2·3순위 21개 체계 및 고용24 공고 분류 통합
 - **작업자**: Codex
 - **기준 확인**:
