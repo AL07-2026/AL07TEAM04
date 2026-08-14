@@ -200,7 +200,14 @@ export function getProfileMatchedRankedProjects(
   profile?: SeniorProfileData | null,
 ) {
   if (!hasProfileRecommendationCriteria(profile)) return [];
+
   const preferredCategories = new Set(getProfilePreferredCategories(profile));
   const matchedPostings = postings.filter((posting) => preferredCategories.has(posting.category));
-  return getPersonalizedRankedProjects(matchedPostings, profile);
+
+  if (matchedPostings.length > 0) {
+    return getPersonalizedRankedProjects(matchedPostings, profile);
+  }
+
+  // Fallback: If live feed has no exact category match for selected preference, rank all postings so registered user always receives tailored recommendations
+  return getPersonalizedRankedProjects(postings, profile);
 }
