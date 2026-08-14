@@ -577,8 +577,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         user?.uid,
       );
       const emailResult = sendApplicationEmailToManager(applyingPosting, {
-        applicantName: user?.name || '김시니어',
-        applicantEmail: user?.email || 'senior@example.com',
+        applicantName:
+          user?.name && user.name !== '김인재'
+            ? user.name
+            : user?.email === 'sehddnr2@gmail.com'
+              ? '이동욱'
+              : user?.name || '이동욱',
+        applicantEmail: user?.email || 'sehddnr2@gmail.com',
         attachedResumeName: resumeFileName,
         interviewSummary: 'AI 인터뷰 종합 검증 96점, 10년+ 실무 노하우 기반 과제 해결 능력 보유',
         coverNote: applicantNote,

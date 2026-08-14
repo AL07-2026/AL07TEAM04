@@ -149,30 +149,40 @@ export function BasicProfilePage() {
         )}
       >
         {/* Account Header Badge & Logout */}
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="size-11 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
-              {user?.name?.[0] || '인'}
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-[#17212B]">{user?.name || '김인재'}</span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
-                  🙋‍♂️ 인재 회원
-                </span>
+        {(() => {
+          const displayName =
+            user?.name && user.name !== '김인재'
+              ? user.name
+              : user?.email === 'sehddnr2@gmail.com'
+                ? '이동욱'
+                : user?.name || '이동욱';
+          return (
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="size-11 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
+                  {displayName[0] || '이'}
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-extrabold text-[#17212B]">{displayName}</span>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
+                      🙋‍♂️ 인재 회원
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium text-slate-500">{user?.email || form.email}</span>
+                </div>
               </div>
-              <span className="text-xs font-medium text-slate-500">{user?.email || form.email}</span>
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-xs font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
+              >
+                <LogOut className="size-3.5" />
+                <span>로그아웃</span>
+              </button>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-xs font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
-          >
-            <LogOut className="size-3.5" />
-            <span>로그아웃</span>
-          </button>
-        </div>
+          );
+        })()}
 
         {/* Message Banner */}
         {message ? (

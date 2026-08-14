@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 하드코딩 대체명('김인재') 완전 보정 및 '이동욱' 님 실시간 프로필 성함 동적 연동
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **사용자 이름 동적 바인딩 보정 (`authContext.tsx`, `FlowPages.tsx`, `BasicProfilePage.tsx`, `JobDatabasePage.tsx`)**: 기존 시드 기본값으로 고정되어 있던 `'김인재'` 하드코딩 문구를 제거하고, 계정 이메일 `sehddnr2@gmail.com` 접속 시 **`이동욱`** 님 성함이 홈 화면 환영 인사, 내정보 프로필 및 기업 이메일 지원서에 동적으로 정확하게 표시되도록 보정 완료.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 하드코딩 시드 배열 완전 제거 (순수 워크넷 API 전용) & 기업 담당자 지원 알림 메일 시스템 탑재
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

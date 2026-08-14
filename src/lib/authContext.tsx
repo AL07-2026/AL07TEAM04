@@ -87,7 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               saveUserLocal({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                name: firebaseUser.displayName || '사용자',
+                name:
+                  firebaseUser.displayName ||
+                  (firebaseUser.email === 'sehddnr2@gmail.com'
+                    ? '이동욱'
+                    : firebaseUser.email?.split('@')[0] || '이동욱'),
                 role: 'senior',
               });
             }
@@ -264,10 +268,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Smooth fallback for offline/demo/testing environment
+      const defaultName =
+        email === 'sehddnr2@gmail.com'
+          ? '이동욱'
+          : email?.split('@')[0] || (targetRole === 'senior' ? '이동욱' : '채용담당자');
       const demoProfile: UserProfile = {
         uid: 'user-' + Date.now(),
         email: email || 'demo@eojob.com',
-        name: targetRole === 'senior' ? '김인재' : '채용담당자',
+        name: defaultName,
         role: targetRole,
       };
       saveUserLocal(demoProfile);
@@ -291,10 +299,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
+      const computedName =
+        googleUser.displayName ||
+        (googleUser.email === 'sehddnr2@gmail.com' ? '이동욱' : googleUser.email?.split('@')[0] || '이동욱');
       const profile: UserProfile = {
         uid: googleUser.uid,
         email: googleUser.email || '',
-        name: googleUser.displayName || googleUser.email?.split('@')[0] || '구글 회원',
+        name: computedName,
         role: targetRole,
         createdAt: new Date().toISOString(),
       };
