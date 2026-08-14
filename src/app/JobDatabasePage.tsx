@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { sendApplicationEmailToManager } from '@/services/emailService';
 import { createProject, fetchProjects } from '@/services/projectService';
 import { createProposalFromPosting } from '@/services/proposalService';
+import { calculatePersonalizedMatch, getPersonalizedRankedProjects } from '@/services/recommendationEngine';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
 import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
@@ -216,6 +217,8 @@ function PostingCard({
   role?: Role;
   selected: boolean;
 }) {
+  const matchResult = calculatePersonalizedMatch(posting);
+
   return (
     <button
       className={cn(
@@ -244,11 +247,17 @@ function PostingCard({
         </div>
         <div className="shrink-0 rounded-xl bg-[#173F3A] px-3 py-2 text-center text-white">
           <p className="text-[10px] font-bold opacity-80">적합도</p>
-          <p className="text-[18px] font-extrabold">{posting.seniorFitScore}</p>
+          <p className="text-[18px] font-extrabold">{matchResult.personalizedScore}</p>
         </div>
       </div>
 
-      <p className="mt-3 line-clamp-2 text-[13px] font-medium leading-6 text-slate-600">
+      {/* Personalized Match Reason Badge */}
+      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE] bg-[#DDEBE7]/60 px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+        <Sparkles className="size-3 shrink-0 text-[#173F3A]" />
+        <span className="truncate">{matchResult.matchReasons[0]}</span>
+      </div>
+
+      <p className="mt-2.5 line-clamp-2 text-[13px] font-medium leading-6 text-slate-600">
         {posting.problemStatement}
       </p>
 
@@ -287,14 +296,15 @@ function PostingCard({
 function DetailPanel({
   onApply,
   posting,
-  role = 'company',
+  role,
 }: {
-  onApply?: (posting: JobPosting) => void;
+  onApply?: () => void;
   posting: JobPosting;
   role?: Role;
 }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const matchResult = calculatePersonalizedMatch(posting);
 
   return (
     <article
@@ -312,7 +322,7 @@ function DetailPanel({
             <div className="inline-flex shrink-0 items-baseline gap-1 rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-1 text-[#F06B4F]">
               <span className="text-[10px] font-extrabold">적합도</span>
               <strong className="text-[16px] font-extrabold text-[#17212B]">
-                {posting.seniorFitScore}
+                {matchResult.personalizedScore}
               </strong>
             </div>
           </div>
@@ -350,7 +360,7 @@ function DetailPanel({
           <div className="rounded-xl border border-[#F06B4F]/30 bg-[#FDF0ED] px-3 py-2 text-center">
             <p className="text-[11px] font-extrabold text-[#F06B4F]">시니어 적합도</p>
             <p className="text-[24px] font-extrabold text-[#17212B]">
-              {posting.seniorFitScore}
+              {matchResult.personalizedScore}
             </p>
           </div>
         </div>
@@ -367,6 +377,27 @@ function DetailPanel({
           </span>
         </div>
       ) : null}
+
+      {/* Personalized Profile Match Analysis */}
+      <div className="mt-4 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-3.5 flex flex-col gap-2 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#173F3A]">
+            <Sparkles className="size-4 text-[#173F3A]" />
+            🎯 실시간 가입자 프로필 기반 적합도 매칭분석
+          </div>
+          <span className="rounded-full bg-[#173F3A] px-2.5 py-0.5 text-[11px] font-extrabold text-white">
+            {matchResult.personalizedScore}% 매칭
+          </span>
+        </div>
+        <div className="flex flex-col gap-1 text-xs">
+          {matchResult.matchReasons.map((reason, idx) => (
+            <p key={idx} className="font-semibold text-[#17212B] flex items-center gap-1">
+              <span>•</span>
+              <span>{reason}</span>
+            </p>
+          ))}
+        </div>
+      </div>
 
       {isMobile ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-[#E0D9C8]">
@@ -499,7 +530,7 @@ function DetailPanel({
             {role === 'senior' ? (
               <button
                 type="button"
-                onClick={() => onApply?.(posting)}
+                onClick={() => onApply?.()}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] text-sm font-extrabold text-white shadow-md hover:bg-[#12332F] active:scale-[0.99] transition-all cursor-pointer"
               >
                 📩 프로젝트 지원하기
@@ -507,7 +538,7 @@ function DetailPanel({
             ) : (
               <button
                 type="button"
-                onClick={() => onApply?.(posting)}
+                onClick={() => onApply?.()}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F06B4F] text-sm font-extrabold text-white shadow-md hover:bg-[#D85A3F] active:scale-[0.99] transition-all cursor-pointer"
               >
                 🤝 시니어 인재에게 제안하기
@@ -547,9 +578,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       const userProjects = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...userProjects];
-      setPostings(combined);
-      if (combined[0]) {
-        setSelectedId(combined[0].id);
+      const ranked = getPersonalizedRankedProjects(combined);
+      const rankedPostings = ranked.map((r) => r.posting);
+      setPostings(rankedPostings);
+      if (rankedPostings[0]) {
+        setSelectedId(rankedPostings[0].id);
       }
     })();
   }, []);

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
 import { fetchProjects } from '@/services/projectService';
 import { getUserProposals, type UserProposal } from '@/services/proposalService';
+import { getPersonalizedRankedProjects } from '@/services/recommendationEngine';
 import { seedProjectsIfEmpty } from '@/services/seedService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
@@ -159,8 +160,8 @@ export function SeniorHomePage() {
       const loaded = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...loaded];
-      const sorted = combined.sort((a, b) => b.seniorFitScore - a.seniorFitScore);
-      setRecommendedJobs(sorted.slice(0, 4));
+      const ranked = getPersonalizedRankedProjects(combined);
+      setRecommendedJobs(ranked.slice(0, 4).map((r) => r.posting));
     })();
   }, []);
 

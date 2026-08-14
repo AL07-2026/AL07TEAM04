@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 실제 가입자 정보 (희망 직종, 경험한 분야, 해결 경험) 기반 맞춤 채용 추천 엔진 완성
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **동적 가입자 프로필 맞춤 매칭 엔진 구축 (`recommendationEngine.ts`)**: 가입자가 입력한 **원하는 희망 직종(`desiredCategory`)**, **경험한 세부 분야(`field`)**, **과거 해결했던 핵심 문제 및 성과 사례(`solvedExperiences`)** 데이터를 고용노동부 워크넷 40+ 프로젝트 공고의 문제 해결 과제(`problemStatement`), 목표(`projectGoal`), 필요 역량(`requiredSkills`)과 실시간 대조하여 88~99% 개인화 적합도 점수 및 매칭 근거 사유를 자동 산출하는 파이프라인 완성.
+  - **가입자 경험 프로필 입력/수정 확장 (`BasicProfilePage.tsx`, `profileService.ts`)**: `내 경험 정보` 화면에 원하는 희망 직종(추천 1순위), 경험 세부 분야, 해결했던 핵심 문제 및 과제 성과 사례 입력 폼을 신설하고, 프로필 수정 시 홈 화면 및 DB 추천 순위가 실시간으로 재계산되어 즉시 반영되도록 구현.
+  - **홈 화면 & 프로젝트 DB 맞춤 매칭 뱃지 연동 (`FlowPages.tsx`, `JobDatabasePage.tsx`)**: 인재 홈 화면(`SeniorHomePage`) 및 프로젝트 DB(`JobDatabasePage`) 공고 카드 상단과 상세 보기 패널에 `🎯 이동욱 님의 [원하는 직종: 서비스 운영] & [해결 경험: 0→1 프로세스 구축] 98% 일치` 매칭 분석 뱃지 탑재.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [NEW] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 하드코딩 대체명('김인재') 완전 보정 및 '이동욱' 님 실시간 프로필 성함 동적 연동
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

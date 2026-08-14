@@ -3,11 +3,14 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export type SeniorProfileData = {
+  desiredCategory?: string;
   email: string;
   experience: string;
   field: string;
+  keySkills?: string;
   period: string;
   phone: string;
+  solvedExperiences?: string;
   updatedAt?: string;
 };
 
