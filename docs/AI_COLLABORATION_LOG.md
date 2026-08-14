@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 적합도 뱃지 심플화 (중복 표출 제거 및 '90점 이상' 구간 문구 완전 삭제) (`JobDatabasePage.tsx`, `FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **'90점 이상' 군더더기 문구 삭제**: 공고 카드 및 상세 상단 뱃지에서 불필요한 `90점 이상 · 매우 높음` 표기를 **`매우 높음`**과 **`97점`**으로 깔끔하게 심플화.
+  - **적합도 분석 상자 내 중복 뱃지 완전 제거**: 상세보기 상단 뱃지와 내 정보 기반 적합도 분석 박스 우측에 뱃지가 중복으로 연속 노출되던 점을 개선하여, 하단 박스 내 중복 뱃지 삭제.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] API 기술 배너 완전 제거 및 내부 자동 재시도 + 무소음 백업 데이터 전환 구조로 개선 (`worknetService.ts`, `JobDatabasePage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
