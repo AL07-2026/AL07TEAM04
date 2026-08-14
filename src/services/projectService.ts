@@ -11,7 +11,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 
-import { jobPostings as initialJobPostings, type JobPosting } from '@/data/jobPostings';
+import { type JobPosting } from '@/data/jobPostings';
 import { db } from '@/lib/firebase';
 
 const PROJECTS_COLLECTION = 'projects';
@@ -23,7 +23,7 @@ export async function fetchProjects(): Promise<JobPosting[]> {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      return initialJobPostings;
+      return [];
     }
 
     const projects: JobPosting[] = snapshot.docs.map((docSnap) => {
@@ -36,8 +36,8 @@ export async function fetchProjects(): Promise<JobPosting[]> {
 
     return projects;
   } catch (error) {
-    console.warn('Firestore fetchProjects failed, falling back to local seed data:', error);
-    return initialJobPostings;
+    console.warn('Firestore fetchProjects failed:', error);
+    return [];
   }
 }
 
@@ -50,12 +50,10 @@ export async function fetchProjectById(id: string): Promise<JobPosting | null> {
       return { id: snapshot.id, ...snapshot.data() } as JobPosting;
     }
 
-    const localMatch = initialJobPostings.find((p: JobPosting) => p.id === id);
-    return localMatch || null;
+    return null;
   } catch (error) {
-    console.warn(`Firestore fetchProjectById(${id}) failed, checking local seed data:`, error);
-    const localMatch = initialJobPostings.find((p: JobPosting) => p.id === id);
-    return localMatch || null;
+    console.warn(`Firestore fetchProjectById(${id}) failed:`, error);
+    return null;
   }
 }
 

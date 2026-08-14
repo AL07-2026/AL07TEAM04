@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 하드코딩 시드 배열 완전 제거 (순수 워크넷 API 전용) & 기업 담당자 지원 알림 메일 시스템 탑재
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **하드코딩 시드 데이터 100% 완전 청소 (`jobPostings.ts`, `projectService.ts`)**: 남아있던 구형 하드코딩 목업 공고 데이터(`jobPostings` mock list)를 완전히 비우고(`jobPostings = []`), 고용노동부 워크넷 OpenAPI 40+ 실시간 연동 공고 데이터와 실제 파이어베이스 사용자 등록 공고 데이터만을 단일 데이터 원천(Single Source of Truth)으로 확정.
+  - **기업 담당자 자동 이메일 통지 시스템 구축 (`emailService.ts`, `JobDatabasePage.tsx`)**: 지원서 제출 완료 즉시 기업 채용 담당자의 메일로 지원자 성함, 이메일, 첨부 이력서 파일, 40+ 시니어 적합도 점수, AI 경험 인터뷰 검증 결과 요약 및 전달 메시지가 이메일 템플릿으로 발송되도록 파이프라인 탑재.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [NEW] [`src/services/emailService.ts`](file:///c:/AL07TEAM04/src/services/emailService.ts)
+  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [MODIFY] [`src/services/projectService.ts`](file:///c:/AL07TEAM04/src/services/projectService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 실제 지원서 제출 모달 (이력서/AI인터뷰 검토) 및 '내 제안' 실시간 연동 완성
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

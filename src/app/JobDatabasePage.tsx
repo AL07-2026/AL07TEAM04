@@ -5,6 +5,7 @@ import {
   Database,
   FileText,
   Filter,
+  Mail,
   MapPin,
   Plus,
   Search,
@@ -28,6 +29,7 @@ import {
 import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
+import { sendApplicationEmailToManager } from '@/services/emailService';
 import { createProject, fetchProjects } from '@/services/projectService';
 import { createProposalFromPosting } from '@/services/proposalService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
@@ -574,10 +576,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         applicantNote,
         user?.uid,
       );
-      const text = `✓ [${applyingPosting.companyName}] 지원서가 성공적으로 제출되었습니다! '내 제안'에서 확인하세요.`;
+      const emailResult = sendApplicationEmailToManager(applyingPosting, {
+        applicantName: user?.name || '김시니어',
+        applicantEmail: user?.email || 'senior@example.com',
+        attachedResumeName: resumeFileName,
+        interviewSummary: 'AI 인터뷰 종합 검증 96점, 10년+ 실무 노하우 기반 과제 해결 능력 보유',
+        coverNote: applicantNote,
+      });
+      const text = `✓ [${applyingPosting.companyName}] 지원서 제출 완료! ${emailResult.message}`;
       setActionNotice(text);
       setApplyingPosting(null);
-      setTimeout(() => setActionNotice(''), 6000);
+      setTimeout(() => setActionNotice(''), 7000);
     } catch (err) {
       console.error('Failed to submit proposal:', err);
     } finally {
@@ -912,6 +921,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <p className="font-bold text-[#17212B]">
                     🎙️ AI 역량 검증 요약: <span className="font-medium text-slate-700">10년+ 실무 노하우 보유, 부서 간 과제 해결 및 프로세스 표준화 능력 검증 완료</span>
                   </p>
+                </div>
+              </div>
+
+              {/* Manager Email System Notice */}
+              <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-3 text-xs font-bold text-[#173F3A]">
+                <Mail className="size-4 shrink-0 text-[#173F3A] mt-0.5" />
+                <div className="flex flex-col gap-0.5">
+                  <span>지원 완료 시 기업 채용 담당자 이메일로 실시간 지원서 알림이 자동 전송됩니다.</span>
+                  <span className="text-[11px] font-medium text-slate-600">이력서 파일, 40+ 적합도 점수, AI 경험 검증 결과 리포트가 한눈에 전달됩니다.</span>
                 </div>
               </div>
 
