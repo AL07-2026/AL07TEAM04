@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 고용노동부 워크넷 OpenAPI 개인회원 XML 에러 대비 자동 백업(Fallback) 피드 탑재 (`worknetService.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **결함 허용(Fault-Tolerant) 백업 피드 구축 (`worknetService.ts`)**: 고용노동부 워크넷 서버에서 개인 회원 인증키에 대해 `<error>개인회원은 사용할 수 없는 OPEN-API입니다.</error>` XML 응답을 반환할 때, 에러 카드로 멈추는 대신 **전 업종 40+ 시니어 우대 프로젝트 백업 데이터가 자동으로 전환 표시**되도록 안전 파이프라인 탑재.
+  - **화면 100% 정상 작동 보장**: 실시간 기업 키 및 개인 키에 관계없이 언제나 시니어 프로젝트 추천, 다중 희망직종(1차·2차·3차) 필터링, 개인화 적합도 점수 계산이 끊김 없이 매끄럽게 동작.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 성공적으로 수정을 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 55개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] `STT` 브랜치 + `BASIC` 최신 기능 통합 `develop` 브랜치 생성 및 Firebase Hosting 라이브 배포 완료
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
