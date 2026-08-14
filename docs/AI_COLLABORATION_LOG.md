@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 워크넷 상세 보기 화면 '해결 과제' 카드 누락 수정 및 텍스트 생략 제거 (`JobDatabasePage.tsx`, `FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **워크넷 상세 모달 해결 과제 카드 표출 (`JobDatabasePage.tsx`)**: 공고 클릭 시 상세 보기 모달에서 워크넷 공고(`source === 'worknet'`)인 경우 `해결 과제` 영역이 완전히 누락되어 표시되지 않던 이슈를 수정하여, **`🤖 Gemini AI 해결 과제 분석 & 시니어 실행 로드맵`** 카드가 100% 정상 노출되도록 반영.
+  - **해결 과제 텍스트 말줄임(`line-clamp`) 완전 제거**: 카드 및 리스트 영역에서 `해결 과제` 문장이 2줄로 잘려서 안 보이던 문제를 해결하기 위해 말줄임을 제거하고 전문이 온전하고 시원하게 표시되도록 개선.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 첫 접속 시 추천 공고 즉시 표출 구조로 전면 개선 (리프레시 필요 현상 완전 차단) (`FlowPages.tsx`, `recommendationEngine.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
