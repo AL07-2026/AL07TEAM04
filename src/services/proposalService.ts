@@ -23,13 +23,42 @@ export interface UserProposal {
 
 const LOCAL_STORAGE_KEY = 'eojob_user_proposals';
 
+function isRealProposal(item: Partial<UserProposal>): boolean {
+  if (!item || !item.id) return false;
+  if (item.id.includes('SEED') || item.id === 'PROP-1' || item.id === 'PROP-2') return false;
+  if (
+    item.companyName === '(주) 디자인브릿지스튜디오 [워크넷 인증 강소기업]' ||
+    item.companyName === '(주) 세일즈위버 넥스트'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function clearLegacyProposals(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!data) return;
+    const parsed = JSON.parse(data) as UserProposal[];
+    const cleanList = parsed.filter(isRealProposal);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanList));
+  } catch {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  }
+}
+
 export function getLocalProposals(): UserProposal[] {
   if (typeof window === 'undefined') return [];
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!data) return [];
     const parsed = JSON.parse(data) as UserProposal[];
-    return parsed;
+    const cleanList = parsed.filter(isRealProposal);
+    if (cleanList.length !== parsed.length) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanList));
+    }
+    return cleanList;
   } catch {
     return [];
   }
@@ -49,6 +78,7 @@ export function saveLocalProposal(proposal: Omit<UserProposal, 'id'>): UserPropo
 }
 
 export async function getUserProposals(userId?: string): Promise<UserProposal[]> {
+  clearLegacyProposals();
   const localList = getLocalProposals();
 
   if (!db || !userId) {
@@ -64,10 +94,12 @@ export async function getUserProposals(userId?: string): Promise<UserProposal[]>
       return localList;
     }
 
-    const firestoreList: UserProposal[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<UserProposal, 'id'>),
-    }));
+    const firestoreList: UserProposal[] = snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<UserProposal, 'id'>),
+      }))
+      .filter(isRealProposal);
 
     const combined = [...firestoreList];
     for (const item of localList) {

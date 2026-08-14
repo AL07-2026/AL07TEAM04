@@ -24,7 +24,7 @@ import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
 import { fetchProjects } from '@/services/projectService';
-import { getUserProposals, type UserProposal } from '@/services/proposalService';
+import { clearLegacyProposals, getUserProposals, type UserProposal } from '@/services/proposalService';
 import { getPersonalizedRankedProjects } from '@/services/recommendationEngine';
 import { seedProjectsIfEmpty } from '@/services/seedService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
@@ -1113,6 +1113,7 @@ export function MyProposalsPage() {
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
+    clearLegacyProposals();
     void (async () => {
       const list = await getUserProposals(user?.uid);
       setProposals(list);

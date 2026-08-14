@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 사용자 브라우저 캐시 잔여 시드 자동 소탕 스크러버 탑재 및 코드 중복 최적화 (`proposalService.ts`, `FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **브라우저 캐시 잔여 시드 자동 소탕 (`clearLegacyProposals`, `isRealProposal`)**: 브라우저 localstorage(`eojob_user_proposals`)에 남아 있던 기존 구형 시드 데이터(`PROP-SEED-1`, `PROP-SEED-2`, `(주) 디자인브릿지스튜디오`, `(주) 세일즈위버 넥스트`)를 페이지 접속 시 즉시 감지하여 자동 삭제하는 세정 로직 탑재.
+  - **코드 최적화 및 중복 모듈화**: `isRealProposal` 검증 헬퍼 함수를 신설하여 `getLocalProposals`, `clearLegacyProposals`, `getUserProposals`의 필터링 로직 중복을 제거하고 DRY 원칙에 맞춰 최적화.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 희망 직종 1차/2차/3차 다중 선택 및 경력 분야 세부 핵심 강점 입력 보완 (`BasicProfilePage.tsx`, `recommendationEngine.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
