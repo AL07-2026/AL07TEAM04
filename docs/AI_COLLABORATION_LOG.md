@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] UI 전 화면 워크넷/고용24 출처 표기 문구 및 뱃지 전면 제거 및 단정화 (`JobDatabasePage.tsx`, `FlowPages.tsx`, `worknetService.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **워크넷/고용24 브랜드 표기 제거**: 화면 상단/하단 뱃지 및 상세보기 팝업, 안내 문구에 남아 있던 `고용24 공식 공고`, `🏛️ 고용24(워크넷) 공식 공고`, `고용24 Open API 조회 기준`, `고용24 원문 공고 보기` 등의 출처 표기 텍스트를 **`시니어 맞춤 공식 공고`**, **`시니어 우대 공고`**, **`이어잡 공식 검증`**, **`채용 상세 공고 보기`** 등 단정하고 전문적인 서비스 전용 뱃지 및 문구로 일괄 전면 전환.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 55개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 고용노동부 워크넷 OpenAPI 개인회원 XML 에러 대비 자동 백업(Fallback) 피드 탑재 (`worknetService.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
