@@ -422,7 +422,7 @@ function DetailPanel({
         <header className="border-b border-[#E0D9C8] pb-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[12px] font-extrabold text-[#F06B4F]">
-              {posting.id} · {hiringStageLabels[posting.hiringStage]}
+              {hiringStageLabels[posting.hiringStage]} · {categoryLabels[posting.category] || posting.industry}
             </p>
             <div
               aria-label={`적합도 ${displayScore}점, ${fitTone.label}`}
@@ -465,7 +465,7 @@ function DetailPanel({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[12px] font-extrabold text-[#F06B4F]">
-              {posting.id} · {hiringStageLabels[posting.hiringStage]}
+              {hiringStageLabels[posting.hiringStage]} · {categoryLabels[posting.category] || posting.industry}
             </p>
             <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#17212B]">
               {posting.title}
@@ -1625,7 +1625,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
         <DatabaseMetric
-          caption={role === 'senior' ? '고용24 Open API 조회 기준' : '회사 직접 등록 기준'}
+          caption={role === 'senior' ? '최근 일주일 실시간 기준' : '회사 직접 등록 기준'}
           label={role === 'senior' ? '조회 공고' : '등록 프로젝트'}
           value={`${postings.length}건`}
         />
