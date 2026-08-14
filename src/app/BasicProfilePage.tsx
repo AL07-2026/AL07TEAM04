@@ -46,6 +46,16 @@ export function BasicProfilePage() {
   const { mode } = useViewportMode();
   const { user, signOut } = useAuth();
   const [form, setForm] = useState<ProfileForm>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLocal = localStorage.getItem('eojob_senior_profile');
+      if (savedLocal) {
+        try {
+          return JSON.parse(savedLocal) as ProfileForm;
+        } catch {
+          // ignore
+        }
+      }
+    }
     return {
       field: '서비스 운영',
       period: '12년',
@@ -64,13 +74,17 @@ export function BasicProfilePage() {
     void (async () => {
       const data = await getSeniorProfile(user.uid);
       if (data) {
-        setForm({
+        const loadedForm = {
           field: data.field || '서비스 운영',
           period: data.period || '12년',
           experience: data.experience || '서비스 운영 프로세스 체계화 및 프로젝트 관리 총괄',
           phone: data.phone || '010-1234-5678',
           email: data.email || user.email || 'senior@example.com',
-        });
+        };
+        setForm(loadedForm);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('eojob_senior_profile', JSON.stringify(loadedForm));
+        }
       }
     })();
   }, [user]);
@@ -99,6 +113,9 @@ export function BasicProfilePage() {
       setMessage('필수 정보를 모두 입력해 주세요.');
       return;
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('eojob_senior_profile', JSON.stringify(form));
+    }
     if (user?.uid) {
       try {
         await saveSeniorProfile(user.uid, form);
@@ -107,7 +124,7 @@ export function BasicProfilePage() {
       }
     }
     setIsEditing(false);
-    setMessage('');
+    setMessage('✓ 프로필 정보가 성공적으로 저장되었습니다.');
   }
 
   async function handleLogout() {
@@ -156,6 +173,20 @@ export function BasicProfilePage() {
             <span>로그아웃</span>
           </button>
         </div>
+
+        {/* Message Banner */}
+        {message ? (
+          <div
+            className={cn(
+              'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 border shadow-2xs',
+              message.startsWith('✓')
+                ? 'bg-[#ECFDF5] border-[#10B981]/40 text-[#059669]'
+                : 'bg-rose-50 border-rose-200 text-rose-700',
+            )}
+          >
+            <span>{message}</span>
+          </div>
+        ) : null}
 
         {/* View Mode vs Edit Mode */}
         {!isEditing ? (

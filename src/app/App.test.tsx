@@ -90,4 +90,36 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.click(screen.getByRole('button', { name: '대화 제안하기' }));
     expect(screen.getByText(/010-1234-5678/)).toBeInTheDocument();
   });
+
+  it('인재 기본정보를 수정하고 정상적으로 저장되는지 확인한다', async () => {
+    window.history.pushState({}, '', '/basic-profile');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '저장된 내 경험 정보' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '정보 수정' }));
+    expect(screen.getByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('경력 분야'), { target: { value: 'AI 서비스 개발' } });
+    fireEvent.change(screen.getByLabelText('경력 기간'), { target: { value: '15년' } });
+    fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
+
+    expect(await screen.findByText('✓ 프로필 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
+    expect(screen.getByText('AI 서비스 개발')).toBeInTheDocument();
+    expect(screen.getByText('15년')).toBeInTheDocument();
+  });
+
+  it('회사 기본정보를 수정하고 정상적으로 저장되는지 확인한다', async () => {
+    window.history.pushState({}, '', '/company-info');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '저장된 회사 정보' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '정보 수정' }));
+    expect(screen.getByRole('heading', { name: '회사 정보 수정' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('회사명'), { target: { value: '(주) 테크노바' } });
+    fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
+
+    expect(await screen.findByText('✓ 회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
+    expect(screen.getAllByText('(주) 테크노바').length).toBeGreaterThan(0);
+  });
 });

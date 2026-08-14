@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 개인 프로필 & 회사 데이터 저장/수정 이중 보존(Dual Storage) 점검 및 UI 피드백 보정
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **이중 저장 데이터 보존 구조 구축 (Firestore + localStorage)**: `BasicProfilePage.tsx` 및 `CompanyInfoPage.tsx`에서 사용자가 개인 정보 및 회사 정보를 수정/저장 시 Firestore 원격 DB 저장과 동시에 로컬 스토리지(`eojob_senior_profile`, `eojob_company_profile`)에 이중 저장되도록 보정.
+  - **시각적 알림 토스트/배너 탑재**: 정보 저장 완료 시 `✓ 프로필 정보가 성공적으로 저장되었습니다.` 성공 피드백 알림 배너가 화면 상단에 명확하게 노출되도록 보정.
+  - **단위/통합 테스트 확장**: `App.test.tsx`에 인재 기본정보 및 회사 기본정보 실제 변경/저장 동작 검증 테스트 2건 추가 (총 28개 테스트 100% 통과).
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 성공.
+- **변경 파일**:
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] Firebase Firestore 실시간 데이터베이스 연동 & CRUD 서비스 구축
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

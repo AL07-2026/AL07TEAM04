@@ -20,13 +20,25 @@ export function CompanyInfoPage() {
   const { mode } = useViewportMode();
   const { user, signOut } = useAuth();
 
-  const [form, setForm] = useState<CompanyForm>(() => ({
-    companyName: '(주) 이어잡',
-    companyAddress: '서울특별시 강남구 테헤란로 123',
-    managerName: user?.name || '김담당',
-    email: user?.email || 'hr@eojob.com',
-    phone: '02-1234-5678',
-  }));
+  const [form, setForm] = useState<CompanyForm>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLocal = localStorage.getItem('eojob_company_profile');
+      if (savedLocal) {
+        try {
+          return JSON.parse(savedLocal) as CompanyForm;
+        } catch {
+          // ignore
+        }
+      }
+    }
+    return {
+      companyName: '(주) 이어잡',
+      companyAddress: '서울특별시 강남구 테헤란로 123',
+      managerName: user?.name || '김담당',
+      email: user?.email || 'hr@eojob.com',
+      phone: '02-1234-5678',
+    };
+  });
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [message, setMessage] = useState('');
@@ -36,13 +48,17 @@ export function CompanyInfoPage() {
     void (async () => {
       const data = await getCompanyProfile(user.uid);
       if (data) {
-        setForm({
+        const loadedForm = {
           companyName: data.companyName || '(주) 이어잡',
           companyAddress: data.description || '서울특별시 강남구 테헤란로 123',
           managerName: user.name || '김담당',
           email: data.contactEmail || user.email || 'hr@eojob.com',
           phone: data.contactPhone || '02-1234-5678',
-        });
+        };
+        setForm(loadedForm);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('eojob_company_profile', JSON.stringify(loadedForm));
+        }
       }
     })();
   }, [user]);
@@ -52,6 +68,9 @@ export function CompanyInfoPage() {
     if (!form.companyName.trim() || !form.managerName.trim() || !form.email.trim()) {
       setMessage('회사명, 담당자명, 이메일은 필수 입력 사항입니다.');
       return;
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('eojob_company_profile', JSON.stringify(form));
     }
     if (user?.uid) {
       try {
@@ -68,7 +87,7 @@ export function CompanyInfoPage() {
       }
     }
     setIsEditing(false);
-    setMessage('');
+    setMessage('✓ 회사 정보가 성공적으로 저장되었습니다.');
   }
 
   async function handleLogout() {
@@ -121,6 +140,20 @@ export function CompanyInfoPage() {
             <span>로그아웃</span>
           </button>
         </div>
+
+        {/* Message Banner */}
+        {message ? (
+          <div
+            className={cn(
+              'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 border shadow-2xs',
+              message.startsWith('✓')
+                ? 'bg-[#ECFDF5] border-[#10B981]/40 text-[#059669]'
+                : 'bg-rose-50 border-rose-200 text-rose-700',
+            )}
+          >
+            <span>{message}</span>
+          </div>
+        ) : null}
 
         {/* View Mode vs Edit Mode */}
         {!isEditing ? (
