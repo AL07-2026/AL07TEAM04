@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 고용24 OpenAPI 6개 인증키 등록 및 Cloud Functions 환경 설정 완료 (`worknetService.ts`, `functions/.env`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **워크넷 6개 인증키 풀 등록**: 채용정보(`a5dea...`), 직업훈련(`9a75e...`), 직무정보(`820aa...`), 직업상세(`32661...`), 공통코드(`ccc1d...`), 강소기업(`dd79d...`) 6종류의 OpenAPI 인증키를 프론트엔드 환경변수(`.env`), 백엔드 Cloud Functions 환경변수(`functions/.env`), 코드 레벨 폴백(`worknetService.ts`)에 모두 기본값으로 선언 등록 완료.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app) 라이브 배포 완료.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 72개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [NEW] [`functions/.env`](file:///c:/AL07TEAM04/functions/.env)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 고용24 오류 빨간 상자 안내 제거 및 4채널 자동 복구 백업 피드 파이프라인 구축 (`worknetService.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
