@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 적합도 90점 이상 최우선 배지 컬러 선명한 주황색(#F06B4F) 시각적 개선 (`fitScoreTone.ts`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **90점 이상 배지 주황색(Orange) 디자인 전환**: 95점 및 90점대 추천 공고 배지의 기존 딥그린 배경이 다소 어둡던 점을 개선하여, **화사하고 시동성이 뛰어난 서비스 대표 코랄 오렌지 배경(`bg-[#F06B4F] text-white`)과 굵은 선명 폰트**로 전면 전환.
+  - **시각적 계층화 완성**: 90점 이상 최우선 공고가 오렌지색 배지로 한눈에 강조되며 추천 가독성 극대화.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 55개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/lib/fitScoreTone.ts`](file:///c:/AL07TEAM04/src/lib/fitScoreTone.ts)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] UI 전 화면 워크넷/고용24 출처 표기 문구 및 뱃지 전면 제거 및 단정화 (`JobDatabasePage.tsx`, `FlowPages.tsx`, `worknetService.ts`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
