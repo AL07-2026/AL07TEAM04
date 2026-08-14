@@ -11,8 +11,8 @@ import {
 } from '@/services/recommendationEngine';
 
 const profile: SeniorProfileData = {
-  desiredCategory: 'dev-engineering',
-  desiredCategory2: 'operations',
+  desiredCategory: 'it-development-data',
+  desiredCategory2: 'service',
   email: 'senior@example.com',
   experience: '소프트웨어 개발과 서비스 운영 프로세스 개선 경험',
   field: '소프트웨어 개발',
@@ -98,11 +98,11 @@ describe('profile-based recommendations', () => {
   it('희망 직종을 고용24 키워드 검색 조건으로 변환한다', () => {
     expect(getProfileWorknetKeywords(profile)).toEqual([
       '개발자',
-      '소프트웨어',
-      '엔지니어',
-      '운영',
-      '프로세스',
+      '데이터',
+      '정보보안',
       '서비스',
+      '매장',
+      '시설관리',
     ]);
     expect(getProfileExperienceMonths(profile)).toBe(180);
   });
@@ -111,10 +111,21 @@ describe('profile-based recommendations', () => {
     expect(
       getProfileWorknetKeywords({
         ...profile,
-        desiredCategory2: 'dev-engineering',
-        desiredCategory3: 'dev-engineering',
+        desiredCategory2: 'it-development-data',
+        desiredCategory3: 'it-development-data',
       }),
-    ).toEqual(['개발자', '소프트웨어', '엔지니어']);
+    ).toEqual(['개발자', '데이터', '정보보안']);
+  });
+
+  it('선택한 21개 직종과 일치하는 공고가 없으면 다른 직종을 섞지 않는다', () => {
+    const unmatchedProfile = {
+      ...profile,
+      desiredCategory: 'medical',
+      desiredCategory2: undefined,
+    };
+    const posting = createPosting('development', 'dev-engineering', '소프트웨어 개발 리드');
+
+    expect(getProfileMatchedRankedProjects([posting], unmatchedProfile)).toEqual([]);
   });
 
   it('희망 근무 지역에 따라 적합도 점수와 사유를 반영한다', () => {
@@ -124,8 +135,14 @@ describe('profile-based recommendations', () => {
     const busanPosting = createPosting('busan', 'dev-engineering', '부산 개발 리드');
     busanPosting.location = '부산 해운대구';
 
-    const matchSeoul = calculatePersonalizedMatch(seoulPosting, { ...profile, desiredLocation: '서울' });
-    const matchBusan = calculatePersonalizedMatch(busanPosting, { ...profile, desiredLocation: '서울' });
+    const matchSeoul = calculatePersonalizedMatch(seoulPosting, {
+      ...profile,
+      desiredLocation: '서울',
+    });
+    const matchBusan = calculatePersonalizedMatch(busanPosting, {
+      ...profile,
+      desiredLocation: '서울',
+    });
 
     expect(matchSeoul.personalizedScore).toBeGreaterThan(matchBusan.personalizedScore);
     expect(matchSeoul.matchReasons.some((r) => r.includes('희망 근무 지역 서울'))).toBe(true);

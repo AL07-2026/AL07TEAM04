@@ -125,9 +125,16 @@ describe('Figma v2 통합 화면 라우팅', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getAllByRole('combobox')[0]!, {
-      target: { value: 'ai-automation' },
+    const primaryOccupation = screen.getByLabelText('1순위 희망 직종 (필수)');
+    expect(primaryOccupation.querySelectorAll('option')).toHaveLength(22);
+    fireEvent.change(primaryOccupation, {
+      target: { value: 'it-development-data' },
     });
+    expect(
+      screen
+        .getByLabelText('2순위 희망 직종 (선택)')
+        .querySelector('option[value="it-development-data"]'),
+    ).toBeDisabled();
     fireEvent.change(screen.getByLabelText('경력 분야'), { target: { value: 'AI 서비스 개발' } });
     fireEvent.change(screen.getByLabelText('경력 기간'), { target: { value: '15년' } });
     fireEvent.change(screen.getByLabelText(/대표 실무 경험 요약/), {

@@ -23,6 +23,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
 import { categoryLabels, type JobPosting, type ProjectCategory } from '@/data/jobPostings';
+import {
+  getOccupationCategoryLabel,
+  mapOccupationCategoryToProject,
+  normalizeOccupationCategory,
+} from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import {
   buildExperienceCardFromAnswers,
@@ -99,11 +104,15 @@ type InterviewQuestion = {
 };
 
 function toProjectCategory(value: string | undefined) {
-  return value && value in categoryLabels ? (value as ProjectCategory) : undefined;
+  if (value && value in categoryLabels) return value as ProjectCategory;
+  return mapOccupationCategoryToProject(value) ?? undefined;
 }
 
-function getInterviewQuestions(category?: ProjectCategory): InterviewQuestion[] {
-  const categoryName = category ? categoryLabels[category] : '희망 직종';
+function getInterviewQuestions(
+  category?: ProjectCategory,
+  occupationLabel?: string,
+): InterviewQuestion[] {
+  const categoryName = occupationLabel ?? (category ? categoryLabels[category] : '희망 직종');
   return [
     {
       field: 'problem',
@@ -284,9 +293,7 @@ function HomeRecommendationRow({
 
       <div className={cn('min-w-0', isMobile && 'border-t border-[#E0D9C8]/70 pt-3')}>
         <p className="text-[13px] font-extrabold text-[#173F3A]">해결 과제</p>
-        <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">
-          {problem}
-        </p>
+        <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">{problem}</p>
       </div>
 
       <div className="min-w-0 text-[14px] font-bold leading-6 text-slate-600">
@@ -346,18 +353,23 @@ export function SeniorHomePage() {
       setIsLoadingRecommendations(true);
       const profilePromise = resolveSeniorProfile(user?.uid);
       const worknetFeedPromise = profilePromise.then((profile) => {
-        const hasCriteria = hasProfileRecommendationCriteria(profile);
+        if (!hasProfileRecommendationCriteria(profile)) {
+          return {
+            projects: [],
+            status: 'profile-required' as const,
+            message: '내 정보의 희망 직종과 경력 정보를 먼저 입력해 주세요.',
+          };
+        }
         return fetchWorknetSeniorProjectFeed({
-          keywords: hasCriteria ? getProfileWorknetKeywords(profile) : undefined,
-          maxCareerMonths: hasCriteria ? getProfileExperienceMonths(profile) : undefined,
+          keywords: getProfileWorknetKeywords(profile),
+          maxCareerMonths: getProfileExperienceMonths(profile),
         });
       });
-      const [profile, worknetFeed, proposals, experienceCard] = await Promise.all([
-        profilePromise,
-        worknetFeedPromise,
+      const summaryPromise = Promise.all([
         getUserProposals(user?.uid),
         getLatestUserExperienceCard(user?.uid),
       ]);
+      const [profile, worknetFeed] = await Promise.all([profilePromise, worknetFeedPromise]);
       setRecommendationProfile(profile);
       const ranked = getProfileMatchedRankedProjects(worknetFeed.projects, profile);
       const topRecommendations = ranked.slice(0, 4);
@@ -374,26 +386,44 @@ export function SeniorHomePage() {
       );
       setRecommendedProjectsCount(topRecommendations.length);
 
-      setActiveProposalsCount(
-        proposals.filter(
-          (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
-        ).length,
-      );
+      void summaryPromise
+        .then(([proposals, experienceCard]) => {
+          setActiveProposalsCount(
+            proposals.filter(
+              (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
+            ).length,
+          );
 
-      // A profile alone is not an experience card. Count only a completed interview card.
-      const hasSavedExperience = Boolean(experienceCard);
-      setSavedExperienceCount(hasSavedExperience ? 1 : 0);
-
-      // Personalized score is a ranking score, not a matching success rate.
-      setHighestFitScore(
-        hasSavedExperience ? (topRecommendations[0]?.matchResult.personalizedScore ?? null) : null,
-      );
-      setIsLoadingRecommendations(false);
+          const hasSavedExperience = Boolean(experienceCard);
+          setSavedExperienceCount(hasSavedExperience ? 1 : 0);
+          setHighestFitScore(
+            hasSavedExperience
+              ? (topRecommendations[0]?.matchResult.personalizedScore ?? null)
+              : null,
+          );
+        })
+        .catch((error: unknown) => {
+          console.warn('Failed to load senior summary:', error);
+        });
     }
-    void loadAndRankProjects();
+
+    const runRecommendationLoad = () => {
+      void loadAndRankProjects()
+        .catch((error: unknown) => {
+          console.warn('Failed to load senior recommendations:', error);
+          setRecommendedJobs([]);
+          setRecommendedProjectsCount(0);
+          setRecommendationFeedMessage(
+            '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          );
+        })
+        .finally(() => setIsLoadingRecommendations(false));
+    };
+
+    runRecommendationLoad();
 
     const handleProfileUpdate = () => {
-      void loadAndRankProjects();
+      runRecommendationLoad();
     };
 
     window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
@@ -714,10 +744,14 @@ export function ExperienceInterviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const applicationReturn = getPendingApplicationInterview();
-  const profileCategory = toProjectCategory(getLocalSeniorProfile(user?.uid)?.desiredCategory);
+  const profileCategoryValue = getLocalSeniorProfile(user?.uid)?.desiredCategory;
+  const profileOccupationCategory = normalizeOccupationCategory(profileCategoryValue);
+  const profileCategory = toProjectCategory(profileCategoryValue);
   const targetCategory = applicationReturn?.targetCategory ?? profileCategory;
-  const targetCategoryLabel = targetCategory ? categoryLabels[targetCategory] : '희망 직종';
-  const interviewQuestions = getInterviewQuestions(targetCategory);
+  const targetCategoryLabel = applicationReturn?.targetCategory
+    ? categoryLabels[applicationReturn.targetCategory]
+    : getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
+  const interviewQuestions = getInterviewQuestions(targetCategory, targetCategoryLabel);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSecondsRef = useRef(0);

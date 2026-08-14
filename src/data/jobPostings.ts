@@ -1,3 +1,5 @@
+import type { OccupationCategory } from '@/data/occupationCategories';
+
 export type ProjectCategory =
   | 'dev-engineering'
   | 'design-brand'
@@ -24,6 +26,7 @@ export type JobPosting = {
   companySize: string;
   title: string;
   category: ProjectCategory;
+  occupationCategory?: OccupationCategory;
   seniority: Seniority;
   employmentType: EmploymentType;
   hiringStage: HiringStage;

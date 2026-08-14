@@ -1,4 +1,12 @@
-import { categoryLabels, type JobPosting, type ProjectCategory } from '@/data/jobPostings';
+import type { JobPosting, ProjectCategory } from '@/data/jobPostings';
+import {
+  mapOccupationCategoryToProject,
+  mapProjectCategoryToOccupation,
+  normalizeOccupationCategory,
+  occupationCategoryLabels,
+  occupationCategorySearchKeywords,
+  type OccupationCategory,
+} from '@/data/occupationCategories';
 import type { SeniorProfileData } from '@/services/profileService';
 
 export interface PersonalizedMatchResult {
@@ -7,20 +15,6 @@ export interface PersonalizedMatchResult {
   posting: JobPosting;
   primaryCategoryMatch: boolean;
 }
-
-const categorySearchKeywords: Record<ProjectCategory, string[]> = {
-  'dev-engineering': ['개발자', '소프트웨어', '엔지니어'],
-  'design-brand': ['디자인', 'UX', '브랜드'],
-  'marketing-sales': ['마케팅', '영업', 'B2B'],
-  'hr-strategy': ['인사', '경영기획', '조직'],
-  'r-and-d-manufacturing': ['제조', '생산', '품질'],
-  'legacy-modernization': ['ERP', '시스템 고도화', '전환'],
-  'ai-automation': ['AI', '자동화', 'RPA'],
-  'data-platform': ['데이터', 'DB', '분석'],
-  security: ['보안', '리스크', '컴플라이언스'],
-  growth: ['사업개발', '성장', '전략'],
-  operations: ['운영', '프로세스', '서비스'],
-};
 
 const solvedKeywords = [
   '프로세스',
@@ -44,19 +38,34 @@ const solvedKeywords = [
   'cs',
 ];
 
-function toProjectCategory(value?: string): ProjectCategory | null {
-  return value && value in categoryLabels ? (value as ProjectCategory) : null;
-}
-
 export function getProfilePreferredCategories(profile?: SeniorProfileData | null) {
   const categories = [
     profile?.desiredCategory,
     profile?.desiredCategory2,
     profile?.desiredCategory3,
   ]
-    .map(toProjectCategory)
-    .filter((category): category is ProjectCategory => Boolean(category));
+    .map(normalizeOccupationCategory)
+    .filter((category): category is OccupationCategory => Boolean(category));
   return [...new Set(categories)];
+}
+
+export function getProfilePreferredProjectCategories(
+  profile?: SeniorProfileData | null,
+): ProjectCategory[] {
+  return [
+    ...new Set(
+      getProfilePreferredCategories(profile)
+        .map(mapOccupationCategoryToProject)
+        .filter((category): category is ProjectCategory => Boolean(category)),
+    ),
+  ];
+}
+
+export function getPostingOccupationCategory(posting: JobPosting): OccupationCategory {
+  return (
+    normalizeOccupationCategory(posting.occupationCategory) ??
+    mapProjectCategoryToOccupation(posting.category)
+  );
 }
 
 export function hasProfileRecommendationCriteria(profile?: SeniorProfileData | null) {
@@ -71,7 +80,7 @@ export function hasProfileRecommendationCriteria(profile?: SeniorProfileData | n
 
 export function getProfileWorknetKeywords(profile?: SeniorProfileData | null) {
   const keywords = getProfilePreferredCategories(profile).flatMap(
-    (category) => categorySearchKeywords[category],
+    (category) => occupationCategorySearchKeywords[category],
   );
   return [...new Set(keywords)].slice(0, 9);
 }
@@ -96,7 +105,8 @@ export function calculatePersonalizedMatch(
 
   const activeProfile = profile!;
   const desiredCategories = getProfilePreferredCategories(activeProfile);
-  const categoryPriority = desiredCategories.indexOf(posting.category);
+  const postingOccupationCategory = getPostingOccupationCategory(posting);
+  const categoryPriority = desiredCategories.indexOf(postingOccupationCategory);
   const userExperienceText = [
     activeProfile.field,
     activeProfile.experience,
@@ -124,13 +134,19 @@ export function calculatePersonalizedMatch(
 
   if (categoryPriority === 0) {
     baseScore = 94;
-    matchReasons.push(`1순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
+    matchReasons.push(
+      `1순위 희망 직종 ${occupationCategoryLabels[postingOccupationCategory]}과 일치합니다.`,
+    );
   } else if (categoryPriority === 1) {
     baseScore = 87;
-    matchReasons.push(`2순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
+    matchReasons.push(
+      `2순위 희망 직종 ${occupationCategoryLabels[postingOccupationCategory]}과 일치합니다.`,
+    );
   } else if (categoryPriority === 2) {
     baseScore = 82;
-    matchReasons.push(`3순위 희망 직종 ${categoryLabels[posting.category]}과 일치합니다.`);
+    matchReasons.push(
+      `3순위 희망 직종 ${occupationCategoryLabels[postingOccupationCategory]}과 일치합니다.`,
+    );
   } else {
     matchReasons.push('선택한 희망 직종과 직접 일치하지 않아 참고 공고로 분류됩니다.');
   }
@@ -158,7 +174,9 @@ export function calculatePersonalizedMatch(
     const locKeyword = desiredLocation.replace(/(특별시|광역시|특별자치도|도|시)$/, '');
     if (postingLoc.includes(locKeyword) || postingLoc.includes(desiredLocation)) {
       baseScore += 2;
-      matchReasons.push(`희망 근무 지역 ${desiredLocation}과 공고 위치(${postingLoc})가 일치합니다.`);
+      matchReasons.push(
+        `희망 근무 지역 ${desiredLocation}과 공고 위치(${postingLoc})가 일치합니다.`,
+      );
     } else {
       baseScore -= 3;
       matchReasons.push(`공고 위치(${postingLoc})가 희망 지역(${desiredLocation})과 다릅니다.`);
@@ -204,12 +222,8 @@ export function getProfileMatchedRankedProjects(
   }
 
   const preferredCategories = new Set(getProfilePreferredCategories(profile));
-  const matchedPostings = postings.filter((posting) => preferredCategories.has(posting.category));
-
-  if (matchedPostings.length > 0) {
-    return getPersonalizedRankedProjects(matchedPostings, profile);
-  }
-
-  // Fallback: If live feed has no exact category match for selected preference, rank all postings so registered user always receives tailored recommendations
-  return getPersonalizedRankedProjects(postings, profile);
+  const matchedPostings = postings.filter((posting) =>
+    preferredCategories.has(getPostingOccupationCategory(posting)),
+  );
+  return getPersonalizedRankedProjects(matchedPostings, profile);
 }

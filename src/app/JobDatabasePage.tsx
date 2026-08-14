@@ -32,14 +32,20 @@ import {
 import { useNavigate } from 'react-router';
 
 import {
-  categoryLabels,
   databaseSummary,
   employmentTypeLabels,
   hiringStageLabels,
   seniorityLabels,
   workTypeLabels,
 } from '@/data/jobPostings';
-import type { EmploymentType, HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
+import type {
+  EmploymentType,
+  HiringStage,
+  JobPosting,
+  ProjectCategory,
+  WorkType,
+} from '@/data/jobPostings';
+import { occupationCategoryLabels } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import {
   beginApplicationInterview,
@@ -62,7 +68,9 @@ import {
   getProfileExperienceMonths,
   getProfileMatchedRankedProjects,
   getProfilePreferredCategories,
+  getProfilePreferredProjectCategories,
   getProfileWorknetKeywords,
+  getPostingOccupationCategory,
   hasProfileRecommendationCriteria,
 } from '@/services/recommendationEngine';
 import { createProject, fetchProjects } from '@/services/projectService';
@@ -99,6 +107,10 @@ const employmentTypeFilters: { id: EmploymentTypeFilter; label: string }[] = [
   { id: 'contract', label: '📋 계약직' },
   { id: 'project', label: '🎯 프로젝트 / 자문' },
 ];
+
+function getPostingOccupationLabel(posting: JobPosting) {
+  return occupationCategoryLabels[getPostingOccupationCategory(posting)];
+}
 
 const workTypeFilters: { id: WorkTypeFilter; label: string }[] = [
   { id: all, label: '전체 근무' },
@@ -311,7 +323,7 @@ function PostingCard({
               </span>
             ) : null}
             <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-              {posting.source === 'worknet' ? posting.industry : categoryLabels[posting.category]}
+              {posting.source === 'worknet' ? posting.industry : getPostingOccupationLabel(posting)}
             </span>
             <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-1 text-[11px] font-extrabold text-[#F06B4F]">
               {hiringStageLabels[posting.hiringStage]}
@@ -341,9 +353,7 @@ function PostingCard({
             fitTone.containerClassName,
           )}
         >
-          <p className={cn('text-[11px] font-bold', fitTone.labelClassName)}>
-            {fitTone.label}
-          </p>
+          <p className={cn('text-[11px] font-bold', fitTone.labelClassName)}>{fitTone.label}</p>
           <p className={cn('text-[18px] font-extrabold', fitTone.scoreClassName)}>
             {displayScore}점
           </p>
@@ -431,7 +441,8 @@ function DetailPanel({
         <header className="border-b border-[#E0D9C8] pb-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[12px] font-extrabold text-[#F06B4F]">
-              {hiringStageLabels[posting.hiringStage]} · {categoryLabels[posting.category] || posting.industry}
+              {hiringStageLabels[posting.hiringStage]} ·{' '}
+              {getPostingOccupationLabel(posting) || posting.industry}
             </p>
             <div
               aria-label={`적합도 ${displayScore}점, ${fitTone.label}`}
@@ -474,7 +485,8 @@ function DetailPanel({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[12px] font-extrabold text-[#F06B4F]">
-              {hiringStageLabels[posting.hiringStage]} · {categoryLabels[posting.category] || posting.industry}
+              {hiringStageLabels[posting.hiringStage]} ·{' '}
+              {getPostingOccupationLabel(posting) || posting.industry}
             </p>
             <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#17212B]">
               {posting.title}
@@ -492,9 +504,7 @@ function DetailPanel({
             aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
             className={cn('rounded-xl border px-3 py-2 text-center', fitTone.containerClassName)}
           >
-            <p className={cn('text-[12px] font-bold', fitTone.labelClassName)}>
-              {fitTone.label}
-            </p>
+            <p className={cn('text-[12px] font-bold', fitTone.labelClassName)}>{fitTone.label}</p>
             <p className={cn('text-[24px] font-extrabold', fitTone.scoreClassName)}>
               {displayScore}점
             </p>
@@ -543,13 +553,17 @@ function DetailPanel({
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 해결해야 할 핵심 과제 진단</p>
+                <p className="text-[12px] font-extrabold text-[#173F3A]">
+                  🎯 해결해야 할 핵심 과제 진단
+                </p>
                 <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
                   {posting.problemStatement}
                 </p>
               </section>
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">🚀 달성 핵심 목표 및 KPI 지표</p>
+                <p className="text-[12px] font-extrabold text-[#173F3A]">
+                  🚀 달성 핵심 목표 및 KPI 지표
+                </p>
                 <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
                   {posting.projectGoal}
                 </p>
@@ -566,7 +580,12 @@ function DetailPanel({
               ['임금 정보', posting.salaryRange],
               ['공고 마감', getDeadlineText(posting)],
               ['등록일', posting.registeredLabel || '등록일 미제공'],
-              ['제공 기관', posting.sourceProvider?.includes('워크넷') ? '이어잡 공식 검증' : posting.sourceProvider || '이어잡 공식 검증'],
+              [
+                '제공 기관',
+                posting.sourceProvider?.includes('워크넷')
+                  ? '이어잡 공식 검증'
+                  : posting.sourceProvider || '이어잡 공식 검증',
+              ],
             ].map(([label, value]) => (
               <div
                 className="border-b border-[#E0D9C8] px-4 py-3 last:border-b-0 sm:border-r sm:last:border-r-0"
@@ -605,10 +624,12 @@ function DetailPanel({
           <MobileDetailRow label="🤖 AI 해결 과제 분석" tone="mint">
             <div className="flex flex-col gap-2">
               <p className="font-bold text-[#17212B] leading-relaxed">
-                🎯 <span className="font-extrabold text-[#173F3A]">핵심 과제:</span> {posting.problemStatement}
+                🎯 <span className="font-extrabold text-[#173F3A]">핵심 과제:</span>{' '}
+                {posting.problemStatement}
               </p>
               <p className="font-bold text-[#17212B] leading-relaxed">
-                🚀 <span className="font-extrabold text-[#173F3A]">목표 지표:</span> {posting.projectGoal}
+                🚀 <span className="font-extrabold text-[#173F3A]">목표 지표:</span>{' '}
+                {posting.projectGoal}
               </p>
             </div>
           </MobileDetailRow>
@@ -662,13 +683,17 @@ function DetailPanel({
             </div>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 해결해야 할 핵심 과제 진단</p>
+                <p className="text-[12px] font-extrabold text-[#173F3A]">
+                  🎯 해결해야 할 핵심 과제 진단
+                </p>
                 <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
                   {posting.problemStatement}
                 </p>
               </section>
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">🚀 달성 핵심 목표 및 KPI 지표</p>
+                <p className="text-[12px] font-extrabold text-[#173F3A]">
+                  🚀 달성 핵심 목표 및 KPI 지표
+                </p>
                 <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
                   {posting.projectGoal}
                 </p>
@@ -830,15 +855,20 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           maxCareerMonths: getProfileExperienceMonths(profile),
         });
       });
-      const [userProjects, resolvedProfile, worknetFeed, latestInterviewCard] = await Promise.all([
+      const interviewCardPromise =
+        role === 'senior'
+          ? getLatestUserExperienceCard(user?.uid)
+          : Promise.resolve<StoredExperienceCard | null>(null);
+      const [userProjects, resolvedProfile, worknetFeed] = await Promise.all([
         role === 'company' ? fetchProjects() : Promise.resolve([]),
         profilePromise,
         worknetFeedPromise,
-        role === 'senior'
-          ? getLatestUserExperienceCard(user?.uid)
-          : Promise.resolve<StoredExperienceCard | null>(null),
       ]);
-      if (role === 'senior') setInterviewCard(latestInterviewCard);
+      if (role === 'senior') {
+        void interviewCardPromise.then(setInterviewCard).catch((error: unknown) => {
+          console.warn('Failed to load latest interview card:', error);
+        });
+      }
       setSeniorProfile(resolvedProfile);
       setWorknetFeedStatus(worknetFeed.status);
       const visibleUserProjects =
@@ -876,16 +906,30 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           setApplicationFiles(draft?.files ?? []);
           setApplicantNote(draft?.note ?? '');
           setApplicationError('');
-          setInterviewCard(latestInterviewCard);
+          setInterviewCard(readStoredExperienceCard(user?.uid));
         }
       }
-      setIsLoadingPostings(false);
     }
-    void loadDatabaseProjects();
+
+    const runDatabaseLoad = () => {
+      void loadDatabaseProjects()
+        .catch((error: unknown) => {
+          console.warn('Failed to load project database:', error);
+          setPostings([]);
+          setSelectedId('');
+          setWorknetFeedStatus('unavailable');
+          setWorknetFeedMessage(
+            '프로젝트 목록을 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          );
+        })
+        .finally(() => setIsLoadingPostings(false));
+    };
+
+    runDatabaseLoad();
 
     const handleProfileUpdate = () => {
       setSelectedCategory(all);
-      void loadDatabaseProjects();
+      runDatabaseLoad();
     };
 
     window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
@@ -1131,7 +1175,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         }
         return second.seniorFitScore - first.seniorFitScore;
       });
-  }, [postings, query, selectedCategory, selectedEmploymentType, selectedHiringStage, selectedWorkType, sortBy]);
+  }, [
+    postings,
+    query,
+    selectedCategory,
+    selectedEmploymentType,
+    selectedHiringStage,
+    selectedWorkType,
+    sortBy,
+  ]);
 
   const selectedPosting =
     filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
@@ -1143,10 +1195,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     Number(sortBy !== 'fit-desc');
   const hasActiveFilters = activeFilterCount > 0 || Boolean(query);
   const preferredProfileCategories = getProfilePreferredCategories(seniorProfile);
+  const preferredProfileProjectCategories = getProfilePreferredProjectCategories(seniorProfile);
   const activeCategoryFilters =
-    role === 'senior' && preferredProfileCategories.length > 0
+    role === 'senior' && preferredProfileProjectCategories.length > 0
       ? categoryFilters.filter(
-          (category) => category.id === all || preferredProfileCategories.includes(category.id),
+          (category) =>
+            category.id === all || preferredProfileProjectCategories.includes(category.id),
         )
       : categoryFilters;
   const selectedCategoryLabel =
@@ -1219,7 +1273,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     className="rounded-full border border-[#BBD5CE] bg-white px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A]"
                     key={category}
                   >
-                    {index + 1}순위 · {categoryLabels[category]}
+                    {index + 1}순위 · {occupationCategoryLabels[category]}
                   </span>
                 ))}
                 {seniorProfile?.period ? (
@@ -1382,7 +1436,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     {applyingPosting.title}
                   </p>
                   <p className="mt-1 text-[14px] font-medium text-slate-600">
-                    {categoryLabels[applyingPosting.category]} · {applyingPosting.location} ·{' '}
+                    {getPostingOccupationLabel(applyingPosting)} · {applyingPosting.location} ·{' '}
                     {applyingPosting.salaryRange}
                   </p>
                 </div>
@@ -1465,7 +1519,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     >
                       <span>저장 카드: {interviewMatch?.cardCategoryLabel}</span>
                       <ArrowRight className="size-3.5" />
-                      <span>지원 직종: {categoryLabels[applyingPosting.category]}</span>
+                      <span>지원 직종: {getPostingOccupationLabel(applyingPosting)}</span>
                     </div>
                     <div
                       className={cn(
@@ -1658,7 +1712,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   {!interviewCard
                     ? 'AI 인터뷰 완료와 첨부파일 1개 이상이 필요합니다.'
                     : !isInterviewReady
-                      ? `${categoryLabels[applyingPosting.category]} 직종에 맞는 인터뷰가 필요합니다.`
+                      ? `${getPostingOccupationLabel(applyingPosting)} 직종에 맞는 인터뷰가 필요합니다.`
                       : '첨부파일을 1개 이상 등록해 주세요.'}
                 </p>
               ) : null}

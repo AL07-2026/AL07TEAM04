@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createWorknetJobSearchParams,
   deriveWorknetHiringStage,
+  fetchWorknetXml,
   parseWorknetJobXml,
   transformWorknetToSeniorProject,
 } from '@/services/worknetService';
@@ -31,6 +32,10 @@ const officialXmlFixture = `<?xml version="1.0" encoding="UTF-8"?>
 </wantedRoot>`;
 
 describe('worknetService', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('공식 XML 응답 필드를 원문 그대로 파싱한다', () => {
     const parsed = parseWorknetJobXml(officialXmlFixture);
 
@@ -61,6 +66,7 @@ describe('worknetService', () => {
     expect(posting).toMatchObject({
       companyName: '테스트 주식회사',
       title: '서비스 운영 시스템 개발자',
+      occupationCategory: 'it-development-data',
       salaryRange: '연봉 5,000만원 이상',
       deadline: '2026-08-20',
       postedAt: '2026-08-14',
@@ -80,6 +86,13 @@ describe('worknetService', () => {
     expect(parsed.error).toBe('사용 권한이 없습니다.');
   });
 
+  it('고용24 message 오류도 공고 데이터로 오인하지 않는다', () => {
+    const parsed = parseWorknetJobXml('<GO24><message>인증키를 확인해 주세요.</message></GO24>');
+
+    expect(parsed.items).toEqual([]);
+    expect(parsed.error).toBe('인증키를 확인해 주세요.');
+  });
+
   it('내 정보에서 만든 키워드를 고용24 다중 검색 조건에 반영한다', () => {
     const params = createWorknetJobSearchParams('approved-key', {
       keywords: ['개발자', ' 소프트웨어 ', '개발자'],
@@ -91,5 +104,28 @@ describe('worknetService', () => {
     expect(params.get('career')).toBe('E');
     expect(params.get('minCareerM')).toBe('0');
     expect(params.get('maxCareerM')).toBe('180');
+  });
+
+  it('브라우저 외부 프록시 대신 같은 출처의 서버 API를 한 번 호출한다', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(officialXmlFixture, {
+        status: 200,
+        headers: { 'Content-Type': 'application/xml' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const params = createWorknetJobSearchParams('approved-key', {
+      keywords: ['개발자'],
+      maxCareerMonths: 180,
+    });
+    await expect(fetchWorknetXml(params)).resolves.toContain('<wantedRoot>');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const firstCall = fetchMock.mock.calls[0];
+    expect(typeof firstCall?.[0]).toBe('string');
+    if (typeof firstCall?.[0] !== 'string') throw new Error('요청 URL이 문자열이 아닙니다.');
+    expect(firstCall[0]).toMatch(/^\/api\/worknet\/jobs\?/);
+    expect(firstCall?.[1]?.signal).toBeInstanceOf(AbortSignal);
   });
 });

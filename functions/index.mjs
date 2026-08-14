@@ -6,6 +6,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { generateGeminiConnectionTest, getGeminiLogDetails } from './lib/gemini.mjs';
 import { generateExperienceCard } from './lib/experienceCard.mjs';
 import { generateNextInterviewQuestion } from './lib/interviewQuestion.mjs';
+import { proxyWorknetJobs } from './lib/worknetProxy.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
@@ -99,6 +100,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/worknet/jobs', (req, res) =>
+  proxyWorknetJobs(req, res, process.env.WORKNET_JOB_API_KEY),
+);
+
 app.get('/api/ai/test', async (_req, res) => {
   try {
     const text = await generateGeminiConnectionTest();
@@ -169,7 +174,11 @@ app.post('/api/interview/transcribe', async (req, res) => {
   try {
     const audioFile = await parseAudioUpload(req);
 
-    if (audioFile.mimetype && !audioFile.mimetype.startsWith('audio/') && audioFile.mimetype !== 'application/octet-stream') {
+    if (
+      audioFile.mimetype &&
+      !audioFile.mimetype.startsWith('audio/') &&
+      audioFile.mimetype !== 'application/octet-stream'
+    ) {
       return sendClientError(res, 400, '올바른 음성 파일이 아닙니다. 다시 녹음해 주세요.');
     }
 
@@ -198,7 +207,11 @@ app.post('/api/interview/transcribe', async (req, res) => {
     }
 
     logError('Unexpected transcription error:', error);
-    return sendClientError(res, 500, '음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.');
+    return sendClientError(
+      res,
+      500,
+      '음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.',
+    );
   }
 });
 

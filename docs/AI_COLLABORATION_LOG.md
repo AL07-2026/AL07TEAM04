@@ -16,6 +16,62 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 희망 직종 1·2·3순위 21개 체계 및 고용24 공고 분류 통합
+- **작업자**: Codex
+- **기준 확인**:
+  - 첨부 코드표의 21개 직무 항목과 고용24 Open API의 1·2·3 depth 직종 코드표는 서로 다른 분류 체계임을 공식 코드표(XLS)로 확인.
+  - 화면은 첨부된 21개 항목과 순서를 사용하고, 고용24 공고는 제목·업종·6자리 `jobsCd` 보조 판정을 거쳐 21개 화면 분류로 변환하도록 분리.
+- **작업 내용**:
+  - **1·2·3순위 선택 UI**: 21개 직종을 공통 데이터로 정의하고 각 항목에 업무 예시를 표시. 모바일/PC 입력 높이를 48px로 맞추고 같은 직종의 중복 순위 선택을 차단.
+  - **기존 데이터 호환**: 기존 11개 프로젝트 분류값을 새 21개 직종으로 읽기 시 자동 변환하며, 변환 후 중복 순위는 제거.
+  - **실제 공고 분류**: 고용24 공고 변환 시 `occupationCategory`를 함께 저장하고, 카드·상세·지원 화면에 새 직종명을 일관되게 표시.
+  - **추천 기준 통일**: 프로필의 1·2·3순위를 고용24 검색 키워드와 추천 점수에 연결. 선택 직종과 일치하는 공고가 없을 때 무관한 직종을 섞던 fallback을 제거.
+  - **인터뷰 연동**: 프로필에서 인터뷰를 시작할 때 새 21개 직종명을 질문 문구에 사용하고 기존 경험 카드의 프로젝트 분류와 호환되도록 변환.
+  - **테스트 격리**: 통합 UI 테스트가 실제 Firestore에 접속하거나 데이터를 쓰지 않도록 Firestore 모듈을 테스트 전용 빈 저장소로 격리.
+- **검증**:
+  - 직종 옵션 21개/중복 방지, 기존 저장값 변환, 공고 6개 유형 분류, 키워드 검색, 추천 필터, 프로필 저장, 통합 UI 테스트 추가 및 통과.
+  - `npm run validate` 통과 (typecheck, ESLint, Vitest 10개 파일 72개 테스트, Vite production build). 기존 500kB 초과 번들 경고는 유지.
+- **변경 파일**:
+  - [NEW] [`src/data/occupationCategories.ts`](file:///c:/AL07TEAM04/src/data/occupationCategories.ts)
+  - [NEW] [`src/data/occupationCategories.test.ts`](file:///c:/AL07TEAM04/src/data/occupationCategories.test.ts)
+  - [NEW] [`src/services/profileService.test.ts`](file:///c:/AL07TEAM04/src/services/profileService.test.ts)
+  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/test/setup.ts`](file:///c:/AL07TEAM04/src/test/setup.ts)
+  - [MODIFY] 관련 테스트 파일
+- **전달 사항**:
+  - 새 프로필 저장값은 21개 내부 ID를 사용하며, 기존 Firestore 문서는 사용자가 프로필을 다시 저장할 때 새 값으로 갱신됨.
+
+### [2026-08-14] 고용24 API 무한 대기·중복 호출 제거 및 서버 프록시 최적화
+- **작업자**: Codex
+- **원인**:
+  - 브라우저가 고용24를 직접 호출한 뒤 외부 CORS 프록시 2개를 순차 시도하고, 이 전체 절차를 최대 3회 반복하면서 제한시간 없이 로딩이 길어짐.
+  - 홈에서 내 정보가 없어도 API를 요청했고, 추천 공고와 무관한 Firestore 요약·인터뷰 조회까지 모두 끝나야 로딩이 종료됨.
+- **작업 내용**:
+  - **단일 동일 출처 프록시**: Firebase Function/로컬 API에 `/api/worknet/jobs` 경로를 추가해 공식 고용24 API를 서버에서 한 번만 호출. 외부 공용 CORS 프록시 의존성을 제거.
+  - **시간 상한 보장**: 고용24 상위 요청 5초, 브라우저 요청 7초 제한을 적용해 네트워크 문제 시에도 로딩이 무한정 지속되지 않도록 수정.
+  - **요청 공유·캐시**: 같은 프로필 조건의 동시 요청은 하나의 Promise를 공유하고, 성공 공고는 브라우저와 CDN에서 5분간 재사용.
+  - **불필요한 요청 제거**: 내 정보 희망 직종·경력이 없으면 고용24을 호출하지 않고 입력 안내를 표시. 가상 공고 fallback 데이터도 제거해 실제 고용24 공고만 노출.
+  - **체감 로딩 개선**: 프로필·공고 조회와 제안/인터뷰 요약 조회를 분리해 공고 결과가 먼저 표시되게 함. 예외가 발생해도 `finally`에서 로딩 상태를 반드시 해제.
+  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 60개 테스트, Vite production build). 서버 프록시 문법 검사 및 동일 출처 단일 호출·오류 XML 파싱·파라미터 화이트리스트 테스트 추가. 기존 대형 번들 경고는 유지.
+- **변경 파일**:
+  - [NEW] [`functions/lib/worknetProxy.mjs`](file:///c:/AL07TEAM04/functions/lib/worknetProxy.mjs)
+  - [NEW] [`functions/lib/worknetProxy.test.mjs`](file:///c:/AL07TEAM04/functions/lib/worknetProxy.test.mjs)
+  - [MODIFY] [`functions/index.mjs`](file:///c:/AL07TEAM04/functions/index.mjs)
+  - [MODIFY] [`server/interviewTranscribeServer.mjs`](file:///c:/AL07TEAM04/server/interviewTranscribeServer.mjs)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/services/worknetService.test.ts`](file:///c:/AL07TEAM04/src/services/worknetService.test.ts)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+- **전달 사항**:
+  - Firebase 배포 시 Hosting과 `api` Function을 함께 배포해야 서버 프록시 경로가 활성화됨.
+
 ### [2026-08-14] 워크넷 상세 보기 화면 '해결 과제' 카드 누락 수정 및 텍스트 생략 제거 (`JobDatabasePage.tsx`, `FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

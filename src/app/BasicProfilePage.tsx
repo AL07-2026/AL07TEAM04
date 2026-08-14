@@ -9,7 +9,11 @@ import {
   TextAreaField,
   useViewportMode,
 } from '@/app/wireframe/Ui';
-import { categoryLabels, type ProjectCategory } from '@/data/jobPostings';
+import {
+  getOccupationCategoryLabel,
+  normalizeOccupationPreferences,
+  occupationCategoryOptions,
+} from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import {
@@ -64,6 +68,45 @@ function ProfileInfoRow({
   );
 }
 
+function OccupationPreferenceSelect({
+  label,
+  onChange,
+  optional = false,
+  selectedValues,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  optional?: boolean;
+  selectedValues: string[];
+  value?: string;
+}) {
+  const selectedByAnotherRank = new Set(
+    selectedValues.filter((selectedValue) => selectedValue && selectedValue !== value),
+  );
+
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-[13px] font-extrabold text-[#173F3A]">{label}</span>
+      <select
+        aria-label={label}
+        className="h-12 w-full truncate rounded-xl border border-[#E0D9C8] bg-white px-3 text-[14px] font-bold text-[#17212B] shadow-2xs outline-none focus:border-[#173F3A]"
+        onChange={(event) => onChange(event.target.value)}
+        value={value || ''}
+      >
+        <option disabled={!optional} value="">
+          {optional ? '선택 안 함' : '직종을 선택해 주세요'}
+        </option>
+        {occupationCategoryOptions.map((option) => (
+          <option disabled={selectedByAnotherRank.has(option.id)} key={option.id} value={option.id}>
+            {option.label} — {option.description}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function BasicProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
@@ -114,8 +157,18 @@ export function BasicProfilePage() {
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
+    const rawDesiredCategories = [
+      form.desiredCategory,
+      form.desiredCategory2,
+      form.desiredCategory3,
+    ].filter((category): category is string => Boolean(category));
+    if (new Set(rawDesiredCategories).size !== rawDesiredCategories.length) {
+      setMessage('희망 직종 1·2·3순위는 서로 다른 직종으로 선택해 주세요.');
+      return;
+    }
+    const desiredCategories = normalizeOccupationPreferences(rawDesiredCategories);
     if (
-      !form.desiredCategory?.trim() ||
+      desiredCategories.length === 0 ||
       !form.field.trim() ||
       !form.period.trim() ||
       !form.experience.trim() ||
@@ -127,11 +180,18 @@ export function BasicProfilePage() {
       );
       return;
     }
-    saveLocalSeniorProfile(form, user?.uid);
+    const normalizedForm: ProfileForm = {
+      ...form,
+      desiredCategory: desiredCategories[0],
+      desiredCategory2: desiredCategories[1],
+      desiredCategory3: desiredCategories[2],
+    };
+    setForm(normalizedForm);
+    saveLocalSeniorProfile(normalizedForm, user?.uid);
     window.dispatchEvent(new Event('eojob_senior_profile_updated'));
     if (user?.uid) {
       try {
-        await saveSeniorProfile(user.uid, form);
+        await saveSeniorProfile(user.uid, normalizedForm);
       } catch (err) {
         console.error('Failed to save senior profile to Firestore:', err);
         setIsEditing(false);
@@ -151,6 +211,11 @@ export function BasicProfilePage() {
   }
 
   const isMobile = mode === 'mobile';
+  const selectedOccupationValues = [
+    form.desiredCategory || '',
+    form.desiredCategory2 || '',
+    form.desiredCategory3 || '',
+  ];
 
   return (
     <MobilePage
@@ -252,27 +317,24 @@ export function BasicProfilePage() {
               <dl className="overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xs">
                 <ProfileInfoRow
                   label="1순위 희망직종"
-                  value={categoryLabels[form.desiredCategory as ProjectCategory] || '미입력'}
+                  value={getOccupationCategoryLabel(form.desiredCategory, '미입력')}
                 />
                 {form.desiredCategory2 ? (
                   <ProfileInfoRow
                     label="2순위 희망직종"
-                    value={
-                      categoryLabels[form.desiredCategory2 as ProjectCategory] ||
-                      form.desiredCategory2
-                    }
+                    value={getOccupationCategoryLabel(form.desiredCategory2, '미입력')}
                   />
                 ) : null}
                 {form.desiredCategory3 ? (
                   <ProfileInfoRow
                     label="3순위 희망직종"
-                    value={
-                      categoryLabels[form.desiredCategory3 as ProjectCategory] ||
-                      form.desiredCategory3
-                    }
+                    value={getOccupationCategoryLabel(form.desiredCategory3, '미입력')}
                   />
                 ) : null}
-                <ProfileInfoRow label="희망 근무지역" value={form.desiredLocation || '전국 (전체)'} />
+                <ProfileInfoRow
+                  label="희망 근무지역"
+                  value={form.desiredLocation || '전국 (전체)'}
+                />
                 <ProfileInfoRow label="경력 분야" value={form.field} />
                 <ProfileInfoRow label="경력 기간" value={form.period} />
                 <ProfileInfoRow
@@ -304,7 +366,7 @@ export function BasicProfilePage() {
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
                       <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
                       <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
-                        {categoryLabels[form.desiredCategory as ProjectCategory] || '미입력'}
+                        {getOccupationCategoryLabel(form.desiredCategory, '미입력')}
                       </span>
                     </div>
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
@@ -313,8 +375,7 @@ export function BasicProfilePage() {
                       </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
                         {form.desiredCategory2
-                          ? categoryLabels[form.desiredCategory2 as ProjectCategory] ||
-                            form.desiredCategory2
+                          ? getOccupationCategoryLabel(form.desiredCategory2)
                           : '선택 안 함'}
                       </span>
                     </div>
@@ -324,8 +385,7 @@ export function BasicProfilePage() {
                       </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
                         {form.desiredCategory3
-                          ? categoryLabels[form.desiredCategory3 as ProjectCategory] ||
-                            form.desiredCategory3
+                          ? getOccupationCategoryLabel(form.desiredCategory3)
                           : '선택 안 함'}
                       </span>
                     </div>
@@ -440,80 +500,27 @@ export function BasicProfilePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-extrabold text-[#173F3A]">
-                    1순위 희망 직종 (필수)
-                  </span>
-                  <select
-                    value={form.desiredCategory || ''}
-                    onChange={(e) => update('desiredCategory')(e.target.value)}
-                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
-                  >
-                    <option disabled value="">
-                      1순위 직종 선택
-                    </option>
-                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
-                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
-                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
-                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
-                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
-                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
-                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
-                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
-                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
-                    <option value="security">보안/리스크 (컴플라이언스)</option>
-                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-bold text-slate-600">
-                    2순위 희망 직종 (선택)
-                  </span>
-                  <select
-                    value={form.desiredCategory2 || ''}
-                    onChange={(e) => update('desiredCategory2')(e.target.value)}
-                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
-                  >
-                    <option value="">선택 안 함</option>
-                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
-                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
-                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
-                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
-                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
-                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
-                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
-                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
-                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
-                    <option value="security">보안/리스크 (컴플라이언스)</option>
-                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-bold text-slate-600">
-                    3순위 희망 직종 (선택)
-                  </span>
-                  <select
-                    value={form.desiredCategory3 || ''}
-                    onChange={(e) => update('desiredCategory3')(e.target.value)}
-                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
-                  >
-                    <option value="">선택 안 함</option>
-                    <option value="operations">운영 효율화 (서비스 운영/프로세스)</option>
-                    <option value="dev-engineering">개발/엔지니어링 (웹/앱/인프라)</option>
-                    <option value="design-brand">디자인/브랜딩 (UX/UI/브랜드)</option>
-                    <option value="marketing-sales">마케팅/영업 (B2B/그로스)</option>
-                    <option value="hr-strategy">인사/경영전략 (조직/보상/평가)</option>
-                    <option value="r-and-d-manufacturing">제조/R&D (스마트공장/품질)</option>
-                    <option value="legacy-modernization">레거시 개선 (MSA/전환)</option>
-                    <option value="ai-automation">AI 자동화 (LLM/RPA)</option>
-                    <option value="data-platform">데이터 플랫폼 (아키텍처/DB)</option>
-                    <option value="security">보안/리스크 (컴플라이언스)</option>
-                    <option value="growth">성장/그로스 (세일즈/수익화)</option>
-                  </select>
-                </div>
+              <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-3">
+                <OccupationPreferenceSelect
+                  label="1순위 희망 직종 (필수)"
+                  onChange={update('desiredCategory')}
+                  selectedValues={selectedOccupationValues}
+                  value={form.desiredCategory}
+                />
+                <OccupationPreferenceSelect
+                  label="2순위 희망 직종 (선택)"
+                  onChange={update('desiredCategory2')}
+                  optional
+                  selectedValues={selectedOccupationValues}
+                  value={form.desiredCategory2}
+                />
+                <OccupationPreferenceSelect
+                  label="3순위 희망 직종 (선택)"
+                  onChange={update('desiredCategory3')}
+                  optional
+                  selectedValues={selectedOccupationValues}
+                  value={form.desiredCategory3}
+                />
               </div>
 
               <div className="pt-2 border-t border-[#E0D9C8]">

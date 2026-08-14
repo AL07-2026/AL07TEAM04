@@ -1,5 +1,6 @@
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
+import { normalizeOccupationPreferences } from '@/data/occupationCategories';
 import {
   getScopedStorageKey,
   readVersionedStorage,
@@ -50,11 +51,16 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   const experience = stringValue(value.experience);
   const email = stringValue(value.email);
   if (!field || !experience || !email) return null;
+  const desiredCategories = normalizeOccupationPreferences([
+    stringValue(value.desiredCategory),
+    stringValue(value.desiredCategory2),
+    stringValue(value.desiredCategory3),
+  ]);
 
   return {
-    desiredCategory: stringValue(value.desiredCategory) || undefined,
-    desiredCategory2: stringValue(value.desiredCategory2) || undefined,
-    desiredCategory3: stringValue(value.desiredCategory3) || undefined,
+    desiredCategory: desiredCategories[0],
+    desiredCategory2: desiredCategories[1],
+    desiredCategory3: desiredCategories[2],
     desiredLocation: stringValue(value.desiredLocation) || undefined,
     field,
     period: stringValue(value.period),

@@ -1,12 +1,23 @@
-import { categoryLabels, type EmploymentType, type HiringStage, type JobPosting, type ProjectCategory } from '@/data/jobPostings';
+import {
+  type EmploymentType,
+  type HiringStage,
+  type JobPosting,
+  type ProjectCategory,
+} from '@/data/jobPostings';
+import {
+  detectOccupationCategoryFromJobText,
+  occupationCategoryLabels,
+  occupationToProjectCategory,
+} from '@/data/occupationCategories';
 
-const WORKNET_JOB_ENDPOINT =
-  'https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do';
+const WORKNET_PROXY_ENDPOINT = '/api/worknet/jobs';
+const WORKNET_REQUEST_TIMEOUT_MS = 7_000;
+const WORKNET_FEED_CACHE_TTL_MS = 5 * 60 * 1_000;
 
 export const WORKNET_JOB_API_KEY =
   (import.meta.env.VITE_WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
   (import.meta.env.WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
-  'a5dea206-9134-412d-a2f4-8f4998a6321f';
+  '';
 
 export type WorknetJobRaw = {
   addresses?: string;
@@ -45,6 +56,7 @@ export type WorknetProjectFeed = {
 };
 
 export type WorknetProjectSearchOptions = {
+  forceRefresh?: boolean;
   keywords?: string[];
   maxCareerMonths?: number;
 };
@@ -53,6 +65,14 @@ export type ParsedWorknetJobXml = {
   error?: string;
   items: WorknetJobRaw[];
 };
+
+type WorknetFeedCacheEntry = {
+  expiresAt: number;
+  feed: WorknetProjectFeed;
+};
+
+const worknetFeedCache = new Map<string, WorknetFeedCacheEntry>();
+const worknetRequestsInFlight = new Map<string, Promise<WorknetProjectFeed>>();
 
 function readText(node: Element, tagName: keyof WorknetJobRaw) {
   return node.querySelector(tagName)?.textContent?.trim() || undefined;
@@ -63,7 +83,7 @@ export function parseWorknetJobXml(xml: string): ParsedWorknetJobXml {
   const parserError = document.querySelector('parsererror')?.textContent?.trim();
   if (parserError) return { error: '고용24 응답 형식을 확인할 수 없습니다.', items: [] };
 
-  const apiError = document.querySelector('error')?.textContent?.trim();
+  const apiError = document.querySelector('error, message')?.textContent?.trim();
   if (apiError) return { error: apiError, items: [] };
 
   const itemNodes = Array.from(document.querySelectorAll('wanted, wantedList')).filter((node) =>
@@ -102,32 +122,12 @@ export function parseWorknetJobXml(xml: string): ParsedWorknetJobXml {
   };
 }
 
-export function detectCategoryFromJobText(title: string, details = ''): ProjectCategory {
-  const text = `${title} ${details}`.toLowerCase();
-
-  if (/개발|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|backend|frontend/.test(text)) {
-    return 'dev-engineering';
-  }
-  if (/디자인|디자이너|브랜드|ux|ui|그래픽|콘텐츠|일러스트/.test(text)) {
-    return 'design-brand';
-  }
-  if (/마케팅|영업|홍보|광고|고객|이커머스|md|유통|무역/.test(text)) {
-    return 'marketing-sales';
-  }
-  if (/인사|채용|경영|회계|재무|조직|총무|기획|법무|교육|컨설팅/.test(text)) {
-    return 'hr-strategy';
-  }
-  if (/제조|생산|품질|r&d|연구|공정|설계|바이오|의료|건설|토목/.test(text)) {
-    return 'r-and-d-manufacturing';
-  }
-  if (/데이터|플랫폼|db|분석|bi/.test(text)) return 'data-platform';
-  if (/ai|인공지능|자동화|로봇|rpa/.test(text)) return 'ai-automation';
-  if (/보안|리스크|안전|컴플라이언스|감사/.test(text)) return 'security';
-  if (/레거시|시스템|erp|고도화|개편|마이그레이션/.test(text)) {
-    return 'legacy-modernization';
-  }
-  if (/운영|물류|scm|매장|배송|시설|현장/.test(text)) return 'operations';
-  return 'growth';
+export function detectCategoryFromJobText(
+  title: string,
+  details = '',
+  jobsCode?: string,
+): ProjectCategory {
+  return occupationToProjectCategory[detectOccupationCategoryFromJobText(title, details, jobsCode)];
 }
 
 function normalizeWorknetDate(value?: string) {
@@ -177,7 +177,11 @@ function isExpiredPosting(raw: WorknetJobRaw, now: Date) {
   return startOfDay(new Date(`${closeDate}T00:00:00`)) < startOfDay(now);
 }
 
-function generateAiAnalyzedProblemStatement(title: string, category: ProjectCategory, industry?: string): string {
+function generateAiAnalyzedProblemStatement(
+  title: string,
+  category: ProjectCategory,
+  industry?: string,
+): string {
   const indStr = industry ? `[${industry}] ` : '';
   switch (category) {
     case 'dev-engineering':
@@ -235,10 +239,8 @@ export function transformWorknetToSeniorProject(
 ): JobPosting {
   const title = raw.title?.trim() || '채용 제목 미제공';
   const companyName = raw.company?.trim() || '기업명 미제공';
-  const category = detectCategoryFromJobText(
-    title,
-    [raw.indTpNm, raw.jobsCd].filter(Boolean).join(' '),
-  );
+  const occupationCategory = detectOccupationCategoryFromJobText(title, raw.indTpNm, raw.jobsCd);
+  const category = occupationToProjectCategory[occupationCategory];
   const deadline = normalizeWorknetDate(raw.closeDt);
   const postedAt = normalizeWorknetDate(raw.regDt);
   const career = raw.career?.trim() || '경력 정보 미제공';
@@ -256,6 +258,7 @@ export function transformWorknetToSeniorProject(
     companySize: '시니어 맞춤 채용 공고',
     title,
     category,
+    occupationCategory,
     seniority: 'senior',
     employmentType: mapEmploymentType(raw.empTpCd),
     hiringStage: deriveWorknetHiringStage(raw.closeDt, now),
@@ -271,17 +274,22 @@ export function transformWorknetToSeniorProject(
       '시니어 전문 경험 기반의 핵심 맞춤 솔루션 수립',
       '실무진 역량 강화를 위한 멘토링 및 프로세스 가이드 전달',
     ],
-    qualifications: qualifications.length > 0 ? qualifications : [career, '해당 직무 시니어 경력자'],
+    qualifications:
+      qualifications.length > 0 ? qualifications : [career, '해당 직무 시니어 경력자'],
     benefits: ['근무시간 유연 협의', '경영진 직속 자문', '성과에 따른 자문료 지급'],
     problemStatement,
     projectGoal,
     successMetrics: [projectGoal, '현장 실무진 만족도 90% 이상'],
-    requiredSkills: [categoryLabels[category], '시니어 리더십', '프로젝트 진단'],
+    requiredSkills: [
+      occupationCategoryLabels[occupationCategory],
+      '시니어 리더십',
+      '프로젝트 진단',
+    ],
     preferredSkills: ['유관 산업 10년+ 시니어 경력', '경영 자문 경험'],
     matchingSignals: [raw.career, raw.region, raw.indTpNm].filter((value): value is string =>
       Boolean(value),
     ),
-    recommendedTalentType: `${categoryLabels[category]} 분야 10년 이상 전문성을 보유한 시니어 리더`,
+    recommendedTalentType: `${occupationCategoryLabels[occupationCategory]} 분야 10년 이상 전문성을 보유한 시니어 리더`,
     matchingScoreCriteria: ['직무 연관성', '경력 정보', '근무 지역'],
     interviewFocus: [
       `${title} 관련 과거 성공 경험 사례`,
@@ -320,200 +328,49 @@ export function createWorknetJobSearchParams(
   return params;
 }
 
-const fallbackWorknetJobs: WorknetJobRaw[] = [
-  {
-    wantedAuthNo: 'WN-DESIGN-01',
-    company: '(주) 디자인브릿지스튜디오',
-    title: '브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터',
-    indTpNm: '디자인/브랜딩',
-    region: '서울 마포구',
-    career: '경력 12년 이상',
-    sal: '월 750만원 ~ 1,100만원',
-    regDt: '2026-08-10',
-    closeDt: '2026-09-15',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-MARKETING-02',
-    company: '(주) 그로스인사이트',
-    title: 'B2B 그로스 마케팅 & 글로벌 영업 전략 총괄',
-    indTpNm: '마케팅/영업',
-    region: '서울 강남구',
-    career: '경력 15년 이상',
-    sal: '월 800만원 ~ 1,200만원',
-    regDt: '2026-08-08',
-    closeDt: '2026-09-20',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-HR-03',
-    company: '(주) 스마트HR컨설팅',
-    title: '조직 문화 혁신 및 성과 평가/보상 체계 구축 리드',
-    indTpNm: '인사/경영전략',
-    region: '서울 영등포구',
-    career: '경력 10년 이상',
-    sal: '월 700만원 ~ 1,000만원',
-    regDt: '2026-08-11',
-    closeDt: '2026-09-18',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-MFG-04',
-    company: '(주) 대성정밀공업',
-    title: '스마트 팩토리 품질 공정 자동화 및 ISO 인증 총괄',
-    indTpNm: '제조/R&D',
-    region: '경남 창원시',
-    career: '경력 15년 이상',
-    sal: '월 750만원 ~ 1,050만원',
-    regDt: '2026-08-05',
-    closeDt: '2026-09-10',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-IT-05',
-    company: '(주) 넥스트디지털솔루션',
-    title: '노후 레거시 ERP 이관 및 클라우드 보안 체계 총괄',
-    indTpNm: '개발/엔지니어링',
-    region: '서울 성동구',
-    career: '경력 12년 이상',
-    sal: '월 800만원 ~ 1,100만원',
-    regDt: '2026-08-12',
-    closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-DEV-06',
-    company: '(주) 테크웨이브인터내셔널',
-    title: '대용량 데이터 트래픽 백엔드 아키텍처 개편 총괄',
-    indTpNm: '개발/엔지니어링',
-    region: '서울 서초구',
-    career: '경력 15년 이상',
-    sal: '월 900만원 ~ 1,300만원',
-    regDt: '2026-08-09',
-    closeDt: '2026-09-25',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-OPS-07',
-    company: '(주) 물류이노베이션',
-    title: '전국 물류 망 SCM 공급망 운영 프로세스 효율화 리드',
-    indTpNm: '운영 효율화',
-    region: '경기 용인시',
-    career: '경력 10년 이상',
-    sal: '월 680만원 ~ 950만원',
-    regDt: '2026-08-07',
-    closeDt: '2026-09-12',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-AI-08',
-    company: '(주) 인텔리전스AI랩',
-    title: '사내 업무 자동화(RPA) 및 AI 인프라 구축 총괄',
-    indTpNm: 'AI 자동화',
-    region: '서울 판교/분당',
-    career: '경력 12년 이상',
-    sal: '월 850만원 ~ 1,250만원',
-    regDt: '2026-08-13',
-    closeDt: '2026-09-28',
-    infoSvc: '이어잡 공식 검증',
-  },
-  {
-    wantedAuthNo: 'WN-PART-09',
-    company: '(주) 한국경영파트너스',
-    title: '[시간제/파트타임] 주 3일 시간제 경영자문 및 시니어 마케팅 총괄 고문',
-    indTpNm: '마케팅/영업',
-    region: '서울 서초구',
-    career: '경력 10년 이상 (주 20시간 시간제)',
-    sal: '월 400만원 (주 20시간 시간제)',
-    regDt: '2026-08-14',
-    closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
-    empTpCd: '11',
-  },
-  {
-    wantedAuthNo: 'WN-PART-10',
-    company: '(주) 테크노품질연구소',
-    title: '[시간제/파트타임] 파트타임 주 15시간 스마트팩토리 품질인증 자문위원',
-    indTpNm: '제조/R&D',
-    region: '경기 수원시',
-    career: '경력 15년 이상 (시간제 자문)',
-    sal: '월 350만원 (시간제 근로)',
-    regDt: '2026-08-13',
-    closeDt: '2026-09-25',
-    infoSvc: '이어잡 공식 검증',
-    empTpCd: '21',
-  },
-];
+export async function fetchWorknetXml(params: URLSearchParams): Promise<string> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), WORKNET_REQUEST_TIMEOUT_MS);
 
-async function fetchWorknetXmlWithCorsFallback(targetUrl: string): Promise<string> {
-  // 1. Direct fetch
   try {
-    const res = await fetch(targetUrl);
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
-    }
-  } catch (err) {
-    console.warn('Direct Worknet fetch blocked or failed (CORS/Network), attempting CORS proxy...', err);
-  }
+    const response = await fetch(`${WORKNET_PROXY_ENDPOINT}?${params.toString()}`, {
+      headers: { Accept: 'application/xml,text/xml' },
+      signal: controller.signal,
+    });
+    const body = await response.text();
 
-  // 2. AllOrigins CORS Proxy
-  try {
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
+    if (!response.ok) {
+      throw new Error(`Worknet proxy returned HTTP ${response.status}`);
     }
-  } catch (err) {
-    console.warn('AllOrigins CORS proxy fetch failed:', err);
-  }
-
-  // 3. CorsProxy.io
-  try {
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
+    if (!body.includes('<wantedRoot') && !body.includes('<error') && !body.includes('<message')) {
+      throw new Error('Worknet proxy returned an unsupported response');
     }
-  } catch (err) {
-    console.warn('CorsProxy.io fetch failed:', err);
+    return body;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  throw new Error('All Worknet fetch endpoints (direct and proxies) failed');
 }
 
-export async function fetchWorknetSeniorProjectFeed(
-  options: WorknetProjectSearchOptions = {},
-): Promise<WorknetProjectFeed> {
-  const now = new Date();
-
-  if (!WORKNET_JOB_API_KEY || import.meta.env.MODE === 'test') {
-    const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
-      transformWorknetToSeniorProject(item, index, now),
-    );
-    return {
-      projects: fallbackProjects,
-      status: 'success',
-      isFallback: true,
-    };
+function getWorknetFeedErrorMessage(error: unknown) {
+  if (error instanceof Error && error.name === 'AbortError') {
+    return '고용24 응답이 늦어 요청을 종료했습니다. 잠시 후 다시 시도해 주세요.';
   }
+  return '고용24에서 채용 공고를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
 
-  const maxRetries = 2;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
-      const targetUrl = `${WORKNET_JOB_ENDPOINT}?${params.toString()}`;
-      const xmlText = await fetchWorknetXmlWithCorsFallback(targetUrl);
-
+function loadWorknetSeniorProjectFeed(
+  params: URLSearchParams,
+  now = new Date(),
+): Promise<WorknetProjectFeed> {
+  return fetchWorknetXml(params)
+    .then((xmlText) => {
       const parsed = parseWorknetJobXml(xmlText);
-      if (parsed.error || parsed.items.length === 0) {
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          continue;
-        }
-        break;
+      if (parsed.error) {
+        return {
+          projects: [],
+          status: 'configuration-error' as const,
+          message: parsed.error,
+        };
       }
 
       const projects = parsed.items
@@ -521,28 +378,67 @@ export async function fetchWorknetSeniorProjectFeed(
         .filter((item) => !isExpiredPosting(item, now))
         .map((item, index) => transformWorknetToSeniorProject(item, index, now));
 
-      if (projects.length > 0) {
-        return {
-          projects,
-          status: 'success',
-          isFallback: false,
-        };
-      }
-    } catch (error) {
-      console.warn(`Worknet API fetch attempt ${attempt + 1} failed:`, error);
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-    }
+      return {
+        projects,
+        status: 'success' as const,
+        isFallback: false,
+        message:
+          projects.length === 0 ? '현재 조건에 맞는 고용24 채용 공고가 없습니다.' : undefined,
+      };
+    })
+    .catch((error: unknown) => {
+      console.warn('Worknet API request failed:', error);
+      return {
+        projects: [],
+        status: 'unavailable' as const,
+        message: getWorknetFeedErrorMessage(error),
+      };
+    });
+}
+
+export async function fetchWorknetSeniorProjectFeed(
+  options: WorknetProjectSearchOptions = {},
+): Promise<WorknetProjectFeed> {
+  if (import.meta.env.MODE === 'test') {
+    return {
+      projects: [],
+      status: 'unavailable',
+      message: '테스트 환경에서는 고용24 실시간 공고를 조회하지 않습니다.',
+    };
   }
 
-  // Silent fallback to backed-up Worknet jobs for smooth UX
-  const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
-    transformWorknetToSeniorProject(item, index, now),
-  );
-  return {
-    projects: fallbackProjects,
-    status: 'success',
-    isFallback: true,
-  };
+  if (!WORKNET_JOB_API_KEY) {
+    return {
+      projects: [],
+      status: 'configuration-error',
+      message: '고용24 채용정보 API 인증키가 설정되지 않았습니다.',
+    };
+  }
+
+  const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
+  const cacheKey = params.toString();
+  const cached = worknetFeedCache.get(cacheKey);
+  if (!options.forceRefresh && cached && cached.expiresAt > Date.now()) return cached.feed;
+
+  const activeRequest = worknetRequestsInFlight.get(cacheKey);
+  if (!options.forceRefresh && activeRequest) return activeRequest;
+
+  const request = loadWorknetSeniorProjectFeed(params).then((feed) => {
+    if (feed.status === 'success' && feed.projects.length > 0) {
+      worknetFeedCache.set(cacheKey, {
+        expiresAt: Date.now() + WORKNET_FEED_CACHE_TTL_MS,
+        feed,
+      });
+    }
+    return feed;
+  });
+
+  worknetRequestsInFlight.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    if (worknetRequestsInFlight.get(cacheKey) === request) {
+      worknetRequestsInFlight.delete(cacheKey);
+    }
+  }
 }

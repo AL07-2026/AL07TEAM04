@@ -9,6 +9,7 @@ import multer from 'multer';
 import { generateGeminiConnectionTest, getGeminiLogDetails } from '../functions/lib/gemini.mjs';
 import { generateExperienceCard } from '../functions/lib/experienceCard.mjs';
 import { generateNextInterviewQuestion } from '../functions/lib/interviewQuestion.mjs';
+import { proxyWorknetJobs } from '../functions/lib/worknetProxy.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDirectory = path.resolve(__dirname, '..');
@@ -57,6 +58,14 @@ function logError(label, error) {
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
+
+app.get('/api/worknet/jobs', (req, res) =>
+  proxyWorknetJobs(
+    req,
+    res,
+    process.env.WORKNET_JOB_API_KEY ?? process.env.VITE_WORKNET_JOB_API_KEY,
+  ),
+);
 
 app.get('/api/ai/test', async (_req, res) => {
   try {
@@ -133,7 +142,11 @@ app.post('/api/interview/transcribe', upload.single('audio'), async (req, res) =
     return sendClientError(res, 400, '음성 파일을 읽지 못했어요. 다시 말씀해 주세요.');
   }
 
-  if (req.file.mimetype && !req.file.mimetype.startsWith('audio/') && req.file.mimetype !== 'application/octet-stream') {
+  if (
+    req.file.mimetype &&
+    !req.file.mimetype.startsWith('audio/') &&
+    req.file.mimetype !== 'application/octet-stream'
+  ) {
     return sendClientError(res, 400, '올바른 음성 파일이 아닙니다. 다시 녹음해 주세요.');
   }
 
@@ -159,7 +172,11 @@ app.post('/api/interview/transcribe', upload.single('audio'), async (req, res) =
     return res.json({ text });
   } catch (error) {
     logError('Unexpected transcription error:', error);
-    return sendClientError(res, 500, '음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.');
+    return sendClientError(
+      res,
+      500,
+      '음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.',
+    );
   }
 });
 
