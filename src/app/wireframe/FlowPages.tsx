@@ -366,7 +366,7 @@ export function SeniorHomePage() {
       const topRecommendations = ranked.slice(0, 4);
       setRecommendationFeedMessage(
         worknetFeed.status === 'success' && topRecommendations.length === 0
-          ? '내 정보의 희망 직종과 일치하는 고용24 공고를 찾지 못했습니다.'
+          ? '내 정보의 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.'
           : (worknetFeed.message ?? ''),
       );
       setRecommendedJobs(
@@ -530,7 +530,7 @@ export function SeniorHomePage() {
               🎯 회원님 조건 맞춤 추천 프로젝트
             </h3>
             <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-0.5 text-[11px] font-extrabold text-[#F06B4F]">
-              내 정보 기반 · 고용24 공식 공고
+              내 정보 기반 · 맞춤 검증 공고
             </span>
           </div>
           <button
@@ -570,7 +570,7 @@ export function SeniorHomePage() {
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
               <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
-                {recommendationFeedMessage || '현재 조회된 고용24 채용 공고가 없습니다.'}
+                {recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
               </p>
               <button
                 className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#173F3A] px-4 text-[13px] font-extrabold text-[#173F3A]"

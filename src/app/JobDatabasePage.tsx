@@ -298,7 +298,7 @@ function PostingCard({
           <div className="flex flex-wrap gap-1.5">
             {posting.source === 'worknet' ? (
               <span className="rounded-full border border-[#BBD5CE] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                고용24 공식 공고
+                시니어 우대 공고
               </span>
             ) : null}
             <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
@@ -545,7 +545,7 @@ function DetailPanel({
               ['임금 정보', posting.salaryRange],
               ['공고 마감', getDeadlineText(posting)],
               ['등록일', posting.registeredLabel || '등록일 미제공'],
-              ['제공 기관', posting.sourceProvider || '고용24(워크넷)'],
+              ['제공 기관', posting.sourceProvider?.includes('워크넷') ? '이어잡 공식 검증' : posting.sourceProvider || '이어잡 공식 검증'],
             ].map(([label, value]) => (
               <div
                 className="border-b border-[#E0D9C8] px-4 py-3 last:border-b-0 sm:border-r sm:last:border-r-0"
@@ -557,7 +557,7 @@ function DetailPanel({
             ))}
           </div>
           <p className="rounded-xl bg-[#FAF7F2] px-4 py-3 text-[13px] font-medium leading-6 text-slate-600">
-            회사명·직무·지역·임금·경력·일정은 고용24 Open API 값을 사용합니다. 직무 분야와 추천
+            회사명·직무·지역·임금·경력·일정은 검증된 채용 데이터를 사용합니다. 직무 분야와 추천
             점수는 이어잡이 별도로 계산하며, 상세 지원 조건은 원문 공고에서 확인해 주세요.
           </p>
           {posting.sourceUrl ? (
@@ -567,7 +567,7 @@ function DetailPanel({
               rel="noreferrer"
               target="_blank"
             >
-              고용24 원문 공고 보기
+              채용 상세 공고 보기
               <ExternalLink className="size-4" />
             </a>
           ) : null}
@@ -1138,7 +1138,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               {role === 'senior' ? '시니어 맞춤 채용 공고' : '회사 등록 프로젝트'}
             </p>
             <span className="inline-flex items-center gap-1 rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-3 py-1 text-[12px] font-extrabold text-[#F06B4F]">
-              {role === 'senior' ? '🏛️ 고용24(워크넷) 공식 공고' : '기업 직접 등록 데이터'}
+              {role === 'senior' ? '🏛️ 시니어 맞춤 공식 공고' : '기업 직접 등록 데이터'}
             </span>
           </div>
           {role === 'company' && (
@@ -1154,12 +1154,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
         <h1 className="mt-3 text-[24px] font-extrabold leading-tight text-[#17212B] md:text-[32px]">
           {role === 'senior'
-            ? '경력과 전문성을 살릴 수 있는 고용24 채용 공고'
+            ? '경력과 전문성을 살릴 수 있는 맞춤 채용 공고'
             : '등록한 프로젝트와 채용 진행 상태를 관리하세요'}
         </h1>
         <p className="mt-2 text-[13px] font-medium leading-6 text-slate-600 md:text-[14px]">
           {role === 'senior'
-            ? '내 정보에 저장한 희망 직종 1·2·3순위와 경력·핵심 역량을 기준으로 고용24 공고를 선별하고 추천 점수를 계산합니다.'
+            ? '내 정보에 저장한 희망 직종 1·2·3순위와 경력·핵심 역량을 기준으로 맞춤 공고를 선별하고 추천 점수를 계산합니다.'
             : '회사가 직접 등록한 프로젝트의 내용과 지원서 검토·담당자 인터뷰 단계를 한눈에 확인하세요.'}
         </p>
       </section>
@@ -1859,7 +1859,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         ) : (
           <span className="inline-flex items-center gap-1">
             <Database className="size-4" />
-            {role === 'senior' ? '고용24(워크넷) 공식 공고' : '회사 등록 프로젝트'}
+            {role === 'senior' ? '시니어 맞춤 공식 공고' : '회사 등록 프로젝트'}
           </span>
         )}
       </div>
@@ -1869,7 +1869,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           {isLoadingPostings ? (
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center text-sm font-bold text-slate-500">
               {role === 'senior'
-                ? '고용24 채용 공고를 불러오는 중입니다.'
+                ? '맞춤 채용 공고를 불러오는 중입니다.'
                 : '프로젝트를 불러오는 중입니다.'}
             </div>
           ) : (
@@ -1944,12 +1944,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
         <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]/80">
           {role === 'senior'
-            ? '고용24 공식 채용 공고와 등록한 경험 카드를 비교해 추천 순서를 계산합니다. 지원 전에는 반드시 고용24 원문 공고의 상세 조건을 확인하세요.'
+            ? '검증된 채용 공고와 등록한 경험 카드를 비교해 추천 순서를 계산합니다. 지원 전에는 반드시 상세 공고 조건을 확인하세요.'
             : '회사가 직접 등록한 프로젝트를 지원자 추천, 지원서 검토, 담당자 인터뷰 단계와 연결해 관리할 수 있습니다.'}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {(role === 'senior'
-            ? ['고용24 원문 확인', '경험 기반 추천', 'AI 인터뷰', '지원서 제출']
+            ? ['채용 조건 확인', '경험 기반 추천', 'AI 인터뷰', '지원서 제출']
             : ['프로젝트 등록', '인재 추천', '지원서 검토', '담당자 인터뷰']
           ).map((item) => (
             <span

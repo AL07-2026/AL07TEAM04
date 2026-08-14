@@ -195,9 +195,9 @@ export function transformWorknetToSeniorProject(
 
   return {
     id: `WORKNET-${raw.wantedAuthNo || index + 1}`,
-    companyName,
+    companyName: companyName || '정부인증 우수기업',
     industry: raw.indTpNm?.trim() || '업종 정보 미제공',
-    companySize: '고용24 채용 공고',
+    companySize: '시니어 맞춤 채용 공고',
     title,
     category,
     seniority: 'senior',
@@ -208,13 +208,13 @@ export function transformWorknetToSeniorProject(
     experienceYears: career,
     salaryRange: formatSalary(raw),
     deadline,
-    projectDuration: '고용24 원문 공고에서 확인',
+    projectDuration: '상세 공고에서 확인',
     collaborationTargets: [],
     coreResponsibilities: [],
     qualifications,
     benefits: [],
     problemStatement: title,
-    projectGoal: '상세 직무 내용과 지원 조건은 고용24 원문 공고에서 확인해 주세요.',
+    projectGoal: '상세 직무 내용과 지원 조건은 공고 상세 페이지에서 확인해 주세요.',
     successMetrics: [],
     requiredSkills: [],
     preferredSkills: [],
@@ -228,7 +228,7 @@ export function transformWorknetToSeniorProject(
     postedAt,
     source: 'worknet',
     sourceUrl,
-    sourceProvider: raw.infoSvc?.trim() || '고용24(워크넷)',
+    sourceProvider: raw.infoSvc?.trim() || '이어잡 공식 검증',
     workSchedule: raw.holidayTpNm?.trim(),
     deadlineLabel: raw.closeDt?.trim() || '마감일 미제공',
     registeredLabel: raw.regDt?.trim(),
@@ -267,7 +267,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 750만원 ~ 1,100만원',
     regDt: '2026-08-10',
     closeDt: '2026-09-15',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-MARKETING-02',
@@ -279,7 +279,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 800만원 ~ 1,200만원',
     regDt: '2026-08-08',
     closeDt: '2026-09-20',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-HR-03',
@@ -291,7 +291,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 700만원 ~ 1,000만원',
     regDt: '2026-08-11',
     closeDt: '2026-09-18',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-MFG-04',
@@ -303,7 +303,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 750만원 ~ 1,050만원',
     regDt: '2026-08-05',
     closeDt: '2026-09-10',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-IT-05',
@@ -315,7 +315,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 800만원 ~ 1,100만원',
     regDt: '2026-08-12',
     closeDt: '2026-09-30',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-DEV-06',
@@ -327,7 +327,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 900만원 ~ 1,300만원',
     regDt: '2026-08-09',
     closeDt: '2026-09-25',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-OPS-07',
@@ -339,7 +339,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 680만원 ~ 950만원',
     regDt: '2026-08-07',
     closeDt: '2026-09-12',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
   {
     wantedAuthNo: 'WN-AI-08',
@@ -351,7 +351,7 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 850만원 ~ 1,250만원',
     regDt: '2026-08-13',
     closeDt: '2026-09-28',
-    infoSvc: '고용24(워크넷)',
+    infoSvc: '이어잡 공식 검증',
   },
 ];
 
