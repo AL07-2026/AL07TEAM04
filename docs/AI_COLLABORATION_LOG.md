@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 로그인 후 홈 화면 착륙 및 맞춤 40+ 시니어 추천 프로젝트 실시간 노출 구조 완성
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **로그인 후 홈 화면 랜딩 보장 (`LoginPage.tsx`, `SeniorHomePage`)**: 사용자가 로그인 성공 시 홈 화면(`/senior`, `/company`)으로 즉시 랜딩되도록 연동.
+  - **홈 화면 맞춤 추천 리스트 구성 (`SeniorHomePage`)**: 인재 홈 화면 진입 시 고용노동부 워크넷 40+ 실시간 변환 프로젝트 중 사용자의 등록 조건과 적합도(95점+)가 가장 높은 추천 공고 카드가 메인에 선명하게 렌더링되도록 구현.
+  - **프로젝트 탐색 DB 연결 (`JobDatabasePage.tsx`)**: '프로젝트' 메뉴 진입 시 검색/필터링(개발자, 디자인, 마케팅, 인사, 제조 등 전 업종)을 자유롭게 탐색할 수 있으며, 최초 접속 시 시니어 적합도 정렬(추천 리스트 우선)이 기본 활성화되도록 완성.
+  - **Firebase Hosting 배포 완료**: URL `https://al07team04-bdfcd.web.app` 호스팅 라이브 웹사이트에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 상단 네비게이션 '프로젝트' 탭 실시간 워크넷 연동 DB 연결 & 라이브 재배포
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

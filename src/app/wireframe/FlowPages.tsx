@@ -17,9 +17,13 @@ import { useNavigate } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
+import type { JobPosting } from '@/data/jobPostings';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
+import { fetchProjects } from '@/services/projectService';
+import { seedProjectsIfEmpty } from '@/services/seedService';
+import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
 import {
   ActionButton,
@@ -41,8 +45,6 @@ const projects: Project[] = [
   { company: '마켓온', title: 'B2B 영업 전략 점검', meta: '주 1회 · 서울 · 2개월' },
   { company: '에듀브릿지', title: '파트너 운영 프로세스 개선', meta: '주 2회 · 혼합 · 3개월' },
 ];
-
-const featuredProject = projects[0]!;
 
 const seniorProposals: Project[] = [
   {
@@ -168,6 +170,18 @@ export function SeniorHomePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      await seedProjectsIfEmpty();
+      const loaded = await fetchProjects();
+      const worknetProjects = await fetchWorknetSeniorProjects();
+      const combined = [...worknetProjects, ...loaded];
+      const sorted = combined.sort((a, b) => b.seniorFitScore - a.seniorFitScore);
+      setRecommendedJobs(sorted.slice(0, 4));
+    })();
+  }, []);
 
   return (
     <MobilePage
@@ -221,24 +235,71 @@ export function SeniorHomePage() {
       </button>
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
-        <SummaryCard label="새 추천 프로젝트" role="senior" value="12개" />
+        <SummaryCard label="새 추천 프로젝트" role="senior" value={`${recommendedJobs.length > 0 ? recommendedJobs.length : 12}개`} />
         <SummaryCard label="진행 중인 제안" role="senior" value="2건" />
         {!isMobile && <SummaryCard label="경험 카드 조회수" role="senior" value="38회" />}
         {!isMobile && <SummaryCard label="매칭 성공률" role="senior" value="98%" />}
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">추천 프로젝트</h3>
-        <div className={cn('grid gap-3', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4')}>
-          <ProjectCard onClick={() => void navigate('/senior/projects/1')} project={featuredProject} />
-          {projects.slice(1).map((proj) => (
-            <ProjectCard key={proj.title} onClick={() => void navigate('/senior/projects/1')} project={proj} />
-          ))}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">🎯 회원님 조건 맞춤 추천 프로젝트</h3>
+            <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-0.5 text-[11px] font-extrabold text-[#F06B4F]">
+              정부 워크넷 40+ 실시간
+            </span>
+          </div>
+          <button
+            onClick={() => void navigate('/senior/projects')}
+            className="text-xs font-extrabold text-[#173F3A] hover:underline"
+            type="button"
+          >
+            전체 보기 →
+          </button>
+        </div>
+
+        <div className={cn('grid gap-3', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4')}>
+          {recommendedJobs.length > 0
+            ? recommendedJobs.map((job) => (
+                <div
+                  key={job.id}
+                  onClick={() => void navigate('/senior/projects')}
+                  className="cursor-pointer flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs transition hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="rounded-md bg-[#FAF7F2] border border-[#E0D9C8]/60 px-2 py-0.5 text-[11px] font-bold text-[#173F3A]">
+                        {job.companyName}
+                      </span>
+                      <h4 className="mt-1.5 text-sm md:text-base font-extrabold text-[#17212B] line-clamp-2">
+                        {job.title}
+                      </h4>
+                    </div>
+                    <span className="flex shrink-0 flex-col items-center justify-center rounded-xl bg-[#173F3A] px-2.5 py-1 text-xs font-black text-white">
+                      <span>적합도</span>
+                      <span className="text-sm text-[#F06B4F]">{job.seniorFitScore}점</span>
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-col gap-1.5 rounded-xl bg-[#FAF7F2] p-2.5 text-xs">
+                    <p className="font-extrabold text-[#173F3A]">📌 해결 과제</p>
+                    <p className="font-medium text-slate-700 line-clamp-2">{job.problemStatement}</p>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-500">
+                    <span>{job.location} · {job.workType === 'hybrid' ? '하이브리드' : job.workType === 'remote' ? '원격' : '오피스'}</span>
+                    <span className="text-[#F06B4F] font-extrabold">{job.salaryRange}</span>
+                  </div>
+                </div>
+              ))
+            : projects.slice(0, 2).map((proj) => (
+                <ProjectCard key={proj.title} onClick={() => void navigate('/senior/projects')} project={proj} />
+              ))}
         </div>
       </div>
 
       <ActionButton onClick={() => void navigate('/senior/projects')}>
-        프로젝트 전체 둘러보기 →
+        모든 업종 검색 & 프로젝트 데이터베이스 탐색하기 →
       </ActionButton>
     </MobilePage>
   );
