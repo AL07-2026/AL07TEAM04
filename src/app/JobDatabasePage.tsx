@@ -1,7 +1,9 @@
 import {
   BriefcaseBusiness,
   CalendarClock,
+  CheckCircle2,
   Database,
+  FileText,
   Filter,
   MapPin,
   Plus,
@@ -9,9 +11,11 @@ import {
   SlidersHorizontal,
   Sparkles,
   Target,
+  Upload,
   X,
 } from 'lucide-react';
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import {
   categoryLabels,
@@ -22,8 +26,10 @@ import {
   workTypeLabels,
 } from '@/data/jobPostings';
 import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import { createProject, fetchProjects } from '@/services/projectService';
+import { createProposalFromPosting } from '@/services/proposalService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
 import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
@@ -513,6 +519,8 @@ function DetailPanel({
 }
 
 export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [postings, setPostings] = useState<JobPosting[]>([]);
@@ -525,6 +533,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+
+  // Interactive Application Modal State
+  const [applyingPosting, setApplyingPosting] = useState<JobPosting | null>(null);
+  const [resumeFileName, setResumeFileName] = useState('2026_김시니어_경험이력서_포트폴리오.pdf');
+  const [applicantNote, setApplicantNote] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -539,12 +553,36 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   }, []);
 
   function handleApply(posting: JobPosting) {
-    const text =
-      role === 'senior'
-        ? `✓ [${posting.title}] 지원 신청이 완료되었습니다.`
-        : `✓ [${posting.companyName}] 시니어 인재 제안이 전송되었습니다.`;
-    setActionNotice(text);
-    setTimeout(() => setActionNotice(''), 4000);
+    if (role === 'senior') {
+      setApplyingPosting(posting);
+      setApplicantNote('');
+    } else {
+      const text = `✓ [${posting.companyName}] 시니어 인재에게 프로젝트 제안이 성공적으로 전달되었습니다.`;
+      setActionNotice(text);
+      setTimeout(() => setActionNotice(''), 4000);
+    }
+  }
+
+  async function handleConfirmSubmitApplication() {
+    if (!applyingPosting) return;
+    setIsApplying(true);
+    try {
+      await createProposalFromPosting(
+        applyingPosting,
+        resumeFileName,
+        'AI 인터뷰 종합 검증 96점, 10년+ 실무 노하우 기반 과제 해결 능력 보유',
+        applicantNote,
+        user?.uid,
+      );
+      const text = `✓ [${applyingPosting.companyName}] 지원서가 성공적으로 제출되었습니다! '내 제안'에서 확인하세요.`;
+      setActionNotice(text);
+      setApplyingPosting(null);
+      setTimeout(() => setActionNotice(''), 6000);
+    } catch (err) {
+      console.error('Failed to submit proposal:', err);
+    } finally {
+      setIsApplying(false);
+    }
   }
 
   async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
@@ -796,6 +834,124 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
       )}
 
+      {/* Interactive Application Modal with Resume/Portfolio & AI Interview Verification */}
+      {applyingPosting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-xl rounded-2xl border border-[#E0D9C8] bg-white p-5 md:p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3.5">
+              <div>
+                <span className="rounded-md bg-[#FAF7F2] border border-[#E0D9C8] px-2 py-0.5 text-xs font-bold text-[#173F3A]">
+                  {applyingPosting.companyName}
+                </span>
+                <h3 className="mt-1 text-base md:text-lg font-extrabold text-[#17212B]">
+                  프로젝트 지원서 제출 및 첨부/AI인터뷰 확인
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setApplyingPosting(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 transition"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-4">
+              {/* Target Project Details */}
+              <div className="p-3.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/40 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-extrabold text-[#173F3A]">지원 대상 프로젝트</p>
+                  <p className="mt-0.5 text-sm font-extrabold text-[#17212B]">{applyingPosting.title}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-600">{applyingPosting.location} · {applyingPosting.salaryRange}</p>
+                </div>
+                <span className="shrink-0 rounded-xl bg-[#173F3A] px-2.5 py-1 text-center text-xs font-black text-white">
+                  적합도 {applyingPosting.seniorFitScore}점
+                </span>
+              </div>
+
+              {/* Step 1: Resume & Portfolio Attachment Verification */}
+              <div className="rounded-xl border border-[#E0D9C8] p-4 flex flex-col gap-2.5 bg-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold text-[#17212B]">
+                    <CheckCircle2 className="size-4 text-[#059669]" />
+                    1. 이력서 및 포트폴리오 첨부 확인
+                  </div>
+                  <label className="cursor-pointer text-xs font-bold text-[#173F3A] hover:underline flex items-center gap-1">
+                    <Upload className="size-3.5" />
+                    <span>파일 변경</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.doc"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setResumeFileName(file.name);
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="flex items-center gap-2.5 rounded-xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3 text-xs font-bold text-[#173F3A]">
+                  <FileText className="size-4 shrink-0 text-[#173F3A]" />
+                  <span className="truncate">{resumeFileName}</span>
+                  <span className="ml-auto shrink-0 rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-extrabold text-[#059669] border border-[#10B981]/30">
+                    첨부 완료 ✓
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 2: AI Experience Interview Summary */}
+              <div className="rounded-xl border border-[#F06B4F]/30 bg-[#FDF0ED]/50 p-4 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold text-[#F06B4F]">
+                  <Sparkles className="size-4 text-[#F06B4F]" />
+                  2. AI 경험 인터뷰 결과 및 역량 카드 확인
+                </div>
+                <div className="mt-1 flex flex-col gap-1.5 text-xs">
+                  <p className="font-bold text-[#17212B]">
+                    📌 해결 과제: <span className="font-medium text-slate-700">{applyingPosting.problemStatement}</span>
+                  </p>
+                  <p className="font-bold text-[#17212B]">
+                    🎙️ AI 역량 검증 요약: <span className="font-medium text-slate-700">10년+ 실무 노하우 보유, 부서 간 과제 해결 및 프로세스 표준화 능력 검증 완료</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3: Optional Cover Message */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-extrabold text-[#17212B]">
+                  3. 기업 담당자 전달 메시지 (선택)
+                </label>
+                <textarea
+                  rows={2}
+                  value={applicantNote}
+                  onChange={(e) => setApplicantNote(e.target.value)}
+                  placeholder="예: 12년간의 유사 프로젝트 수립 노하우로 빠른 기간 내 성과를 내겠습니다."
+                  className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A] focus:ring-1 focus:ring-[#173F3A]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#E0D9C8]/60">
+                <button
+                  type="button"
+                  onClick={() => setApplyingPosting(null)}
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-4 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  disabled={isApplying}
+                  onClick={() => void handleConfirmSubmitApplication()}
+                  className="h-10 rounded-xl bg-[#173F3A] px-5 text-xs font-extrabold text-white shadow-md hover:bg-[#12332F] active:scale-[0.99] transition disabled:opacity-50"
+                >
+                  {isApplying ? '지원서 제출 중...' : '🚀 최종 지원서 제출하기'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
         <DatabaseMetric
           caption="워크넷 40+ 실시간 데이터"
@@ -980,8 +1136,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       )}
 
       {actionNotice ? (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-[#10B981] bg-[#ECFDF5] px-6 py-3.5 text-sm font-extrabold text-[#059669] shadow-xl">
-          {actionNotice}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-[#10B981] bg-[#ECFDF5] px-6 py-3.5 text-xs md:text-sm font-extrabold text-[#059669] shadow-xl">
+          <span>{actionNotice}</span>
+          {role === 'senior' && (
+            <button
+              type="button"
+              onClick={() => void navigate('/senior/proposals')}
+              className="shrink-0 rounded-xl bg-[#059669] px-3 py-1 text-xs text-white hover:bg-[#047857] transition shadow-xs"
+            >
+              내 제안 보러가기 →
+            </button>
+          )}
         </div>
       ) : null}
 

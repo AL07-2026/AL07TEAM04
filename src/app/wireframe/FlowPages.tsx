@@ -3,6 +3,7 @@ import {
   AudioLines,
   Award,
   BarChart2,
+  FileText,
   Info,
   Mic,
   Settings,
@@ -22,6 +23,7 @@ import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
 import { fetchProjects } from '@/services/projectService';
+import { getUserProposals, type UserProposal } from '@/services/proposalService';
 import { seedProjectsIfEmpty } from '@/services/seedService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
@@ -44,27 +46,6 @@ const projects: Project[] = [
   { company: '그로우랩', title: '신규 서비스 운영 체계 만들기', meta: '주 2회 · 원격 · 3개월' },
   { company: '마켓온', title: 'B2B 영업 전략 점검', meta: '주 1회 · 서울 · 2개월' },
   { company: '에듀브릿지', title: '파트너 운영 프로세스 개선', meta: '주 2회 · 혼합 · 3개월' },
-];
-
-const seniorProposals: Project[] = [
-  {
-    company: '그로우랩',
-    title: '신규 서비스 운영 체계 만들기',
-    meta: '검토 중 · 8월 4일',
-    action: '제안 확인 →',
-  },
-  {
-    company: '마켓온',
-    title: 'B2B 영업 전략 점검',
-    meta: '연락 받음 · 8월 1일',
-    action: '제안 확인 →',
-  },
-  {
-    company: '에듀브릿지',
-    title: '파트너 운영 프로세스 개선',
-    meta: '검토 전 · 7월 29일',
-    action: '제안 확인 →',
-  },
 ];
 
 const receivedProposals: Project[] = [
@@ -1076,14 +1057,24 @@ export function ProposalCompletePage() {
 
 export function MyProposalsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [filter, setFilter] = useState('전체');
+  const [proposals, setProposals] = useState<UserProposal[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const list = await getUserProposals(user?.uid);
+      setProposals(list);
+    })();
+  }, [user]);
 
   const visible =
     filter === '전체'
-      ? seniorProposals
-      : seniorProposals.filter((item) => item.meta.startsWith(filter));
+      ? proposals
+      : proposals.filter((item) => item.status === filter);
+
   return (
     <MobilePage
       activeNav="proposals"
@@ -1102,17 +1093,59 @@ export function MyProposalsPage() {
           </Chip>
         ))}
       </div>
-      {/* STANDARDIZED MOBILE MAIN HEADER: DOWN-SCALED FROM 20px/24px TO 16px ON MOBILE FOR PERFECT VISUAL BALANCE */}
+
       <h2 className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[16px]' : 'text-xl md:text-2xl')}>
         보낸 제안 {visible.length}건
       </h2>
+
       <div className="flex flex-col gap-4">
-        {visible.map((project) => (
-          <ProjectCard
-            key={project.title}
+        {visible.map((item) => (
+          <div
+            key={item.id}
             onClick={() => void navigate('/senior/proposals/1')}
-            project={project}
-          />
+            className="cursor-pointer flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="inline-block rounded-md bg-[#FAF7F2] border border-[#E0D9C8]/60 px-2.5 py-0.5 text-xs font-bold text-[#173F3A]">
+                  {item.companyName}
+                </span>
+                <h3 className="mt-2 text-base md:text-lg font-extrabold text-[#17212B]">
+                  {item.projectTitle}
+                </h3>
+              </div>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full px-3 py-1 text-xs font-extrabold border',
+                  item.status === '연락 받음'
+                    ? 'bg-[#ECFDF5] text-[#059669] border-[#10B981]/40'
+                    : 'bg-[#FAF7F2] text-[#F06B4F] border-[#F06B4F]/30',
+                )}
+              >
+                {item.status}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[#FAF7F2] p-3 text-xs">
+              <div className="flex items-center gap-2 font-bold text-[#173F3A]">
+                <FileText className="size-4 text-[#173F3A]" />
+                <span>
+                  첨부된 서류: <strong>{item.resumeFileName}</strong>
+                </span>
+              </div>
+              {item.interviewSummary ? (
+                <div className="flex items-start gap-1.5 font-medium text-slate-700">
+                  <span className="shrink-0 font-extrabold text-[#F06B4F]">🎙️ AI 경험 요약:</span>
+                  <span className="line-clamp-2">{item.interviewSummary}</span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>지원일: {item.appliedAt}</span>
+              <span className="text-[#173F3A] font-extrabold">적합도 {item.seniorFitScore}점</span>
+            </div>
+          </div>
         ))}
       </div>
     </MobilePage>

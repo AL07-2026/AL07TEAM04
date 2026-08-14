@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 실제 지원서 제출 모달 (이력서/AI인터뷰 검토) 및 '내 제안' 실시간 연동 완성
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **대화형 지원서 제출 모달 구축 (`JobDatabasePage.tsx`)**: `📩 프로젝트 지원하기` 버튼 클릭 시 단순 알림이 아닌, **① 이력서/포트폴리오 첨부 파일 확인 및 변경 기능**, **② AI 경험 인터뷰 핵심 역량 평가 및 적합도 점수 연동 확인**, **③ 기업 전달 한 줄 메시지 입력** 단계를 거쳐 최종 제출하는 대화형 지원 시스템 완성.
+  - **지원 데이터 영구 저장 서비스 및 '내 제안' 실시간 노출 (`proposalService.ts`, `FlowPages.tsx`)**: 사용자가 프로젝트에 지원하면 LocalStorage 및 Firestore(`user_proposals` 컬렉션)에 실시간 기록되며, **`내 제안`(` /senior/proposals`)** 메뉴 진입 시 지원한 프로젝트명, 지원 일자, 첨부 파일명, AI 경험 인터뷰 요약, 상태(`검토 중`, `연락 받음`)가 실시간 렌더링되도록 구현.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [NEW] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 하드코딩 시드 데이터 제거, 워크넷 단일 데이터 원천화 및 지원하기/제안하기 버튼 구축
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
