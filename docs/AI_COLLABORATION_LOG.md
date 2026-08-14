@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] '개발/엔지니어링' 직무 카테고리 명시적 통합 및 전 직군 분류 체계 최적화
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **'개발/엔지니어링' 최상위 직무 통합 (`jobPostings.ts`, `worknetService.ts`)**: 워크넷 OpenAPI 공고 가공 시 소프트웨어 개발자(백엔드, 프론트엔드, 풀스택, 모바일, 웹개발, 아키텍처) 공고를 명확하게 분류할 수 있도록 `dev-engineering` ('개발/엔지니어링') 카테고리를 독립 최상위 직종으로 확립.
+  - **전 직무 분류 정당성 확보**: 개발자, 디자인/브랜딩, 마케팅/영업, 인사/경영전략, 제조/R&D, 운영/물류, 데이터, AI자동화, 보안 등 대한민국 전체 직무를 아우르는 10대 통합 카테고리 체계 완성.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 성공.
+- **변경 파일**:
+  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 전 업종(디자인, 마케팅, 인사, 제조, IT 등) 직무 무제한 40+ 시니어 과제 도출 엔진 전면 확장
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

@@ -1,4 +1,5 @@
 export type ProjectCategory =
+  | 'dev-engineering'
   | 'design-brand'
   | 'marketing-sales'
   | 'hr-strategy'
@@ -49,6 +50,7 @@ export type JobPosting = {
 };
 
 export const categoryLabels: Record<ProjectCategory, string> = {
+  'dev-engineering': '개발/엔지니어링',
   'design-brand': '디자인/브랜딩',
   'marketing-sales': '마케팅/영업',
   'hr-strategy': '인사/경영전략',

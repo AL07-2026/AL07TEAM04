@@ -38,6 +38,9 @@ export type WorknetApiResponse = {
 export function detectCategoryFromJobText(title: string, duties: string): ProjectCategory {
   const combined = `${title} ${duties}`.toLowerCase();
 
+  if (/개발|개발자|소프트웨어|백엔드|프론트엔드|엔지니어|코딩|웹개발|앱개발|아키텍트|풀스택|backend|frontend/.test(combined)) {
+    return 'dev-engineering';
+  }
   if (/디자인|디자이너|ux|ui|브랜드|크리에이티브|시각|웹디자인|그래픽|일러스트/.test(combined)) {
     return 'design-brand';
   }
@@ -68,7 +71,7 @@ export function detectCategoryFromJobText(title: string, duties: string): Projec
   return 'growth';
 }
 
-// 전 업종(디자인, 마케팅, 인사, 제조, IT 등) 40+ 시니어 해결 과제 도출 엔진
+// 전 업종(개발자, 디자인, 마케팅, 인사, 제조, IT 등) 40+ 시니어 해결 과제 도출 엔진
 export function transformWorknetToSeniorProject(
   raw: WorknetJobRaw,
   index: number,
@@ -76,6 +79,7 @@ export function transformWorknetToSeniorProject(
   const category = detectCategoryFromJobText(raw.title, raw.duties);
 
   const problemStatements: Record<ProjectCategory, string> = {
+    'dev-engineering': `${raw.company}의 소프트웨어 아키텍처 개편 및 10년+ 경험을 보유한 40+ 시니어 개발 리드의 리팩토링 및 기술 고도화 총괄이 요구됩니다.`,
     'design-brand': `${raw.company}의 브랜드 정체성 리디자인 및 UX/UI 가이드라인 확립을 위해 10년+ 경험을 가진 40+ 시니어 디자인 디렉터의 총괄 주도가 필요합니다.`,
     'marketing-sales': `${raw.company}의 신규 시장 개척 및 매출 스케일업을 목표로, 40+ 시니어 마케팅/영업 리드의 현장 주도형 타겟 분석과 파이프라인 구축이 요구됩니다.`,
     'hr-strategy': `${raw.company}의 중장기 경영 전략 수립 및 조직 평가/보상 체계 고도화를 총괄할 40+ 인사/경영 전문가의 해결책이 필요합니다.`,
@@ -89,6 +93,7 @@ export function transformWorknetToSeniorProject(
   };
 
   const projectGoals: Record<ProjectCategory, string> = {
+    'dev-engineering': '소프트웨어 아키텍처 수립 및 서비스 가동률/성능 100% 최적화',
     'design-brand': '브랜드 디자인 시스템 구축 및 시각 가이드라인 100% 표준화',
     'marketing-sales': '신규 타겟 파이프라인 확보 및 매출 성장률 30% 증대',
     'hr-strategy': '조직 평가 체계 개편 및 핵심 인재 리텐션 기반 마련',
@@ -102,6 +107,7 @@ export function transformWorknetToSeniorProject(
   };
 
   const requiredSkillsMap: Record<ProjectCategory, string[]> = {
+    'dev-engineering': ['Software Architecture', 'Code Refactoring', 'Backend/Frontend', 'Tech Leadership'],
     'design-brand': ['Brand Strategy', 'UX/UI Design', 'Design System', 'Creative Direction'],
     'marketing-sales': ['Growth Marketing', 'B2B Sales', 'Market Analysis', 'Revenue Strategy'],
     'hr-strategy': ['HR Strategy', 'Organization Design', 'Performance Management', 'Change Management'],

@@ -684,6 +684,7 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
                   name="category"
                   className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                 >
+                  <option value="dev-engineering">개발/엔지니어링</option>
                   <option value="design-brand">디자인/브랜딩</option>
                   <option value="marketing-sales">마케팅/영업</option>
                   <option value="hr-strategy">인사/경영전략</option>
