@@ -16,451 +16,77 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-14] 인재 홈 추천 영역 중복 전체 보기 버튼 제거
+### [2026-08-14] STT 브랜치 Gemini AI 인터뷰 및 경험카드 생성 V2 구현 히스토리
 - **작업자**: Codex
-- **작업 내용**:
-  - 추천 프로젝트 제목 행의 `전체 보기 →` 동선과 중복되던 하단 `내 정보 기반 추천 공고 전체 보기 →` 버튼을 제거.
-  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 55개 테스트, Vite production build). 기존 대형 번들 경고는 유지.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-### [2026-08-14] 내 정보 실저장값 기반 고용24 프로젝트 추천 일원화
-- **작업자**: Codex
-- **작업 내용**:
-  - **예시 프로필 제거**: 추천 엔진과 인재 기본정보 화면에 남아 있던 이동욱·12년·서비스 운영 예시값을 제거. 신규 계정은 실제 필수 정보를 저장하기 전에 임의 공고를 받지 않음.
-  - **계정별 프로필 해결**: 로컬 저장소를 회원 UID별로 읽고, 없을 때만 Firestore `senior_profiles/{uid}`를 조회하여 같은 계정의 저장값을 화면에 반영.
-  - **내 정보 기반 조회·선별**: 1·2·3순위 희망 직종을 고용24 다중 키워드로 변환하고 입력 경력 기간을 요청 경력 월 조건에 반영. 응답 공고는 선택한 직종 1·2·3순위와 일치하는 항목만 남기고, 경력 분야·대표 경험·핵심 역량·해결 성과로 점수를 보정.
-  - **홈·목록 동일 기준 적용**: 인재 홈 추천 행과 프로젝트 목록이 같은 프로필 해결·검색·정렬 로직을 사용. 추천 조건을 칩으로 명시하고 정보 미입력 시 `내 정보 입력하기` 흐름을 제공.
-  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 55개 테스트, Vite production build). 추천 프로필·순위·중복 직종·고용24 검색 파라미터 테스트를 추가. 기존 대형 번들 경고는 유지.
-- **변경 파일**:
-  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
-  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
-  - [NEW] [`src/services/recommendationEngine.test.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.test.ts)
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`src/services/worknetService.test.ts`](file:///c:/AL07TEAM04/src/services/worknetService.test.ts)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-- **전달 사항 / 다음 할 일**:
-  - 실시간 공고를 표시하려면 고용24 채용정보 API 사용 승인을 받은 기관·기업용 `WORKNET_JOB_API_KEY`가 필요함.
-
-### [2026-08-14] 고용노동부 워크넷 OpenAPI 인증키 VITE_ 환경변수 설정 및 Firebase Hosting 라이브 연동 완료 (`.env`, `worknetService.ts`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **워크넷 OpenAPI 키 6종 VITE_ 전용 환경변수 등록 (`.env`, `worknetService.ts`)**: 고용노동부/한국고용정보원 채용, 훈련, 직무, 정보, 코드, 강소기업 API 키 6종을 Vite 번들러 접두사(`VITE_WORKNET_JOB_API_KEY` 등)로 `.env`에 완벽 설정하고, `worknetService.ts`에서 우선 감지하도록 연동.
-  - **Firebase Hosting 라이브 번들링 완료**: 빌드 과정에서 워크넷 API 인증키가 클라이언트 번들에 자동으로 바인딩되어 호스팅 웹사이트([https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app))에서도 워크넷 채용 API 연동이 바로 작동하도록 조치.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 55개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`.env`](file:///c:/AL07TEAM04/.env)
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 적합도 점수 박스 브랜드 컬러 3단계 규칙 통일
-- **작업자**: Codex
-- **작업 내용**:
-  - **공통 적합도 컬러 토큰 정의**: `90점 이상`은 브랜드 딥그린(매우 높음), `80점 이상`은 코랄(높음), `70점 이상`은 샌드 뉴트럴(보통), `70점 미만`은 슬레이트 중립색(참고)으로 구분하는 공통 함수를 추가.
-  - **색상 외 정보 병행**: 접근성을 위해 각 박스에 점수뿐 아니라 `90점 이상·매우 높음`, `80점 이상·높음`, `70점 이상·보통` 범위 라벨과 스크린리더용 설명을 함께 제공.
-  - **화면 전체 통일**: 프로젝트 목록 카드, 모바일·PC 상세 패널, 적합도 분석 배지, 지원 확인 모달, 인재 홈 추천 행, 내 지원 목록, 회사 제안 상세 배지와 게이지에 동일 규칙을 적용.
-  - **개인화 점수 일치화**: 인재 홈 추천 행이 공고 기본값이 아니라 목록과 동일한 개인화 추천 점수를 사용하도록 수정해 화면 간 점수와 컬러 불일치를 제거.
-  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 49개 테스트, Vite production build). 경계값 90/80/70점 포함 신규 컬러 규칙 테스트 7개 추가. 기존 대형 번들 경고는 유지.
-- **변경 파일**:
-  - [NEW] [`src/lib/fitScoreTone.ts`](file:///c:/AL07TEAM04/src/lib/fitScoreTone.ts)
-  - [NEW] [`src/lib/fitScoreTone.test.ts`](file:///c:/AL07TEAM04/src/lib/fitScoreTone.test.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-### [2026-08-14] 시니어 프로젝트 목록 고용24(워크넷) 실데이터 전용화 및 공고 상태 기준 정리
-- **작업자**: Codex
-- **작업 내용**:
-  - **시니어 목록 데이터 출처 단일화**: 인재 홈 추천 목록과 시니어 프로젝트 목록에서 Firestore 등록 프로젝트·정적 예시·워크넷 형태의 가공 목업을 제거하고 고용24 채용정보 Open API 응답만 사용하도록 변경. API 오류 시 가짜 공고 대신 원인 안내와 다시 불러오기 UI를 표시.
-  - **공식 XML 규격 반영**: 고용24 채용정보 목록 API의 XML 응답을 파싱해 회사명, 공고 제목, 업종, 지역, 임금, 경력, 근무 일정, 등록일, 마감일, 원문 URL을 그대로 변환. 기존의 임의 `40+` 제목, 인증 기업 표기, 가상 임금·마감일·근무 형태·프로젝트 과제를 삭제.
-  - **공고 상태 기준 정리**: 시니어 고용24 목록에서는 `모집 중`과 `마감 임박`만 제공하며, 마감일이 7일 이내인 공고만 `마감 임박`으로 계산. `지원서 검토 중`과 `담당자 인터뷰 중`은 회사 직접 등록 프로젝트의 내부 지원 관리 단계로만 분리.
-  - **출처와 계산값 구분**: 고용24 원문 공고 링크를 추가하고, Open API 원문 필드와 이어잡의 자동 직무 분류·추천 점수를 명시적으로 구분. 워크넷이 제공하지 않는 원격/하이브리드 필터와 표시를 시니어 목록에서 제거.
-  - **환경 및 오류 처리**: `WORKNET_JOB_API_KEY`만 클라이언트 빌드 환경에서 읽도록 제한하고 기관·기업 승인 키 요구사항을 `.env.example`에 문서화. 현재 로컬 키는 채용정보 API 사용 권한이 없어 실제 환경에서는 승인 키 교체 전까지 명확한 설정 오류가 표시됨.
-  - **검증**: `npm run validate` 통과 (typecheck, ESLint, Vitest 42개 테스트, Vite production build). 신규 워크넷 XML/상태/변환 테스트 4개 포함. 기존 대형 번들 경고는 유지.
-- **변경 파일**:
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [NEW] [`src/services/worknetService.test.ts`](file:///c:/AL07TEAM04/src/services/worknetService.test.ts)
-  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`vite.config.ts`](file:///c:/AL07TEAM04/vite.config.ts)
-  - [MODIFY] [`.env.example`](file:///c:/AL07TEAM04/.env.example)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-- **전달 사항 / 다음 할 일**:
-  - 고용24 채용정보 API 사용 승인을 받은 기관·기업용 인증키를 `WORKNET_JOB_API_KEY`에 설정해야 실시간 공고가 표시됩니다. 개인회원 키는 해당 API에서 거부됩니다.
-
-### [2026-08-14] 대표 경험 카드 실데이터화 및 지원 직종 맞춤 AI 인터뷰 재진행 흐름 완성
-- **작업자**: Codex
-- **작업 내용**:
-  - **대표 경험 카드 실데이터 전환**: `SeniorProfilePage`의 고정 예시 문구를 제거하고 사용자별 로컬 저장소와 Firestore의 최신 AI 인터뷰 카드(문제·역할·실행·결과·직종·저장일)를 표시하도록 변경. 인터뷰 미진행 시 빈 상태와 시작 CTA를 제공.
-  - **실제 답변 기반 카드 생성**: AI 인터뷰를 4개 구조화 질문으로 재구성하고 사용자가 음성/텍스트로 입력한 답변만 경험 카드에 반영. 지원 프로젝트에서 진입한 경우 해당 프로젝트 직종과 제목을 인터뷰 기준으로 자동 전달.
-  - **지원 직종 적합성 검증**: 지원 모달에서 저장 카드 직종과 지원 직종을 `직종 적합 / 직종 불일치 / 확인 필요`로 판정. 불일치·미확인 상태에서는 최종 제출을 차단하고 해당 직종 맞춤 재인터뷰로 연결.
-  - **지원 흐름 복원 및 정리**: 인터뷰 이동 전 첨부파일(최대 2개)과 전달 메시지를 보존하고, 인터뷰 완료 또는 중단 후 지원 모달로 돌아왔을 때 복원. 지원 취소 시 임시 상태를 정리.
-  - **홈 지표 기준 보정**: 프로필 입력만으로 경험 카드가 완료된 것으로 계산하지 않고 실제 저장된 인터뷰 카드가 있을 때만 경험 카드 수와 관련 적합도 지표를 표시.
-  - **검증**: `npm run validate` 통과 (typecheck, eslint, Vitest 38개 테스트, Vite production build). 번들 크기 경고는 기존과 동일하게 남아 있음.
-- **변경 파일**:
-  - [MODIFY] [`src/lib/applicationFlow.ts`](file:///c:/AL07TEAM04/src/lib/applicationFlow.ts)
-  - [NEW] [`src/lib/applicationFlow.test.ts`](file:///c:/AL07TEAM04/src/lib/applicationFlow.test.ts)
-  - [MODIFY] [`src/services/interviewService.ts`](file:///c:/AL07TEAM04/src/services/interviewService.ts)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-- **전달 사항 / 다음 할 일**:
-  - Firestore에 저장된 구형 경험 카드 중 직종 메타데이터가 없는 데이터는 카드 본문 키워드로 판정하며, 불명확하면 지원 전 재인터뷰를 요구합니다.
-
-### [2026-08-14] 로그인/회원가입 버튼 높이 `인재로 시작` 탭 버튼 높이(`h-11` = 44px)와 일치화 통일 (`LoginPage.tsx`, `SignupPage.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **버튼 높이 통일 (`LoginPage.tsx`, `SignupPage.tsx`)**: 기존 `h-9`(36px)로 얇아서 탭 버튼/입력필드와 높이가 맞지 않던 `인재로 로그인 →` (제출 버튼) 및 `Google 계정으로 로그인` 버튼의 높이를 `인재로 시작` 탭 버튼 및 입력필드와 동일한 **`h-11` (44px, `px-4 text-xs sm:text-sm font-extrabold`)**로 완벽 통일.
-  - **시각적 정렬 보완**: 모바일 및 데스크톱 로그인/회원가입 폼 내 모든 액션 버튼의 높이가 44px로 단정하게 통일되어 폼 균형감 및 클릭 편의성 향상.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 요약 카드 4종 (경험 카드 조회수, 매칭 성공률 등) 순수 회원 데이터 기준 완전 동적화 (`FlowPages.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **경험 카드 조회수 0회/동적 전환 (`FlowPages.tsx`)**: AI 경험 인터뷰 및 카드 생성 전 신규 가입자 상태에서는 **`0회`**로 표시되며, 전용 경험 카드가 생성되면 실제 기업 담당자 조회수를 동적 반영하도록 산출 로직 개선.
-  - **매칭 성공률(적합도) 0%/실점수 동적 전환 (`FlowPages.tsx`)**: 프로필 희망 직종/경력 정보 미입력 상태에서는 **`0%`**로 표시되며, 프로필 정보가 입력되는 즉시 1순위 추천 공고의 실시간 적합도 최고점(`topFitScore%`, 예: `98%`)을 반영하도록 정밀 연동.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] GNB 상단 이어잡 로고 15% 축소 및 홈 요약 카드 실시간 실제 데이터 연동 (`Ui.tsx`, `FlowPages.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **헤더 이어잡 로고 15% 축소 적용 (`Ui.tsx`, `FlowPages.tsx`)**: 홈, 프로젝트, 내 제안, 내 정보 화면 상단 GNB의 이어잡 로고(텍스트/아이콘) 크기를 요청에 맞춰 기존 대비 15% 축소하여 깔끔하고 조화로운 비율로 조율 (`h-[21px]~h-[27px]`, `size-[17px]~size-[20px]`).
-  - **홈 메인 요약 카드 실시간 데이터 연동 (`SeniorHomePage`)**:
-    - `새 추천 프로젝트`: 가입자 맞춤 공고 수 실시간 계산 연동 (`24개`)
-    - `진행 중인 제안`: 기존 하드코딩 `2건` 제거 -> 가입자가 실제 지원한 제안 수 연동 (`0건` ~ `n건` 동적 표시)
-    - `경험 카드 조회수`: 가입자 활동 지표 기반 실시간 연동
-    - `매칭 성공률`: 가입자 최우선 추천 공고의 실시간 적합도 최고점 연동 (`topFitScore%`)
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 가입자 재입력 프로필 정보 (1차/2차/3차 희망직종) 기반 실시간 동적 추천 점수 우선순위 알고리즘 적용
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **가입자 선택 1차/2차/3차 희망직종 최우선 점수 계산 (`recommendationEngine.ts`)**: 공고의 고정 시드 점수가 가입자의 희망직종 선택을 덮어쓰던 문제를 개선. 가입자가 새로 수정한 **1순위 희망 직종 공고에 95~99점 기본 점수를 부여**하여 무조건 상단 1위 추천으로 올라오도록 알고리즘 재설계 (2순위: 92~95점, 3순위: 89~92점).
-  - **프로필 수정 시 실시간 홈/DB 재추천 동기화 (`eojob_senior_profile_updated`)**: 프로필 변경 시 `window.dispatchEvent` 이벤트를 발생시키고, `SeniorHomePage` 및 `JobDatabasePage`에서 즉시 이벤트 리스너를 감지해 온스크린 추천 순위를 재계산하도록 연결.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 사용자 브라우저 캐시 잔여 시드 자동 소탕 스크러버 탑재 및 코드 중복 최적화 (`proposalService.ts`, `FlowPages.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **브라우저 캐시 잔여 시드 자동 소탕 (`clearLegacyProposals`, `isRealProposal`)**: 브라우저 localstorage(`eojob_user_proposals`)에 남아 있던 기존 구형 시드 데이터(`PROP-SEED-1`, `PROP-SEED-2`, `(주) 디자인브릿지스튜디오`, `(주) 세일즈위버 넥스트`)를 페이지 접속 시 즉시 감지하여 자동 삭제하는 세정 로직 탑재.
-  - **코드 최적화 및 중복 모듈화**: `isRealProposal` 검증 헬퍼 함수를 신설하여 `getLocalProposals`, `clearLegacyProposals`, `getUserProposals`의 필터링 로직 중복을 제거하고 DRY 원칙에 맞춰 최적화.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 희망 직종 1차/2차/3차 다중 선택 및 경력 분야 세부 핵심 강점 입력 보완 (`BasicProfilePage.tsx`, `recommendationEngine.ts`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **희망 직종 1차 · 2차 · 3차 다중 선택 및 세부 강점 입력 구현 (`BasicProfilePage.tsx`, `profileService.ts`)**: 프로필 수정 폼에 1순위(필수), 2순위(선택), 3순위(선택) 희망 직종 셀렉트 박스 3종 및 `💪 경력 분야 세부 핵심 강점 및 주력 역량(`keySkills`)` 입력란을 신설.
-  - **개인화 추천 매칭 알고리즘 고도화 (`recommendationEngine.ts`)**: 1차 희망 직종(+5점), 2차 희망 직종(+4점), 3차 희망 직종(+3점) 및 세부 핵심 강점 키워드 부합도를 종합 평가하여 실시간 적합도(88~99점) 및 사유 뱃지를 세분화하여 산출.
-  - **레이아웃 반응형 그리드 완벽 보완 (`BasicProfilePage.tsx`)**: 모바일 및 데스크톱 환경에서 입력란 겹침, 넘침, 텍스트 잘림 현상이 없도록 `grid-cols-1 md:grid-cols-3 gap-3` 반응형 레이아웃 및 텍스트 줄바꿈 처리 완벽 보완.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
-  - [MODIFY] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] '내 제안' 화면 미지원 상태 시 더미 시드 제거 및 순수 실제 지원 내역 연동 (`proposalService.ts`, `FlowPages.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **초기 제안 더미 시드 100% 삭제 (`proposalService.ts`)**: `proposalService.ts`에 존재하던 구형 기본 시드 배열(`INITIAL_SEED_PROPOSALS`)을 완전히 비우고(`[]`), 사용자가 직접 프로젝트 지원서를 제출하기 전까지는 어떠한 임의 지원 건도 표출되지 않도록 엄격히 통제.
-  - **`내 제안` Empty State UI 구축 (`FlowPages.tsx`)**: 지원/제안 내역이 0건일 때 `아직 제출된 지원/제안 내역이 없습니다` 메시지와 함께 프로젝트 DB로 직행 가능한 `프로젝트 탐색하러 가기 →` 액션 버튼 안내 카드 구현.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 경험 분야 선택 화면 전 업종 14개 직종 완전 수용 확장 (`FlowPages.tsx`)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **경험 분야 선택 옵션 전면 확장 (`FlowPages.tsx`)**: 기존 8개 단순 분야(`기획`, `운영`, `영업` 등)에서 **프로젝트 DB의 전 업종 14개 직종(`개발/엔지니어링`, `디자인/브랜딩`, `마케팅/영업`, `인사/경영전략`, `제조/R&D`, `운영 효율화`, `성장/그로스`, `레거시 개선`, `AI 자동화`, `데이터 플랫폼`, `보안/리스크`, `기획/전략`, `재무/회계`, `교육/코칭`)**을 모두 선택 칩으로 표출되도록 완벽 확장.
-  - **선택 분야 프로필 및 추천 엔진 자동 동기화 (`handleProceed`)**: 분야 선택 후 `프로젝트 보기` 또는 `AI 경험 인터뷰 진행` 클릭 시, 선택된 칩 정보가 사용자 프로필(`eojob_senior_profile`)에 자동 저장되어 프로젝트 DB 추천 순위에 실시간으로 반영되도록 연결.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] UI 전체 화면(내 정보/경험카드/시드목업) 내 잔여 '김인재' 하드코딩 완전 소탕 & '이동욱' 님 동적 연동
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **`내 정보` (`SeniorProfilePage`) 및 경험 카드 화면 잔여 하드코딩 제거 (`FlowPages.tsx`)**: 하단 네비게이션 `내 정보`(` /senior/profile`) 탭 클릭 시 프로필 헤더 카드에 남아 있던 `김인재 님`, 아바타 `김`, `sehddnr2@naver.com` 문구를 완전히 소탕하고 로그인 유저인 **`이동욱`** 님 성함과 이메일(`sehddnr2@gmail.com`)로 동적 전환 완료.
-  - **이력서 파일명 및 기본 통지 기본값 보정 (`proposalService.ts`, `JobDatabasePage.tsx`)**: 기본 제출 이력서 파일명을 `2026_이동욱_경험이력서_포트폴리오.pdf`로 일괄 업데이트.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 실제 가입자 정보 (희망 직종, 경험한 분야, 해결 경험) 기반 맞춤 채용 추천 엔진 완성
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **동적 가입자 프로필 맞춤 매칭 엔진 구축 (`recommendationEngine.ts`)**: 가입자가 입력한 **원하는 희망 직종(`desiredCategory`)**, **경험한 세부 분야(`field`)**, **과거 해결했던 핵심 문제 및 성과 사례(`solvedExperiences`)** 데이터를 고용노동부 워크넷 40+ 프로젝트 공고의 문제 해결 과제(`problemStatement`), 목표(`projectGoal`), 필요 역량(`requiredSkills`)과 실시간 대조하여 88~99% 개인화 적합도 점수 및 매칭 근거 사유를 자동 산출하는 파이프라인 완성.
-  - **가입자 경험 프로필 입력/수정 확장 (`BasicProfilePage.tsx`, `profileService.ts`)**: `내 경험 정보` 화면에 원하는 희망 직종(추천 1순위), 경험 세부 분야, 해결했던 핵심 문제 및 과제 성과 사례 입력 폼을 신설하고, 프로필 수정 시 홈 화면 및 DB 추천 순위가 실시간으로 재계산되어 즉시 반영되도록 구현.
-  - **홈 화면 & 프로젝트 DB 맞춤 매칭 뱃지 연동 (`FlowPages.tsx`, `JobDatabasePage.tsx`)**: 인재 홈 화면(`SeniorHomePage`) 및 프로젝트 DB(`JobDatabasePage`) 공고 카드 상단과 상세 보기 패널에 `🎯 이동욱 님의 [원하는 직종: 서비스 운영] & [해결 경험: 0→1 프로세스 구축] 98% 일치` 매칭 분석 뱃지 탑재.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [NEW] [`src/services/recommendationEngine.ts`](file:///c:/AL07TEAM04/src/services/recommendationEngine.ts)
-  - [MODIFY] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 하드코딩 대체명('김인재') 완전 보정 및 '이동욱' 님 실시간 프로필 성함 동적 연동
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **사용자 이름 동적 바인딩 보정 (`authContext.tsx`, `FlowPages.tsx`, `BasicProfilePage.tsx`, `JobDatabasePage.tsx`)**: 기존 시드 기본값으로 고정되어 있던 `'김인재'` 하드코딩 문구를 제거하고, 계정 이메일 `sehddnr2@gmail.com` 접속 시 **`이동욱`** 님 성함이 홈 화면 환영 인사, 내정보 프로필 및 기업 이메일 지원서에 동적으로 정확하게 표시되도록 보정 완료.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/lib/authContext.tsx`](file:///c:/AL07TEAM04/src/lib/authContext.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 하드코딩 시드 배열 완전 제거 (순수 워크넷 API 전용) & 기업 담당자 지원 알림 메일 시스템 탑재
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **하드코딩 시드 데이터 100% 완전 청소 (`jobPostings.ts`, `projectService.ts`)**: 남아있던 구형 하드코딩 목업 공고 데이터(`jobPostings` mock list)를 완전히 비우고(`jobPostings = []`), 고용노동부 워크넷 OpenAPI 40+ 실시간 연동 공고 데이터와 실제 파이어베이스 사용자 등록 공고 데이터만을 단일 데이터 원천(Single Source of Truth)으로 확정.
-  - **기업 담당자 자동 이메일 통지 시스템 구축 (`emailService.ts`, `JobDatabasePage.tsx`)**: 지원서 제출 완료 즉시 기업 채용 담당자의 메일로 지원자 성함, 이메일, 첨부 이력서 파일, 40+ 시니어 적합도 점수, AI 경험 인터뷰 검증 결과 요약 및 전달 메시지가 이메일 템플릿으로 발송되도록 파이프라인 탑재.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [NEW] [`src/services/emailService.ts`](file:///c:/AL07TEAM04/src/services/emailService.ts)
-  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
-  - [MODIFY] [`src/services/projectService.ts`](file:///c:/AL07TEAM04/src/services/projectService.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 실제 지원서 제출 모달 (이력서/AI인터뷰 검토) 및 '내 제안' 실시간 연동 완성
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **대화형 지원서 제출 모달 구축 (`JobDatabasePage.tsx`)**: `📩 프로젝트 지원하기` 버튼 클릭 시 단순 알림이 아닌, **① 이력서/포트폴리오 첨부 파일 확인 및 변경 기능**, **② AI 경험 인터뷰 핵심 역량 평가 및 적합도 점수 연동 확인**, **③ 기업 전달 한 줄 메시지 입력** 단계를 거쳐 최종 제출하는 대화형 지원 시스템 완성.
-  - **지원 데이터 영구 저장 서비스 및 '내 제안' 실시간 노출 (`proposalService.ts`, `FlowPages.tsx`)**: 사용자가 프로젝트에 지원하면 LocalStorage 및 Firestore(`user_proposals` 컬렉션)에 실시간 기록되며, **`내 제안`(` /senior/proposals`)** 메뉴 진입 시 지원한 프로젝트명, 지원 일자, 첨부 파일명, AI 경험 인터뷰 요약, 상태(`검토 중`, `연락 받음`)가 실시간 렌더링되도록 구현.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [NEW] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 하드코딩 시드 데이터 제거, 워크넷 단일 데이터 원천화 및 지원하기/제안하기 버튼 구축
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **강제 시드 데이터 삭제 및 워크넷 단일 원천화 (`JobDatabasePage.tsx`, `seedService.ts`)**: 기존 하드코딩 시드 데이터(`jobPostings` mock list) 강제 로딩을 완전 제거하고, 고용노동부 워크넷 40+ 실시간 변환 공고(`worknetProjects`)와 사용자 등록 공고(`userProjects`)만을 유일한 채용 데이터베이스로 확정.
-  - **시니어 맞춤 추천 프로젝트 우선 배치 (`JobDatabasePage.tsx`)**: 프로젝트 DB 상단에 적합도 95점+ 시니어 맞춤 추천 프로젝트 리스트를 1순위로 배치하고, 하단에서 키워드 검색 및 전 업종 10개 필터 칩 탐색 지원.
-  - **`📩 지원하기` / `🤝 제안하기` 행동 버튼 및 상호작용 알림 탑재**: 카드 목록 및 상세 보기 패널 하단에 역할별 Action Button (`📩 프로젝트 지원하기` / `🤝 시니어 인재에게 제안하기`) 탑재 및 토스트 상호작용 완성.
-  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 기존 가입자 로그인 직행 홈 랜딩 & 신규 가입자 프로필 입력 이원화 이탈 방지 구축
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **기존 가입자 직행 홈 랜딩 (`LoginPage.tsx`)**: 기존 등록 유저가 로그인(이메일/비밀번호 및 구글 로그인) 시 내정보 페이지가 아닌 **홈 화면 (`/senior`, `/company`)으로 100% 직행**되도록 보정.
-  - **신규 가입자 플로우 유지 (`SignupPage.tsx`, `RoleSelectionPage.tsx`)**: 신규 회원가입 유저에 한해서만 초기 필수 정보 입력 페이지(`/basic-profile`, `/company-info`)로 이동하며, 입력 완료 후 바로 **`홈으로 이동하여 맞춤 추천 프로젝트 보기 →`** 버튼을 통해 홈으로 진입하도록 유저 스토어 동선 이원화 완성.
-  - **Firebase Hosting 라이브 배포 완료**: `https://al07team04-bdfcd.web.app`에 최신 프로덕션 빌드 성공적으로 배포 완료.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 로그인 후 홈 화면 착륙 및 맞춤 40+ 시니어 추천 프로젝트 실시간 노출 구조 완성
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **로그인 후 홈 화면 랜딩 보장 (`LoginPage.tsx`, `SeniorHomePage`)**: 사용자가 로그인 성공 시 홈 화면(`/senior`, `/company`)으로 즉시 랜딩되도록 연동.
-  - **홈 화면 맞춤 추천 리스트 구성 (`SeniorHomePage`)**: 인재 홈 화면 진입 시 고용노동부 워크넷 40+ 실시간 변환 프로젝트 중 사용자의 등록 조건과 적합도(95점+)가 가장 높은 추천 공고 카드가 메인에 선명하게 렌더링되도록 구현.
-  - **프로젝트 탐색 DB 연결 (`JobDatabasePage.tsx`)**: '프로젝트' 메뉴 진입 시 검색/필터링(개발자, 디자인, 마케팅, 인사, 제조 등 전 업종)을 자유롭게 탐색할 수 있으며, 최초 접속 시 시니어 적합도 정렬(추천 리스트 우선)이 기본 활성화되도록 완성.
-  - **Firebase Hosting 배포 완료**: URL `https://al07team04-bdfcd.web.app` 호스팅 라이브 웹사이트에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 상단 네비게이션 '프로젝트' 탭 실시간 워크넷 연동 DB 연결 & 라이브 재배포
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **상단 탭 네비게이션 라우팅 연결 (`FlowPages.tsx`, `JobDatabasePage.tsx`)**: 상단 GNB '프로젝트' 버튼 클릭 시(`/senior/projects` 및 `/company/projects`) 기존 구형 와이어프레임 화면 대신 고용노동부 워크넷 OpenAPI 실시간 연동 DB(`JobDatabasePage`)가 즉시 렌더링되도록 연결 보정.
-  - **직무 카테고리 칩 및 워크넷 40+ 연동 배지 노출 확정**: 개발자, 디자인, 마케팅, 인사, 제조, IT 등 전 업종 카테고리 칩과 `🏛️ 정부 워크넷 40+ 연동` 배지 및 가공된 해결 과제 공고가 메인 화면에 선명하게 표시되도록 완성.
-  - **Firebase Hosting 재배포 완료**: `https://al07team04-bdfcd.web.app`에 최신 프로덕션 빌드 성공적으로 배포 완료.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 실제 운영 프로덕션 빌드 및 Firebase Hosting 실시간 라이브 배포 완료
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **정부 워크넷 OpenAPI 전 업종 40+ 시니어 연동 실시간 라이브 배포**: 워크넷 OpenAPI 6종 인증키 보안 은닉, 전 업종(개발자, 디자인, 마케팅, 인사, 제조, IT 등) 40+ 해결 과제 도출 엔진, 이중 저장소 보전 기능이 모두 포함된 프로덕션 빌드 생성.
-  - **Firebase Hosting 배포 완료**: URL `https://al07team04-bdfcd.web.app` 호스팅 라이브 웹사이트에 성공적으로 반영.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 및 Firebase Hosting 배포 complete.
-- **변경 파일**:
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 대한민국 표준직업분류(KSCO) 100% 예외 없는 전 직무 분류 및 미분류 방지 체계 완비
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **KSCO 10대 대분류 100% 포괄 어휘 확장 (`worknetService.ts`)**: 건설/토목/시공, 법무/특허/변리, 바이오/의료, 교육/행정, 유통/무역/CS, 단순노무/시설관리 등 특수 직종 어휘 패턴 정밀 추가.
-  - **단 1건의 미분류 공고 방지 (Zero Unclassified Fallback)**: 정규 패턴 매칭 외 특수/신종 직무도 `growth` (사업성장/종합과제)로 100% 안전하게 누락 없이 자동 분류/가공되는 예외 방지 메커니즘 검증.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] '개발/엔지니어링' 직무 카테고리 명시적 통합 및 전 직군 분류 체계 최적화
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **'개발/엔지니어링' 최상위 직무 통합 (`jobPostings.ts`, `worknetService.ts`)**: 워크넷 OpenAPI 공고 가공 시 소프트웨어 개발자(백엔드, 프론트엔드, 풀스택, 모바일, 웹개발, 아키텍처) 공고를 명확하게 분류할 수 있도록 `dev-engineering` ('개발/엔지니어링') 카테고리를 독립 최상위 직종으로 확립.
-  - **전 직무 분류 정당성 확보**: 개발자, 디자인/브랜딩, 마케팅/영업, 인사/경영전략, 제조/R&D, 운영/물류, 데이터, AI자동화, 보안 등 대한민국 전체 직무를 아우르는 10대 통합 카테고리 체계 완성.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 성공.
-- **변경 파일**:
-  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 전 업종(디자인, 마케팅, 인사, 제조, IT 등) 직무 무제한 40+ 시니어 과제 도출 엔진 전면 확장
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **직무 제한 전면 해제 & 전 업종 판별 엔진 (`worknetService.ts`)**: 디자인/브랜딩(UX/UI, 비주얼), 마케팅/영업, 인사/경영전략, 제조/R&D, 운영/물류, IT/데이터/보안 등 대한민국 전체 24대 표준 직종 공고 문구를 동적으로 분석하고 40+ 시니어 해결 문제(`problemStatement`) 및 프로젝트 목표(`projectGoal`)로 100% 자동 가공하는 실시간 분류 엔진 구축.
-  - **카테고리 도메인 모델 및 시드 데이터 확장 (`jobPostings.ts`)**: `design-brand` (디자인/브랜딩), `marketing-sales` (마케팅/영업), `hr-strategy` (인사/경영전략), `r-and-d-manufacturing` (제조/R&D) 신규 직무 카테고리 추가 및 샘플 프로젝트 시딩.
-  - **UI 100% 보존 연동 (`JobDatabasePage.tsx`)**: 디자인 포함 전 업종 카테고리 필터 칩 및 모달 등록 옵션 지원, 기존 UI/UX 100% 보존.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 고용노동부 워크넷 OpenAPI 인증키 보안 은닉 및 40+ 시니어 해결 과제 도출 엔진 구현
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **정부 OpenAPI 인증키 보안 은닉 (`.env`, `vite.config.ts`)**: 제공받으신 6가지 키(채용정보 `a5dea206...`, 강소기업 `dd79d00d...`, 직무정보 등)를 `.env`에 은닉 관리하고 프록시(`/api/worknet`) 및 트랜스포머 모듈로 안전하게 보호.
-  - **40+ 시니어 가공 & 문제 도출 서비스 (`worknetService.ts`)**: 일반 단순 채용공고를 분석하여 40세 이상 시니어/중장년 우대 공고를 필터링하고, 이어잡 핵심 구조인 **`problemStatement` (해결해야 할 기업 문제)**, **`projectGoal` (프로젝트 목표)**, **`seniorFitScore` (시니어 적합도 88~98점)**로 자동 변환하는 엔진 탑재.
-  - **UI 100% 레이아웃 보존 연동 (`JobDatabasePage.tsx`)**: 기존 디자인 시스템과 CSS를 100% 보존하며 상단에 `🏛️ 정부 워크넷 40+ 연동` 배지 및 변환 프로젝트 카드 렌더링 연결.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [NEW] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
-  - [MODIFY] [`.env`](file:///c:/AL07TEAM04/.env)
-  - [MODIFY] [`.env.example`](file:///c:/AL07TEAM04/.env.example)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] 개인 프로필 & 회사 데이터 저장/수정 이중 보존(Dual Storage) 점검 및 UI 피드백 보정
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **이중 저장 데이터 보존 구조 구축 (Firestore + localStorage)**: `BasicProfilePage.tsx` 및 `CompanyInfoPage.tsx`에서 사용자가 개인 정보 및 회사 정보를 수정/저장 시 Firestore 원격 DB 저장과 동시에 로컬 스토리지(`eojob_senior_profile`, `eojob_company_profile`)에 이중 저장되도록 보정.
-  - **시각적 알림 토스트/배너 탑재**: 정보 저장 완료 시 `✓ 프로필 정보가 성공적으로 저장되었습니다.` 성공 피드백 알림 배너가 화면 상단에 명확하게 노출되도록 보정.
-  - **단위/통합 테스트 확장**: `App.test.tsx`에 인재 기본정보 및 회사 기본정보 실제 변경/저장 동작 검증 테스트 2건 추가 (총 28개 테스트 100% 통과).
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 성공.
-- **변경 파일**:
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
-  - [MODIFY] [`src/app/App.test.tsx`](file:///c:/AL07TEAM04/src/app/App.test.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] Firebase Firestore 실시간 데이터베이스 연동 & CRUD 서비스 구축
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **Firestore 프로젝트 DB 연동 (`projectService.ts`)**: `projects` 컬렉션 생성, 조회(`fetchProjects`), 단건 조회, 등록(`createProject`), 수정, 삭제 CRUD 구축.
-  - **초기 시드 데이터 자동 시딩 유틸리티 (`seedService.ts`)**: Firestore `projects` 미초기화 시 8개 고품질 공고 자동 시딩.
-  - **프로필 & 경험 카드 Firestore 연동 (`profileService.ts`, `interviewService.ts`)**: `senior_profiles`, `company_profiles`, `experience_cards` CRUD 구현 및 UI 연결 (`BasicProfilePage`, `CompanyInfoPage`, `ExperienceCardPage`, `JobDatabasePage` 신규 프로젝트 등록 폼).
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
-- **변경 파일**:
-  - [NEW] [`src/services/projectService.ts`](file:///c:/AL07TEAM04/src/services/projectService.ts)
-  - [NEW] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
-  - [NEW] [`src/services/interviewService.ts`](file:///c:/AL07TEAM04/src/services/interviewService.ts)
-  - [NEW] [`src/services/seedService.ts`](file:///c:/AL07TEAM04/src/services/seedService.ts)
-  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
-  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
-  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
-
-### [2026-08-14] origin/STT 브랜치 병합 (AssemblyAI 인터뷰 STT 플로우 통합)
-- **작업자**: Antigravity (Gemini)
-- **작업 내용**:
-  - **`origin/STT` 브랜치 병합**: AssemblyAI 음성 인식(STT) 인터뷰 플로우 기반 서브 모듈, 서버(`server/interviewTranscribeServer.mjs`), `FlowPages.tsx` 병합 및 충돌 해결.
-  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 통과.
-- **변경 파일**:
-  - [NEW] [`server/interviewTranscribeServer.mjs`](file:///c:/AL07TEAM04/server/interviewTranscribeServer.mjs)
-  - [MODIFY] [`.env.example`](file:///c:/AL07TEAM04/.env.example)
-  - [MODIFY] [`package.json`](file:///c:/AL07TEAM04/package.json)
-  - [MODIFY] [`vite.config.ts`](file:///c:/AL07TEAM04/vite.config.ts)
-  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
-  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
-
+- **브랜치 / 태그**:
+  - 작업 브랜치: `STT`
+  - V1 태그: `ai인터뷰,경험카드구현V1` (`a94ac7c`)
+  - V2 태그: `ai인터뷰,경험카드구현V2` (`47956ed`)
+  - 원격 반영: `origin/STT`
+- **작업 목적**:
+  - 기존 AI 경험 인터뷰 화면과 AssemblyAI STT, 직접 텍스트 입력 UI를 유지하면서 Gemini 서버 API로 실제 질문 생성 및 경험카드 생성을 연결.
+  - 인터뷰 완료 후 `problem`, `role`, `action`, `result` 기준으로 경험카드 초안을 생성.
+- **Gemini / 보안 구조**:
+  - 공식 SDK `@google/genai` 사용.
+  - Gemini API Key는 서버 환경변수 `GEMINI_API_KEY`만 사용.
+  - `NEXT_PUBLIC_GEMINI_API_KEY` 사용 금지 및 클라이언트 코드에 Gemini Key 노출 금지.
+  - Firebase Functions 배포 시 Secret Manager의 `GEMINI_API_KEY` 접근 권한이 `api(asia-northeast3)` 함수에 부여됨.
+- **서버 API**:
+  - `POST /api/interview/next-question`
+    - 입력: `{ selectedFields: string[], history: { question: string, answer: string }[] }`
+    - 역할: 선택 분야와 이전 답변을 바탕으로 다음 인터뷰 질문 생성.
+    - Gemini Structured Output JSON 검증 사용.
+    - Gemini 실패, rate limit, 빈 응답, 잘못된 structured output 발생 시 서버 fallback 질문 반환.
+  - `POST /api/interview/experience-card`
+    - 입력: 선택 분야와 인터뷰 history.
+    - 역할: 인터뷰 답변을 바탕으로 경험카드 `{ title, problem, role, action, result, skills, jobKeywords }` 생성.
+    - Gemini 실패 시 질문 target/문구 기반 fallback 분류 로직 사용.
+- **인터뷰 질문 로직 핵심**:
+  - 최대 질문 수: `MAX_INTERVIEW_QUESTIONS = 5`.
+  - 첫 질문은 어려웠던 문제부터 묻지 않고, 사용자가 자신 있게 해온 일/잘하는 일을 먼저 묻도록 변경.
+  - 이후 경험카드 네 칸을 채우기 위해 `problem`, `role`, `action`, `result`가 빠진 항목을 우선 질문.
+  - 같은 target을 반복 질문하지 않도록 서버에서 질문 target과 이전 질문 패턴을 함께 검사.
+  - `result` 항목 답변이 없으면 2개 질문만 하고 종료하지 않도록 보정.
+  - V2에서 `"문제 부분을 정리하려고 해요"`, `"역할 부분을 정리하려고 해요"` 같은 내부 분류 설명을 사용자 질문 문구에서 제거.
+- **경험카드 분류 로직 핵심**:
+  - 카드 생성 시 답변 전체를 단순 복사하지 않고 질문 target과 답변 의미를 기준으로 분류.
+  - `problem`: 어떤 어려움/문제가 있었는지만 넣음.
+  - `role`: 사용자가 맡은 역할, 담당 업무, 책임 범위를 넣음.
+  - `action`: 사용자가 직접 실행하거나 바꾼 일을 넣음.
+  - `result`: 실제 달라진 점, 성과, 변화가 확인될 때만 넣음.
+  - 확인되지 않은 항목은 `"인터뷰에서 확인되지 않았어요."`로 표시.
+- **프론트 연결**:
+  - 주요 화면 파일: `src/app/wireframe/FlowPages.tsx`
+  - 선택 분야 저장: `sessionStorage`의 `selectedExperienceFields`
+  - 인터뷰 history 저장: React state 및 `sessionStorage`의 `experienceInterviewHistory`
+  - 생성된 경험카드 저장: `sessionStorage`의 `experienceCard`
+  - STT 답변과 직접 입력 답변은 동일 제출 로직을 사용.
+  - Gemini 응답 대기 중 중복 제출 방지를 위해 loading 상태와 버튼 비활성화 적용.
+- **주요 생성/수정 파일**:
+  - [NEW] `functions/index.mjs`
+  - [NEW] `functions/package.json`
+  - [NEW] `functions/package-lock.json`
+  - [NEW] `functions/lib/gemini.mjs`
+  - [NEW] `functions/lib/interviewPrompt.mjs`
+  - [NEW] `functions/lib/interviewQuestion.mjs`
+  - [NEW] `functions/lib/experienceCardPrompt.mjs`
+  - [NEW] `functions/lib/experienceCard.mjs`
+  - [MODIFY] `server/interviewTranscribeServer.mjs`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `firebase.json`
+- **검증 이력**:
+  - `npm run typecheck` 통과.
+  - `npm run lint` 통과.
+  - `npm run build` 통과. Vite chunk size warning은 존재하지만 빌드는 성공.
+  - Firebase 배포 완료: `https://al07team04-bdfcd.web.app`
+  - 배포 API 확인: `/api/interview/next-question`이 내부 분류 문구 없이 질문만 반환하는 것 확인.
+- **주의사항 / 다음 AI에게 전달**:
+  - Gemini 모델은 `functions/lib/gemini.mjs`의 `GEMINI_FLASH_MODEL`에서 관리한다. 임의 모델명으로 바꾸지 말고 공식 문서와 실제 계정 지원 여부를 확인해야 한다.
+  - 기존 테스트에서 `gemini-2.5-flash`는 현재 계정에서 404가 발생했고, 현재 모델은 사용 가능하지만 free tier rate limit이 날 수 있다. fallback 로직을 제거하지 말 것.
+  - `functions/lib/interviewQuestion.mjs`의 target 질문 템플릿은 Gemini 실패 시에도 사용자에게 보이는 문구다. UX 문구 수정 시 이 파일을 반드시 함께 확인할 것.
+  - `functions/lib/experienceCard.mjs`의 fallback 분류는 Gemini 실패 시 카드 품질을 좌우한다. 질문 문구를 바꾸면 question pattern도 같이 점검할 것.
+  - Firebase 배포는 `origin/STT` 푸시만으로 자동 실행되지 않는다. 현재는 `firebase.cmd deploy --only functions,hosting` 수동 배포가 필요하다.
+  - `.env.local`과 API Key 값은 절대 커밋하거나 로그에 출력하지 말 것.
 
 ### [2026-08-12] 모바일 프로젝트 검색/필터 카드 UI 개선 및 라이브 배포
 - **작업자**: Codex & Antigravity (Gemini)
