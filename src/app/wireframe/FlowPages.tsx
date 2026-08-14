@@ -284,7 +284,7 @@ function HomeRecommendationRow({
 
       <div className={cn('min-w-0', isMobile && 'border-t border-[#E0D9C8]/70 pt-3')}>
         <p className="text-[13px] font-extrabold text-[#173F3A]">해결 과제</p>
-        <p className="mt-1 line-clamp-2 text-[15px] font-medium leading-6 text-slate-700">
+        <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">
           {problem}
         </p>
       </div>
