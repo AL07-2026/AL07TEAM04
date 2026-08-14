@@ -270,11 +270,11 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            {/* Main Action Button - Dark Green (#173F3A) & Unified h-9 height */}
+            {/* Main Action Button - Dark Green (#173F3A) & Unified h-11 height */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-9 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.99] disabled:opacity-40"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.99] disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -294,7 +294,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-9 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] active:scale-[0.99]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs sm:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] active:scale-[0.99]"
             >
               <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -409,11 +409,11 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            {/* RESTORED TO DARK GREEN (#173F3A) AS REQUESTED BY USER */}
+            {/* RESTORED TO DARK GREEN (#173F3A) AS REQUESTED BY USER - Unified h-11 height */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-9 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.995] disabled:opacity-40"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.995] disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -433,7 +433,7 @@ export function LoginPage() {
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-9 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] hover:border-[#173F3A] active:scale-[0.992]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs sm:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] hover:border-[#173F3A] active:scale-[0.992]"
             >
               <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

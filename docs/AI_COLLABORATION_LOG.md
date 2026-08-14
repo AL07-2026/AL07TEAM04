@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 로그인/회원가입 버튼 높이 `인재로 시작` 탭 버튼 높이(`h-11` = 44px)와 일치화 통일 (`LoginPage.tsx`, `SignupPage.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **버튼 높이 통일 (`LoginPage.tsx`, `SignupPage.tsx`)**: 기존 `h-9`(36px)로 얇아서 탭 버튼/입력필드와 높이가 맞지 않던 `인재로 로그인 →` (제출 버튼) 및 `Google 계정으로 로그인` 버튼의 높이를 `인재로 시작` 탭 버튼 및 입력필드와 동일한 **`h-11` (44px, `px-4 text-xs sm:text-sm font-extrabold`)**로 완벽 통일.
+  - **시각적 정렬 보완**: 모바일 및 데스크톱 로그인/회원가입 폼 내 모든 액션 버튼의 높이가 44px로 단정하게 통일되어 폼 균형감 및 클릭 편의성 향상.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
+  - [MODIFY] [`src/app/SignupPage.tsx`](file:///c:/AL07TEAM04/src/app/SignupPage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 요약 카드 4종 (경험 카드 조회수, 매칭 성공률 등) 순수 회원 데이터 기준 완전 동적화 (`FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
