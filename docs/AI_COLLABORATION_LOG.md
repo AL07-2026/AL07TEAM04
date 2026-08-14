@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] `STT` 브랜치 + `BASIC` 최신 기능 통합 `develop` 브랜치 생성 및 Firebase Hosting 라이브 배포 완료
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **통합 `develop` 브랜치 생성 및 소스 머지**: `BASIC` 브랜치의 최신 고용노동부 워크넷 OpenAPI 실데이터 연동, 개인화 다중 직종(1차·2차·3차) 매칭, 적합도 브랜드 컬러 3단계 규칙, 버튼 높이 일치화(`h-11`), 브라우저 시드 자동 소탕 로직과 `STT` 브랜치의 Gemini 기반 음성/AI 경험 인터뷰 파이프라인을 완전히 충돌 없이 병합.
+  - **원격 브랜치 동기화 (`origin/develop`, `origin/STT`)**: 통합된 `develop` 브랜치를 새로 생성하여 `origin/develop`에 푸시함과 동시에, `origin/STT` 브랜치에도 최신 `BASIC` 업데이트 내용을 100% 통합 반영완료.
+  - **Firebase Hosting 라이브 배포 완료**: 배포 URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 최신 통합 빌드 배포 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 55개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [NEW BRANCH] `develop` (`origin/develop`)
+  - [UPDATE BRANCH] `origin/STT`
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] STT 브랜치 Gemini AI 인터뷰 및 경험카드 생성 V2 구현 히스토리
 - **작업자**: Codex
 - **브랜치 / 태그**:
