@@ -6,6 +6,7 @@ import {
   FileText,
   Info,
   Mic,
+  Send,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -1147,54 +1148,77 @@ export function MyProposalsPage() {
       </h2>
 
       <div className="flex flex-col gap-4">
-        {visible.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => void navigate('/senior/proposals/1')}
-            className="cursor-pointer flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="inline-block rounded-md bg-[#FAF7F2] border border-[#E0D9C8]/60 px-2.5 py-0.5 text-xs font-bold text-[#173F3A]">
-                  {item.companyName}
-                </span>
-                <h3 className="mt-2 text-base md:text-lg font-extrabold text-[#17212B]">
-                  {item.projectTitle}
-                </h3>
-              </div>
-              <span
-                className={cn(
-                  'shrink-0 rounded-full px-3 py-1 text-xs font-extrabold border',
-                  item.status === '연락 받음'
-                    ? 'bg-[#ECFDF5] text-[#059669] border-[#10B981]/40'
-                    : 'bg-[#FAF7F2] text-[#F06B4F] border-[#F06B4F]/30',
-                )}
-              >
-                {item.status}
-              </span>
+        {visible.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3.5 rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center shadow-xs">
+            <div className="flex size-14 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
+              <Send className="size-7 text-[#173F3A]" />
             </div>
-
-            <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[#FAF7F2] p-3 text-xs">
-              <div className="flex items-center gap-2 font-bold text-[#173F3A]">
-                <FileText className="size-4 text-[#173F3A]" />
-                <span>
-                  첨부된 서류: <strong>{item.resumeFileName}</strong>
-                </span>
-              </div>
-              {item.interviewSummary ? (
-                <div className="flex items-start gap-1.5 font-medium text-slate-700">
-                  <span className="shrink-0 font-extrabold text-[#F06B4F]">🎙️ AI 경험 요약:</span>
-                  <span className="line-clamp-2">{item.interviewSummary}</span>
-                </div>
-              ) : null}
+            <div className="flex flex-col gap-1">
+              <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">
+                아직 제출된 지원/제안 내역이 없습니다
+              </h3>
+              <p className="text-xs md:text-sm font-medium text-slate-500">
+                마음에 드는 프로젝트를 탐색하고 📩 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해 보세요!
+              </p>
             </div>
-
-            <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>지원일: {item.appliedAt}</span>
-              <span className="text-[#173F3A] font-extrabold">적합도 {item.seniorFitScore}점</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => void navigate('/senior/projects')}
+              className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-xs md:text-sm font-extrabold text-white shadow-xs hover:bg-[#12332F] transition cursor-pointer"
+            >
+              프로젝트 탐색하러 가기 →
+            </button>
           </div>
-        ))}
+        ) : (
+          visible.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => void navigate('/senior/proposals/1')}
+              className="cursor-pointer flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-block rounded-md bg-[#FAF7F2] border border-[#E0D9C8]/60 px-2.5 py-0.5 text-xs font-bold text-[#173F3A]">
+                    {item.companyName}
+                  </span>
+                  <h3 className="mt-2 text-base md:text-lg font-extrabold text-[#17212B]">
+                    {item.projectTitle}
+                  </h3>
+                </div>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-3 py-1 text-xs font-extrabold border',
+                    item.status === '연락 받음'
+                      ? 'bg-[#ECFDF5] text-[#059669] border-[#10B981]/40'
+                      : 'bg-[#FAF7F2] text-[#F06B4F] border-[#F06B4F]/30',
+                  )}
+                >
+                  {item.status}
+                </span>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2 rounded-xl bg-[#FAF7F2] p-3 text-xs">
+                <div className="flex items-center gap-2 font-bold text-[#173F3A]">
+                  <FileText className="size-4 text-[#173F3A]" />
+                  <span>
+                    첨부된 서류: <strong>{item.resumeFileName}</strong>
+                  </span>
+                </div>
+                {item.interviewSummary ? (
+                  <div className="flex items-start gap-1.5 font-medium text-slate-700">
+                    <span className="shrink-0 font-extrabold text-[#F06B4F]">🎙️ AI 경험 요약:</span>
+                    <span className="line-clamp-2">{item.interviewSummary}</span>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-500">
+                <span>지원일: {item.appliedAt}</span>
+                <span className="text-[#173F3A] font-extrabold">적합도 {item.seniorFitScore}점</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </MobilePage>
   );

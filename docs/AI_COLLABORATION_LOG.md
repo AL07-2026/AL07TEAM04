@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] '내 제안' 화면 미지원 상태 시 더미 시드 제거 및 순수 실제 지원 내역 연동 (`proposalService.ts`, `FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **초기 제안 더미 시드 100% 삭제 (`proposalService.ts`)**: `proposalService.ts`에 존재하던 구형 기본 시드 배열(`INITIAL_SEED_PROPOSALS`)을 완전히 비우고(`[]`), 사용자가 직접 프로젝트 지원서를 제출하기 전까지는 어떠한 임의 지원 건도 표출되지 않도록 엄격히 통제.
+  - **`내 제안` Empty State UI 구축 (`FlowPages.tsx`)**: 지원/제안 내역이 0건일 때 `아직 제출된 지원/제안 내역이 없습니다` 메시지와 함께 프로젝트 DB로 직행 가능한 `프로젝트 탐색하러 가기 →` 액션 버튼 안내 카드 구현.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 경험 분야 선택 화면 전 업종 14개 직종 완전 수용 확장 (`FlowPages.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
