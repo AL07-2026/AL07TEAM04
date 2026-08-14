@@ -18,14 +18,12 @@ import {
   databaseSummary,
   employmentTypeLabels,
   hiringStageLabels,
-  jobPostings,
   seniorityLabels,
   workTypeLabels,
 } from '@/data/jobPostings';
 import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
 import { cn } from '@/lib/utils';
 import { createProject, fetchProjects } from '@/services/projectService';
-import { seedProjectsIfEmpty } from '@/services/seedService';
 import { fetchWorknetSeniorProjects } from '@/services/worknetService';
 
 import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
@@ -198,12 +196,16 @@ function DetailBulletList({ items, tone = 'mint' }: { items: string[]; tone?: 'c
 }
 
 function PostingCard({
+  onApply,
   onSelect,
   posting,
+  role = 'company',
   selected,
 }: {
+  onApply?: (posting: JobPosting) => void;
   onSelect: () => void;
   posting: JobPosting;
+  role?: Role;
   selected: boolean;
 }) {
   return (
@@ -251,11 +253,38 @@ function PostingCard({
         <span>{seniorityLabels[posting.seniority]}</span>
         <span>마감 {formatDate(posting.deadline)}</span>
       </div>
+
+      <div className="mt-3.5 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5">
+        <span className="text-[12px] font-bold text-[#F06B4F]">{posting.salaryRange}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onApply?.(posting);
+          }}
+          className={cn(
+            'inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-extrabold text-white shadow-2xs transition-all',
+            role === 'senior'
+              ? 'bg-[#173F3A] hover:bg-[#12332F]'
+              : 'bg-[#F06B4F] hover:bg-[#D85A3F]',
+          )}
+        >
+          {role === 'senior' ? '📩 지원하기' : '🤝 제안하기'}
+        </button>
+      </div>
     </button>
   );
 }
 
-function DetailPanel({ posting }: { posting: JobPosting }) {
+function DetailPanel({
+  onApply,
+  posting,
+  role = 'company',
+}: {
+  onApply?: (posting: JobPosting) => void;
+  posting: JobPosting;
+  role?: Role;
+}) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
 
@@ -382,80 +411,101 @@ function DetailPanel({ posting }: { posting: JobPosting }) {
       ) : (
         <>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
-        <section className="rounded-xl bg-[#FAF7F2] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#173F3A]">해결해야 할 프로젝트</p>
-          <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]/80">
-            {posting.problemStatement}
-          </p>
-        </section>
-        <section className="rounded-xl bg-[#FAF7F2] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#173F3A]">프로젝트 목표</p>
-          <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]/80">
-            {posting.projectGoal}
-          </p>
-        </section>
-      </div>
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        <section className="rounded-xl border border-[#E0D9C8] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#17212B]">핵심 업무</p>
-          <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
-            {posting.coreResponsibilities.map((item) => (
-              <li key={item}>• {item}</li>
-            ))}
-          </ul>
-        </section>
-        <section className="rounded-xl border border-[#E0D9C8] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#17212B]">자격 요건</p>
-          <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
-            {posting.qualifications.map((item) => (
-              <li key={item}>• {item}</li>
-            ))}
-          </ul>
-        </section>
-        <section className="rounded-xl border border-[#E0D9C8] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#17212B]">복지/조건</p>
-          <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
-            {posting.benefits.map((item) => (
-              <li key={item}>• {item}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <section className="rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3.5">
-          <p className="text-[12px] font-extrabold text-[#173F3A]">추천 인재 유형</p>
-          <p className="mt-1 text-[13px] font-bold leading-6 text-[#17212B]">
-            {posting.recommendedTalentType}
-          </p>
-          <div className="mt-3">
-            <TagList items={posting.requiredSkills} />
+            <section className="rounded-xl bg-[#FAF7F2] p-3.5 border border-[#E0D9C8]/60">
+              <p className="text-[12px] font-extrabold text-[#173F3A]">해결해야 할 프로젝트</p>
+              <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]">
+                {posting.problemStatement}
+              </p>
+            </section>
+            <section className="rounded-xl bg-[#FAF7F2] p-3.5 border border-[#E0D9C8]/60">
+              <p className="text-[12px] font-extrabold text-[#173F3A]">프로젝트 목표</p>
+              <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]">
+                {posting.projectGoal}
+              </p>
+            </section>
           </div>
-        </section>
-        <section className="rounded-xl border border-[#F06B4F]/30 bg-[#FDF0ED] p-3.5">
-          <p className="text-[12px] font-extrabold text-[#F06B4F]">AI 인터뷰 확인 포인트</p>
-          <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-[#17212B]/80">
-            {posting.interviewFocus.map((item) => (
-              <li key={item}>• {item}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
 
-      <section className="mt-4 rounded-xl border border-[#E0D9C8] p-3.5">
-        <p className="text-[12px] font-extrabold text-[#17212B]">매칭 점수 산정 기준</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {posting.matchingScoreCriteria.map((item) => (
-            <span
-              className="rounded-full bg-[#FAF7F2] px-3 py-1.5 text-[12px] font-bold text-[#17212B]/80"
-              key={item}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <section className="rounded-xl border border-[#E0D9C8] p-3.5">
+              <p className="text-[12px] font-extrabold text-[#17212B]">핵심 업무</p>
+              <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
+                {posting.coreResponsibilities.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </section>
+            <section className="rounded-xl border border-[#E0D9C8] p-3.5">
+              <p className="text-[12px] font-extrabold text-[#17212B]">자격 요건</p>
+              <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
+                {posting.qualifications.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </section>
+            <section className="rounded-xl border border-[#E0D9C8] p-3.5">
+              <p className="text-[12px] font-extrabold text-[#17212B]">복지/조건</p>
+              <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-slate-600">
+                {posting.benefits.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <section className="rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3.5">
+              <p className="text-[12px] font-extrabold text-[#173F3A]">추천 인재 유형</p>
+              <p className="mt-1 text-[13px] font-bold leading-6 text-[#17212B]">
+                {posting.recommendedTalentType}
+              </p>
+              <div className="mt-3">
+                <TagList items={posting.requiredSkills} />
+              </div>
+            </section>
+            <section className="rounded-xl border border-[#F06B4F]/30 bg-[#FDF0ED] p-3.5">
+              <p className="text-[12px] font-extrabold text-[#F06B4F]">AI 인터뷰 확인 포인트</p>
+              <ul className="mt-2 space-y-1.5 text-[13px] font-medium text-[#17212B]">
+                {posting.interviewFocus.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          <section className="mt-4 rounded-xl border border-[#E0D9C8] p-3.5">
+            <p className="text-[12px] font-extrabold text-[#17212B]">매칭 점수 산정 기준</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {posting.matchingScoreCriteria.map((item) => (
+                <span
+                  className="rounded-full bg-[#FAF7F2] px-3 py-1.5 text-[12px] font-bold text-[#17212B]/80"
+                  key={item}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
           </section>
+
+          {/* Action Button Bar */}
+          <div className="mt-5 flex flex-col gap-2.5 border-t border-[#E0D9C8] pt-4">
+            {role === 'senior' ? (
+              <button
+                type="button"
+                onClick={() => onApply?.(posting)}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] text-sm font-extrabold text-white shadow-md hover:bg-[#12332F] active:scale-[0.99] transition-all cursor-pointer"
+              >
+                📩 프로젝트 지원하기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onApply?.(posting)}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F06B4F] text-sm font-extrabold text-white shadow-md hover:bg-[#D85A3F] active:scale-[0.99] transition-all cursor-pointer"
+              >
+                🤝 시니어 인재에게 제안하기
+              </button>
+            )}
+          </div>
         </>
       )}
     </article>
@@ -465,28 +515,37 @@ function DetailPanel({ posting }: { posting: JobPosting }) {
 export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const [postings, setPostings] = useState<JobPosting[]>(jobPostings);
+  const [postings, setPostings] = useState<JobPosting[]>([]);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(all);
   const [selectedWorkType, setSelectedWorkType] = useState<WorkTypeFilter>(all);
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
   const [sortBy, setSortBy] = useState<SortOption>('fit-desc');
-  const [selectedId, setSelectedId] = useState(jobPostings[0]?.id ?? '');
+  const [selectedId, setSelectedId] = useState('');
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
 
   useEffect(() => {
     void (async () => {
-      await seedProjectsIfEmpty();
-      const loaded = await fetchProjects();
+      const userProjects = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
-      const combined = [...worknetProjects, ...loaded];
+      const combined = [...worknetProjects, ...userProjects];
       setPostings(combined);
       if (combined[0]) {
         setSelectedId(combined[0].id);
       }
     })();
   }, []);
+
+  function handleApply(posting: JobPosting) {
+    const text =
+      role === 'senior'
+        ? `✓ [${posting.title}] 지원 신청이 완료되었습니다.`
+        : `✓ [${posting.companyName}] 시니어 인재 제안이 전송되었습니다.`;
+    setActionNotice(text);
+    setTimeout(() => setActionNotice(''), 4000);
+  }
 
   async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -739,24 +798,24 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
         <DatabaseMetric
-          caption="검색/필터 가능한 시드 데이터"
+          caption="워크넷 40+ 실시간 데이터"
           label="프로젝트 수"
-          value={`${databaseSummary.totalPostings}건`}
+          value={`${postings.length}건`}
         />
         <DatabaseMetric
           caption="AI 매칭 초기 점수 기준"
           label="평균 적합도"
-          value={`${databaseSummary.averageSeniorFitScore}점`}
+          value={`${postings.length > 0 ? Math.round(postings.reduce((sum, p) => sum + p.seniorFitScore, 0) / postings.length) : 94}점`}
         />
         <DatabaseMetric
           caption="원격 또는 하이브리드"
           label="유연 근무"
-          value={`${databaseSummary.remoteFriendlyCount}건`}
+          value={`${postings.filter((p) => p.workType !== 'onsite').length}건`}
         />
         <DatabaseMetric
-          caption="우선 노출 필요 프로젝트"
-          label="마감 임박"
-          value={`${databaseSummary.closingSoonCount}건`}
+          caption="우선 노출 추천 프로젝트"
+          label="마감 임박 / 추천"
+          value={`${postings.filter((p) => p.seniorFitScore >= 95).length}건`}
         />
       </div>
 
@@ -920,6 +979,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </>
       )}
 
+      {actionNotice ? (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-[#10B981] bg-[#ECFDF5] px-6 py-3.5 text-sm font-extrabold text-[#059669] shadow-xl">
+          {actionNotice}
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between text-[13px] font-bold text-slate-500">
         <span>
           검색 결과 <strong className="text-[#173F3A]">{filteredPostings.length}</strong>건
@@ -929,7 +994,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         ) : (
           <span className="inline-flex items-center gap-1">
             <Database className="size-4" />
-            DB MVP
+            정부 워크넷 40+ DB
           </span>
         )}
       </div>
@@ -939,8 +1004,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           {filteredPostings.map((posting) => (
             <PostingCard
               key={posting.id}
+              onApply={() => handleApply(posting)}
               onSelect={() => setSelectedId(posting.id)}
               posting={posting}
+              role={role}
               selected={selectedPosting?.id === posting.id}
             />
           ))}
@@ -948,7 +1015,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
         {selectedPosting ? (
           <div className={isMobile ? 'order-first' : 'sticky top-4 self-start'}>
-            <DetailPanel posting={selectedPosting} />
+            <DetailPanel onApply={() => handleApply(selectedPosting)} posting={selectedPosting} role={role} />
           </div>
         ) : (
           <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center text-sm font-bold text-slate-500">

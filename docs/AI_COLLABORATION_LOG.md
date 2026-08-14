@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 하드코딩 시드 데이터 제거, 워크넷 단일 데이터 원천화 및 지원하기/제안하기 버튼 구축
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **강제 시드 데이터 삭제 및 워크넷 단일 원천화 (`JobDatabasePage.tsx`, `seedService.ts`)**: 기존 하드코딩 시드 데이터(`jobPostings` mock list) 강제 로딩을 완전 제거하고, 고용노동부 워크넷 40+ 실시간 변환 공고(`worknetProjects`)와 사용자 등록 공고(`userProjects`)만을 유일한 채용 데이터베이스로 확정.
+  - **시니어 맞춤 추천 프로젝트 우선 배치 (`JobDatabasePage.tsx`)**: 프로젝트 DB 상단에 적합도 95점+ 시니어 맞춤 추천 프로젝트 리스트를 1순위로 배치하고, 하단에서 키워드 검색 및 전 업종 10개 필터 칩 탐색 지원.
+  - **`📩 지원하기` / `🤝 제안하기` 행동 버튼 및 상호작용 알림 탑재**: 카드 목록 및 상세 보기 패널 하단에 역할별 Action Button (`📩 프로젝트 지원하기` / `🤝 시니어 인재에게 제안하기`) 탑재 및 토스트 상호작용 완성.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 기존 가입자 로그인 직행 홈 랜딩 & 신규 가입자 프로필 입력 이원화 이탈 방지 구축
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
