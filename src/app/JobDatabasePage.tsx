@@ -462,7 +462,7 @@ function DetailPanel({ posting }: { posting: JobPosting }) {
   );
 }
 
-export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
+export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [postings, setPostings] = useState<JobPosting[]>(jobPostings);
@@ -613,7 +613,7 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
       )}
       role={role}
       showBack={false}
-      title="프로젝트"
+      title={title ?? (role === 'company' ? '프로젝트 관리' : '프로젝트 목록')}
     >
       <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -16,6 +16,7 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
+import { JobDatabasePage } from '@/app/JobDatabasePage';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import { saveExperienceCard } from '@/services/interviewService';
@@ -770,86 +771,7 @@ export function ExperienceCardPage() {
 }
 
 export function ProjectListPage() {
-  const navigate = useNavigate();
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
-  const [filter, setFilter] = useState('전체');
-  const visibleProjects = projects.filter((_, index) => {
-    if (filter === '전체') return true;
-    if (filter === '영업') return index === 1;
-    return index !== 1;
-  });
-
-  return (
-    <MobilePage
-      activeNav="projects"
-      backTo="/senior/experience"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
-      role="senior"
-      title="프로젝트 목록"
-    >
-      {isMobile ? (
-        <section className="rounded-[20px] bg-[#173F3A] p-4 text-white shadow-sm">
-          <div className="flex items-center gap-1.5 text-[12px] font-extrabold text-[#DDEBE7]">
-            <Sparkles aria-hidden="true" className="size-4" />내 경험을 기준으로 찾았어요
-          </div>
-          <strong className="mt-2 block text-[22px] font-extrabold leading-[1.35] tracking-[-0.02em]">
-            잘 맞는 프로젝트를
-            <br />
-            한눈에 확인하세요
-          </strong>
-          <p className="mt-2 text-[13px] font-medium leading-5 text-white/70">
-            운영과 영업 경험을 우선 반영한 추천 결과입니다.
-          </p>
-        </section>
-      ) : null}
-
-      <div
-        aria-label="프로젝트 분야 필터"
-        className="flex gap-2 overflow-x-auto pb-0.5"
-        role="group"
-      >
-        {['전체', '운영', '영업'].map((item) => (
-          <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
-            {item}
-          </Chip>
-        ))}
-      </div>
-
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[12px] font-bold text-slate-500">경험 일치도 높은 순</p>
-          <h2
-            className={cn(
-              'mt-0.5 font-extrabold text-[#17212B]',
-              isMobile ? 'text-[18px]' : 'text-xl md:text-2xl',
-            )}
-          >
-            추천 프로젝트 {visibleProjects.length}개
-          </h2>
-        </div>
-        <span className="rounded-full bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-          맞춤 추천
-        </span>
-      </div>
-
-      <div className={cn('flex flex-col', isMobile ? 'gap-3' : 'gap-4')}>
-        {visibleProjects.map((project) => {
-          const projectIndex = projects.findIndex((item) => item.title === project.title);
-          return (
-            <ProjectCard
-              key={project.title}
-              onClick={() => void navigate(`/senior/projects/${projectIndex + 1}`)}
-              project={project}
-            />
-          );
-        })}
-      </div>
-    </MobilePage>
-  );
+  return <JobDatabasePage role="senior" />;
 }
 
 export function ProjectDetailPage() {
@@ -1304,70 +1226,7 @@ export function ProjectCompletePage() {
 }
 
 export function ProjectManagementPage() {
-  const navigate = useNavigate();
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
-  const [filter, setFilter] = useState('전체');
-  const managed = [
-    {
-      company: '공개 중',
-      title: '신규 서비스 운영 체계 만들기',
-      meta: '받은 제안 5건 · 8월 3일',
-      action: '프로젝트 관리 →',
-    },
-    {
-      company: '공개 중',
-      title: 'B2B 영업 전략 점검',
-      meta: '받은 제안 2건 · 7월 28일',
-      action: '프로젝트 관리 →',
-    },
-  ];
-  return (
-    <MobilePage
-      activeNav="projects"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
-      role="company"
-      showBack={false}
-      title="프로젝트 관리"
-    >
-      <div className="flex gap-2.5">
-        {['전체', '공개 중', '마감'].map((item) => (
-          <Chip
-            key={item}
-            onClick={() => setFilter(item)}
-            role="company"
-            selected={filter === item}
-          >
-            {item}
-          </Chip>
-        ))}
-      </div>
-      <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#17212B]">
-        등록 프로젝트 {filter === '마감' ? 0 : 2}개
-      </h2>
-      <div className="flex flex-col gap-4">
-        {filter !== '마감' ? (
-          managed.map((project) => (
-            <ProjectCard
-              key={project.title}
-              onClick={() => void navigate('/company/proposals')}
-              project={project}
-            />
-          ))
-        ) : (
-          <p className="rounded-xl border border-[#E0D9C8] bg-white p-6 text-base text-slate-500 shadow-xs">
-            마감된 프로젝트가 없습니다.
-          </p>
-        )}
-      </div>
-      <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
-        새 프로젝트 등록
-      </ActionButton>
-    </MobilePage>
-  );
+  return <JobDatabasePage role="company" />;
 }
 
 export function ReceivedProposalsPage() {
