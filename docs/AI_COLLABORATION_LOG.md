@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 경험 분야 선택 화면 전 업종 14개 직종 완전 수용 확장 (`FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **경험 분야 선택 옵션 전면 확장 (`FlowPages.tsx`)**: 기존 8개 단순 분야(`기획`, `운영`, `영업` 등)에서 **프로젝트 DB의 전 업종 14개 직종(`개발/엔지니어링`, `디자인/브랜딩`, `마케팅/영업`, `인사/경영전략`, `제조/R&D`, `운영 효율화`, `성장/그로스`, `레거시 개선`, `AI 자동화`, `데이터 플랫폼`, `보안/리스크`, `기획/전략`, `재무/회계`, `교육/코칭`)**을 모두 선택 칩으로 표출되도록 완벽 확장.
+  - **선택 분야 프로필 및 추천 엔진 자동 동기화 (`handleProceed`)**: 분야 선택 후 `프로젝트 보기` 또는 `AI 경험 인터뷰 진행` 클릭 시, 선택된 칩 정보가 사용자 프로필(`eojob_senior_profile`)에 자동 저장되어 프로젝트 DB 추천 순위에 실시간으로 반영되도록 연결.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] UI 전체 화면(내 정보/경험카드/시드목업) 내 잔여 '김인재' 하드코딩 완전 소탕 & '이동욱' 님 동적 연동
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

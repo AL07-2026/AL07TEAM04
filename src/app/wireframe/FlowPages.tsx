@@ -295,11 +295,27 @@ export function SeniorHomePage() {
   );
 }
 
-const experienceOptions = ['기획', '운영', '영업', '마케팅', '재무', '인사', '기술', '교육'];
+const experienceOptions = [
+  '개발/엔지니어링',
+  '디자인/브랜딩',
+  '마케팅/영업',
+  '인사/경영전략',
+  '제조/R&D',
+  '운영 효율화',
+  '성장/그로스',
+  '레거시 개선',
+  'AI 자동화',
+  '데이터 플랫폼',
+  '보안/리스크',
+  '기획/전략',
+  '재무/회계',
+  '교육/코칭',
+];
 
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(['운영', '영업']);
+  const [selected, setSelected] = useState(['운영 효율화', '마케팅/영업']);
+
   function toggle(option: string) {
     setSelected((current) =>
       current.includes(option)
@@ -309,6 +325,27 @@ export function ExperienceSelectionPage() {
           : current,
     );
   }
+
+  function handleProceed(targetUrl: string) {
+    if (typeof window !== 'undefined' && selected.length > 0) {
+      const savedLocal = localStorage.getItem('eojob_senior_profile');
+      let profile: Record<string, unknown> = {};
+      if (savedLocal) {
+        try {
+          profile = JSON.parse(savedLocal) as Record<string, unknown>;
+        } catch {
+          // ignore
+        }
+      }
+      const updated = {
+        ...profile,
+        field: selected.join(', '),
+      };
+      localStorage.setItem('eojob_senior_profile', JSON.stringify(updated));
+    }
+    void navigate(targetUrl);
+  }
+
   return (
     <MobilePage
       activeNav="projects"
@@ -320,7 +357,7 @@ export function ExperienceSelectionPage() {
       <div className="flex items-center justify-between">
         <p className="text-xs font-extrabold text-[#173F3A]">분야 선택</p>
         <button
-          onClick={() => void navigate('/senior/experience/interview')}
+          onClick={() => handleProceed('/senior/experience/interview')}
           className="text-xs font-extrabold text-[#F06B4F] underline"
           type="button"
         >
@@ -328,7 +365,9 @@ export function ExperienceSelectionPage() {
         </button>
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">경험 분야를 선택하세요</h2>
-      <p className="text-[13px] font-medium text-slate-500">최대 3개까지 선택할 수 있어요.</p>
+      <p className="text-[13px] font-medium text-slate-500">
+        프로젝트 DB의 전 업종 14개 직종 중 최대 3개까지 선택할 수 있어요.
+      </p>
       <div className="flex flex-wrap gap-2.5">
         {experienceOptions.map((option) => (
           <Chip key={option} onClick={() => toggle(option)} selected={selected.includes(option)}>
@@ -343,7 +382,7 @@ export function ExperienceSelectionPage() {
         </span>
       </div>
       <ActionButton
-        onClick={() => void navigate('/senior/experience/interview')}
+        onClick={() => handleProceed('/senior/experience/interview')}
         className="mb-1"
       >
         AI 경험 인터뷰 진행 (추천)
@@ -351,7 +390,7 @@ export function ExperienceSelectionPage() {
       <ActionButton
         secondary
         disabled={!selected.length}
-        onClick={() => void navigate('/senior/projects')}
+        onClick={() => handleProceed('/senior/projects')}
       >
         프로젝트 보기
       </ActionButton>
