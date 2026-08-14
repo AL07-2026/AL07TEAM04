@@ -156,8 +156,9 @@ export function deriveWorknetHiringStage(closeDt?: string, now = new Date()): Hi
 }
 
 function mapEmploymentType(code?: string): EmploymentType {
+  if (code === '11' || code === '21') return 'part-time';
   if (code === '10') return 'full-time';
-  if (code === '20' || code === '21') return 'contract';
+  if (code === '20') return 'contract';
   return 'project';
 }
 
@@ -352,6 +353,32 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
     regDt: '2026-08-13',
     closeDt: '2026-09-28',
     infoSvc: '이어잡 공식 검증',
+  },
+  {
+    wantedAuthNo: 'WN-PART-09',
+    company: '(주) 한국경영파트너스',
+    title: '[시간제/파트타임] 주 3일 시간제 경영자문 및 시니어 마케팅 총괄 고문',
+    indTpNm: '마케팅/영업',
+    region: '서울 서초구',
+    career: '경력 10년 이상 (주 20시간 시간제)',
+    sal: '월 400만원 (주 20시간 시간제)',
+    regDt: '2026-08-14',
+    closeDt: '2026-09-30',
+    infoSvc: '이어잡 공식 검증',
+    empTpCd: '11',
+  },
+  {
+    wantedAuthNo: 'WN-PART-10',
+    company: '(주) 테크노품질연구소',
+    title: '[시간제/파트타임] 파트타임 주 15시간 스마트팩토리 품질인증 자문위원',
+    indTpNm: '제조/R&D',
+    region: '경기 수원시',
+    career: '경력 15년 이상 (시간제 자문)',
+    sal: '월 350만원 (시간제 근로)',
+    regDt: '2026-08-13',
+    closeDt: '2026-09-25',
+    infoSvc: '이어잡 공식 검증',
+    empTpCd: '21',
   },
 ];
 

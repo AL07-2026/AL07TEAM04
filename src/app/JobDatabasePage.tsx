@@ -39,7 +39,7 @@ import {
   seniorityLabels,
   workTypeLabels,
 } from '@/data/jobPostings';
-import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
+import type { EmploymentType, HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
 import { useAuth } from '@/lib/authContext';
 import {
   beginApplicationInterview,
@@ -79,6 +79,7 @@ import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui
 const all = 'all';
 type CategoryFilter = ProjectCategory | typeof all;
 type WorkTypeFilter = WorkType | typeof all;
+type EmploymentTypeFilter = EmploymentType | typeof all;
 type HiringStageFilter = HiringStage | typeof all;
 type SortOption = 'fit-desc' | 'deadline-asc' | 'latest-desc';
 
@@ -89,6 +90,14 @@ const ALLOWED_APPLICATION_FILE_EXTENSIONS = ['pdf', 'doc', 'docx'];
 const categoryFilters: { id: CategoryFilter; label: string }[] = [
   { id: all, label: '전체' },
   ...databaseSummary.categories.map(({ id, label }) => ({ id, label })),
+];
+
+const employmentTypeFilters: { id: EmploymentTypeFilter; label: string }[] = [
+  { id: all, label: '전체 고용 형태' },
+  { id: 'part-time', label: '⏱️ 시간제 (파트타임)' },
+  { id: 'full-time', label: '💼 정규직' },
+  { id: 'contract', label: '📋 계약직' },
+  { id: 'project', label: '🎯 프로젝트 / 자문' },
 ];
 
 const workTypeFilters: { id: WorkTypeFilter; label: string }[] = [
@@ -740,6 +749,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(all);
   const [selectedWorkType, setSelectedWorkType] = useState<WorkTypeFilter>(all);
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState<EmploymentTypeFilter>(all);
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
   const [sortBy, setSortBy] = useState<SortOption>('fit-desc');
   const [selectedId, setSelectedId] = useState('');
@@ -1053,8 +1063,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return postings
       .filter((posting) => {
         const matchesCategory = selectedCategory === all || posting.category === selectedCategory;
-        const matchesWorkType =
-          role === 'senior' || selectedWorkType === all || posting.workType === selectedWorkType;
+        const matchesWorkType = selectedWorkType === all || posting.workType === selectedWorkType;
+        const matchesEmploymentType =
+          selectedEmploymentType === all ||
+          (selectedEmploymentType === 'part-time'
+            ? posting.employmentType === 'part-time' ||
+              posting.title.includes('시간제') ||
+              posting.title.includes('파트타임') ||
+              posting.workSchedule?.includes('시간제') ||
+              posting.experienceYears?.includes('시간제')
+            : posting.employmentType === selectedEmploymentType);
         const matchesHiringStage =
           selectedHiringStage === all || posting.hiringStage === selectedHiringStage;
         const searchableText = [
@@ -1076,6 +1094,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         return (
           matchesCategory &&
           matchesWorkType &&
+          matchesEmploymentType &&
           matchesHiringStage &&
           (!normalizedQuery || searchableText.includes(normalizedQuery))
         );
@@ -1089,13 +1108,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         }
         return second.seniorFitScore - first.seniorFitScore;
       });
-  }, [postings, query, role, selectedCategory, selectedHiringStage, selectedWorkType, sortBy]);
+  }, [postings, query, selectedCategory, selectedEmploymentType, selectedHiringStage, selectedWorkType, sortBy]);
 
   const selectedPosting =
     filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
   const activeFilterCount =
     Number(selectedCategory !== all) +
-    Number(role === 'company' && selectedWorkType !== all) +
+    Number(selectedWorkType !== all) +
+    Number(selectedEmploymentType !== all) +
     Number(selectedHiringStage !== all) +
     Number(sortBy !== 'fit-desc');
   const hasActiveFilters = activeFilterCount > 0 || Boolean(query);
@@ -1115,6 +1135,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setQuery('');
     setSelectedCategory(all);
     setSelectedWorkType(all);
+    setSelectedEmploymentType(all);
     setSelectedHiringStage(all);
     setSortBy('fit-desc');
   }
@@ -1741,15 +1762,20 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               상세 조건
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              {role === 'company' ? (
-                <SelectField
-                  label="근무 형태"
-                  mobile
-                  onChange={setSelectedWorkType}
-                  options={workTypeFilters}
-                  value={selectedWorkType}
-                />
-              ) : null}
+              <SelectField
+                label="고용 형태"
+                mobile
+                onChange={setSelectedEmploymentType}
+                options={employmentTypeFilters}
+                value={selectedEmploymentType}
+              />
+              <SelectField
+                label="근무 방식"
+                mobile
+                onChange={setSelectedWorkType}
+                options={workTypeFilters}
+                value={selectedWorkType}
+              />
               <SelectField
                 label={role === 'senior' ? '공고 상태' : '진행 단계'}
                 mobile
@@ -1757,15 +1783,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 options={activeHiringStageFilters}
                 value={selectedHiringStage}
               />
-              <div className={role === 'company' ? 'col-span-2' : ''}>
-                <SelectField
-                  label="정렬 기준"
-                  mobile
-                  onChange={setSortBy}
-                  options={sortOptions}
-                  value={sortBy}
-                />
-              </div>
+              <SelectField
+                label="정렬 기준"
+                mobile
+                onChange={setSortBy}
+                options={sortOptions}
+                value={sortBy}
+              />
             </div>
           </div>
         </section>
@@ -1789,29 +1813,23 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </section>
 
-          <section
-            className={cn(
-              'grid gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs',
-              role === 'senior' ? 'md:grid-cols-2' : 'md:grid-cols-3',
-            )}
-          >
-            <div
-              className={cn(
-                'flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]',
-                role === 'senior' ? 'md:col-span-2' : 'md:col-span-3',
-              )}
-            >
+          <section className="grid gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs md:grid-cols-4">
+            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B] md:col-span-4">
               <SlidersHorizontal className="size-4 text-[#173F3A]" />
               {role === 'senior' ? '채용 공고 상세 조건' : '프로젝트 상세 조건'}
             </div>
-            {role === 'company' ? (
-              <SelectField
-                label="근무 형태"
-                onChange={setSelectedWorkType}
-                options={workTypeFilters}
-                value={selectedWorkType}
-              />
-            ) : null}
+            <SelectField
+              label="고용 형태"
+              onChange={setSelectedEmploymentType}
+              options={employmentTypeFilters}
+              value={selectedEmploymentType}
+            />
+            <SelectField
+              label="근무 방식"
+              onChange={setSelectedWorkType}
+              options={workTypeFilters}
+              value={selectedWorkType}
+            />
             <SelectField
               label={role === 'senior' ? '공고 상태' : '진행 단계'}
               onChange={setSelectedHiringStage}

@@ -13,7 +13,7 @@ export type ProjectCategory =
 
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type Seniority = 'senior' | 'lead' | 'principal';
-export type EmploymentType = 'full-time' | 'contract' | 'advisory' | 'project';
+export type EmploymentType = 'full-time' | 'contract' | 'part-time' | 'advisory' | 'project';
 export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing';
 
 export type JobPosting = {
@@ -85,6 +85,7 @@ export const seniorityLabels: Record<Seniority, string> = {
 export const employmentTypeLabels: Record<EmploymentType, string> = {
   'full-time': '정규직',
   contract: '계약직',
+  'part-time': '시간제(파트타임)',
   advisory: '자문',
   project: '프로젝트',
 };
