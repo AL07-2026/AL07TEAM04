@@ -545,27 +545,19 @@ function DetailPanel({
 
       {posting.source === 'worknet' ? (
         <div className="mt-4 flex flex-col gap-3">
-          {/* Gemini AI Detailed Problem Analysis & Execution Roadmap */}
+          {/* Gemini AI Detailed Problem Analysis */}
           <div className="rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>🤖 Gemini AI 해결 과제 분석 & 시니어 실행 로드맵</span>
+              <span>🤖 Gemini AI 해결 과제 분석</span>
             </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
                 <p className="text-[12px] font-extrabold text-[#173F3A]">
                   🎯 해결해야 할 핵심 과제 진단
                 </p>
                 <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
                   {posting.problemStatement}
-                </p>
-              </section>
-              <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">
-                  🚀 달성 핵심 목표 및 KPI 지표
-                </p>
-                <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
-                  {posting.projectGoal}
                 </p>
               </section>
             </div>
@@ -675,27 +667,19 @@ function DetailPanel({
         </div>
       ) : (
         <>
-          {/* Gemini AI Detailed Problem & Execution Analysis */}
+          {/* Gemini AI Detailed Problem Analysis */}
           <div className="mt-5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>🤖 Gemini AI 해결 과제 분석 & 시니어 실행 로드맵</span>
+              <span>🤖 Gemini AI 해결 과제 분석</span>
             </div>
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
                 <p className="text-[12px] font-extrabold text-[#173F3A]">
                   🎯 해결해야 할 핵심 과제 진단
                 </p>
-                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
+                <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
                   {posting.problemStatement}
-                </p>
-              </section>
-              <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">
-                  🚀 달성 핵심 목표 및 KPI 지표
-                </p>
-                <p className="mt-2 text-[13px] font-semibold leading-6 text-[#17212B]">
-                  {posting.projectGoal}
                 </p>
               </section>
             </div>
