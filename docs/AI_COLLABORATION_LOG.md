@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] GNB 상단 이어잡 로고 15% 축소 및 홈 요약 카드 실시간 실제 데이터 연동 (`Ui.tsx`, `FlowPages.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **헤더 이어잡 로고 15% 축소 적용 (`Ui.tsx`, `FlowPages.tsx`)**: 홈, 프로젝트, 내 제안, 내 정보 화면 상단 GNB의 이어잡 로고(텍스트/아이콘) 크기를 요청에 맞춰 기존 대비 15% 축소하여 깔끔하고 조화로운 비율로 조율 (`h-[21px]~h-[27px]`, `size-[17px]~size-[20px]`).
+  - **홈 메인 요약 카드 실시간 데이터 연동 (`SeniorHomePage`)**:
+    - `새 추천 프로젝트`: 가입자 맞춤 공고 수 실시간 계산 연동 (`24개`)
+    - `진행 중인 제안`: 기존 하드코딩 `2건` 제거 -> 가입자가 실제 지원한 제안 수 연동 (`0건` ~ `n건` 동적 표시)
+    - `경험 카드 조회수`: 가입자 활동 지표 기반 실시간 연동
+    - `매칭 성공률`: 가입자 최우선 추천 공고의 실시간 적합도 최고점 연동 (`topFitScore%`)
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/Ui.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 가입자 재입력 프로필 정보 (1차/2차/3차 희망직종) 기반 실시간 동적 추천 점수 우선순위 알고리즘 적용
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

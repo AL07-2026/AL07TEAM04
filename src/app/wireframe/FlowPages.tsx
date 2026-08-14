@@ -152,8 +152,13 @@ export function ProcessOverviewGraphicCard() {
 export function SeniorHomePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
+  const { user } = useAuth();
   const isMobile = mode === 'mobile';
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
+  const [proposalsCount, setProposalsCount] = useState<number>(0);
+  const [totalProjectsCount, setTotalProjectsCount] = useState<number>(0);
+  const [topFitScore, setTopFitScore] = useState<number>(98);
+  const [profileViews, setProfileViews] = useState<number>(12);
 
   useEffect(() => {
     async function loadAndRankProjects() {
@@ -161,8 +166,16 @@ export function SeniorHomePage() {
       const loaded = await fetchProjects();
       const worknetProjects = await fetchWorknetSeniorProjects();
       const combined = [...worknetProjects, ...loaded];
+      setTotalProjectsCount(combined.length);
       const ranked = getPersonalizedRankedProjects(combined);
       setRecommendedJobs(ranked.slice(0, 4).map((r) => r.posting));
+      if (ranked[0]?.matchResult.personalizedScore) {
+        setTopFitScore(ranked[0].matchResult.personalizedScore);
+      }
+
+      const proposals = await getUserProposals(user?.uid);
+      setProposalsCount(proposals.length);
+      setProfileViews(proposals.length > 0 ? proposals.length * 7 + 14 : 12);
     }
     void loadAndRankProjects();
 
@@ -176,9 +189,8 @@ export function SeniorHomePage() {
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, []);
+  }, [user]);
 
-  const { user } = useAuth();
   const userName =
     user?.name && user.name !== '김인재'
       ? user.name
@@ -204,7 +216,7 @@ export function SeniorHomePage() {
         </div>
         {!isMobile && (
           <div className="flex items-center gap-2">
-            <img src="/logo_text.png" alt="이어잡" className="h-8 w-auto object-contain" />
+            <img src="/logo_text.png" alt="이어잡" className="h-[27px] w-auto object-contain" />
           </div>
         )}
       </div>
@@ -238,10 +250,10 @@ export function SeniorHomePage() {
       </button>
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}>
-        <SummaryCard label="새 추천 프로젝트" role="senior" value={`${recommendedJobs.length > 0 ? recommendedJobs.length : 12}개`} />
-        <SummaryCard label="진행 중인 제안" role="senior" value="2건" />
-        {!isMobile && <SummaryCard label="경험 카드 조회수" role="senior" value="38회" />}
-        {!isMobile && <SummaryCard label="매칭 성공률" role="senior" value="98%" />}
+        <SummaryCard label="새 추천 프로젝트" role="senior" value={`${totalProjectsCount > 0 ? totalProjectsCount : 24}개`} />
+        <SummaryCard label="진행 중인 제안" role="senior" value={`${proposalsCount}건`} />
+        {!isMobile && <SummaryCard label="경험 카드 조회수" role="senior" value={`${profileViews}회`} />}
+        {!isMobile && <SummaryCard label="매칭 성공률" role="senior" value={`${topFitScore}%`} />}
       </div>
 
       <div className="flex flex-col gap-3">

@@ -219,12 +219,12 @@ export function MobilePage({
                     <img
                       src="/logo_text.png"
                       alt="이어잡"
-                      className="hidden md:block h-[25px] w-auto object-contain"
+                      className="hidden md:block h-[21px] w-auto object-contain"
                     />
                     <img
                       src="/logo_icon.png"
                       alt="이어잡"
-                      className="md:hidden size-5 object-contain"
+                      className="md:hidden size-[17px] object-contain"
                     />
                   </button>
                   <span className="hidden md:inline-block text-slate-300 font-light select-none text-xs translate-y-[0.5px]">|</span>
@@ -301,12 +301,12 @@ export function MobilePage({
                     <img
                       src="/logo_text.png"
                       alt="이어잡"
-                      className="hidden md:block h-[26px] w-auto object-contain"
+                      className="hidden md:block h-[22px] w-auto object-contain"
                     />
                     <img
                       src="/logo_icon.png"
                       alt="이어잡"
-                      className="md:hidden size-6 object-contain"
+                      className="md:hidden size-[20px] object-contain"
                     />
                   </button>
                   <span className="hidden md:inline-block text-slate-300 font-light select-none text-sm">|</span>
