@@ -6,6 +6,7 @@ import {
   BarChart2,
   FileText,
   Info,
+  Loader2,
   Mic,
   RefreshCw,
   Send,
@@ -338,9 +339,11 @@ export function SeniorHomePage() {
   const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(
     null,
   );
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadAndRankProjects() {
+      setIsLoadingRecommendations(true);
       const profilePromise = resolveSeniorProfile(user?.uid);
       const worknetFeedPromise = profilePromise.then((profile) => {
         if (!hasProfileRecommendationCriteria(profile)) {
@@ -391,6 +394,7 @@ export function SeniorHomePage() {
       setHighestFitScore(
         hasSavedExperience ? (topRecommendations[0]?.matchResult.personalizedScore ?? null) : null,
       );
+      setIsLoadingRecommendations(false);
     }
     void loadAndRankProjects();
 
@@ -526,8 +530,11 @@ export function SeniorHomePage() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">
+            <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B] flex items-center gap-2">
               🎯 회원님 조건 맞춤 추천 프로젝트
+              {isLoadingRecommendations ? (
+                <Loader2 className="size-4 animate-spin text-[#173F3A]" />
+              ) : null}
             </h3>
             <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-0.5 text-[11px] font-extrabold text-[#F06B4F]">
               내 정보 기반 · 맞춤 검증 공고
@@ -552,7 +559,26 @@ export function SeniorHomePage() {
         ) : null}
 
         <div className="flex flex-col gap-3">
-          {recommendedJobs.length > 0 ? (
+          {isLoadingRecommendations ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((idx) => (
+                <div
+                  className="flex items-center justify-between rounded-2xl border border-[#E0D9C8]/80 bg-white p-4 shadow-3xs animate-pulse"
+                  key={idx}
+                >
+                  <div className="flex flex-col gap-2 min-w-0 flex-1">
+                    <div className="h-4 w-24 rounded bg-slate-200" />
+                    <div className="h-5 w-3/4 rounded bg-slate-200" />
+                    <div className="h-4 w-1/2 rounded bg-slate-100" />
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0 ml-4">
+                    <div className="h-7 w-20 rounded-xl bg-[#DDEBE7]" />
+                    <div className="h-4 w-14 rounded bg-slate-200 mt-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recommendedJobs.length > 0 ? (
             recommendedJobs.map((job) => (
               <HomeRecommendationRow
                 company={job.companyName}
