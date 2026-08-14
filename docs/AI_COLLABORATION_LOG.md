@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 조회 공고 수치 캡션 '실시간 기준' 정비 및 내부 ID(WORKNET-WN-...) UI 제거 (`JobDatabasePage.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **지표 캡션 개선**: 메트릭 카드의 출처 캡션을 `고용24 Open API 조회 기준` 대신 깔끔하고 직관적인 **`실시간 기준`**으로 변경.
+  - **불필요한 날것의 시스템 ID 제거**: 상세보기 및 공고 헤더에 표출되던 `WORKNET-WN-DESIGN-01 · 모집 중` 등의 불필요한 내부 원문 ID 표시를 완전 삭제하고 **`모집 중 · 디자인/브랜딩`** 등 단정하고 가독성 높은 직종 정보로 대체.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 인재 프로필 '📍 희망 근무 지역' 선택 및 개인화 추천 엔진 가중치 연동 (`profileService.ts`, `recommendationEngine.ts`, `BasicProfilePage.tsx`, `JobDatabasePage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
