@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 구직자 '⏱️ 시간제(파트타임)' 고용 형태 검색 필터 및 워크넷 코드 연동 (`jobPostings.ts`, `worknetService.ts`, `JobDatabasePage.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **구직자 고용 형태 필터 탑재**: 구직자(인재) 프로젝트 탐색 화면에 **`⏱️ 시간제 (파트타임)`**, **`💼 정규직`**, **`📋 계약직`**, **`🎯 프로젝트/자문`** 고용 형태 필터 셀렉터 구축.
+  - **워크넷 시간제 코드 매핑 (`worknetService.ts`)**: 워크넷 API 고용형태 코드 `11`(기간의 정함이 없는 시간제) 및 `21`(기간의 정함이 있는 시간제)과 키워드를 `'part-time'` 고용형태로 자동 분류하여 필터링 연동.
+  - **시니어 우대 시간제 백업 공고 탑재**: 주 15~20시간 시간제 경영자문 및 품질인증 자문위원 공고 연동.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/data/jobPostings.ts`](file:///c:/AL07TEAM04/src/data/jobPostings.ts)
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 조회 공고 수치 캡션 '실시간 기준' 정비 및 내부 ID(WORKNET-WN-...) UI 제거 (`JobDatabasePage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
