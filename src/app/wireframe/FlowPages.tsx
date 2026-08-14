@@ -12,7 +12,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
@@ -77,6 +77,24 @@ const receivedProposals: Project[] = [
     action: '제안 확인 →',
   },
 ];
+
+type InterviewAnswer = {
+  questionId: string;
+  answerText: string;
+  inputType: 'voice' | 'text';
+  createdAt: string;
+};
+
+const currentInterviewQuestionId = 'q1';
+
+function createInterviewAnswer(answerText: string, inputType: InterviewAnswer['inputType']): InterviewAnswer {
+  return {
+    questionId: currentInterviewQuestionId,
+    answerText,
+    inputType,
+    createdAt: new Date().toISOString(),
+  };
+}
 
 export function ProcessOverviewGraphicCard() {
   const { mode } = useViewportMode();
@@ -289,6 +307,12 @@ export function ExperienceSelectionPage() {
 
 export function ExperienceInterviewPage() {
   const navigate = useNavigate();
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
+  const recordingSecondsRef = useRef(0);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordingMimeTypeRef = useRef('audio/webm');
   const [messages, setMessages] = useState([
     { id: 1, sender: 'ai', text: '가장 해결하기 어려웠던 업무 문제는 무엇이었나요?' },
     { id: 2, sender: 'user', text: '반복되는 납기 지연 문제를 개선했습니다.' },
@@ -296,36 +320,216 @@ export function ExperienceInterviewPage() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [voiceNotice, setVoiceNotice] = useState('버튼을 누르면 마이크 권한을 요청합니다.');
+  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [currentAnswer, setCurrentAnswer] = useState<InterviewAnswer | null>(null);
 
-  function handleVoiceInput() {
-    setIsRecording(true);
-    setTimeout(() => {
+  function clearRecordingTimer() {
+    if (recordingTimerRef.current !== null) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }
+
+  function stopMicStream() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }
+
+  function getSupportedAudioMimeType() {
+    if (typeof MediaRecorder === 'undefined') return '';
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm'];
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? '';
+  }
+
+  function formatRecordingTime(totalSeconds: number) {
+    const minutes = Math.floor(totalSeconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
+      return;
+    }
+
+    clearRecordingTimer();
+    stopMicStream();
+    setIsRecording(false);
+  }
+
+  async function transcribeRecordedAudio(audioBlob: Blob) {
+    if (!audioBlob.size) {
+      setVoiceNotice('음성 파일을 읽지 못했어요. 다시 말씀해 주세요.');
+      return;
+    }
+
+    setIsTranscribing(true);
+    setVoiceNotice('음성을 글자로 바꾸고 있어요...');
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'interview-answer.webm');
+
+      const response = await fetch('/api/interview/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = (await response.json().catch(() => null)) as { text?: string; error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? '음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.');
+      }
+
+      const transcribedText = data?.text?.trim();
+      if (!transcribedText) {
+        throw new Error('음성을 잘 듣지 못했어요. 다시 말씀해 주세요.');
+      }
+
+      const voiceAnswer = createInterviewAnswer(transcribedText, 'voice');
+      setCurrentAnswer(voiceAnswer);
+      setInputText(voiceAnswer.answerText);
+      setVoiceNotice('음성을 글자로 바꿨어요. 내용을 확인하고 수정한 뒤 입력해 주세요.');
+    } catch {
+      setVoiceNotice('음성을 글자로 바꾸는 중 문제가 발생했어요. 다시 시도해 주세요.');
+    } finally {
+      setIsTranscribing(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearRecordingTimer();
+      stopMicStream();
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.stop();
+      }
+    };
+  }, []);
+
+  async function handleVoiceInput() {
+    if (isTranscribing) return;
+
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+
+    setVoiceNotice('');
+    setRecordedAudio(null);
+    setCurrentAnswer(null);
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceNotice('이 브라우저에서는 마이크 녹음을 지원하지 않습니다. 모바일 Safari/Chrome을 최신 버전으로 업데이트하거나 텍스트 입력을 이용해 주세요.');
+      return;
+    }
+
+    if (typeof MediaRecorder === 'undefined') {
+      setVoiceNotice('현재 iOS 브라우저 환경에서는 MediaRecorder를 사용할 수 없습니다. iOS/Safari 최신 버전에서 다시 시도하거나 텍스트 입력을 이용해 주세요.');
+      return;
+    }
+
+    const mimeType = getSupportedAudioMimeType();
+    if (!mimeType) {
+      setVoiceNotice('이 브라우저에서는 webm 녹음을 지원하지 않을 수 있습니다. 모바일 Chrome에서 다시 시도하거나 텍스트 입력을 이용해 주세요.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType });
+
+      streamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      recordingMimeTypeRef.current = mimeType;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        clearRecordingTimer();
+        stopMicStream();
+        setIsRecording(false);
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordingMimeTypeRef.current });
+        setRecordedAudio(audioBlob);
+        void transcribeRecordedAudio(audioBlob);
+      };
+
+      recorder.onerror = () => {
+        clearRecordingTimer();
+        stopMicStream();
+        setIsRecording(false);
+        setVoiceNotice('녹음 중 문제가 발생했습니다. 마이크 권한과 브라우저 설정을 확인해 주세요.');
+      };
+
+      recordingSecondsRef.current = 0;
+      setRecordingSeconds(0);
+      setIsRecording(true);
+      setVoiceNotice('녹음 중입니다. 답변을 마치면 버튼을 다시 눌러 종료하세요.');
+      recorder.start(1000);
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds((seconds) => {
+          const nextSeconds = seconds + 1;
+          recordingSecondsRef.current = nextSeconds;
+          return nextSeconds;
+        });
+      }, 1000);
+    } catch (error) {
+      clearRecordingTimer();
+      stopMicStream();
       setIsRecording(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          sender: 'user',
-          text: '생산 일정과 부서 간 협업 방식을 재설계하여 납기 준수율을 향상시켰습니다.',
-        },
-        {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: '훌륭하네요! 말씀하신 내용을 바탕으로 대표 경험 카드를 생성합니다.',
-        },
-      ]);
-    }, 1200);
+
+      const name = error instanceof DOMException ? error.name : '';
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setVoiceNotice('마이크 권한이 거절되었습니다. 브라우저 주소창 또는 iOS 설정에서 마이크 접근을 허용한 뒤 다시 시도해 주세요.');
+        return;
+      }
+
+      setVoiceNotice('마이크를 시작할 수 없습니다. 다른 앱이 마이크를 사용 중인지 확인하거나 텍스트 입력을 이용해 주세요.');
+    }
+  }
+
+  function submitInterviewAnswer(answer: InterviewAnswer) {
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), sender: 'user', text: answer.answerText },
+      { id: Date.now() + 1, sender: 'ai', text: '입력하신 내용으로 경험 카드가 생성되었습니다.' },
+    ]);
+  }
+
+  function handleAnswerTextChange(answerText: string) {
+    setInputText(answerText);
+    setCurrentAnswer((prev) => (prev ? { ...prev, answerText } : null));
   }
 
   function handleTextSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!inputText.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), sender: 'user', text: inputText },
-      { id: Date.now() + 1, sender: 'ai', text: '입력하신 내용으로 경험 카드가 생성되었습니다.' },
-    ]);
+    const answerText = inputText.trim();
+    if (!answerText) return;
+
+    const answer = currentAnswer
+      ? {
+          ...currentAnswer,
+          answerText,
+        }
+      : createInterviewAnswer(answerText, 'text');
+
+    setCurrentAnswer(answer);
+    submitInterviewAnswer(answer);
     setInputText('');
+    setCurrentAnswer(null);
   }
 
   return (
@@ -377,9 +581,17 @@ export function ExperienceInterviewPage() {
           )}
           <button
             onClick={handleVoiceInput}
-            disabled={isRecording}
+            aria-pressed={isRecording}
+            disabled={isTranscribing}
             type="button"
-            className="group relative flex size-20 flex-col items-center justify-center gap-1 rounded-full bg-[#F06B4F] text-white shadow-xl shadow-[#F06B4F]/25 transition-all active:scale-95 hover:scale-105 hover:bg-[#E05A3E]"
+            className={cn(
+              'group relative flex size-20 flex-col items-center justify-center gap-1 rounded-full text-white shadow-xl transition-all active:scale-95 hover:scale-105',
+              isTranscribing
+                ? 'bg-slate-400 shadow-slate-300'
+                : isRecording
+                ? 'bg-[#173F3A] shadow-[#173F3A]/25 hover:bg-[#21544E]'
+                : 'bg-[#F06B4F] shadow-[#F06B4F]/25 hover:bg-[#E05A3E]',
+            )}
           >
             <div
               className={`flex size-8 items-center justify-center rounded-full bg-white/20 ${isRecording ? 'animate-ping' : ''}`}
@@ -391,9 +603,29 @@ export function ExperienceInterviewPage() {
               )}
             </div>
             <span className="text-[10px] font-extrabold tracking-tight">
-              {isRecording ? '듣는 중...' : '말로 답하기'}
+              {isTranscribing ? '변환 중' : isRecording ? '녹음 종료' : '말로 답하기'}
             </span>
           </button>
+        </div>
+
+        <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-center shadow-xs">
+          <span className="text-[11px] font-extrabold text-[#173F3A]">
+            {isTranscribing
+              ? '음성을 글자로 바꾸고 있어요...'
+              : isRecording
+                ? `녹음 중 · ${formatRecordingTime(recordingSeconds)}`
+                : '버튼을 누르면 마이크 권한을 요청합니다.'}
+          </span>
+          {voiceNotice ? (
+            <span aria-live="polite" className="text-[11px] font-semibold text-[#F06B4F]">
+              {voiceNotice}
+            </span>
+          ) : null}
+          {recordedAudio ? (
+            <span className="text-[10px] font-medium text-slate-500">
+              webm Blob 생성 완료 · {(recordedAudio.size / 1024).toFixed(1)}KB
+            </span>
+          ) : null}
         </div>
 
         <form onSubmit={handleTextSubmit} className="flex w-full items-center gap-2">
@@ -401,7 +633,7 @@ export function ExperienceInterviewPage() {
             type="text"
             placeholder="✏️ 직접 입력하기"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => handleAnswerTextChange(e.target.value)}
             className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
           />
           <button
