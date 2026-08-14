@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] 외부 API 연결 상태 뱃지 인디케이터 및 서비스 백업 피드 전환 안내 탑재 (`worknetService.ts`, `JobDatabasePage.tsx`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **API 연결 상태 뱃지 탑재**: 고용24/워크넷 API 연결 상태에 따라 `🟢 실시간 채용정보 API 연결 정상 연동 중` 또는 `⚡ 실시간 외부 API 점검 중 (서비스 보장을 위해 안전 백업 피드가 동작 중입니다)` 상태 인디케이터 배너 표출.
+  - **수동 동기화 & 실시간 재연결 기능**: 네트워크 상태 배너 우측에 `[🔄 실시간 재연결 시도]` 및 `[🔄 동기화]` 버튼을 제공하여 언제든지 API 재호출이 가능하도록 지원.
+  - **무중단 서비스 회복성 (Resilience)**: 외부 API 서버 장애나 키 인증 점검 발생 시에도 사용자에게 깨짐 없는 UX와 40+ 검증 프로젝트 목록을 안전하게 지속 표출.
+  - **Firebase Hosting 라이브 배포 완료**: URL [https://al07team04-bdfcd.web.app](https://al07team04-bdfcd.web.app)에 수정을 완벽히 반영.
+  - **검증**: `npm run validate` (typecheck 0 error, ESLint 0 warning, Vitest 56개 전체 테스트 100% 통과, vite production build 완료).
+- **변경 파일**:
+  - [MODIFY] [`src/services/worknetService.ts`](file:///c:/AL07TEAM04/src/services/worknetService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 구직자 '⏱️ 시간제(파트타임)' 고용 형태 검색 필터 및 워크넷 코드 연동 (`jobPostings.ts`, `worknetService.ts`, `JobDatabasePage.tsx`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
