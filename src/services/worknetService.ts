@@ -38,6 +38,7 @@ export type WorknetProjectFeedStatus =
   'success' | 'profile-required' | 'configuration-error' | 'unavailable';
 
 export type WorknetProjectFeed = {
+  isFallback?: boolean;
   message?: string;
   projects: JobPosting[];
   status: WorknetProjectFeedStatus;
@@ -394,6 +395,8 @@ export async function fetchWorknetSeniorProjectFeed(
     return {
       projects: fallbackProjects,
       status: 'success',
+      isFallback: true,
+      message: '외부 API 연결 점검 상태로 안전 백업 데이터 피드가 동작 중입니다.',
     };
   }
 
@@ -411,6 +414,8 @@ export async function fetchWorknetSeniorProjectFeed(
       return {
         projects: fallbackProjects,
         status: 'success',
+        isFallback: true,
+        message: '외부 API 점검 상태로 안전 백업 피드가 연동되었습니다.',
       };
     }
 
@@ -419,9 +424,20 @@ export async function fetchWorknetSeniorProjectFeed(
       .filter((item) => !isExpiredPosting(item, now))
       .map((item, index) => transformWorknetToSeniorProject(item, index, now));
 
+    if (projects.length === 0) {
+      return {
+        projects: fallbackWorknetJobs.map((item, index) =>
+          transformWorknetToSeniorProject(item, index, now),
+        ),
+        status: 'success',
+        isFallback: true,
+      };
+    }
+
     return {
-      projects: projects.length > 0 ? projects : fallbackWorknetJobs.map((item, index) => transformWorknetToSeniorProject(item, index, now)),
+      projects,
       status: 'success',
+      isFallback: false,
     };
   } catch (error) {
     console.warn('Failed to load Worknet jobs, using fallback feed:', error);
@@ -431,6 +447,8 @@ export async function fetchWorknetSeniorProjectFeed(
     return {
       projects: fallbackProjects,
       status: 'success',
+      isFallback: true,
+      message: '실시간 API 점검 상태로 검증된 백업 피드로 자동 조율되었습니다.',
     };
   }
 }
