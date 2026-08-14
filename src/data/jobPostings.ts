@@ -1,4 +1,8 @@
 export type ProjectCategory =
+  | 'design-brand'
+  | 'marketing-sales'
+  | 'hr-strategy'
+  | 'r-and-d-manufacturing'
   | 'legacy-modernization'
   | 'ai-automation'
   | 'data-platform'
@@ -45,6 +49,10 @@ export type JobPosting = {
 };
 
 export const categoryLabels: Record<ProjectCategory, string> = {
+  'design-brand': '디자인/브랜딩',
+  'marketing-sales': '마케팅/영업',
+  'hr-strategy': '인사/경영전략',
+  'r-and-d-manufacturing': '제조/R&D',
   'legacy-modernization': '레거시 개선',
   'ai-automation': 'AI 자동화',
   'data-platform': '데이터 플랫폼',
@@ -559,6 +567,70 @@ export const jobPostings: JobPosting[] = [
     interviewFocus: ['비용 원인 분해', '절감 우선순위', '알림 기준 설계'],
     seniorFitScore: 92,
     postedAt: '2026-08-11',
+  },
+  {
+    id: 'JOB-016',
+    companyName: '스튜디오 크리에이티브',
+    industry: '디자인 / 브랜딩',
+    companySize: '30-50명',
+    title: '글로벌 브랜드 리디자인 및 UX/UI 가이드 수립 디렉터',
+    category: 'design-brand',
+    seniority: 'lead',
+    employmentType: 'project',
+    hiringStage: 'open',
+    workType: 'hybrid',
+    location: '서울 강남구',
+    experienceYears: '10년 이상 (40세 이상 우대)',
+    salaryRange: '월 750만-1,100만',
+    deadline: '2026-09-20',
+    projectDuration: '3개월',
+    collaborationTargets: ['브랜드디자인팀', 'UI/UX팀', '마케팅팀'],
+    coreResponsibilities: ['브랜드 비주얼 아이덴티티 재정립', '디자인 시스템 수립', 'UI/UX 가이드 작성'],
+    qualifications: ['브랜드/UX 10년 이상 디렉팅 경험', '디자인 시스템 수립 및 총괄 리딩 경험'],
+    benefits: ['하이브리드 유연근무', '프로젝트 성과 인센티브'],
+    problemStatement: '신규 해외 진출에 맞춰 노후화된 브랜드 비주얼과 파편화된 UX/UI 시스템 체계화가 시급합니다.',
+    projectGoal: '통합 브랜드 디자인 가이드라인 수립 및 디자인 시스템 구축 100% 달성',
+    successMetrics: ['브랜드 가이드라인 완성', '디자인 시스템 100% 배포'],
+    requiredSkills: ['Brand Identity', 'UX/UI Direction', 'Design System', 'Visual Strategy'],
+    preferredSkills: ['글로벌 브랜딩 프로젝트 경험', '40+ 시니어 디렉터 경험'],
+    matchingSignals: ['디자인 총괄 디렉팅', '브랜드 리디자인', '디자인 시스템'],
+    recommendedTalentType: '10년 이상 브랜드 디렉팅 및 디자인 시스템 구축 경험을 보유한 40+ 시니어',
+    matchingScoreCriteria: ['디자인 디렉팅 40%', '브랜드 전략 30%', '협업 역량 30%'],
+    interviewFocus: ['과거 대형 브랜드 리디자인 성공 사례', '디자인 시스템 이관 시 부서 설득 경험'],
+    seniorFitScore: 97,
+    postedAt: '2026-08-14',
+  },
+  {
+    id: 'JOB-017',
+    companyName: '(주) 스마트HR랩',
+    industry: '인사 / 조직컨설팅',
+    companySize: '50-100명',
+    title: '40+ 시니어 기반 조직 문화 혁신 및 인사평가 체계 개편',
+    category: 'hr-strategy',
+    seniority: 'principal',
+    employmentType: 'advisory',
+    hiringStage: 'open',
+    workType: 'remote',
+    location: '서울 영등포구',
+    experienceYears: '15년 이상',
+    salaryRange: '월 800만-1,200만',
+    deadline: '2026-09-30',
+    projectDuration: '4개월',
+    collaborationTargets: ['CEO', '인사팀', '각 부서장'],
+    coreResponsibilities: ['조직 문화 평가', '직무 분석 및 보상 체계 개편', '시니어 역량 코칭'],
+    qualifications: ['인사/조직 전략 15년 이상 총괄 경험', 'C-Level 자문 경험'],
+    benefits: ['원격 자문', '고액 자문료 지급'],
+    problemStatement: '기업 성장에 따른 조직 유연성 저하 및 기존 평가/보상 체계의 수율 저하 문제 해결이 시급합니다.',
+    projectGoal: '새로운 직무 기반 평가/보상 가이드라인 수립 및 조직 활성화',
+    successMetrics: ['직무 평가 가이드 작성', '보상 체계 개편안 승인'],
+    requiredSkills: ['HR Strategy', 'Organization Culture', 'Job Evaluation', 'Executive Coaching'],
+    preferredSkills: ['CHRO 경험', '대기업/강소기업 인사총괄 경험'],
+    matchingSignals: ['조직문화 개편', '인사평가 체계', 'CHRO 자문'],
+    recommendedTalentType: '15년 이상 HR CHRO 및 인사전략 총괄을 역임한 시니어 자문위원',
+    matchingScoreCriteria: ['인사전략 40%', '조직문화 30%', '자문 경험 30%'],
+    interviewFocus: ['조직 저항 극복 경험', '새로운 평가체계 안착 방안'],
+    seniorFitScore: 96,
+    postedAt: '2026-08-14',
   },
 ];
 

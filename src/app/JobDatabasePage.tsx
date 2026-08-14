@@ -684,6 +684,10 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
                   name="category"
                   className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                 >
+                  <option value="design-brand">디자인/브랜딩</option>
+                  <option value="marketing-sales">마케팅/영업</option>
+                  <option value="hr-strategy">인사/경영전략</option>
+                  <option value="r-and-d-manufacturing">제조/R&D</option>
                   <option value="operations">운영 효율화</option>
                   <option value="growth">성장/그로스</option>
                   <option value="legacy-modernization">레거시 개선</option>
