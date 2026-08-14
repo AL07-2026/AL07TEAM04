@@ -16,7 +16,9 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
+import { saveExperienceCard } from '@/services/interviewService';
 
 import {
   ActionButton,
@@ -659,6 +661,29 @@ export function ExperienceInterviewPage() {
 
 export function ExperienceCardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSaveCard() {
+    setIsSaving(true);
+    try {
+      if (user?.uid) {
+        await saveExperienceCard({
+          uid: user.uid,
+          title: '반복되는 납기 지연 문제 개선',
+          problem: '생산 일정과 부서 간 협업 불일치',
+          role: '생산관리 책임자로 개선 주도',
+          action: '공정 점검과 협업 방식을 재설계',
+          result: '납기 준수율 향상',
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to save experience card to Firestore:', err);
+    } finally {
+      setIsSaving(false);
+      void navigate('/senior/projects');
+    }
+  }
 
   return (
     <MobilePage
@@ -736,8 +761,8 @@ export function ExperienceCardPage() {
         <ActionButton secondary onClick={() => void navigate('/senior/experience/interview')}>
           수정하기
         </ActionButton>
-        <ActionButton onClick={() => void navigate('/senior/projects')}>
-          경험 저장하기
+        <ActionButton disabled={isSaving} onClick={() => void handleSaveCard()}>
+          {isSaving ? '저장 중...' : '경험 저장하기'}
         </ActionButton>
       </div>
     </MobilePage>

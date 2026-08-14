@@ -16,6 +16,25 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] Firebase Firestore 실시간 데이터베이스 연동 & CRUD 서비스 구축
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **Firestore 프로젝트 DB 연동 (`projectService.ts`)**: `projects` 컬렉션 생성, 조회(`fetchProjects`), 단건 조회, 등록(`createProject`), 수정, 삭제 CRUD 구축.
+  - **초기 시드 데이터 자동 시딩 유틸리티 (`seedService.ts`)**: Firestore `projects` 미초기화 시 8개 고품질 공고 자동 시딩.
+  - **프로필 & 경험 카드 Firestore 연동 (`profileService.ts`, `interviewService.ts`)**: `senior_profiles`, `company_profiles`, `experience_cards` CRUD 구현 및 UI 연결 (`BasicProfilePage`, `CompanyInfoPage`, `ExperienceCardPage`, `JobDatabasePage` 신규 프로젝트 등록 폼).
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 26개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [NEW] [`src/services/projectService.ts`](file:///c:/AL07TEAM04/src/services/projectService.ts)
+  - [NEW] [`src/services/profileService.ts`](file:///c:/AL07TEAM04/src/services/profileService.ts)
+  - [NEW] [`src/services/interviewService.ts`](file:///c:/AL07TEAM04/src/services/interviewService.ts)
+  - [NEW] [`src/services/seedService.ts`](file:///c:/AL07TEAM04/src/services/seedService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`src/app/BasicProfilePage.tsx`](file:///c:/AL07TEAM04/src/app/BasicProfilePage.tsx)
+  - [MODIFY] [`src/app/CompanyInfoPage.tsx`](file:///c:/AL07TEAM04/src/app/CompanyInfoPage.tsx)
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] origin/STT 브랜치 병합 (AssemblyAI 인터뷰 STT 플로우 통합)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

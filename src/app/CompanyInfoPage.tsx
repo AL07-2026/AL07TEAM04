@@ -1,10 +1,11 @@
 import { Building2, LogOut, Pencil } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
+import { getCompanyProfile, saveCompanyProfile } from '@/services/profileService';
 
 type CompanyForm = {
   companyAddress: string;
@@ -30,11 +31,41 @@ export function CompanyInfoPage() {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [message, setMessage] = useState('');
 
-  function handleSave(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (!user?.uid) return;
+    void (async () => {
+      const data = await getCompanyProfile(user.uid);
+      if (data) {
+        setForm({
+          companyName: data.companyName || '(주) 이어잡',
+          companyAddress: data.description || '서울특별시 강남구 테헤란로 123',
+          managerName: user.name || '김담당',
+          email: data.contactEmail || user.email || 'hr@eojob.com',
+          phone: data.contactPhone || '02-1234-5678',
+        });
+      }
+    })();
+  }, [user]);
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.companyName.trim() || !form.managerName.trim() || !form.email.trim()) {
       setMessage('회사명, 담당자명, 이메일은 필수 입력 사항입니다.');
       return;
+    }
+    if (user?.uid) {
+      try {
+        await saveCompanyProfile(user.uid, {
+          companyName: form.companyName,
+          industry: 'B2B Services',
+          companySize: '50-100명',
+          description: form.companyAddress,
+          contactEmail: form.email,
+          contactPhone: form.phone,
+        });
+      } catch (err) {
+        console.error('Failed to save company profile to Firestore:', err);
+      }
     }
     setIsEditing(false);
     setMessage('');

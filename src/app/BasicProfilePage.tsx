@@ -1,10 +1,11 @@
 import { FileText, LogOut, Pencil } from 'lucide-react';
-import { type ChangeEvent, type FormEvent, useRef, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ActionButton, Field, MobilePage, TextAreaField, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
+import { getSeniorProfile, saveSeniorProfile } from '@/services/profileService';
 
 type ProfileForm = {
   email: string;
@@ -58,6 +59,22 @@ export function BasicProfilePage() {
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!user?.uid) return;
+    void (async () => {
+      const data = await getSeniorProfile(user.uid);
+      if (data) {
+        setForm({
+          field: data.field || '서비스 운영',
+          period: data.period || '12년',
+          experience: data.experience || '서비스 운영 프로세스 체계화 및 프로젝트 관리 총괄',
+          phone: data.phone || '010-1234-5678',
+          email: data.email || user.email || 'senior@example.com',
+        });
+      }
+    })();
+  }, [user]);
+
   const update = (key: keyof ProfileForm) => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage('');
@@ -76,11 +93,18 @@ export function BasicProfilePage() {
     setMessage('');
   }
 
-  function handleSave(event: FormEvent) {
+  async function handleSave(event: FormEvent) {
     event.preventDefault();
     if (Object.values(form).some((value) => !value.trim())) {
       setMessage('필수 정보를 모두 입력해 주세요.');
       return;
+    }
+    if (user?.uid) {
+      try {
+        await saveSeniorProfile(user.uid, form);
+      } catch (err) {
+        console.error('Failed to save senior profile to Firestore:', err);
+      }
     }
     setIsEditing(false);
     setMessage('');

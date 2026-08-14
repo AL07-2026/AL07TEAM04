@@ -4,13 +4,14 @@ import {
   Database,
   Filter,
   MapPin,
+  Plus,
   Search,
   SlidersHorizontal,
   Sparkles,
   Target,
   X,
 } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import {
   categoryLabels,
@@ -23,6 +24,8 @@ import {
 } from '@/data/jobPostings';
 import type { HiringStage, JobPosting, ProjectCategory, WorkType } from '@/data/jobPostings';
 import { cn } from '@/lib/utils';
+import { createProject, fetchProjects } from '@/services/projectService';
+import { seedProjectsIfEmpty } from '@/services/seedService';
 
 import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
 
@@ -461,17 +464,87 @@ function DetailPanel({ posting }: { posting: JobPosting }) {
 export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [postings, setPostings] = useState<JobPosting[]>(jobPostings);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(all);
   const [selectedWorkType, setSelectedWorkType] = useState<WorkTypeFilter>(all);
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
   const [sortBy, setSortBy] = useState<SortOption>('fit-desc');
   const [selectedId, setSelectedId] = useState(jobPostings[0]?.id ?? '');
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      await seedProjectsIfEmpty();
+      const loaded = await fetchProjects();
+      if (loaded.length > 0) {
+        setPostings(loaded);
+        if (loaded[0]) {
+          setSelectedId(loaded[0].id);
+        }
+      }
+    })();
+  }, []);
+
+  async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const title = (formData.get('title') as string) || '';
+    const companyName = (formData.get('companyName') as string) || '';
+    const problemStatement = (formData.get('problemStatement') as string) || '';
+    const projectGoal = (formData.get('projectGoal') as string) || '';
+    const category = (formData.get('category') as ProjectCategory) || 'operations';
+
+    if (!title.trim() || !companyName.trim() || !problemStatement.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const created = await createProject({
+        companyName,
+        industry: 'IT / SW',
+        companySize: '50-100명',
+        title,
+        category,
+        seniority: 'lead',
+        employmentType: 'project',
+        hiringStage: 'open',
+        workType: 'hybrid',
+        location: '서울 강남',
+        experienceYears: '10년 이상',
+        salaryRange: '월 600만-900만',
+        deadline: (new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) ?? '2026-09-30',
+        projectDuration: '3개월',
+        collaborationTargets: ['C-Level', '개발팀', '운영팀'],
+        coreResponsibilities: [problemStatement, projectGoal || title],
+        qualifications: ['관련 영역 10년 이상 경력', '프로젝트 주도 경험'],
+        benefits: ['재택/하이브리드 근무', '자율 근태'],
+        problemStatement,
+        projectGoal: projectGoal || title,
+        successMetrics: ['목표 KPI 100% 달성'],
+        requiredSkills: ['전략 수립', '프로세스 개선'],
+        preferredSkills: ['동종 산업 리딩 경험'],
+        matchingSignals: ['유사 문제 해결 경험'],
+        recommendedTalentType: '해당 영역 10년+ 총괄 경험을 가진 시니어 리드',
+        matchingScoreCriteria: ['직무 연관성', '문제 해결 경험', '협업 적합도'],
+        interviewFocus: ['프로젝트 목표 및 성공 경험', '핵심 문제 해결 접근 방식'],
+        seniorFitScore: 95,
+      });
+
+      setPostings((prev) => [created, ...prev]);
+      setSelectedId(created.id);
+      setIsRegisterOpen(false);
+    } catch (err) {
+      console.error('Failed to create project in Firestore:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const filteredPostings = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return jobPostings
+    return postings
       .filter((posting) => {
         const matchesCategory = selectedCategory === all || posting.category === selectedCategory;
         const matchesWorkType = selectedWorkType === all || posting.workType === selectedWorkType;
@@ -509,7 +582,7 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
         }
         return second.seniorFitScore - first.seniorFitScore;
       });
-  }, [query, selectedCategory, selectedHiringStage, selectedWorkType, sortBy]);
+  }, [postings, query, selectedCategory, selectedHiringStage, selectedWorkType, sortBy]);
 
   const selectedPosting =
     filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
@@ -542,9 +615,21 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
       title="프로젝트"
     >
       <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-        <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
-          <Sparkles className="size-3.5" />시니어 맞춤 프로젝트
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
+            <Sparkles className="size-3.5" />시니어 맞춤 프로젝트
+          </p>
+          {role === 'company' && (
+            <button
+              onClick={() => setIsRegisterOpen(true)}
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#173F3A] px-3.5 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-[#21544E] transition-all"
+            >
+              <Plus className="size-4" />
+              <span>새 프로젝트 등록</span>
+            </button>
+          )}
+        </div>
         <h1 className="mt-3 text-[24px] font-extrabold leading-tight text-[#17212B] md:text-[32px]">
           경력과 전문성을 살릴 수 있는 추천 프로젝트
         </h1>
@@ -553,6 +638,93 @@ export function JobDatabasePage({ role = 'company' }: { role?: Role }) {
           한눈에 확인하세요.
         </p>
       </section>
+
+      {/* New Project Registration Modal */}
+      {isRegisterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-[#E0D9C8] bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
+              <h3 className="text-lg font-extrabold text-[#17212B]">🏢 신규 프로젝트 등록</h3>
+              <button
+                onClick={() => setIsRegisterOpen(false)}
+                type="button"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <form onSubmit={handleRegisterProject} className="mt-4 flex flex-col gap-3.5">
+              <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+                <span>회사명 *</span>
+                <input
+                  name="companyName"
+                  required
+                  defaultValue="(주) 기업명"
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+                <span>프로젝트 제목 *</span>
+                <input
+                  name="title"
+                  required
+                  placeholder="예: 서비스 프로세스 자동화 구축"
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+                <span>프로젝트 카테고리</span>
+                <select
+                  name="category"
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
+                >
+                  <option value="operations">운영 효율화</option>
+                  <option value="growth">성장/그로스</option>
+                  <option value="legacy-modernization">레거시 개선</option>
+                  <option value="data-platform">데이터 플랫폼</option>
+                  <option value="ai-automation">AI 자동화</option>
+                  <option value="security">보안/리스크</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+                <span>해결해야 할 문제 (Problem Statement) *</span>
+                <textarea
+                  name="problemStatement"
+                  required
+                  rows={3}
+                  placeholder="기업이 겪고 있는 핵심 문제와 요구사항을 입력해 주세요."
+                  className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+                <span>프로젝트 목표 (Project Goal)</span>
+                <input
+                  name="projectGoal"
+                  placeholder="예: 작업 시간 40% 절감 및 표준 가이드 작성"
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
+                />
+              </label>
+
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterOpen(false)}
+                  className="h-10 rounded-xl border border-[#E0D9C8] px-4 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-10 rounded-xl bg-[#173F3A] px-5 text-xs font-extrabold text-white shadow-xs hover:bg-[#21544E]"
+                >
+                  {isSubmitting ? '등록 중...' : 'Firestore DB에 등록'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
         <DatabaseMetric
