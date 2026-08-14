@@ -561,7 +561,7 @@ export function SeniorHomePage() {
                 key={job.id}
                 meta={`${job.location}${job.workSchedule ? ` · ${job.workSchedule}` : ''}`}
                 onClick={() => void navigate('/senior/projects')}
-                problem={`${job.industry} · ${job.experienceYears}`}
+                problem={job.problemStatement}
                 salary={job.salaryRange}
                 title={job.title}
               />

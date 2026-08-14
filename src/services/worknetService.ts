@@ -445,6 +445,45 @@ const fallbackWorknetJobs: WorknetJobRaw[] = [
   },
 ];
 
+async function fetchWorknetXmlWithCorsFallback(targetUrl: string): Promise<string> {
+  // 1. Direct fetch
+  try {
+    const res = await fetch(targetUrl);
+    if (res.ok) {
+      const text = await res.text();
+      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
+    }
+  } catch (err) {
+    console.warn('Direct Worknet fetch blocked or failed (CORS/Network), attempting CORS proxy...', err);
+  }
+
+  // 2. AllOrigins CORS Proxy
+  try {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const text = await res.text();
+      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
+    }
+  } catch (err) {
+    console.warn('AllOrigins CORS proxy fetch failed:', err);
+  }
+
+  // 3. CorsProxy.io
+  try {
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const text = await res.text();
+      if (text.includes('<wantedRoot>') || text.includes('<message>')) return text;
+    }
+  } catch (err) {
+    console.warn('CorsProxy.io fetch failed:', err);
+  }
+
+  throw new Error('All Worknet fetch endpoints (direct and proxies) failed');
+}
+
 export async function fetchWorknetSeniorProjectFeed(
   options: WorknetProjectSearchOptions = {},
 ): Promise<WorknetProjectFeed> {
@@ -465,10 +504,10 @@ export async function fetchWorknetSeniorProjectFeed(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const params = createWorknetJobSearchParams(WORKNET_JOB_API_KEY, options);
-      const response = await fetch(`${WORKNET_JOB_ENDPOINT}?${params.toString()}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const targetUrl = `${WORKNET_JOB_ENDPOINT}?${params.toString()}`;
+      const xmlText = await fetchWorknetXmlWithCorsFallback(targetUrl);
 
-      const parsed = parseWorknetJobXml(await response.text());
+      const parsed = parseWorknetJobXml(xmlText);
       if (parsed.error || parsed.items.length === 0) {
         if (attempt < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, 500));
