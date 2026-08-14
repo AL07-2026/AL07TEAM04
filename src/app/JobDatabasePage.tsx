@@ -1625,7 +1625,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4')}>
         <DatabaseMetric
-          caption={role === 'senior' ? '최근 일주일 실시간 기준' : '회사 직접 등록 기준'}
+          caption={role === 'senior' ? '실시간 기준' : '회사 직접 등록 기준'}
           label={role === 'senior' ? '조회 공고' : '등록 프로젝트'}
           value={`${postings.length}건`}
         />
