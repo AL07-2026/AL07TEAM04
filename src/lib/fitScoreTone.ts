@@ -10,12 +10,12 @@ export type FitScoreTone = {
 export function getFitScoreTone(score: number): FitScoreTone {
   if (score >= 90) {
     return {
-      barClassName: 'bg-[#173F3A]',
-      containerClassName: 'border-[#173F3A] bg-[#173F3A] text-white',
+      barClassName: 'bg-[#F06B4F]',
+      containerClassName: 'border-[#F06B4F] bg-[#F06B4F] text-white shadow-xs',
       label: '매우 높음',
-      labelClassName: 'text-white/75',
+      labelClassName: 'text-white/85',
       rangeLabel: '90점 이상',
-      scoreClassName: 'text-[#FFB19F]',
+      scoreClassName: 'text-white font-extrabold',
     };
   }
 
