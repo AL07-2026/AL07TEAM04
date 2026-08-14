@@ -569,7 +569,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   // Interactive Application Modal State
   const [applyingPosting, setApplyingPosting] = useState<JobPosting | null>(null);
-  const [resumeFileName, setResumeFileName] = useState('2026_김시니어_경험이력서_포트폴리오.pdf');
+  const [resumeFileName, setResumeFileName] = useState('2026_이동욱_경험이력서_포트폴리오.pdf');
   const [applicantNote, setApplicantNote] = useState('');
   const [isApplying, setIsApplying] = useState(false);
 

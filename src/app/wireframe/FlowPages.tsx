@@ -50,7 +50,7 @@ const projects: Project[] = [
 ];
 
 const receivedProposals: Project[] = [
-  { company: '김인재', title: '서비스 운영 15년', meta: '검토 전 · 오늘', action: '제안 확인 →' },
+  { company: '이동욱 (시니어 인재)', title: '서비스 운영 15년', meta: '검토 전 · 오늘', action: '제안 확인 →' },
   {
     company: '박경험',
     title: 'B2B 운영과 영업 12년',
@@ -1404,7 +1404,7 @@ export function ReceivedProposalDetailPage() {
             <ShieldCheck className="size-3.5 text-[#F06B4F]" /> 98% AI 매칭
           </span>
         </div>
-        <p className="text-xs font-medium text-slate-500">김인재 · 서비스 운영 15년 · 프로세스 설계</p>
+        <p className="text-xs font-medium text-slate-500">이동욱 · 서비스 운영 12년 · 프로세스 설계</p>
       </div>
 
       {/* AI Match Score Gauge */}
@@ -1507,7 +1507,16 @@ export function ReceivedProposalDetailPage() {
 export function SeniorProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
+  const { user } = useAuth();
   const isMobile = mode === 'mobile';
+
+  const userName =
+    user?.name && user.name !== '김인재'
+      ? user.name
+      : user?.email === 'sehddnr2@gmail.com'
+        ? '이동욱'
+        : user?.name || '이동욱';
+  const userEmail = user?.email || 'sehddnr2@gmail.com';
 
   return (
     <MobilePage
@@ -1523,16 +1532,16 @@ export function SeniorProfilePage() {
       {/* Profile Header Card */}
       <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
-          김
+          {userName[0] || '이'}
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">김인재 님</strong>
+            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">{userName} 님</strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 본인 인증
             </span>
           </div>
-          <span className="text-xs font-bold text-slate-500 truncate">sehddnr2@naver.com</span>
+          <span className="text-xs font-bold text-slate-500 truncate">{userEmail}</span>
           <span className="text-xs font-extrabold text-[#F06B4F]">시니어 인재 회원</span>
         </div>
       </div>

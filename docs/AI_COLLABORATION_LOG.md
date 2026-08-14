@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-14] UI 전체 화면(내 정보/경험카드/시드목업) 내 잔여 '김인재' 하드코딩 완전 소탕 & '이동욱' 님 동적 연동
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  - **`내 정보` (`SeniorProfilePage`) 및 경험 카드 화면 잔여 하드코딩 제거 (`FlowPages.tsx`)**: 하단 네비게이션 `내 정보`(` /senior/profile`) 탭 클릭 시 프로필 헤더 카드에 남아 있던 `김인재 님`, 아바타 `김`, `sehddnr2@naver.com` 문구를 완전히 소탕하고 로그인 유저인 **`이동욱`** 님 성함과 이메일(`sehddnr2@gmail.com`)로 동적 전환 완료.
+  - **이력서 파일명 및 기본 통지 기본값 보정 (`proposalService.ts`, `JobDatabasePage.tsx`)**: 기본 제출 이력서 파일명을 `2026_이동욱_경험이력서_포트폴리오.pdf`로 일괄 업데이트.
+  - **Firebase Hosting 라이브 배포 완료**: URL `https://al07team04-bdfcd.web.app`에 성공적으로 반영.
+  - **검증**: `npm run validate` (typecheck, lint, Vitest 28개 테스트 100% 통과, vite production build) 완벽 통과.
+- **변경 파일**:
+  - [MODIFY] [`src/app/wireframe/FlowPages.tsx`](file:///c:/AL07TEAM04/src/app/wireframe/FlowPages.tsx)
+  - [MODIFY] [`src/services/proposalService.ts`](file:///c:/AL07TEAM04/src/services/proposalService.ts)
+  - [MODIFY] [`src/app/JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx)
+  - [MODIFY] [`docs/AI_COLLABORATION_LOG.md`](file:///c:/AL07TEAM04/docs/AI_COLLABORATION_LOG.md)
+
+
 ### [2026-08-14] 실제 가입자 정보 (희망 직종, 경험한 분야, 해결 경험) 기반 맞춤 채용 추천 엔진 완성
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:
