@@ -298,7 +298,7 @@ export function calculatePersonalizedMatch(
 
   if (isSpecificCategoryActive || isCustomOccupationActive) {
     if (categoryPriority >= 0) {
-      baseScore = 94;
+      baseScore = 91;
       matchReasons.push(
         `선택한 직종 ${categoryLabel}과(와) 공고 내용이 일치합니다.`,
       );
@@ -308,17 +308,17 @@ export function calculatePersonalizedMatch(
     }
   } else {
     if (categoryPriority === 0) {
-      baseScore = 94;
+      baseScore = 90;
       matchReasons.push(
         `1순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 1) {
-      baseScore = 87;
+      baseScore = 80;
       matchReasons.push(
         `2순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 2) {
-      baseScore = 82;
+      baseScore = 72;
       matchReasons.push(
         `3순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
@@ -350,12 +350,12 @@ export function calculatePersonalizedMatch(
   const postingTokens = new Set(tokenizeRecommendationText(postingText));
   const sharedProfileTokens = profileSpecialtyTokens.filter((token) => postingTokens.has(token));
   if (sharedProfileTokens.length >= 3) {
-    baseScore += 7;
+    baseScore += 4;
     matchReasons.push(
       `내 정보의 ${sharedProfileTokens.slice(0, 3).join(', ')} 전문 분야가 공고와 밀접하게 일치합니다.`,
     );
   } else if (sharedProfileTokens.length === 2) {
-    baseScore += 5;
+    baseScore += 2;
     matchReasons.push(`내 정보의 ${sharedProfileTokens.join(', ')} 전문 분야가 공고와 일치합니다.`);
   } else if (sharedProfileTokens.length === 1) {
     baseScore += 1;
@@ -407,15 +407,26 @@ export function calculatePersonalizedMatch(
         `희망 근무 지역 ${desiredLocation}과 공고 위치(${postingLoc})가 일치합니다.`,
       );
     } else {
-      baseScore -= 3;
+      baseScore -= 4;
       matchReasons.push(`공고 위치(${postingLoc})가 희망 지역(${desiredLocation})과 다릅니다.`);
     }
   } else if (desiredLocation === '전국' || desiredLocation === '전체') {
     matchReasons.push('전국 희망 근무 지역 조건이 적용되었습니다.');
   }
 
+  let finalScore = baseScore;
+  if (categoryPriority < 0) {
+    finalScore = Math.min(55, finalScore);
+  } else if (categoryPriority === 0) {
+    finalScore = Math.min(99, Math.max(90, finalScore));
+  } else if (categoryPriority === 1) {
+    finalScore = Math.min(89, Math.max(80, finalScore));
+  } else if (categoryPriority === 2) {
+    finalScore = Math.min(79, Math.max(72, finalScore));
+  }
+
   return {
-    personalizedScore: Math.min(99, Math.max(0, baseScore)),
+    personalizedScore: Math.round(finalScore),
     experienceRecommendationApplied,
     matchReasons,
     posting,

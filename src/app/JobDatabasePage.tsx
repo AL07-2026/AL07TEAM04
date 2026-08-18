@@ -382,11 +382,13 @@ function PostingCard({
     activePrimaryCategory,
     experienceCard,
   );
-  const displayScore = profile ? posting.seniorFitScore || matchResult.personalizedScore : posting.seniorFitScore;
-  const displayReasons =
-    posting.recommendationReasons?.length ? posting.recommendationReasons : matchResult.matchReasons;
+  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
+  const displayScore = hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : (posting.seniorFitScore || 75);
+  const displayReasons = hasUserProfile && matchResult.matchReasons.length > 0
+    ? matchResult.matchReasons
+    : (posting.recommendationReasons?.length ? posting.recommendationReasons : ['시니어 우대 공고']);
   const fitTone = getFitScoreTone(displayScore);
-  const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
+  const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
 
   // Clean problem statement text to avoid repeating company name and title

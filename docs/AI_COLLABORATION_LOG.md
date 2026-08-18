@@ -16,7 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 채용 공고 카드 UI 전면 정제 (뱃지 노이즈 축소 + 문구 중복 정제 + 모던 레이아웃)
+### [2026-08-18] 공고 제목 중복 문구 정제 및 개인 맞춤 적합도 점수 알고리즘 정밀 고도화
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - **제목 중복 정제 (`normalizeCompanyAndTitle`)**: `아이디플러스 (IDPLUS)`와 같이 기업명에 괄호 영문명이 있을 때 `아이디플러스 의 아이디플러스`처럼 이중 중복 표기되던 현상 및 `채용합니다 채용` 등 뒤에 무분별하게 붙던 중복 채용 텍스트 정제.
+  - **개인 맞춤 적합도 점수 고도화 (`calculatePersonalizedMatch`)**:
+    - 기존 백엔드 고정 점수(90점 등)가 사용자 프로필을 덮어쓰던 우선순위 버그를 수정하여, **사용자가 등록한 희망 직종(1순위, 2순위, 3순위), 보유 역량, 경력 연수, 희망 근무지에 의해서만 선명하게 맞춤 점수가 산출**되도록 정밀 조정.
+    - **1순위 희망 직종**: **90 ~ 99점** (우수 맞춤)
+    - **2순위 희망 직종**: **80 ~ 89점**
+    - **3순위 희망 직종**: **72 ~ 79점**
+    - **연관 없는 다른 직종**: **30 ~ 55점** (최대 55점 캡 적용으로 무분별한 90점대 노출 전면 차단)
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/data/occupationCategories.ts`
+  - [MODIFY] `src/services/recommendationEngine.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `functions/lib/backendAccumulator.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - 기존 공고 카드 상단에 6~8개 뱃지가 3행으로 무분별하게 겹치던 노이즈 현상을 **최대 3개 핵심 뱃지 단일 행**으로 정돈함.

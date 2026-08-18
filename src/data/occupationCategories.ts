@@ -533,24 +533,40 @@ export function normalizeCompanyAndTitle(
   company = company.replace(/^\[(?:구인|채용|모집|공고|서울시|공공)\]\s*/gi, '').trim();
   if (!company || company === '기업명 미제공') company = '우수 시니어 협력기업';
 
+  // 1. Strip prefix bracket tags like [서울시 일자리] or [채용] or [아이디플러스]
   title = title.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤|긴급|추천|우수)\]\s*/gi, '').trim();
+  title = title.replace(/^\[[^\]]{1,20}\]\s*/g, (match) => {
+    const inner = match.replace(/[[\]]/g, '').trim();
+    const firstPart = (company.split('(')[0] || company).trim();
+    if (company.includes(inner) || inner.includes(firstPart)) {
+      return '';
+    }
+    return match;
+  }).trim();
+
+  // 2. Extract base company name without parenthetical suffixes (e.g. "아이디플러스 (IDPLUS)" -> "아이디플러스")
+  const baseCompanyWithoutParen = (company.split('(')[0] || company).replace(/\(주\)|㈜|주식회사|\(유\)|\(사\)|\(재\)/g, '').trim();
+  const cleanCompanyBase = company.replace(/\(주\)|㈜|주식회사|\(유\)|\(사\)|\(재\)/g, '').trim();
+
+  const candidateBases = [cleanCompanyBase, baseCompanyWithoutParen].filter((b) => b && b.length >= 2);
+  for (const base of candidateBases) {
+    const escCompany = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^(?:\\(주\\)|㈜)?${escCompany}(?:\\(주\\)|㈜|\\([^)]+\\))?(?:에서|의)?\\s*`, 'gi');
+    title = title.replace(regex, '').trim();
+  }
 
   if (company && title.startsWith(company)) {
     title = title.slice(company.length).replace(/^[의\s_:-]+/, '').trim();
   }
-  const cleanCompanyBase = company.replace(/\(주\)|㈜|주식회사|\(유\)|\(사\)|\(재\)/g, '').trim();
-  if (cleanCompanyBase.length >= 2) {
-    const escCompany = cleanCompanyBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`^(?:\\(주\\)|㈜)?${escCompany}(?:\\(주\\)|㈜)?(?:에서|의)?\\s*`, 'i');
-    title = title.replace(regex, '').trim();
-  }
 
+  // 3. Remove promotional phrases and verb suffixes
   title = title.replace(/(?:에서|와\s*함께)\s*(?:함께\s*)?(?:성장하세요|일해요|함께해요|근무할|일하실|보람찬|활력을\s*더하는|경험\s*풍부한)[!.\s]*/gi, ' ').trim();
-  title = title.replace(/\s*(?:를|을|에서)?\s*(?:모집합니다|구합니다|채용합니다|모십니다|찾습니다)[!.\s]*/gi, '').trim();
+  title = title.replace(/\s*(?:를|을|에서)?\s*(?:모집합니다|구합니다|채용합니다|모십니다|찾습니다)[!.\s]*/gi, ' ').trim();
 
-  title = title.replace(/\s*채용\s*채용$/g, ' 채용').trim();
-  title = title.replace(/\s*공개\s*채용\s*채용$/g, ' 공개 채용').trim();
-  title = title.replace(/\s*구인\s*구인$/g, ' 구인').trim();
+  // 4. Clean duplicate "채용", "구인", "모집" suffixes
+  title = title.replace(/\s*(?:채용합니다|모집합니다|구합니다)\s*(?:채용|구인|모집|공고)?$/gi, ' 채용').trim();
+  title = title.replace(/\s*채용\s*채용$/gi, ' 채용').trim();
+  title = title.replace(/\s*구인\s*구인$/gi, ' 구인').trim();
 
   title = title.replace(/\s*외\s*\([^)]*\)/g, '').trim();
 
