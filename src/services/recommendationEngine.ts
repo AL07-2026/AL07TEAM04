@@ -298,32 +298,32 @@ export function calculatePersonalizedMatch(
 
   if (isSpecificCategoryActive || isCustomOccupationActive) {
     if (categoryPriority >= 0) {
-      baseScore = 91;
+      baseScore = 78;
       matchReasons.push(
         `선택한 직종 ${categoryLabel}과(와) 공고 내용이 일치합니다.`,
       );
     } else {
-      baseScore = 40;
+      baseScore = 28;
       matchReasons.push(`선택한 직종과 다른 직종 공고입니다.`);
     }
   } else {
     if (categoryPriority === 0) {
-      baseScore = 90;
+      baseScore = 78;
       matchReasons.push(
         `1순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 1) {
-      baseScore = 80;
+      baseScore = 64;
       matchReasons.push(
         `2순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 2) {
-      baseScore = 72;
+      baseScore = 52;
       matchReasons.push(
         `3순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else {
-      baseScore = 40;
+      baseScore = 28;
       matchReasons.push('등록한 희망 직종과 직접 일치하지 않아 참고 공고로 분류됩니다.');
     }
   }
@@ -332,10 +332,10 @@ export function calculatePersonalizedMatch(
     (keyword) => userExperienceText.includes(keyword) && postingText.includes(keyword),
   );
   if (matchedKeywords.length >= 3) {
-    baseScore += 4;
+    baseScore += 6;
     matchReasons.push(`핵심 역량 ${matchedKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
   } else if (matchedKeywords.length > 0) {
-    baseScore += 2;
+    baseScore += 3;
     matchReasons.push(`경력 키워드 ${matchedKeywords.join(', ')}가 공고와 연결됩니다.`);
   }
 
@@ -350,15 +350,15 @@ export function calculatePersonalizedMatch(
   const postingTokens = new Set(tokenizeRecommendationText(postingText));
   const sharedProfileTokens = profileSpecialtyTokens.filter((token) => postingTokens.has(token));
   if (sharedProfileTokens.length >= 3) {
-    baseScore += 4;
+    baseScore += 6;
     matchReasons.push(
       `내 정보의 ${sharedProfileTokens.slice(0, 3).join(', ')} 전문 분야가 공고와 밀접하게 일치합니다.`,
     );
   } else if (sharedProfileTokens.length === 2) {
-    baseScore += 2;
+    baseScore += 4;
     matchReasons.push(`내 정보의 ${sharedProfileTokens.join(', ')} 전문 분야가 공고와 일치합니다.`);
   } else if (sharedProfileTokens.length === 1) {
-    baseScore += 1;
+    baseScore += 2;
     matchReasons.push(`내 정보의 ${sharedProfileTokens[0]} 관련 경험을 반영했습니다.`);
   }
 
@@ -377,7 +377,7 @@ export function calculatePersonalizedMatch(
     }
 
     if (matchedExperienceTokens.length >= 3) {
-      baseScore += 5;
+      baseScore += 4;
       experienceRecommendationApplied = true;
       matchReasons.push(
         `AI 경험 인터뷰의 ${matchedExperienceTokens.slice(0, 3).join(', ')} 경험이 공고와 연결됩니다.`,
@@ -393,7 +393,7 @@ export function calculatePersonalizedMatch(
 
   const experienceYears = Number.parseInt(activeProfile.period, 10) || 0;
   if (experienceYears >= 10) {
-    baseScore += 1;
+    baseScore += 2;
     matchReasons.push(`입력한 경력 ${experienceYears}년을 반영했습니다.`);
   }
 
@@ -407,7 +407,7 @@ export function calculatePersonalizedMatch(
         `희망 근무 지역 ${desiredLocation}과 공고 위치(${postingLoc})가 일치합니다.`,
       );
     } else {
-      baseScore -= 4;
+      baseScore -= 5;
       matchReasons.push(`공고 위치(${postingLoc})가 희망 지역(${desiredLocation})과 다릅니다.`);
     }
   } else if (desiredLocation === '전국' || desiredLocation === '전체') {
@@ -416,13 +416,13 @@ export function calculatePersonalizedMatch(
 
   let finalScore = baseScore;
   if (categoryPriority < 0) {
-    finalScore = Math.min(55, finalScore);
+    finalScore = Math.min(45, Math.max(15, finalScore));
   } else if (categoryPriority === 0) {
-    finalScore = Math.min(99, Math.max(90, finalScore));
+    finalScore = Math.min(98, Math.max(72, finalScore));
   } else if (categoryPriority === 1) {
-    finalScore = Math.min(89, Math.max(80, finalScore));
+    finalScore = Math.min(85, Math.max(58, finalScore));
   } else if (categoryPriority === 2) {
-    finalScore = Math.min(79, Math.max(72, finalScore));
+    finalScore = Math.min(72, Math.max(48, finalScore));
   }
 
   return {
@@ -431,7 +431,7 @@ export function calculatePersonalizedMatch(
     matchReasons,
     posting,
     primaryCategoryMatch: categoryPriority >= 0,
-    rankingScore: baseScore,
+    rankingScore: Math.round(baseScore),
   };
 }
 
