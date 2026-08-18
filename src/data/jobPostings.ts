@@ -27,6 +27,9 @@ export type JobPosting = {
   title: string;
   category: ProjectCategory;
   occupationCategory?: OccupationCategory;
+  occupationClassificationConfidence?: number;
+  occupationClassificationMargin?: number;
+  occupationClassificationStatus?: 'classified' | 'ambiguous';
   seniority: Seniority;
   employmentType: EmploymentType;
   hiringStage: HiringStage;
@@ -50,13 +53,16 @@ export type JobPosting = {
   matchingScoreCriteria: string[];
   interviewFocus: string[];
   seniorFitScore: number;
+  recommendationReasons?: string[];
+  experienceRecommendationApplied?: boolean;
   postedAt: string;
-  source?: 'internal' | 'worknet';
+  source?: 'internal' | 'worknet' | 'seoul' | 'public';
   sourceUrl?: string;
   sourceProvider?: string;
   workSchedule?: string;
   deadlineLabel?: string;
   registeredLabel?: string;
+  contactEmail?: string;
 };
 
 export const categoryLabels: Record<ProjectCategory, string> = {

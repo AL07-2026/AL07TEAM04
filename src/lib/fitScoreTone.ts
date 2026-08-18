@@ -13,9 +13,9 @@ export function getFitScoreTone(score: number): FitScoreTone {
       barClassName: 'bg-[#F06B4F]',
       containerClassName: 'border-[#F06B4F] bg-[#F06B4F] text-white shadow-xs',
       label: '매우 높음',
-      labelClassName: 'text-white/85',
+      labelClassName: 'text-white/85 whitespace-nowrap',
       rangeLabel: '90점 이상',
-      scoreClassName: 'text-white font-extrabold',
+      scoreClassName: 'text-white font-extrabold whitespace-nowrap',
     };
   }
 
@@ -24,9 +24,9 @@ export function getFitScoreTone(score: number): FitScoreTone {
       barClassName: 'bg-[#F06B4F]',
       containerClassName: 'border-[#F06B4F]/55 bg-[#FDF0ED] text-[#7F3427]',
       label: '높음',
-      labelClassName: 'text-[#7F3427]/75',
+      labelClassName: 'text-[#7F3427]/75 whitespace-nowrap',
       rangeLabel: '80점 이상',
-      scoreClassName: 'text-[#A94230]',
+      scoreClassName: 'text-[#A94230] whitespace-nowrap',
     };
   }
 
@@ -35,9 +35,9 @@ export function getFitScoreTone(score: number): FitScoreTone {
       barClassName: 'bg-[#A9934A]',
       containerClassName: 'border-[#CDBF8C] bg-[#F7F3E7] text-[#5C512D]',
       label: '보통',
-      labelClassName: 'text-[#5C512D]/75',
+      labelClassName: 'text-[#5C512D]/75 whitespace-nowrap',
       rangeLabel: '70점 이상',
-      scoreClassName: 'text-[#6E5E2F]',
+      scoreClassName: 'text-[#6E5E2F] whitespace-nowrap',
     };
   }
 
@@ -45,8 +45,8 @@ export function getFitScoreTone(score: number): FitScoreTone {
     barClassName: 'bg-slate-500',
     containerClassName: 'border-slate-300 bg-slate-100 text-slate-700',
     label: '참고',
-    labelClassName: 'text-slate-500',
+    labelClassName: 'text-slate-500 whitespace-nowrap',
     rangeLabel: '70점 미만',
-    scoreClassName: 'text-slate-700',
+    scoreClassName: 'text-slate-700 whitespace-nowrap',
   };
 }

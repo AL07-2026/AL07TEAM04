@@ -27,3 +27,6 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Firebase local cache
+.firebase/

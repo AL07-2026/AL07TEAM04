@@ -79,19 +79,6 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
   return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
 }
 
-const roleStyles = {
-  senior: {
-    accent: 'text-[#173F3A]',
-    background:
-      'bg-gradient-to-t from-[#12332F] via-[#173F3A] to-[#1E4E48] hover:from-[#0E2825] hover:to-[#173F3A]',
-  },
-  company: {
-    accent: 'text-[#173F3A]',
-    background:
-      'bg-gradient-to-t from-[#12332F] via-[#173F3A] to-[#21544E] hover:from-[#0E2825] hover:to-[#173F3A]',
-  },
-};
-
 type MobilePageProps = {
   activeNav?: SeniorNav | CompanyNav;
   backTo?: string;
@@ -119,9 +106,10 @@ export function MobilePage({
   return (
     <>
       {isMobileMode ? (
-        <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
-          <section className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:h-[844px] sm:min-h-0 sm:rounded-[28px] sm:border relative">
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
+        <main className="h-dvh max-h-dvh overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
+          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-[390px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
+            {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
+            <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
                 {showBack ? (
                   <button
@@ -146,7 +134,7 @@ export function MobilePage({
               </div>
 
               {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
-              <div className="hidden sm:flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
+              <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
                 <button
                   type="button"
                   onClick={() => setViewportMode('pc')}
@@ -210,7 +198,7 @@ export function MobilePage({
                   <button
                     type="button"
                     onClick={() => void navigate('/login')}
-                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition -translate-y-[2.5px]"
+                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
                       src="/logo_text.png"
@@ -223,12 +211,7 @@ export function MobilePage({
                       className="md:hidden size-[17px] object-contain"
                     />
                   </button>
-                  <span className="hidden translate-y-[10%] text-xs font-light text-slate-300 select-none md:inline-block">
-                    |
-                  </span>
-                  <h1 className="translate-y-[10%] text-[16px] font-extrabold tracking-tight text-[#17212B] md:text-[18px]">
-                    {title}
-                  </h1>
+                  <h1 className="sr-only">{title}</h1>
                 </div>
               </div>
 
@@ -307,18 +290,13 @@ export function MobilePage({
                       className="md:hidden size-[20px] object-contain"
                     />
                   </button>
-                  <span className="hidden translate-y-[10%] text-sm font-light text-slate-300 select-none md:inline-block">
-                    |
-                  </span>
-                  <h1 className="translate-y-[10%] text-base font-extrabold tracking-tight text-[#17212B] md:text-lg">
-                    {title}
-                  </h1>
+                  <h1 className="sr-only">{title}</h1>
                 </div>
               </div>
 
               {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
               {role ? (
-                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
+                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
                   {navItems[role].map((item) => {
                     const selected = item.id === activeNav;
                     const IconComponent = item.Icon;
@@ -328,14 +306,14 @@ export function MobilePage({
                         type="button"
                         onClick={() => void navigate(item.path)}
                         className={cn(
-                          'flex items-center gap-2 px-4.5 py-2 rounded-full text-xs md:text-sm font-extrabold transition-all',
+                          'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
                             ? 'bg-[#F06B4F] text-white shadow-xs'
                             : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
                         )}
                       >
                         <IconComponent
-                          className={cn('size-4', selected ? 'text-white' : 'text-slate-500')}
+                          className={cn('size-4 shrink-0', selected ? 'text-white' : 'text-slate-500')}
                         />
                         <span>{item.label}</span>
                       </button>
@@ -418,7 +396,7 @@ function BottomNav({
     <nav
       aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
       className={cn(
-        'flex h-16 shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-1.5 shadow-lg',
+        'sticky bottom-0 z-40 flex h-16 shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-1.5 shadow-lg pb-[env(safe-area-inset-bottom)]',
         forceShow ? 'w-full' : 'md:hidden',
       )}
     >
@@ -487,14 +465,13 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        'flex w-full items-center justify-center rounded-full font-extrabold leading-none shadow-xs transition-all disabled:cursor-not-allowed disabled:opacity-40',
+        'flex w-full items-center justify-center rounded-full font-extrabold leading-none transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
         isMobile ? 'h-12 min-h-12 px-5 text-[14px]' : 'h-14 min-h-14 px-6 text-[16px]',
         secondary
-          ? 'border border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] active:scale-[0.99]'
-          : cn(
-              roleStyles[role].background,
-              'text-white shadow-xs shadow-[#173F3A]/20 hover:shadow-md hover:scale-[1.005] active:scale-[0.995]',
-            ),
+          ? 'border border-[#D4CBB8] bg-gradient-to-b from-white via-[#FAF7F2] to-[#F2EDE2] text-[#17212B] shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-[#173F3A] hover:from-white hover:to-[#E8F2EF] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98]'
+          : role === 'company'
+            ? 'border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] text-white shadow-[0_4px_14px_rgba(240,107,79,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(240,107,79,0.4)] active:translate-y-0 active:scale-[0.98]'
+            : 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_14px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]',
         className,
       )}
       {...props}
@@ -519,11 +496,14 @@ export function Chip({
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition',
-        isMobile ? 'h-10 min-h-10 px-4 text-[13px]' : 'h-11 min-h-11 px-5 text-[15px]',
+        'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition-all duration-200',
+        isMobile ? 'h-10 min-h-10 px-4 text-[13px]' : 'h-11 min-h-11 px-5 text-[14px]',
+        onClick ? 'cursor-pointer' : 'cursor-default select-none',
         selected
-          ? 'border border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
-          : 'border border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#F7F3EA]',
+          ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]'
+          : onClick
+            ? 'border border-[#D4CBB8] bg-gradient-to-b from-white to-[#FAF7F2] text-[#17212B] shadow-[0_2px_4px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-[#173F3A] hover:from-[#F4FAF8] hover:to-[#E5F2EE] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98]'
+            : 'border border-[#E0D9C8] bg-[#FAF7F2] text-slate-700 shadow-none',
       )}
       onClick={onClick}
       type={onClick ? 'button' : undefined}
@@ -739,21 +719,12 @@ export function InfoPanel({ children, label }: { children: ReactNode; label: str
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string };
 
 export function Field({ className, label, ...props }: FieldProps) {
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
-
   return (
-    <label
-      className={cn(
-        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
-        isMobile ? 'text-[13px]' : 'text-[17px]',
-      )}
-    >
+    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-xs md:text-sm">
       <span>{label}</span>
       <input
         className={cn(
-          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
-          isMobile ? 'h-12 text-[16px]' : 'h-14 text-[18px]',
+          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-11 md:h-12 text-xs md:text-sm',
           className,
         )}
         {...props}
@@ -765,21 +736,12 @@ export function Field({ className, label, ...props }: FieldProps) {
 type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string };
 
 export function TextAreaField({ className, label, ...props }: TextAreaFieldProps) {
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
-
   return (
-    <label
-      className={cn(
-        'flex w-full flex-col gap-2 font-extrabold text-[#17212B]',
-        isMobile ? 'text-[13px]' : 'text-[17px]',
-      )}
-    >
+    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-xs md:text-sm">
       <span>{label}</span>
       <textarea
         className={cn(
-          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-4 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15',
-          isMobile ? 'h-24 text-[16px] leading-6' : 'h-32 text-[18px] leading-7',
+          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-24 md:h-28 text-xs md:text-sm leading-relaxed',
           className,
         )}
         {...props}

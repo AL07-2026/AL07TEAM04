@@ -126,10 +126,17 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
 
     const primaryOccupation = screen.getByLabelText('1순위 희망 직종 (필수)');
-    expect(primaryOccupation.querySelectorAll('option')).toHaveLength(22);
+    expect(primaryOccupation.querySelectorAll('option')).toHaveLength(23);
+    fireEvent.change(primaryOccupation, { target: { value: 'other' } });
+    expect(screen.getByLabelText('기타 희망 직종명 (필수)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
+    expect(
+      screen.getAllByText('기타 직종을 선택한 경우 희망 직종명을 2자 이상 입력해 주세요.'),
+    ).not.toHaveLength(0);
     fireEvent.change(primaryOccupation, {
       target: { value: 'it-development-data' },
     });
+    expect(screen.queryByLabelText('기타 희망 직종명 (필수)')).not.toBeInTheDocument();
     expect(
       screen
         .getByLabelText('2순위 희망 직종 (선택)')
@@ -137,8 +144,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ).toBeDisabled();
     fireEvent.change(screen.getByLabelText('경력 분야'), { target: { value: 'AI 서비스 개발' } });
     fireEvent.change(screen.getByLabelText('경력 기간'), { target: { value: '15년' } });
-    fireEvent.change(screen.getByLabelText(/대표 실무 경험 요약/), {
-      target: { value: 'AI 서비스 개발과 운영 프로세스를 총괄했습니다.' },
+    fireEvent.change(screen.getByLabelText(/원하는 근무 형태/), {
+      target: { value: '시간제·파트타임 (오전/오후)' },
     });
     fireEvent.change(screen.getByLabelText('연락처'), { target: { value: '010-0000-0000' } });
     fireEvent.change(screen.getByLabelText('이메일'), {

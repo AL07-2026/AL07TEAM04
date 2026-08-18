@@ -2,14 +2,22 @@ import { AssemblyAI } from 'assemblyai';
 import Busboy from 'busboy';
 import express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
+// Updated API endpoints with real Seoul & Public job environment variables
 import { generateGeminiConnectionTest, getGeminiLogDetails } from './lib/gemini.mjs';
 import { generateExperienceCard } from './lib/experienceCard.mjs';
 import { generateNextInterviewQuestion } from './lib/interviewQuestion.mjs';
 import { proxyWorknetJobs } from './lib/worknetProxy.mjs';
+import { proxySeoulJobs } from './lib/seoulJobProxy.mjs';
+import { proxyPublicJobs } from './lib/publicJobProxy.mjs';
+import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator.mjs';
+import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
+const jobSearchWarmupUrl =
+  'https://al07team04-bdfcd.web.app/api/jobs/search?page=1&pageSize=12&sortBy=fit-desc';
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -100,9 +108,44 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/worknet/jobs', (req, res) =>
-  proxyWorknetJobs(req, res, process.env.WORKNET_JOB_API_KEY),
-);
+app.get('/api/jobs/stats', async (_req, res) => {
+  const stats = await getAccumulatedStats();
+  const latestUpdatedTime = stats.latestUpdatedAt
+    ? new Date(stats.latestUpdatedAt).getTime()
+    : Number.NaN;
+  const isAccumulating =
+    Number.isFinite(latestUpdatedTime) && Date.now() - latestUpdatedTime <= 20 * 60 * 1000;
+  return res.json({ ...stats, isAccumulating, status: 'success' });
+});
+
+app.get('/api/jobs/search', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'private, no-store, max-age=0');
+    const result = await searchAccumulatedJobPostings(req.query);
+    return res.json({ status: 'success', ...result });
+  } catch (error) {
+    logError('Full job database search failed:', error);
+    return sendClientError(res, 500, '전체 채용공고를 검색하는 중 문제가 발생했습니다.');
+  }
+});
+
+app.get('/api/jobs/sync', async (_req, res) => {
+  const result = await runBackendJobSync();
+  clearJobCatalogCache();
+  return res.json({ status: 'success', ...result });
+});
+
+app.get('/api/worknet/jobs', (req, res) => {
+  return proxyWorknetJobs(req, res, process.env.WORKNET_JOB_API_KEY);
+});
+
+app.get('/api/seoul/jobs', (req, res) => {
+  return proxySeoulJobs(req, res, process.env.SEOUL_JOB_API_KEY);
+});
+
+app.get('/api/public/jobs', (req, res) => {
+  return proxyPublicJobs(req, res, process.env.PUBLIC_JOB_API_KEY);
+});
 
 app.get('/api/ai/test', async (_req, res) => {
   try {
@@ -228,4 +271,32 @@ export const api = onRequest(
     secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY'],
   },
   app,
+);
+
+export const scheduledJobSync = onSchedule(
+  {
+    schedule: 'every 5 minutes',
+    timeZone: 'Asia/Seoul',
+    region: 'asia-northeast3',
+    timeoutSeconds: 180,
+    memory: '512MiB',
+  },
+  async () => {
+    console.log('Starting 24/7 Cloud Scheduled Job Sync (Every 5 minutes)...');
+    const result = await runBackendJobSync();
+    clearJobCatalogCache();
+    console.log('Scheduled Job Sync completed:', result);
+    try {
+      const warmupResponse = await fetch(jobSearchWarmupUrl, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!warmupResponse.ok) {
+        throw new Error(`Job search warmup failed (${warmupResponse.status})`);
+      }
+      console.log('Job search API warmup completed.');
+    } catch (error) {
+      console.warn('Job search API warmup notice:', error?.message || error);
+    }
+  },
 );

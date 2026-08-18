@@ -1,6 +1,9 @@
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
-import { normalizeOccupationPreferences } from '@/data/occupationCategories';
+import {
+  OTHER_OCCUPATION_PREFERENCE,
+  normalizeOccupationPreferenceValues,
+} from '@/data/occupationCategories';
 import {
   getScopedStorageKey,
   readVersionedStorage,
@@ -8,12 +11,15 @@ import {
   writeVersionedStorage,
 } from '@/lib/browserStorage';
 import { db } from '@/lib/firebase';
+import { clearWorknetFeedCache } from './worknetService';
 
 export type SeniorProfileData = {
   desiredCategory?: string;
   desiredCategory2?: string;
   desiredCategory3?: string;
+  desiredOccupationText?: string;
   desiredLocation?: string;
+  desiredWorkType?: string;
   email: string;
   experience: string;
   field: string;
@@ -48,20 +54,27 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
   const field = stringValue(value.field);
-  const experience = stringValue(value.experience);
+  const desiredWorkType = stringValue(value.desiredWorkType) || stringValue(value.experience) || '시간제·파트타임 (오전/오후)';
+  const experience = desiredWorkType;
   const email = stringValue(value.email);
-  if (!field || !experience || !email) return null;
-  const desiredCategories = normalizeOccupationPreferences([
+  if (!field || !email) return null;
+  const desiredPreferences = normalizeOccupationPreferenceValues([
     stringValue(value.desiredCategory),
     stringValue(value.desiredCategory2),
     stringValue(value.desiredCategory3),
   ]);
+  const desiredOccupationText = stringValue(value.desiredOccupationText);
 
   return {
-    desiredCategory: desiredCategories[0],
-    desiredCategory2: desiredCategories[1],
-    desiredCategory3: desiredCategories[2],
+    desiredCategory: desiredPreferences[0],
+    desiredCategory2: desiredPreferences[1],
+    desiredCategory3: desiredPreferences[2],
+    desiredOccupationText:
+      desiredPreferences.includes(OTHER_OCCUPATION_PREFERENCE) && desiredOccupationText
+        ? desiredOccupationText
+        : undefined,
     desiredLocation: stringValue(value.desiredLocation) || undefined,
+    desiredWorkType,
     field,
     period: stringValue(value.period),
     experience,
@@ -116,6 +129,7 @@ export function getLocalSeniorProfile(ownerId?: string) {
 export function saveLocalSeniorProfile(profile: SeniorProfileData, ownerId?: string) {
   const normalized = normalizeSeniorProfile(profile);
   if (!normalized) throw new Error('저장할 인재 프로필 정보가 올바르지 않습니다.');
+  clearWorknetFeedCache();
   writeVersionedStorage(getScopedStorageKey(SENIOR_PROFILE_STORAGE_KEY, ownerId), normalized);
 }
 
