@@ -296,49 +296,6 @@ export function calculatePersonalizedMatch(
         ? occupationCategoryLabels[matchedPreference]
         : occupationCategoryLabels[postingOccupationCategory] || '선택 직종';
 
-  if (isSpecificCategoryActive || isCustomOccupationActive) {
-    if (categoryPriority >= 0) {
-      baseScore = 88;
-      matchReasons.push(
-        `선택한 직종 ${categoryLabel}과(와) 공고 내용이 일치합니다.`,
-      );
-    } else {
-      baseScore = 28;
-      matchReasons.push(`선택한 직종과 다른 직종 공고입니다.`);
-    }
-  } else {
-    if (categoryPriority === 0) {
-      baseScore = 88;
-      matchReasons.push(
-        `1순위 희망 직종 ${categoryLabel}과 일치합니다.`,
-      );
-    } else if (categoryPriority === 1) {
-      baseScore = 74;
-      matchReasons.push(
-        `2순위 희망 직종 ${categoryLabel}과 일치합니다.`,
-      );
-    } else if (categoryPriority === 2) {
-      baseScore = 60;
-      matchReasons.push(
-        `3순위 희망 직종 ${categoryLabel}과 일치합니다.`,
-      );
-    } else {
-      baseScore = 28;
-      matchReasons.push('등록한 희망 직종과 직접 일치하지 않아 참고 공고로 분류됩니다.');
-    }
-  }
-
-  const matchedKeywords = solvedKeywords.filter(
-    (keyword) => userExperienceText.includes(keyword) && postingText.includes(keyword),
-  );
-  if (matchedKeywords.length >= 3) {
-    baseScore += 6;
-    matchReasons.push(`핵심 역량 ${matchedKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
-  } else if (matchedKeywords.length > 0) {
-    baseScore += 3;
-    matchReasons.push(`경력 키워드 ${matchedKeywords.join(', ')}가 공고와 연결됩니다.`);
-  }
-
   const profileSpecialtyText = [
     activeProfile.field,
     activeProfile.solvedExperiences,
@@ -349,6 +306,55 @@ export function calculatePersonalizedMatch(
   const profileSpecialtyTokens = tokenizeRecommendationText(profileSpecialtyText);
   const postingTokens = new Set(tokenizeRecommendationText(postingText));
   const sharedProfileTokens = profileSpecialtyTokens.filter((token) => postingTokens.has(token));
+
+  const matchedKeywords = solvedKeywords.filter(
+    (keyword) => userExperienceText.includes(keyword) && postingText.includes(keyword),
+  );
+
+  const hasStrongSubSpecialtyMatch =
+    sharedProfileTokens.length >= 2 ||
+    (sharedProfileTokens.length >= 1 && matchedKeywords.length >= 1);
+
+  if (isSpecificCategoryActive || isCustomOccupationActive) {
+    if (categoryPriority >= 0) {
+      baseScore = hasStrongSubSpecialtyMatch ? 88 : 78;
+      matchReasons.push(
+        `선택한 직종 ${categoryLabel}과(와) 공고 내용이 일치합니다.`,
+      );
+    } else {
+      baseScore = 28;
+      matchReasons.push(`선택한 직종과 다른 직종 공고입니다.`);
+    }
+  } else {
+    if (categoryPriority === 0) {
+      baseScore = hasStrongSubSpecialtyMatch ? 88 : 78;
+      matchReasons.push(
+        `1순위 희망 직종 ${categoryLabel}과 일치합니다.`,
+      );
+    } else if (categoryPriority === 1) {
+      baseScore = hasStrongSubSpecialtyMatch ? 74 : 66;
+      matchReasons.push(
+        `2순위 희망 직종 ${categoryLabel}과 일치합니다.`,
+      );
+    } else if (categoryPriority === 2) {
+      baseScore = hasStrongSubSpecialtyMatch ? 60 : 54;
+      matchReasons.push(
+        `3순위 희망 직종 ${categoryLabel}과 일치합니다.`,
+      );
+    } else {
+      baseScore = 28;
+      matchReasons.push('등록한 희망 직종과 직접 일치하지 않아 참고 공고로 분류됩니다.');
+    }
+  }
+
+  if (matchedKeywords.length >= 3) {
+    baseScore += 6;
+    matchReasons.push(`핵심 역량 ${matchedKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
+  } else if (matchedKeywords.length > 0) {
+    baseScore += 3;
+    matchReasons.push(`경력 키워드 ${matchedKeywords.join(', ')}가 공고와 연결됩니다.`);
+  }
+
   if (sharedProfileTokens.length >= 3) {
     baseScore += 6;
     matchReasons.push(
@@ -418,11 +424,15 @@ export function calculatePersonalizedMatch(
   if (categoryPriority < 0) {
     finalScore = Math.min(45, Math.max(15, finalScore));
   } else if (categoryPriority === 0) {
-    finalScore = Math.min(98, Math.max(82, finalScore));
+    if (hasStrongSubSpecialtyMatch) {
+      finalScore = Math.min(98, Math.max(90, finalScore));
+    } else {
+      finalScore = Math.min(85, Math.max(75, finalScore));
+    }
   } else if (categoryPriority === 1) {
-    finalScore = Math.min(84, Math.max(68, finalScore));
+    finalScore = Math.min(84, Math.max(65, finalScore));
   } else if (categoryPriority === 2) {
-    finalScore = Math.min(72, Math.max(54, finalScore));
+    finalScore = Math.min(72, Math.max(50, finalScore));
   }
 
   return {

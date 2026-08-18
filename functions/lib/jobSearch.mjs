@@ -270,7 +270,17 @@ function calculateFitMatch(entry, options, context) {
     desiredOccupationPriority >= 0 &&
     (categoryPriority < 0 || desiredOccupationPriority < categoryPriority);
   if (directOccupationMatchApplied) categoryPriority = desiredOccupationPriority;
-  let score = categoryPriority === 0 ? 88 : categoryPriority === 1 ? 74 : categoryPriority === 2 ? 60 : 28;
+  const postingTokens = tokenizeRecommendationText(postingText);
+  const sharedProfileTokens = [...context.profileTokens].filter((token) => postingTokens.has(token));
+  const matchingKeywords = solvedKeywords.filter(
+    (keyword) => context.profileText.includes(keyword) && postingText.includes(keyword),
+  );
+
+  const hasStrongSubSpecialtyMatch =
+    sharedProfileTokens.length >= 2 ||
+    (sharedProfileTokens.length >= 1 && matchingKeywords.length >= 1);
+
+  let score = categoryPriority === 0 ? (hasStrongSubSpecialtyMatch ? 88 : 78) : categoryPriority === 1 ? (hasStrongSubSpecialtyMatch ? 74 : 66) : categoryPriority === 2 ? (hasStrongSubSpecialtyMatch ? 60 : 54) : 28;
   const reasons = [];
   if (directOccupationMatchApplied) {
     reasons.push(
@@ -280,9 +290,6 @@ function calculateFitMatch(entry, options, context) {
   else if (categoryPriority === 1) reasons.push('2순위 희망 직종과 일치합니다.');
   else if (categoryPriority === 2) reasons.push('3순위 희망 직종과 일치합니다.');
 
-  const matchingKeywords = solvedKeywords.filter(
-    (keyword) => context.profileText.includes(keyword) && postingText.includes(keyword),
-  );
   if (matchingKeywords.length >= 3) {
     score += 6;
     reasons.push(`핵심 역량 ${matchingKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
@@ -291,8 +298,6 @@ function calculateFitMatch(entry, options, context) {
     reasons.push(`경력 키워드 ${matchingKeywords.join(', ')}가 공고와 연결됩니다.`);
   }
 
-  const postingTokens = tokenizeRecommendationText(postingText);
-  const sharedProfileTokens = [...context.profileTokens].filter((token) => postingTokens.has(token));
   if (sharedProfileTokens.length >= 3) {
     score += 6;
     reasons.push(
@@ -345,11 +350,15 @@ function calculateFitMatch(entry, options, context) {
   if (categoryPriority < 0) {
     finalScore = Math.min(45, Math.max(15, finalScore));
   } else if (categoryPriority === 0) {
-    finalScore = Math.min(98, Math.max(82, finalScore));
+    if (hasStrongSubSpecialtyMatch) {
+      finalScore = Math.min(98, Math.max(90, finalScore));
+    } else {
+      finalScore = Math.min(85, Math.max(75, finalScore));
+    }
   } else if (categoryPriority === 1) {
-    finalScore = Math.min(84, Math.max(68, finalScore));
+    finalScore = Math.min(84, Math.max(65, finalScore));
   } else if (categoryPriority === 2) {
-    finalScore = Math.min(72, Math.max(54, finalScore));
+    finalScore = Math.min(72, Math.max(50, finalScore));
   }
 
   return {
