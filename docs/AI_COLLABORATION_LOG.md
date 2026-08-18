@@ -16,7 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 배너 텍스트 폰트 크기 통일 및 수직 그레이 구분선 Bar 추가
+### [2026-08-18] 모바일 화면 우측 짤림 현상 및 가로 스크롤 방지 레이아웃 최적화
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - 모바일 화면에서 `경기 안양시디지털엠파이어 빌딩` 등 장문의 위치 텍스트로 인해 카드가 100% 폭을 초과하고 화면 우측이 짤리던 레이아웃 현상 수정.
+  - `PostingCard` 및 `MobilePage` 컨테이너에 `overflow-x-hidden`, `max-w-full`, `min-w-0`, `truncate` 적용.
+  - 긴 주소와 자격조건 텍스트가 카드 내부에서 깔끔하게 말줄임표(`...`) 처리되어 모바일 화면 짤림 없이 100% 가로 폭에 정밀 맞춤됨.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - `[핵심 프로젝트 연결]` 주황색 태그와 `[검증된 실무 인재와 기업 프로젝트 매칭]` 검은색 제목 타이틀의 폰트 크기를 **동일한 폰트 크기 (`text-sm md:text-base font-extrabold`)**로 맞추어 시각적 균형감 확보.

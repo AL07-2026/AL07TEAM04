@@ -165,7 +165,7 @@ export function MobilePage({
             </header>
 
             {/* Content Container */}
-            <div className={cn('min-h-0 flex-1 overflow-y-auto px-4 py-4', contentClassName)}>
+            <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-4 py-4', contentClassName)}>
               {children}
             </div>
 
@@ -249,7 +249,7 @@ export function MobilePage({
             </header>
 
             {/* Content Container */}
-            <div className={cn('min-h-0 flex-1 overflow-y-auto', contentClassName)}>{children}</div>
+            <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full', contentClassName)}>{children}</div>
           </section>
         </main>
       ) : (

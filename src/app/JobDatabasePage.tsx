@@ -429,20 +429,20 @@ function PostingCard({
   return (
     <article
       className={cn(
-        'w-full cursor-pointer rounded-2xl border bg-white p-4 text-left shadow-xs transition hover:shadow-md',
+        'w-full max-w-full overflow-hidden cursor-pointer rounded-2xl border bg-white p-4 text-left shadow-xs transition hover:shadow-md min-w-0',
         selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/10' : 'border-[#E0D9C8]',
       )}
       onClick={onSelect}
     >
       {/* Card Header: Company Badge + Fit Score Badge */}
-      <div className="flex items-center justify-between gap-2.5">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-extrabold text-[#173F3A] border border-[#E0D9C8] truncate">
+      <div className="flex items-center justify-between gap-2 min-w-0 w-full overflow-hidden">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-extrabold text-[#173F3A] border border-[#E0D9C8] truncate min-w-0 max-w-[65%] sm:max-w-none">
             <Building2 className="size-3.5 shrink-0 text-[#173F3A]" />
-            {posting.companyName}
+            <span className="truncate">{posting.companyName}</span>
           </span>
           <span className="text-slate-400 shrink-0">·</span>
-          <span className="text-[12px] font-bold text-slate-500 truncate">{posting.industry}</span>
+          <span className="text-[12px] font-bold text-slate-500 truncate min-w-0">{posting.industry}</span>
         </div>
 
         {showScore ? (
@@ -458,9 +458,9 @@ function PostingCard({
       </div>
 
       {/* Position Title */}
-      <h3 className="mt-2.5 text-[16.5px] font-extrabold leading-snug text-[#17212B]">
+      <h3 className="mt-2.5 text-[16.5px] font-extrabold leading-snug text-[#17212B] min-w-0 break-keep overflow-hidden">
         <button
-          className="text-left hover:text-[#173F3A] transition-colors"
+          className="text-left hover:text-[#173F3A] transition-colors line-clamp-2"
           onClick={(event) => {
             event.stopPropagation();
             onSelect();
@@ -472,11 +472,11 @@ function PostingCard({
       </h3>
 
       {/* Streamlined Essential Badges Row (Max 3 Badges, Single Line) */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0 max-w-full overflow-hidden">
         {essentialBadges.map((badge, idx) => (
           <span
             className={cn(
-              'rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border',
+              'rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border truncate max-w-full',
               badge.isMint
                 ? 'border-[#BBD5CE] bg-[#DDEBE7] text-[#173F3A]'
                 : 'border-[#E0D9C8] bg-[#FAF7F2] text-slate-700',
@@ -489,9 +489,9 @@ function PostingCard({
       </div>
 
       {/* Match Highlight Callout */}
-      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-[#F4F9F8] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#173F3A]">
+      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-[#F4F9F8] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#173F3A] min-w-0 overflow-hidden">
         <Sparkles className="size-3.5 shrink-0 text-[#173F3A]" />
-        <span className="truncate">
+        <span className="truncate min-w-0 flex-1">
           {showScore
             ? displayReasons[0]
             : isUnclassifiedFilter
@@ -501,28 +501,28 @@ function PostingCard({
       </div>
 
       {/* Clean AI Problem Statement */}
-      <p className="mt-2 text-[13px] font-medium leading-relaxed text-slate-600 line-clamp-2">
+      <p className="mt-2 text-[13px] font-medium leading-relaxed text-slate-600 line-clamp-2 break-keep min-w-0">
         {cleanProblemStatement}
       </p>
 
       {/* Location, Experience & Deadline Footer */}
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] font-semibold text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <MapPin className="size-3.5 text-slate-400" />
-          {posting.location}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-semibold text-slate-500 min-w-0 overflow-hidden break-keep">
+        <span className="inline-flex items-center gap-1 min-w-0 max-w-[65%] sm:max-w-none truncate">
+          <MapPin className="size-3.5 shrink-0 text-slate-400" />
+          <span className="truncate">{posting.location}</span>
         </span>
-        <span>·</span>
-        <span>{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
-        <span>·</span>
-        <span>마감 {getDeadlineText(posting)}</span>
+        <span className="shrink-0">·</span>
+        <span className="shrink-0">{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
+        <span className="shrink-0">·</span>
+        <span className="shrink-0">마감 {getDeadlineText(posting)}</span>
       </div>
 
       {/* Bottom Bar: Salary + Apply Button */}
-      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5">
-        <span className="text-[13px] font-extrabold text-[#F06B4F]">{posting.salaryRange}</span>
+      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 min-w-0 w-full">
+        <span className="text-[13px] font-extrabold text-[#F06B4F] truncate min-w-0 pr-2">{posting.salaryRange}</span>
         <button
           className={cn(
-            'inline-flex items-center gap-1 rounded-xl px-4 py-1.5 text-[13px] font-extrabold text-white transition-all duration-200 cursor-pointer shadow-2xs',
+            'inline-flex shrink-0 items-center gap-1 rounded-xl px-4 py-1.5 text-[13px] font-extrabold text-white transition-all duration-200 cursor-pointer shadow-2xs',
             role === 'senior'
               ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] active:scale-[0.98]'
               : 'border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]',
