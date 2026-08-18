@@ -434,27 +434,50 @@ function PostingCard({
       )}
       onClick={onSelect}
     >
-      {/* Card Header: Company Badge + Fit Score Badge */}
-      <div className="flex items-center justify-between gap-2 min-w-0 w-full overflow-hidden">
-        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-extrabold text-[#173F3A] border border-[#E0D9C8] truncate min-w-0 max-w-[65%] sm:max-w-none">
+      {/* Card Header: Company Badge + Industry + Fit Score Badge */}
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2.5 min-w-0 w-full overflow-hidden">
+        <div className="flex items-center justify-between gap-2 min-w-0 w-full sm:w-auto sm:justify-start">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[12.5px] font-extrabold text-[#173F3A] border border-[#E0D9C8] shrink min-w-0 max-w-[68%] sm:max-w-none">
             <Building2 className="size-3.5 shrink-0 text-[#173F3A]" />
             <span className="truncate">{posting.companyName}</span>
           </span>
-          <span className="text-slate-400 shrink-0">·</span>
-          <span className="text-[12px] font-bold text-slate-500 truncate min-w-0">{posting.industry}</span>
+          <span className="hidden sm:inline text-slate-400 shrink-0">·</span>
+          <span className="hidden sm:inline text-[12px] font-bold text-slate-500 truncate min-w-0">{posting.industry}</span>
+
+          {/* Fit Score Badge on Mobile (Top Right) */}
+          <div className="sm:hidden shrink-0">
+            {showScore ? (
+              <span className={cn('inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-extrabold border', fitTone.containerClassName)}>
+                <span className={fitTone.labelClassName}>{fitTone.label}</span>
+                <span className={cn('font-black text-[13px]', fitTone.scoreClassName)}>{displayScore}점</span>
+              </span>
+            ) : (
+              <span className="rounded-lg border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A]">
+                직종 탐색
+              </span>
+            )}
+          </div>
         </div>
 
-        {showScore ? (
-          <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-extrabold border', fitTone.containerClassName)}>
-            <span className={fitTone.labelClassName}>{fitTone.label}</span>
-            <span className={cn('font-black text-[13px]', fitTone.scoreClassName)}>{displayScore}점</span>
-          </span>
-        ) : (
-          <span className="shrink-0 rounded-lg border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A]">
-            직종 탐색
-          </span>
-        )}
+        {/* Industry Sub-Row on Mobile */}
+        <div className="sm:hidden flex items-center gap-1 text-[11.5px] font-bold text-slate-500 px-0.5 min-w-0 overflow-hidden">
+          <span className="text-slate-400">·</span>
+          <span className="truncate font-semibold text-slate-600">{posting.industry}</span>
+        </div>
+
+        {/* Fit Score Badge on Desktop */}
+        <div className="hidden sm:block shrink-0">
+          {showScore ? (
+            <span className={cn('inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-extrabold border', fitTone.containerClassName)}>
+              <span className={fitTone.labelClassName}>{fitTone.label}</span>
+              <span className={cn('font-black text-[13px]', fitTone.scoreClassName)}>{displayScore}점</span>
+            </span>
+          ) : (
+            <span className="rounded-lg border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A]">
+              직종 탐색
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Position Title */}
