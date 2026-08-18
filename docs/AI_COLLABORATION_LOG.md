@@ -16,7 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 적합도 점수 구간별 명확한 차등 체계 전면 개편 (1~3순위 내 스킬/지역 매칭 반영)
+### [2026-08-18] 배너 텍스트 폰트 크기 통일 및 수직 그레이 구분선 Bar 추가
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - `[핵심 프로젝트 연결]` 주황색 태그와 `[검증된 실무 인재와 기업 프로젝트 매칭]` 검은색 제목 타이틀의 폰트 크기를 **동일한 폰트 크기 (`text-sm md:text-base font-extrabold`)**로 맞추어 시각적 균형감 확보.
+  - 두 텍스트 사이에 깔끔하고 세련된 **수직 그레이 구분선 Bar (`<span className="h-3.5 w-[1px] bg-slate-300 mx-0.5" />`)**를 추가하여 명확한 경계 구분감 제공.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - 기존 1순위 희망 직종 공고들이 스킬 매칭 여부와 무관하게 모두 90~99점으로 획일화되던 점수 평탄화 현상을 전면 개편함.

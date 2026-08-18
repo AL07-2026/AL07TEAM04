@@ -90,10 +90,11 @@ export function RollingBanner({
       {!isCompact && (
         <div className="flex flex-col gap-1.5 px-1 pt-2 md:pt-2.5 pb-1">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="shrink-0 whitespace-nowrap text-xs md:text-[13px] font-extrabold text-[#F06B4F] leading-tight">
+            <span className="shrink-0 whitespace-nowrap text-sm md:text-base font-extrabold text-[#F06B4F] leading-tight">
               {slide.tag}
             </span>
-            <strong className="text-sm md:text-base font-extrabold text-[#17212B] truncate">
+            <span className="h-3.5 w-[1px] shrink-0 bg-slate-300 mx-0.5" />
+            <strong className="text-sm md:text-base font-extrabold text-[#17212B] truncate leading-tight">
               {slide.title}
             </strong>
           </div>
