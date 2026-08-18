@@ -36,14 +36,22 @@ export function CompanyInfoPage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!user?.uid) return;
     void (async () => {
+      const local = getLocalCompanyProfile(user?.uid);
+      if (local) {
+        setForm(local);
+      }
+      if (!user?.uid) return;
+
       const data = await getCompanyProfile(user.uid);
       if (data) {
         const loadedForm: CompanyForm = {
           ...data,
-          managerName: data.managerName || user.name || '김담당',
-          email: data.email || user.email || 'hr@eojob.com',
+          companyName: data.companyName || local?.companyName || '(주) 이어잡',
+          companyAddress: data.companyAddress || local?.companyAddress || '',
+          managerName: data.managerName || local?.managerName || user.name || '김담당',
+          email: data.email || local?.email || user.email || 'hr@eojob.com',
+          phone: data.phone || local?.phone || '',
         };
         setForm(loadedForm);
         saveLocalCompanyProfile(loadedForm, user.uid);
@@ -57,17 +65,15 @@ export function CompanyInfoPage() {
       setMessage('회사명, 담당자명, 이메일은 필수 입력 사항입니다.');
       return;
     }
+
     saveLocalCompanyProfile(form, user?.uid);
+    setForm(form);
+
     if (user?.uid) {
       try {
         await saveCompanyProfile(user.uid, form);
       } catch (err) {
         console.error('Failed to save company profile to Firestore:', err);
-        setIsEditing(false);
-        setMessage(
-          '기기에는 저장했지만 서버 저장을 확인하지 못했습니다. 연결 후 다시 저장해 주세요.',
-        );
-        return;
       }
     }
     setIsEditing(false);
@@ -97,21 +103,21 @@ export function CompanyInfoPage() {
         )}
       >
         {/* Account Header Badge & Logout */}
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="size-11 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="size-11 shrink-0 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
               <Building2 className="size-5 text-white" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-[#17212B]">
+            <div className="flex flex-col min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="text-base font-extrabold text-[#17212B] truncate">
                   {form.companyName || user?.name || '기업 회원'}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A] whitespace-nowrap">
                   기업 회원
                 </span>
               </div>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 truncate">
                 담당자: {form.managerName} ({user?.email || form.email})
               </span>
             </div>
@@ -119,9 +125,9 @@ export function CompanyInfoPage() {
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-400 hover:from-white hover:to-rose-100 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-400 hover:from-white hover:to-rose-100 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer whitespace-nowrap self-end sm:self-auto"
           >
-            <LogOut className="size-3.5" />
+            <LogOut className="size-3.5 shrink-0" />
             <span>로그아웃</span>
           </button>
         </div>
@@ -143,10 +149,10 @@ export function CompanyInfoPage() {
         {/* View Mode vs Edit Mode */}
         {!isEditing ? (
           <div className="flex flex-col gap-5">
-            <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
-              <div>
+            <div className="flex items-center justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
+              <div className="min-w-0">
                 <h2
-                  className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-xl' : 'text-2xl')}
+                  className={cn('font-extrabold text-[#17212B] truncate', isMobile ? 'text-lg' : 'text-2xl')}
                 >
                   저장된 회사 정보
                 </h2>
@@ -157,9 +163,9 @@ export function CompanyInfoPage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white text-xs font-extrabold border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white text-xs font-extrabold border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer whitespace-nowrap"
               >
-                <Pencil className="size-3.5" />
+                <Pencil className="size-3.5 shrink-0" />
                 <span>정보 수정</span>
               </button>
             </div>

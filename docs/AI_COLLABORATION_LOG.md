@@ -16,7 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] `develop` 브랜치 병합·라이브 배포 완료 후 `leedongwook` 브랜치 복귀
+### [2026-08-18] 모바일 화면 짤림 최적화 & 기업회원 정보 수정 저장 메커니즘 보완
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - **모바일 레이아웃 최적화**:
+    - `JobDatabasePage.tsx`: 기업 채용 & 프로젝트 관리 현황 카드 헤더를 모바일(`flex-col`)과 데스크톱(`sm:flex-row`) 가변 반응형으로 변경하여 `기업 정보 확인·수정 →` 버튼이 모바일 우측으로 오버플로우되거나 짤리지 않도록 보완.
+    - `CompanyInfoPage.tsx`: 계정 상단 뱃지 및 로그아웃 영역, `저장된 회사 정보` 섹션 헤더의 긴 이메일/기업명이 모바일에서 오버플로우되거나 `로그\n아웃`으로 찌그러지지 않도록 `truncate`, `whitespace-nowrap`, `flex-col sm:flex-row` 반응형 레이아웃 전면 개선.
+  - **기업회원 정보 수정 영구 반영 보완**:
+    - `profileService.ts`: `resolveCompanyProfile` 함수 신규 구현 및 `saveLocalCompanyProfile` 로컬 스토리지 즉시 반영 연동.
+    - `CompanyInfoPage.tsx`: 정보 수정 후 `[💾 변경사항 저장하기]` 클릭 시 로컬 스토리지와 폼 상태를 동시 갱신하고 `useEffect`에서 로컬 상태 우선 병합하여 저장된 정보가 100% 영구 반영되도록 보완.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 커밋/푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 내용**:
   - `leedongwook` 브랜치에서 검증된 모든 개선 내역을 `develop` 브랜치에 병합 후 `origin/develop` 푸시 및 Firebase Hosting 프로덕션 배포 완료.

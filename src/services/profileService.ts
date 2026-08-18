@@ -193,6 +193,16 @@ export async function getCompanyProfile(uid: string): Promise<CompanyProfileData
   }
 }
 
+export async function resolveCompanyProfile(uid?: string): Promise<CompanyProfileData | null> {
+  const localProfile = getLocalCompanyProfile(uid);
+  if (localProfile) return localProfile;
+  if (!uid) return null;
+
+  const remoteProfile = await getCompanyProfile(uid);
+  if (remoteProfile) saveLocalCompanyProfile(remoteProfile, uid);
+  return remoteProfile;
+}
+
 export async function saveCompanyProfile(uid: string, profile: CompanyProfileData): Promise<void> {
   const normalized = normalizeCompanyProfile(profile);
   if (!normalized) throw new Error('저장할 회사 정보가 올바르지 않습니다.');
