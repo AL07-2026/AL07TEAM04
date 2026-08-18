@@ -535,6 +535,34 @@ function deduplicatePostings(postings) {
   });
 }
 
+function generateAiAnalyzedProblemStatement(title, category, companyName, industry) {
+  const companyStr = companyName ? `${companyName}의 ` : '';
+  const indStr = industry && industry !== '업종 정보 미제공' && industry !== '경영/일반' && industry !== '공공행정/경영' ? `[${industry}] ` : '';
+
+  switch (category) {
+    case 'dev-engineering':
+    case 'legacy-modernization':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기존 시스템 아키텍처 고도화 및 레거시 모듈 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 엔지니어링 프로젝트입니다.`;
+    case 'design-brand':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기업 브랜드 아이덴티티 쇄신 및 디지털 채널 통합 UX/UI 디자인 가이드라인을 구축하여 시장 경쟁력을 강화하는 디자인 프로젝트입니다.`;
+    case 'marketing-sales':
+    case 'growth':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 신규 고객 파이프라인 개척 및 타겟 기반 마케팅/세일즈 전략 체계화를 통해 지속 가능한 매출 성장을 달성하는 마케팅 프로젝트입니다.`;
+    case 'hr-strategy':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 전사 조직 평가 및 보상 체계 재정비, 전사 리더십 체계 구축 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.`;
+    case 'r-and-d-manufacturing':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 공정 수율 향상, 스마트 팩토리 품질 생산 자동화 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
+    case 'ai-automation':
+    case 'data-platform':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 사내 반복 업무의 AI/RPA 자동화 도입, 파편화된 데이터 통합 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
+    case 'security':
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 정보보안 및 기술 컴플라이언스 위험 진단, 사내 인프라 보안 관리 체계의 고도화를 달성하는 리스크 관리 프로젝트입니다.`;
+    case 'operations':
+    default:
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 전사 운영 프로세스 리드타임 단축, 현장 병목 구간 개선 및 고효율 운영 체계 최적화를 실현하는 핵심 실무 프로젝트입니다.`;
+  }
+}
+
 export function transformSeoulRow(row, nowStr, now) {
   const sourceId = String(row.JO_REQST_NO || row.JO_REGIST_NO || row.JO_REG_NO || '').trim();
   const rawTitle = String(row.JO_SJ || '').trim();
@@ -586,8 +614,8 @@ export function transformSeoulRow(row, nowStr, now) {
     ],
     qualifications: [(row.ACDMCR_NM || '관련 분야 경력 보유자 우대').trim()],
     benefits: ['4대 보험 적용', '퇴직금'],
-    problemStatement: `[서울시 일자리] ${companyName}의 ${title} 채용`,
-    projectGoal: '시니어 전문성과 경험을 활용한 과제 해결',
+    problemStatement: generateAiAnalyzedProblemStatement(title, category, companyName, industry),
+    projectGoal: `${industry} 분야 업무 프로세스 고도화 및 ${title} 직무 과제 해결`,
     successMetrics: ['공고에 명시된 직무 목표 달성'],
     requiredSkills: [industry, '실무 경험'],
     preferredSkills: ['관련 자격증 보유자'],
@@ -660,8 +688,8 @@ export function transformPublicRow(row, nowStr, now) {
     coreResponsibilities: [`${title} 직무 수행 및 업무 총괄`],
     qualifications: [normalizeListValue(row.aplyQlfcCn, '관련 분야 경력 보유자 우대')],
     benefits: ['4대 보험 적용', '공공기관 복지'],
-    problemStatement: `[공공기관 채용] ${companyName}의 ${title} 채용`,
-    projectGoal: '시니어 전문성과 경험을 활용한 과제 해결',
+    problemStatement: generateAiAnalyzedProblemStatement(title, category, companyName, industry),
+    projectGoal: `${companyName} 공공 프로젝트 성공적 이행 및 ${title} 직무 과제 해결`,
     successMetrics: ['공고에 명시된 직무 목표 달성'],
     requiredSkills: [industry, '실무 경험'],
     preferredSkills: ['관련 자격증 보유자'],

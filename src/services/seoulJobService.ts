@@ -80,7 +80,8 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
   const employmentType: EmploymentType = detectEmploymentTypeFromJobText(title, `${industry} ${empTypeRaw}`);
   const workType = detectWorkTypeFromJobText(title, `${industry} ${location}`);
 
-  const problemStatement = `[서울시 일자리 분석] ${companyName}의 ${title} 프로젝트 해결을 위한 전문 인재 채용입니다.`;
+  const indStr = industry && industry !== '경영/일반' ? `[${industry}] ` : '';
+  const problemStatement = `${indStr}${companyName}의 '${title}' 주요 프로젝트: 현장 운영 프로세스 및 실무 과제를 분석·개선하고, 시니어 인재의 경험과 노하우를 활용해 부서 성과 및 운영 효율성을 달성하는 핵심 프로젝트입니다.`;
   const projectGoal = `${industry} 분야 업무 프로세스 고도화 및 ${categoryName} 실무 과제 해결`;
 
   return {

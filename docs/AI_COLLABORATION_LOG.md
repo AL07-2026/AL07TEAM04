@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-18] 채용공고 AI 해결 프로젝트 분석 문구 고도화
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - 기존 획일화된 템플릿 문구(`[서울시 일자리] OO회사 XX 채용`)를 구직자가 본인의 경력과 즉시 매칭시킬 수 있도록 **3단계 구조(업종/과제 명확화 + 프로젝트 상세 목표 + 시니어 성과 창출)**의 맞춤형 문구로 전면 개편함.
+  - `functions/lib/backendAccumulator.mjs` (Firestore 데이터베이스 축적용), `src/services/seoulJobService.ts`, `src/services/publicJobService.ts`, `src/services/worknetService.ts` 전체 파이프라인 적용.
+- **검증 및 배포**: `npm run validate` 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 커밋 및 `origin/leedongwook` 푸시 완료.
+- **변경 파일**:
+  - [MODIFY] `functions/lib/backendAccumulator.mjs`
+  - [MODIFY] `src/services/seoulJobService.ts`
+  - [MODIFY] `src/services/publicJobService.ts`
+  - [MODIFY] `src/services/worknetService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-18] `leedongwook` 브랜치 생성 및 전체 작업 내역 원격 푸시
 - **작업자**: Antigravity (Gemini)
 - **주요 내용**:

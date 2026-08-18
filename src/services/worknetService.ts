@@ -211,29 +211,31 @@ function generateAiAnalyzedProblemStatement(
   title: string,
   category: ProjectCategory,
   industry?: string,
+  companyName?: string,
 ): string {
-  const indStr = industry ? `[${industry}] ` : '';
+  const companyStr = companyName ? `${companyName}의 ` : '';
+  const indStr = industry && industry !== '업종 정보 미제공' ? `[${industry}] ` : '';
   switch (category) {
     case 'dev-engineering':
     case 'legacy-modernization':
-      return `${indStr}'${title}' 주요 프로젝트: 기존 시스템 아키텍처의 고도화 및 레거시 모듈 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 시니어 엔지니어링 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기존 시스템 아키텍처의 고도화 및 레거시 모듈 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 시니어 엔지니어링 프로젝트입니다.`;
     case 'design-brand':
-      return `${indStr}'${title}' 주요 프로젝트: 기업 브랜드 아이덴티티 쇄신 및 디지털 채널 통합 UX/UI 디자인 가이드라인을 구축하여 시장 경쟁력을 강화하는 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기업 브랜드 아이덴티티 쇄신 및 디지털 채널 통합 UX/UI 디자인 가이드라인을 구축하여 시장 경쟁력을 강화하는 프로젝트입니다.`;
     case 'marketing-sales':
     case 'growth':
-      return `${indStr}'${title}' 주요 프로젝트: 신규 고객 파이프라인 개척 및 타겟 기반 마케팅/세일즈 전략 체계화를 통해 지속 가능한 매출 성장 모멘텀을 확보하는 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 신규 고객 파이프라인 개척 및 타겟 기반 마케팅/세일즈 전략 체계화를 통해 지속 가능한 매출 성장 모멘텀을 확보하는 프로젝트입니다.`;
     case 'hr-strategy':
-      return `${indStr}'${title}' 주요 프로젝트: 조직 성장 단계별 인사 평가 및 보상 체계 재정비, 전사 리더십 체계 구축 및 시니어 경험 기반의 경영 조직 문화를 정립하는 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 조직 성장 단계별 인사 평가 및 보상 체계 재정비, 전사 리더십 체계 구축 및 시니어 경험 기반의 경영 조직 문화를 정립하는 프로젝트입니다.`;
     case 'r-and-d-manufacturing':
-      return `${indStr}'${title}' 주요 프로젝트: 스마트 팩토리 품질 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 스마트 팩토리 품질 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
     case 'ai-automation':
     case 'data-platform':
-      return `${indStr}'${title}' 주요 프로젝트: 사내 반복 업무의 AI/RPA 자동화 도입, 파편화된 데이터 통합 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 사내 반복 업무의 AI/RPA 자동화 도입, 파편화된 데이터 통합 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
     case 'security':
-      return `${indStr}'${title}' 주요 프로젝트: 정보보안 및 기술 컴플라이언스 위험 진단, 사내 인프라 보안 관리 체계의 대대적인 고도화를 달성하는 현안 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 정보보안 및 기술 컴플라이언스 위험 진단, 사내 인프라 보안 관리 체계의 대대적인 고도화를 달성하는 현안 프로젝트입니다.`;
     case 'operations':
     default:
-      return `${indStr}'${title}' 주요 프로젝트: 전사 SCM 공급망 및 운영 프로세스 리드타임 단축, 현장 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.`;
+      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 전사 SCM 공급망 및 운영 프로세스 리드타임 단축, 현장 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.`;
   }
 }
 
@@ -279,7 +281,7 @@ export function transformWorknetToSeniorProject(
   const qualifications = [raw.career, education].filter((value): value is string => Boolean(value));
   const sourceUrl = raw.wantedInfoUrl || raw.wantedMobileInfoUrl;
 
-  const problemStatement = generateAiAnalyzedProblemStatement(title, category, raw.indTpNm);
+  const problemStatement = generateAiAnalyzedProblemStatement(title, category, raw.indTpNm, companyName);
   const projectGoal = generateAiAnalyzedProjectGoal(title, category);
 
   return {

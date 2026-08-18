@@ -77,7 +77,8 @@ export function transformPublicJobToPosting(raw: PublicJobRaw): JobPosting | nul
   const employmentType: EmploymentType = detectEmploymentTypeFromJobText(title, `${industry} ${empTypeRaw}`);
   const workType = detectWorkTypeFromJobText(title, `${industry} ${location}`);
 
-  const problemStatement = `[공공기관 채용 분석] ${companyName}의 ${title} 직무 수행 및 공공 프로젝트 핵심 인재 채용입니다.`;
+  const indStr = industry && industry !== '공공행정/경영' ? `[${industry}] ` : '';
+  const problemStatement = `${indStr}${companyName}의 '${title}' 주요 프로젝트: 공공 서비스 표준 규정 준수 및 사업 수행 파이프라인을 정립하고, 전문 인재의 리더십을 통해 기관 과제 목표를 완수하는 핵심 프로젝트입니다.`;
   const projectGoal = `${companyName} 공공 프로젝트 추진 및 ${categoryName} 분야 전문성 발휘`;
 
   return {
