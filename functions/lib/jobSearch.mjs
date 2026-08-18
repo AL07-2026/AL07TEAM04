@@ -476,14 +476,14 @@ function sanitizeAndEnhanceProblemStatement(posting) {
     case 'legacy-modernization':
       return `${indStr}${companyStr}'${title}' 주요 과제: 기존 시스템 고도화 및 레거시 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 엔지니어링 프로젝트입니다.`;
     case 'design-brand':
-      if (/ux|ui|웹|앱|디지털|인터랙티브/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 디지털 UX/UI 디자인 시스템 수립 및 사용자 경험을 개선하는 프로젝트입니다.`;
-      }
-      if (/편집|인쇄|출판|패키지|시각|그래픽/.test(titleLower)) {
+      if (/편집|인쇄|출판|패키지|시각|그래픽|디지털인쇄|디지털 인쇄/.test(titleLower)) {
         return `${indStr}${companyStr}'${title}' 주요 과제: 시각/인쇄 디자인 표준 가이드라인 정립 및 결과물 제작 품질을 향상하는 프로젝트입니다.`;
       }
-      if (/인테리어|공간|설계|전시|무대/.test(titleLower)) {
+      if (/인테리어|공간|건축|시공|모델하우스|전시|무대/.test(titleLower)) {
         return `${indStr}${companyStr}'${title}' 주요 과제: 공간 인테리어 설계 및 시공 품질 정립을 위한 마감 제작 프로젝트입니다.`;
+      }
+      if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템/.test(titleLower)) {
+        return `${indStr}${companyStr}'${title}' 주요 과제: 디지털 UX/UI 디자인 시스템 수립 및 사용자 경험을 개선하는 프로젝트입니다.`;
       }
       return `${indStr}${companyStr}'${title}' 주요 과제: 기업 브랜드 아이덴티티 수립 및 실무 디자인 제작 품질을 강화하는 프로젝트입니다.`;
     case 'marketing-sales':
