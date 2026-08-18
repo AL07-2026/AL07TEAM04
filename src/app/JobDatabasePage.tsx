@@ -1048,6 +1048,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     sourceUrl?: string;
   } | null>(null);
   const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
+  const [isMobileCategoryExpanded, setIsMobileCategoryExpanded] = useState(false);
   const [applicationFiles, setApplicationFiles] = useState<File[]>([]);
   const [applicantNote, setApplicantNote] = useState('');
   const [applicationError, setApplicationError] = useState('');
@@ -2567,48 +2568,103 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           </div>
 
           <div className="mt-5 border-t border-[#E0D9C8] pt-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] font-extrabold text-[#17212B]">
-                {role === 'senior' ? '직무 분야 필터 (선택 시 1순위 반영)' : '프로젝트 유형'}
-              </p>
-              <span className="text-[11px] font-bold text-slate-400">{selectedCategoryLabel}</span>
+            <div className="flex items-center justify-between gap-3 pb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <p className="text-[13px] font-extrabold text-[#17212B] truncate">
+                  {role === 'senior' ? '🎯 직무 분야 필터' : '프로젝트 유형'}
+                </p>
+                {selectedCategory !== all && role === 'senior' && (
+                  <span className="rounded-full bg-[#173F3A]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#173F3A] truncate">
+                    {selectedCategoryLabel}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileCategoryExpanded((prev) => !prev)}
+                className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-extrabold text-[#173F3A] hover:underline cursor-pointer"
+              >
+                <span>{isMobileCategoryExpanded ? '접기 ∧' : '전체 직무 보기 ∨'}</span>
+              </button>
             </div>
-            <div
-              aria-label={role === 'senior' ? '직무 분야 자동 분류' : '프로젝트 유형'}
-              className="mt-3 grid grid-cols-2 gap-2"
-              role="group"
-            >
-              {activeCategoryFilters.map((category) => {
-                const selected = effectiveSelectedCategory === category.id;
-                const badge = 'badge' in category ? category.badge : undefined;
-                return (
-                  <button
-                    aria-pressed={selected}
-                    className={cn(
-                      'flex h-11 min-h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-[13px] font-extrabold transition',
-                      selected
-                        ? 'border-[#173F3A] bg-[#173F3A] text-white shadow-xs'
-                        : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
-                    )}
-                    key={category.id}
-                    onClick={() => changeCategory(category.id)}
-                    type="button"
-                  >
-                    {badge ? (
-                      <span
-                        className={cn(
-                          'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
-                          selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
-                        )}
-                      >
-                        {badge}
-                      </span>
-                    ) : null}
-                    <span className="truncate">{category.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+
+            {!isMobileCategoryExpanded ? (
+              /* Default Horizontal Scroll Chip Stream (Compact 44px Height) */
+              <div
+                aria-label={role === 'senior' ? '직무 분야 가로 스크롤' : '프로젝트 유형'}
+                className="mt-2.5 flex w-full overflow-x-auto pb-1.5 pt-0.5 scrollbar-none gap-2"
+                role="group"
+              >
+                {activeCategoryFilters.map((category) => {
+                  const selected = effectiveSelectedCategory === category.id;
+                  const badge = 'badge' in category ? category.badge : undefined;
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={cn(
+                        'inline-flex h-[38px] min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition whitespace-nowrap shadow-2xs',
+                        selected
+                          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
+                          : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
+                      )}
+                      key={category.id}
+                      onClick={() => changeCategory(category.id)}
+                      type="button"
+                    >
+                      {badge ? (
+                        <span
+                          className={cn(
+                            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
+                            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
+                          )}
+                        >
+                          {badge}
+                        </span>
+                      ) : null}
+                      <span>{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Expanded Flex-Wrap Tag Cloud (100% Full Text, No Truncation) */
+              <div
+                aria-label={role === 'senior' ? '직무 분야 전체 보기' : '프로젝트 유형'}
+                className="mt-2.5 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3 animate-in fade-in duration-200"
+                role="group"
+              >
+                {activeCategoryFilters.map((category) => {
+                  const selected = effectiveSelectedCategory === category.id;
+                  const badge = 'badge' in category ? category.badge : undefined;
+                  return (
+                    <button
+                      aria-pressed={selected}
+                      className={cn(
+                        'inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition whitespace-nowrap shadow-2xs',
+                        selected
+                          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
+                          : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-white',
+                      )}
+                      key={category.id}
+                      onClick={() => changeCategory(category.id)}
+                      type="button"
+                    >
+                      {badge ? (
+                        <span
+                          className={cn(
+                            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
+                            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
+                          )}
+                        >
+                          {badge}
+                        </span>
+                      ) : null}
+                      <span>{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="mt-5 border-t border-[#E0D9C8] pt-4">
