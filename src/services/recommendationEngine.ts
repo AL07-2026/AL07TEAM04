@@ -298,7 +298,7 @@ export function calculatePersonalizedMatch(
 
   if (isSpecificCategoryActive || isCustomOccupationActive) {
     if (categoryPriority >= 0) {
-      baseScore = 78;
+      baseScore = 88;
       matchReasons.push(
         `선택한 직종 ${categoryLabel}과(와) 공고 내용이 일치합니다.`,
       );
@@ -308,17 +308,17 @@ export function calculatePersonalizedMatch(
     }
   } else {
     if (categoryPriority === 0) {
-      baseScore = 78;
+      baseScore = 88;
       matchReasons.push(
         `1순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 1) {
-      baseScore = 64;
+      baseScore = 74;
       matchReasons.push(
         `2순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
     } else if (categoryPriority === 2) {
-      baseScore = 52;
+      baseScore = 60;
       matchReasons.push(
         `3순위 희망 직종 ${categoryLabel}과 일치합니다.`,
       );
@@ -418,11 +418,11 @@ export function calculatePersonalizedMatch(
   if (categoryPriority < 0) {
     finalScore = Math.min(45, Math.max(15, finalScore));
   } else if (categoryPriority === 0) {
-    finalScore = Math.min(98, Math.max(72, finalScore));
+    finalScore = Math.min(98, Math.max(82, finalScore));
   } else if (categoryPriority === 1) {
-    finalScore = Math.min(85, Math.max(58, finalScore));
+    finalScore = Math.min(84, Math.max(68, finalScore));
   } else if (categoryPriority === 2) {
-    finalScore = Math.min(72, Math.max(48, finalScore));
+    finalScore = Math.min(72, Math.max(54, finalScore));
   }
 
   return {

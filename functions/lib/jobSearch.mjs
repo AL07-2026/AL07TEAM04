@@ -270,7 +270,7 @@ function calculateFitMatch(entry, options, context) {
     desiredOccupationPriority >= 0 &&
     (categoryPriority < 0 || desiredOccupationPriority < categoryPriority);
   if (directOccupationMatchApplied) categoryPriority = desiredOccupationPriority;
-  let score = categoryPriority === 0 ? 78 : categoryPriority === 1 ? 64 : categoryPriority === 2 ? 52 : 28;
+  let score = categoryPriority === 0 ? 88 : categoryPriority === 1 ? 74 : categoryPriority === 2 ? 60 : 28;
   const reasons = [];
   if (directOccupationMatchApplied) {
     reasons.push(
@@ -345,11 +345,11 @@ function calculateFitMatch(entry, options, context) {
   if (categoryPriority < 0) {
     finalScore = Math.min(45, Math.max(15, finalScore));
   } else if (categoryPriority === 0) {
-    finalScore = Math.min(98, Math.max(72, finalScore));
+    finalScore = Math.min(98, Math.max(82, finalScore));
   } else if (categoryPriority === 1) {
-    finalScore = Math.min(85, Math.max(58, finalScore));
+    finalScore = Math.min(84, Math.max(68, finalScore));
   } else if (categoryPriority === 2) {
-    finalScore = Math.min(72, Math.max(48, finalScore));
+    finalScore = Math.min(72, Math.max(54, finalScore));
   }
 
   return {
