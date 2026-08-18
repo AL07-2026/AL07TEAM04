@@ -16,21 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 채용공고 AI 해결 과제 정제 및 로딩 속도 최적화
+### [2026-08-18] 기업명 및 채용 포지션 정규화/규격화 및 카드 UI 명확화
 - **작업자**: Antigravity (Gemini)
-- **원인 분석**:
-  - **문구 이상 문제**: 기존 Firestore DB에 저장된 공고 일부에 `[서울시 일자리] OO회사 XX 채용`이나 `XX 채용 채용` 같은 기계적 접두사/접미사가 남아 카드의 해결 프로젝트란에 그대로 출력되던 현상을 파악함.
-  - **로딩 속도 지연 문제**: Cloud Functions 인스턴스에서 검색 카탈로그 로딩 시 14,000여 건 전체 Firestore 데이터를 매번 새로 불렀고, 브라우저 클라이언트 응답 캐시가 없어 페이지 전환 시 3~5초의 네트워크 지연이 발생함을 파악함.
 - **주요 개선**:
-  - **직무명 기반 제목-인식(Title-Aware) AI 과제 생성기 구축**: `sanitizeAndEnhanceProblemStatement` 함수를 도입하여 기계적 접두어(`[서울시 일자리]`, `[공공기관 채용]`) 및 `채용 채용` 중복을 제거하고, 공고 제목(인테리어/야외운동기구 설계/편집디자인/UXUI 등)에 맞춰 실제 해결 과제 문구로 자동 변환함.
-  - **클라이언트/서버 2중 0초 메모리 캐시 구축**:
-    - 백엔드 카탈로그 인메모리 캐시 유지 시간을 15분으로 확장하고,
-    - 클라이언트 `jobSearchService.ts`에 60초 결과 메모리 캐시(`clientSearchCache`)를 신설하여 공고 조회 및 페이지 이동 속도를 0.05초 이내로 대폭 최적화함.
-- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 원격 push 및 Firebase Hosting 미리보기 채널(`leedongwook`) 재배포 완료.
+  - `normalizeCompanyAndTitle` 함수를 고도화하여 무분별하게 혼재된 홍보성 문구("에서 함께 성장하세요!", "녹지 공간과 활력을 더하는...", "...를 모집합니다", "외 (학교/관공서...)") 및 `[서울시 일자리]`, `[긴급]`, 중복 `채용 채용`을 자동 정제하여 **핵심 직무/포지션명**만 깔끔하게 추출함.
+  - 공고 제목 전면에 반복 출현하는 기업명(`(주)시영디자인의 인테리어...` -> `인테리어...`)을 자동 감지/제거하여 기업명과 포지션이 이중으로 중복되지 않도록 정리함.
+  - **프로젝트 탭 (JobDatabasePage) 카드 UI 개선**: 기업명을 `🏢 (주)지안` 태그 형태의 시각적 배지(Pill)로 명확히 분리하고, 그 아래에 채용 포지션 타이틀을 볼드 체형으로 표기하여 기업명과 채용 포지션이 한눈에 규격화되어 구분되도록 구현함.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
 - **변경 파일**:
+  - [MODIFY] `src/data/occupationCategories.ts`
+  - [MODIFY] `functions/lib/backendAccumulator.mjs`
   - [MODIFY] `functions/lib/jobSearch.mjs`
   - [MODIFY] `src/services/dataSyncService.ts`
-  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 
 ### [2026-08-18] `leedongwook` 브랜치 생성 및 전체 작업 내역 원격 푸시

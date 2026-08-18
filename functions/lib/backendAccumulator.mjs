@@ -33,7 +33,7 @@ function sanitizeId(id) {
   return String(id || '').replace(/[\/\\#?%]/g, '_').trim();
 }
 
-function normalizeCompanyAndTitle(rawCompany, rawTitle) {
+export function normalizeCompanyAndTitle(rawCompany, rawTitle) {
   let company = (rawCompany || '').trim();
   let title = (rawTitle || '').trim();
 
@@ -49,10 +49,31 @@ function normalizeCompanyAndTitle(rawCompany, rawTitle) {
     title = temp;
   }
 
-  company = company.replace(/^\[(구인|채용|모집|공고)\]\s*/, '').trim();
-
+  company = company.replace(/^\[(?:구인|채용|모집|공고|서울시|공공)\]\s*/gi, '').trim();
   if (!company || company === '기업명 미제공') company = '우수 시니어 협력기업';
-  if (!title) title = '시니어 전문 채용 공고';
+
+  title = title.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤|긴급|추천|우수)\]\s*/gi, '').trim();
+
+  if (company && title.startsWith(company)) {
+    title = title.slice(company.length).replace(/^[의\s_:-]+/, '').trim();
+  }
+  const cleanCompanyBase = company.replace(/\(주\)|㈜|주식회사|\(유\)|\(사\)|\(재\)/g, '').trim();
+  if (cleanCompanyBase.length >= 2) {
+    const escCompany = cleanCompanyBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^(?:\\(주\\)|㈜)?${escCompany}(?:\\(주\\)|㈜)?(?:에서|의)?\\s*`, 'i');
+    title = title.replace(regex, '').trim();
+  }
+
+  title = title.replace(/(?:에서|와\s*함께)\s*(?:함께\s*)?(?:성장하세요|일해요|함께해요|근무할|일하실|보람찬|활력을\s*더하는|경험\s*풍부한)[!.\s]*/gi, ' ').trim();
+  title = title.replace(/\s*(?:를|을|에서)?\s*(?:모집합니다|구합니다|채용합니다|모십니다|찾습니다)[!.\s]*/gi, '').trim();
+
+  title = title.replace(/\s*채용\s*채용$/g, ' 채용').trim();
+  title = title.replace(/\s*공개\s*채용\s*채용$/g, ' 공개 채용').trim();
+  title = title.replace(/\s*구인\s*구인$/g, ' 구인').trim();
+
+  title = title.replace(/\s*외\s*\([^)]*\)/g, '').trim();
+
+  if (!title) title = '시니어 전문 포지션';
 
   return { companyName: company, title };
 }

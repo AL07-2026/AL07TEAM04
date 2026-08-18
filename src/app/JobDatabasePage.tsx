@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   BriefcaseBusiness,
+  Building2,
   CalendarClock,
   CheckCircle,
   CheckCircle2,
@@ -438,9 +439,17 @@ function PostingCard({
               {hiringStageLabels[posting.hiringStage]}
             </span>
           </div>
-          <h3 className="mt-3 text-[17px] font-extrabold leading-snug text-[#17212B]">
+          <p className="mt-2.5 flex items-center gap-1.5 text-[12px] font-bold text-[#173F3A]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF7F2] px-2 py-0.5 text-[11px] font-extrabold text-[#173F3A] border border-[#E0D9C8]">
+              <Building2 className="size-3 text-[#173F3A]" />
+              {posting.companyName}
+            </span>
+            <span className="text-slate-400">·</span>
+            <span className="text-slate-600">{posting.industry}</span>
+          </p>
+          <h3 className="mt-1.5 text-[17px] font-extrabold leading-snug text-[#17212B]">
             <button
-              className="text-left"
+              className="text-left hover:text-[#173F3A] transition-colors"
               onClick={(event) => {
                 event.stopPropagation();
                 onSelect();
@@ -450,10 +459,6 @@ function PostingCard({
               {posting.title}
             </button>
           </h3>
-          <p className="mt-1 text-[13px] font-bold text-[#173F3A]">
-            {posting.companyName}
-            {posting.source === 'worknet' ? '' : ` · ${posting.industry}`}
-          </p>
         </div>
         {showScore ? (
           <div

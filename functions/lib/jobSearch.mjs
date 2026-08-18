@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { adminDb } from './firestoreAdmin.mjs';
-import { classifyOccupationCategoryFromJobText } from './backendAccumulator.mjs';
+import { classifyOccupationCategoryFromJobText, normalizeCompanyAndTitle } from './backendAccumulator.mjs';
 import { containsUtf8Replacement } from './httpEncoding.mjs';
 import { deduplicateJobCatalog } from './jobDeduplication.mjs';
 
@@ -470,13 +470,16 @@ export function prepareJobCatalog(postings, now = new Date()) {
         !isPostingExpired(posting, now),
     )
     .map((posting) => {
-      const occupationClassification = resolveOccupationClassification(posting);
+      const { companyName, title } = normalizeCompanyAndTitle(posting.companyName, posting.title);
+      const occupationClassification = resolveOccupationClassification({ ...posting, companyName, title });
       const occupationCategory = occupationClassification.isConfident
         ? occupationClassification.category
         : null;
       const normalizedPosting = {
         ...posting,
-        problemStatement: sanitizeAndEnhanceProblemStatement(posting),
+        companyName,
+        title,
+        problemStatement: sanitizeAndEnhanceProblemStatement({ ...posting, companyName, title }),
         occupationCategory: occupationCategory || undefined,
         occupationClassificationConfidence: occupationClassification.confidence,
         occupationClassificationMargin: occupationClassification.margin,

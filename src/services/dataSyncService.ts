@@ -105,12 +105,14 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
  * Normalize those records at the data boundary so every UI consumer receives arrays.
  */
 export function normalizeJobPostingDetailFields(posting: JobPosting): JobPosting {
-  const title = typeof posting.title === 'string' ? posting.title.trim() : '';
+  const { companyName, title } = normalizeCompanyAndTitle(posting.companyName, posting.title);
   const industry = typeof posting.industry === 'string' ? posting.industry.trim() : '';
 
   return {
     ...posting,
-    problemStatement: sanitizeAndEnhanceProblemStatement(posting),
+    companyName,
+    title,
+    problemStatement: sanitizeAndEnhanceProblemStatement({ ...posting, companyName, title }),
     collaborationTargets: normalizeStringArray(posting.collaborationTargets, ['부서 실무진']),
     coreResponsibilities: normalizeStringArray(
       posting.coreResponsibilities,
