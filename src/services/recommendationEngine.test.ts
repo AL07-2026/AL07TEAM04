@@ -4,6 +4,7 @@ import type { JobPosting, ProjectCategory } from '@/data/jobPostings';
 import type { SeniorProfileData } from '@/services/profileService';
 import {
   calculatePersonalizedMatch,
+  getPostingOccupationCategory,
   getProfileExperienceMonths,
   getProfileMatchedRankedProjects,
   getProfileWorknetKeywords,
@@ -71,7 +72,48 @@ describe('profile-based recommendations', () => {
     ).toBe(false);
   });
 
-  it('희망 직종에 포함된 공고만 남기고 1순위를 먼저 배치한다', () => {
+  it('기타 희망 직종은 구체적인 직무명을 입력한 경우에만 해당 공고와 매칭한다', () => {
+    const otherOccupationProfile: SeniorProfileData = {
+      ...profile,
+      desiredCategory: 'other',
+      desiredCategory2: undefined,
+      desiredOccupationText: 'UX 리서처',
+    };
+    const matchingPosting = createPosting(
+      'ux-researcher',
+      'design-brand',
+      '시니어 UX 리서처 채용',
+    );
+    matchingPosting.coreResponsibilities = ['사용자 인터뷰와 사용성 조사'];
+    const unrelatedPosting = createPosting(
+      'office-manager',
+      'hr-strategy',
+      '총무 사무 관리자 채용',
+    );
+
+    expect(hasProfileRecommendationCriteria(otherOccupationProfile)).toBe(true);
+    expect(
+      hasProfileRecommendationCriteria({
+        ...otherOccupationProfile,
+        desiredOccupationText: '',
+      }),
+    ).toBe(false);
+    const ranked = getProfileMatchedRankedProjects(
+      [unrelatedPosting, matchingPosting],
+      otherOccupationProfile,
+    );
+    expect(ranked.map(({ posting }) => posting.id)).toEqual(['ux-researcher']);
+    expect(ranked[0]?.matchResult.matchReasons[0]).toContain('UX 리서처');
+    expect(
+      calculatePersonalizedMatch(
+        unrelatedPosting,
+        otherOccupationProfile,
+        'custom-match',
+      ).primaryCategoryMatch,
+    ).toBe(false);
+  });
+
+  it('맞춤 프로젝트에는 내 정보의 1순위 직종 공고만 남긴다', () => {
     const ranked = getProfileMatchedRankedProjects(
       [
         createPosting('hr', 'hr-strategy', '인사 제도 설계'),
@@ -81,11 +123,80 @@ describe('profile-based recommendations', () => {
       profile,
     );
 
-    expect(ranked.map(({ posting }) => posting.id)).toEqual(['development', 'operations']);
+    expect(ranked.map(({ posting }) => posting.id)).toEqual(['development']);
     expect(ranked[0]?.matchResult.primaryCategoryMatch).toBe(true);
-    expect(ranked[0]?.matchResult.personalizedScore).toBeGreaterThan(
-      ranked[1]?.matchResult.personalizedScore ?? 0,
+    expect(ranked[0]?.matchResult.matchReasons[0]).toContain('선택한 직종');
+  });
+
+  it('AI 경험 인터뷰의 역할·행동·성과가 맞는 공고를 더 높게 추천한다', () => {
+    const matchingPosting = createPosting(
+      'automation',
+      'dev-engineering',
+      '운영 자동화 프로세스 구축 리드',
     );
+    matchingPosting.problemStatement = '수작업 운영 프로세스를 자동화하고 데이터 품질을 개선합니다.';
+    matchingPosting.requiredSkills = ['자동화', '프로세스', '데이터'];
+    const genericPosting = createPosting('generic', 'dev-engineering', '소프트웨어 개발 리드');
+    genericPosting.problemStatement = '신규 서비스 개발을 담당합니다.';
+    genericPosting.requiredSkills = ['개발'];
+
+    const experienceCard = {
+      action: '수작업 운영 프로세스를 자동화하고 데이터 검증 체계를 구축했습니다.',
+      category: 'dev-engineering' as const,
+      problem: '반복 업무와 데이터 품질 문제가 있었습니다.',
+      result: '처리 시간을 단축하고 오류를 줄였습니다.',
+      role: '자동화 구축 리드',
+      title: '운영 자동화 경험',
+    };
+    const ranked = getProfileMatchedRankedProjects(
+      [genericPosting, matchingPosting],
+      profile,
+      undefined,
+      experienceCard,
+    );
+
+    expect(ranked.map(({ posting }) => posting.id)).toEqual(['automation', 'generic']);
+    expect(ranked[0]?.matchResult.experienceRecommendationApplied).toBe(true);
+    expect(
+      ranked[0]?.matchResult.matchReasons.some((reason) => reason.includes('AI 경험 인터뷰')),
+    ).toBe(true);
+  });
+
+  it('프로필의 UX/UI·브랜딩 전문 분야가 일치하는 디자인 공고를 먼저 추천한다', () => {
+    const designProfile: SeniorProfileData = {
+      ...profile,
+      desiredCategory: 'design',
+      desiredCategory2: 'marketing-pr-research',
+      field: 'UX/UI 및 브랜딩',
+      keySkills: 'UX/UI 디자인 설계 및 서비스 런칭, 브랜드 자료 고도화',
+      solvedExperiences: '글로벌 브랜딩과 UX/UI 디자인 시스템 구축',
+    };
+    const genericPosting = createPosting(
+      'generic-design',
+      'design-brand',
+      '편집 디자이너 인쇄물 제작',
+    );
+    genericPosting.industry = '시각 디자인';
+    const uxPosting = createPosting(
+      'ux-senior-design',
+      'design-brand',
+      '기업 글로벌 브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터',
+    );
+    uxPosting.industry = '디자인/글로벌 브랜딩';
+    uxPosting.requiredSkills = ['UX/UI 디자인', '글로벌 브랜딩', '디자인 시스템'];
+
+    const ranked = getProfileMatchedRankedProjects(
+      [genericPosting, uxPosting],
+      designProfile,
+    );
+
+    expect(ranked.map(({ posting }) => posting.id)).toEqual([
+      'ux-senior-design',
+      'generic-design',
+    ]);
+    expect(
+      ranked[0]?.matchResult.matchReasons.some((reason) => reason.includes('전문 분야')),
+    ).toBe(true);
   });
 
   it('프로필이 명시적으로 제공되지 않아도 시니어 공고 피드를 기본 제공한다', () => {
@@ -144,7 +255,48 @@ describe('profile-based recommendations', () => {
       desiredLocation: '서울',
     });
 
-    expect(matchSeoul.personalizedScore).toBeGreaterThan(matchBusan.personalizedScore);
+    expect(matchSeoul.rankingScore).toBeGreaterThan(matchBusan.rankingScore);
     expect(matchSeoul.matchReasons.some((r) => r.includes('희망 근무 지역 서울'))).toBe(true);
+  });
+
+  it('필터에서 특정 직종을 선택하면 해당 직종이 1순위 전용으로 동적 승격 평가된다', () => {
+    const servicePosting = createPosting('service_job', 'operations', '매장 서비스 운영 리드');
+    servicePosting.occupationCategory = 'service';
+
+    const defaultMatch = calculatePersonalizedMatch(servicePosting, profile);
+    expect(defaultMatch.matchReasons[0]).toContain('2순위 희망 직종');
+
+    const promotedMatch = calculatePersonalizedMatch(servicePosting, profile, 'service');
+    expect(promotedMatch.matchReasons[0]).toContain('선택한 직종');
+    expect(promotedMatch.rankingScore).toBeGreaterThan(defaultMatch.rankingScore);
+  });
+
+  it('본문에 직종 단어만 포함된 다른 직무를 희망 직종으로 승격하지 않는다', () => {
+    const accountingPosting = createPosting(
+      'design_company_accounting',
+      'design-brand',
+      '디자인 회사 회계 담당자',
+    );
+    accountingPosting.industry = '디자인 서비스업';
+    accountingPosting.occupationCategory = 'design';
+    accountingPosting.requiredSkills = ['회계', '세무', '재무'];
+
+    expect(getPostingOccupationCategory(accountingPosting)).toBe('accounting-tax-finance');
+    expect(calculatePersonalizedMatch(accountingPosting, profile, 'design').primaryCategoryMatch).toBe(
+      false,
+    );
+  });
+
+  it('서버가 신뢰도 검증한 직무는 브라우저에서 다른 직무로 다시 덮어쓰지 않는다', () => {
+    const serverClassifiedPosting = createPosting(
+      'server_classified_planning',
+      'growth',
+      'AI Product Lead 채용',
+    );
+    serverClassifiedPosting.occupationCategory = 'planning-strategy';
+    serverClassifiedPosting.occupationClassificationStatus = 'classified';
+    serverClassifiedPosting.coreResponsibilities = ['AI 플랫폼 개발자와 협업'];
+
+    expect(getPostingOccupationCategory(serverClassifiedPosting)).toBe('planning-strategy');
   });
 });

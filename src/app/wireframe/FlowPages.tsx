@@ -17,7 +17,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
@@ -46,6 +46,7 @@ import {
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/interviewService';
+import { searchFullJobDatabase } from '@/services/jobSearchService';
 import { createProject, fetchProjectById, fetchProjects } from '@/services/projectService';
 import {
   getLocalCompanyProfile,
@@ -63,12 +64,16 @@ import {
   updateProposalStatus,
 } from '@/services/proposalService';
 import {
-  getProfileExperienceMonths,
+  getExperienceCardRecommendationText,
   getProfileMatchedRankedProjects,
-  getProfileWorknetKeywords,
+  getProfilePrimaryCategory,
   hasProfileRecommendationCriteria,
 } from '@/services/recommendationEngine';
-import { fetchWorknetSeniorProjectFeed } from '@/services/worknetService';
+import {
+  clearWorknetFeedCache,
+  fetchWorknetSeniorProjectFeed,
+  getDefaultSeniorJobPostings,
+} from '@/services/worknetService';
 
 import {
   ActionButton,
@@ -159,7 +164,7 @@ export function ProcessOverviewGraphicCard() {
             isMobile ? 'text-[13px]' : 'text-[17px]',
           )}
         >
-          ✨ 경험매칭 3단계 프로세스
+          경험매칭 3단계 프로세스
         </span>
         <span className={cn('font-bold text-slate-400', isMobile ? 'text-[11px]' : 'text-[14px]')}>
           쉽고 빠른 AI 인터뷰
@@ -277,56 +282,97 @@ function HomeRecommendationRow({
         'w-full rounded-2xl border border-[#E0D9C8] bg-white text-left shadow-xs transition hover:border-[#BBD5CE] hover:shadow-md active:scale-[0.995]',
         isMobile
           ? 'flex flex-col gap-3 p-4'
-          : 'grid grid-cols-[minmax(240px,1.25fr)_minmax(260px,1.35fr)_minmax(190px,0.9fr)_112px] items-center gap-5 px-5 py-4',
+          : 'grid grid-cols-[minmax(200px,1.2fr)_minmax(220px,1.3fr)_minmax(160px,0.9fr)_auto] items-center gap-4 md:gap-5 px-5 py-4',
       )}
       onClick={onClick}
       type="button"
     >
-      <div className="min-w-0">
-        <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[13px] font-bold text-[#173F3A]">
-          {company}
-        </span>
-        <h4 className="mt-2 line-clamp-2 text-[18px] font-extrabold leading-[1.45] text-[#17212B]">
-          {title}
-        </h4>
-      </div>
-
-      <div className={cn('min-w-0', isMobile && 'border-t border-[#E0D9C8]/70 pt-3')}>
-        <p className="text-[13px] font-extrabold text-[#173F3A]">해결 과제</p>
-        <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">{problem}</p>
-      </div>
-
-      <div className="min-w-0 text-[14px] font-bold leading-6 text-slate-600">
-        <p>{meta}</p>
-        {salary ? <p className="mt-0.5 text-[#F06B4F]">{salary}</p> : null}
-      </div>
-
-      <div
-        className={cn(
-          'flex items-center',
-          isMobile ? 'w-full justify-between' : 'justify-end gap-3',
-        )}
-      >
-        {fitScore !== undefined && fitTone ? (
-          <span
-            aria-label={`적합도 ${fitScore}점, ${fitTone.label}`}
-            className={cn(
-              'inline-flex min-w-[88px] flex-col items-center rounded-xl border px-3 py-2',
-              fitTone.containerClassName,
-            )}
-          >
-            <span className={cn('text-[11px] font-bold', fitTone.labelClassName)}>
-              {fitTone.label}
+      {isMobile ? (
+        <div className="flex flex-col gap-3">
+          {/* Top Header Row on Mobile: Company Tag + Fit Score Box */}
+          <div className="flex items-start justify-between gap-3">
+            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-bold text-[#173F3A]">
+              {company}
             </span>
-            <strong className={cn('text-[18px] font-black', fitTone.scoreClassName)}>
-              {fitScore}점
-            </strong>
-          </span>
-        ) : (
-          <span className="text-[14px] font-extrabold text-[#173F3A]">추천 프로젝트</span>
-        )}
-        <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
-      </div>
+            {fitScore !== undefined && fitTone ? (
+              <span
+                aria-label={`적합도 ${fitScore}점, ${fitTone.label}`}
+                className={cn(
+                  'inline-flex shrink-0 whitespace-nowrap flex-col items-center justify-center rounded-xl border px-3 py-1.5 min-w-[72px]',
+                  fitTone.containerClassName,
+                )}
+              >
+                <span className={cn('text-[10px] font-extrabold whitespace-nowrap leading-none', fitTone.labelClassName)}>
+                  {fitTone.label}
+                </span>
+                <strong className={cn('mt-0.5 text-[15px] font-black whitespace-nowrap leading-tight', fitTone.scoreClassName)}>
+                  {fitScore}점
+                </strong>
+              </span>
+            ) : null}
+          </div>
+
+          <h4 className="-mt-1 text-[17px] font-extrabold leading-[1.45] text-[#17212B]">
+            {title}
+          </h4>
+
+          <div className="border-t border-[#E0D9C8]/70 pt-2.5">
+            <p className="text-[12px] font-extrabold text-[#173F3A]">해결 프로젝트</p>
+            <p className="mt-1 text-[13px] font-medium leading-relaxed text-slate-700">{problem}</p>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 text-[13px] font-bold text-slate-600">
+            <div className="min-w-0">
+              <p>{meta}</p>
+              {salary ? <p className="mt-0.5 text-[#F06B4F]">{salary}</p> : null}
+            </div>
+            <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="min-w-0">
+            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[13px] font-bold text-[#173F3A]">
+              {company}
+            </span>
+            <h4 className="mt-2 line-clamp-2 text-[18px] font-extrabold leading-[1.45] text-[#17212B]">
+              {title}
+            </h4>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-[13px] font-extrabold text-[#173F3A]">해결 프로젝트</p>
+            <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">{problem}</p>
+          </div>
+
+          <div className="min-w-0 text-[14px] font-bold leading-6 text-slate-600">
+            <p>{meta}</p>
+            {salary ? <p className="mt-0.5 text-[#F06B4F]">{salary}</p> : null}
+          </div>
+
+          <div className="flex items-center justify-end gap-3 shrink-0 whitespace-nowrap">
+            {fitScore !== undefined && fitTone ? (
+              <span
+                aria-label={`적합도 ${fitScore}점, ${fitTone.label}`}
+                className={cn(
+                  'inline-flex shrink-0 whitespace-nowrap flex-col items-center justify-center rounded-xl border px-3.5 py-2 min-w-[76px]',
+                  fitTone.containerClassName,
+                )}
+              >
+                <span className={cn('text-[11px] font-extrabold whitespace-nowrap leading-none', fitTone.labelClassName)}>
+                  {fitTone.label}
+                </span>
+                <strong className={cn('mt-1 text-[17px] font-black whitespace-nowrap leading-tight', fitTone.scoreClassName)}>
+                  {fitScore}점
+                </strong>
+              </span>
+            ) : (
+              <span className="text-[14px] font-extrabold text-[#173F3A]">추천 프로젝트</span>
+            )}
+            <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
+          </div>
+        </>
+      )}
     </button>
   );
 }
@@ -336,75 +382,94 @@ export function SeniorHomePage() {
   const { mode } = useViewportMode();
   const { user } = useAuth();
   const isMobile = mode === 'mobile';
+
+  const initialLocalProfile = useMemo(() => getLocalSeniorProfile(user?.uid), [user?.uid]);
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
+
   const [activeProposalsCount, setActiveProposalsCount] = useState<number>(0);
-  const [recommendedProjectsCount, setRecommendedProjectsCount] = useState<number>(0);
+  const [recommendedProjectsCount, setRecommendedProjectsCount] = useState(0);
   const [savedExperienceCount, setSavedExperienceCount] = useState<number>(0);
   const [highestFitScore, setHighestFitScore] = useState<number | null>(null);
+  const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
-  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(
-    null,
-  );
-  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState<boolean>(true);
+  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(initialLocalProfile);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+  const [homePage, setHomePage] = useState(1);
+  const [homeTotalPages, setHomeTotalPages] = useState(1);
+  const homeItemsPerPage = 8;
 
   useEffect(() => {
     async function loadAndRankProjects() {
       setIsLoadingRecommendations(true);
-      const profilePromise = resolveSeniorProfile(user?.uid);
-      const worknetFeedPromise = profilePromise.then((profile) => {
-        if (!hasProfileRecommendationCriteria(profile)) {
-          return {
-            projects: [],
-            status: 'profile-required' as const,
-            message: '내 정보의 희망 직종과 경력 정보를 먼저 입력해 주세요.',
-          };
-        }
-        return fetchWorknetSeniorProjectFeed({
-          keywords: getProfileWorknetKeywords(profile),
-          maxCareerMonths: getProfileExperienceMonths(profile),
-        });
-      });
-      const summaryPromise = Promise.all([
+      const [profile, proposals, experienceCard] = await Promise.all([
+        resolveSeniorProfile(user?.uid),
         getUserProposals(user?.uid),
         getLatestUserExperienceCard(user?.uid),
       ]);
-      const [profile, worknetFeed] = await Promise.all([profilePromise, worknetFeedPromise]);
       setRecommendationProfile(profile);
-      const ranked = getProfileMatchedRankedProjects(worknetFeed.projects, profile);
-      const topRecommendations = ranked.slice(0, 4);
-      setRecommendationFeedMessage(
-        worknetFeed.status === 'success' && topRecommendations.length === 0
-          ? '내 정보의 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.'
-          : (worknetFeed.message ?? ''),
+      setActiveProposalsCount(
+        proposals.filter(
+          (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
+        ).length,
       );
-      setRecommendedJobs(
-        topRecommendations.map((result) => ({
-          ...result.posting,
-          seniorFitScore: result.matchResult.personalizedScore,
-        })),
-      );
-      setRecommendedProjectsCount(topRecommendations.length);
+      setSavedExperienceCount(experienceCard ? 1 : 0);
 
-      void summaryPromise
-        .then(([proposals, experienceCard]) => {
-          setActiveProposalsCount(
-            proposals.filter(
-              (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
-            ).length,
-          );
+      const primaryCategory = getProfilePrimaryCategory(profile);
+      if (!primaryCategory) {
+        setRecommendedJobs([]);
+        setRecommendedProjectsCount(0);
+        setHomeTotalPages(1);
+        setHighestFitScore(null);
+        setIsExperienceRecommendationApplied(false);
+        setRecommendationFeedMessage('내 정보에서 1순위 희망 직종을 먼저 선택해 주세요.');
+        return;
+      }
 
-          const hasSavedExperience = Boolean(experienceCard);
-          setSavedExperienceCount(hasSavedExperience ? 1 : 0);
-          setHighestFitScore(
-            hasSavedExperience
-              ? (topRecommendations[0]?.matchResult.personalizedScore ?? null)
-              : null,
-          );
-        })
-        .catch((error: unknown) => {
-          console.warn('Failed to load senior summary:', error);
+      try {
+        const result = await searchFullJobDatabase({
+          categories: [primaryCategory],
+          desiredCategories: [primaryCategory],
+          desiredLocation: profile?.desiredLocation,
+          experienceCardCategory: experienceCard?.category,
+          experienceCardText: getExperienceCardRecommendationText(experienceCard),
+          experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
+          page: homePage,
+          pageSize: homeItemsPerPage,
+          profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
+            .filter(Boolean)
+            .join(' '),
+          sortBy: 'fit-desc',
         });
+        setRecommendedJobs(result.items);
+        setRecommendedProjectsCount(result.total);
+        setHomeTotalPages(result.totalPages);
+        if (homePage === 1) setHighestFitScore(result.items[0]?.seniorFitScore ?? null);
+        setIsExperienceRecommendationApplied(Boolean(experienceCard));
+        setRecommendationFeedMessage(
+          result.total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
+        );
+      } catch (error) {
+        console.warn('Full job database recommendation failed, using fallback feed:', error);
+        const worknetFeed = await fetchWorknetSeniorProjectFeed({ includeAnyCareer: true });
+        const sourceProjects =
+          worknetFeed.projects.length > 0 ? worknetFeed.projects : getDefaultSeniorJobPostings();
+        const ranked = getProfileMatchedRankedProjects(
+          sourceProjects,
+          profile,
+          primaryCategory,
+          experienceCard,
+        );
+        const total = ranked.length;
+        const start = (homePage - 1) * homeItemsPerPage;
+        const pageJobs = ranked.slice(start, start + homeItemsPerPage).map(({ posting }) => posting);
+        setRecommendedJobs(pageJobs);
+        setRecommendedProjectsCount(total);
+        setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
+        if (homePage === 1) setHighestFitScore(pageJobs[0]?.seniorFitScore ?? null);
+        setIsExperienceRecommendationApplied(Boolean(experienceCard));
+        setRecommendationFeedMessage(worknetFeed.message ?? '');
+      }
     }
 
     const runRecommendationLoad = () => {
@@ -413,6 +478,7 @@ export function SeniorHomePage() {
           console.warn('Failed to load senior recommendations:', error);
           setRecommendedJobs([]);
           setRecommendedProjectsCount(0);
+          setHomeTotalPages(1);
           setRecommendationFeedMessage(
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
           );
@@ -423,18 +489,27 @@ export function SeniorHomePage() {
     runRecommendationLoad();
 
     const handleProfileUpdate = () => {
-      runRecommendationLoad();
+      clearWorknetFeedCache();
+      setHomePage(1);
+      setRecommendationReloadKey((prev) => prev + 1);
     };
 
     window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
     window.addEventListener('eojob_experience_card_updated', handleProfileUpdate);
+    window.addEventListener('eojob_feed_revalidated', handleProfileUpdate);
     window.addEventListener('storage', handleProfileUpdate);
     return () => {
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
+      window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
       window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [recommendationReloadKey, user?.uid]);
+  }, [homePage, recommendationReloadKey, user?.uid]);
+
+  const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
+  const recommendationPrimaryLabel = recommendationPrimaryCategory
+    ? getOccupationCategoryLabel(recommendationPrimaryCategory, '1순위 직종')
+    : '1순위 직종 미설정';
 
   const userName =
     user?.name && user.name !== '김인재'
@@ -467,7 +542,7 @@ export function SeniorHomePage() {
               isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl',
             )}
           >
-            {userName}님, 안녕하세요 👋
+            {userName}님, 안녕하세요
           </h2>
           <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">
             이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
@@ -483,38 +558,40 @@ export function SeniorHomePage() {
       {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR MOBILE & PC */}
       <RollingBanner isCompact={isMobile} />
 
-      {/* Visual Process Overview */}
-      <ProcessOverviewGraphicCard />
-
       {/* AI Experience Interview Banner */}
       <button
         onClick={() => void navigate('/senior/experience/interview')}
         type="button"
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:shadow-md active:scale-[0.99]"
+        className="group w-full rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.99]"
       >
-        <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs md:text-base font-extrabold text-[#F06B4F]">
-            <Sparkles className="size-4 text-[#F06B4F]" /> 1/3 경험 등록 추천
-          </span>
-          <strong
-            className={cn(
-              'font-extrabold text-[#17212B]',
-              isMobile ? 'text-base' : 'text-lg md:text-xl lg:text-2xl',
-            )}
-          >
-            AI 경험 인터뷰 시작하기
-          </strong>
-          <span className="text-xs md:text-base font-medium text-slate-600">
-            말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
-          </span>
-        </div>
-        <div
-          className={cn(
-            'flex shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-md shadow-[#F06B4F]/25',
-            isMobile ? 'size-11' : 'size-14',
-          )}
-        >
-          <Mic className={isMobile ? 'size-5' : 'size-7'} />
+        <div className="flex w-full items-center justify-between gap-3 md:gap-6">
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+            <span className="text-xs font-extrabold text-[#F06B4F] md:text-base flex items-center gap-1">
+              <Sparkles className="size-3.5 md:size-4" />
+              1/3 경험 등록 추천
+            </span>
+            <strong
+              className={cn(
+                'font-extrabold text-[#17212B]',
+                isMobile ? 'text-base' : 'text-lg md:text-xl lg:text-2xl',
+              )}
+            >
+              AI 경험 인터뷰 시작하기
+            </strong>
+            <span className="text-xs md:text-base font-medium text-slate-600">
+              말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
+            </span>
+          </div>
+
+          {/* Clickable Microphone Icon Button shifted 7% right */}
+          <div className="flex items-center justify-center shrink-0 translate-x-[7%]">
+            <div
+              aria-label="마이크로 AI 경험 인터뷰 시작하기"
+              className="flex size-12 md:size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F06B4F] via-[#EE5D3B] to-[#D94826] text-white shadow-md shadow-[#F06B4F]/25 transition group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-[#F06B4F]/35"
+            >
+              <Mic className="size-6 md:size-7 animate-pulse" />
+            </div>
+          </div>
         </div>
       </button>
 
@@ -522,7 +599,7 @@ export function SeniorHomePage() {
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard
-          caption="현재 상위 추천 노출 수"
+          caption={`1순위 ${recommendationPrimaryLabel} 기준`}
           label="추천 프로젝트"
           role="senior"
           value={`${recommendedProjectsCount}개`}
@@ -552,31 +629,42 @@ export function SeniorHomePage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B] flex items-center gap-2">
-              🎯 회원님 조건 맞춤 추천 프로젝트
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-[#17212B] flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+              맞춤 추천 프로젝트
               {isLoadingRecommendations ? (
                 <Loader2 className="size-4 animate-spin text-[#173F3A]" />
               ) : null}
             </h3>
-            <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-0.5 text-[11px] font-extrabold text-[#F06B4F]">
-              내 정보 기반 · 맞춤 검증 공고
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-0.5 text-[11px] font-extrabold text-[#F06B4F]">
+              시니어 맞춤
             </span>
           </div>
           <button
             onClick={() => void navigate('/senior/projects')}
-            className="text-xs font-extrabold text-[#173F3A] hover:underline"
+            className="shrink-0 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] hover:text-[#0F2D2A] hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer"
             type="button"
           >
-            전체 보기 →
+            <span>전체 보기 →</span>
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3.5 py-2.5 text-[12px] font-extrabold text-[#173F3A]">
+          <Target className="size-4 shrink-0" />
+          <span>내 정보 1순위 · {recommendationPrimaryLabel}</span>
+          <span className="text-slate-300">|</span>
+          <span>
+            {isExperienceRecommendationApplied
+              ? 'AI 경험 인터뷰의 역할·행동·성과까지 추천 순서에 반영됨'
+              : '경력 분야·핵심 강점·해결 경험을 추천 순서에 반영함'}
+          </span>
         </div>
 
         {!isMobile ? (
           <div className="grid grid-cols-[minmax(240px,1.25fr)_minmax(260px,1.35fr)_minmax(190px,0.9fr)_112px] gap-5 px-5 text-[13px] font-extrabold text-slate-500">
             <span>프로젝트</span>
-            <span>해결 과제</span>
+            <span>해결 프로젝트</span>
             <span>근무·보상 조건</span>
             <span className="text-right">추천</span>
           </div>
@@ -603,19 +691,79 @@ export function SeniorHomePage() {
               ))}
             </div>
           ) : recommendedJobs.length > 0 ? (
-            recommendedJobs.map((job) => (
-              <HomeRecommendationRow
-                company={job.companyName}
-                fitScore={job.seniorFitScore}
-                isMobile={isMobile}
-                key={job.id}
-                meta={`${job.location}${job.workSchedule ? ` · ${job.workSchedule}` : ''}`}
-                onClick={() => void navigate('/senior/projects')}
-                problem={job.problemStatement}
-                salary={job.salaryRange}
-                title={job.title}
-              />
-            ))
+            <>
+              {recommendedJobs.map((job) => (
+                  <HomeRecommendationRow
+                    company={job.companyName}
+                    fitScore={job.seniorFitScore}
+                    isMobile={isMobile}
+                    key={job.id}
+                    meta={`${job.location}${job.workSchedule ? ` · ${job.workSchedule}` : ''}`}
+                    onClick={() => void navigate('/senior/projects')}
+                    problem={job.problemStatement}
+                    salary={job.salaryRange}
+                    title={job.title}
+                  />
+                ))}
+
+              {/* Home Pagination Controls */}
+              {homeTotalPages > 1 && (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+                  <div className="text-xs font-bold text-slate-600">
+                    전체 <span className="font-extrabold text-[#173F3A]">{recommendedProjectsCount}</span>건 중{' '}
+                    <span className="font-extrabold text-[#17212B]">
+                      {(homePage - 1) * homeItemsPerPage + 1}~{Math.min(homePage * homeItemsPerPage, recommendedProjectsCount)}
+                    </span>건 표시
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      onClick={() => setHomePage((p) => Math.max(1, p - 1))}
+                      disabled={homePage === 1}
+                      type="button"
+                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                    >
+                      이전
+                    </button>
+
+                    {Array.from({ length: Math.min(5, homeTotalPages) }, (_, idx) => {
+                      const totalP = homeTotalPages;
+                      let pageNum = idx + 1;
+                      if (totalP > 5) {
+                        if (homePage > 3 && homePage < totalP - 2) {
+                          pageNum = homePage - 2 + idx;
+                        } else if (homePage >= totalP - 2) {
+                          pageNum = totalP - 4 + idx;
+                        }
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setHomePage(pageNum)}
+                          type="button"
+                          className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
+                            homePage === pageNum
+                              ? 'bg-[#173F3A] text-white shadow-xs'
+                              : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setHomePage((p) => Math.min(homeTotalPages, p + 1))}
+                      disabled={homePage === homeTotalPages}
+                      type="button"
+                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                    >
+                      다음
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
@@ -623,7 +771,7 @@ export function SeniorHomePage() {
                 {recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
               </p>
               <button
-                className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#173F3A] px-4 text-[13px] font-extrabold text-[#173F3A]"
+                className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
                 onClick={() =>
                   hasProfileRecommendationCriteria(recommendationProfile)
                     ? setRecommendationReloadKey((value) => value + 1)
@@ -704,7 +852,7 @@ export function ExperienceSelectionPage() {
           className="text-xs font-extrabold text-[#F06B4F] underline"
           type="button"
         >
-          🎙️ AI 경험 인터뷰 시작 →
+          AI 경험 인터뷰 시작 →
         </button>
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">경험 분야를 선택하세요</h2>
@@ -1155,7 +1303,7 @@ export function ExperienceInterviewPage() {
             aria-label="현재 인터뷰 답변"
             disabled={interviewComplete || isRecording || isTranscribing}
             type="text"
-            placeholder={interviewComplete ? '답변 완료' : '✏️ 현재 질문에 직접 답변하기'}
+            placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
             value={inputText}
             onChange={(e) => handleAnswerTextChange(e.target.value)}
             className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
@@ -1262,7 +1410,7 @@ export function ExperienceCardPage() {
         <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]">
-              ✨ {getExperienceCardCategoryLabel(experienceCard)} 인터뷰 완료
+              {getExperienceCardCategoryLabel(experienceCard)} 인터뷰 완료
             </span>
             <span className="flex items-center gap-1 text-[11px] font-bold text-[#173F3A]">
               ✓ 본인 확인
@@ -1744,7 +1892,7 @@ export function MyProposalsPage() {
                 아직 제출된 지원/제안 내역이 없습니다
               </h3>
               <p className="text-xs md:text-sm font-medium text-slate-500">
-                마음에 드는 프로젝트를 탐색하고 📩 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해
+                마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해
                 보세요!
               </p>
             </div>
@@ -1797,9 +1945,7 @@ export function MyProposalsPage() {
                   </div>
                   {item.interviewSummary ? (
                     <div className="flex items-start gap-1.5 font-medium text-slate-700">
-                      <span className="shrink-0 font-extrabold text-[#F06B4F]">
-                        🎙️ AI 경험 요약:
-                      </span>
+                      <span className="shrink-0 font-extrabold text-[#F06B4F]">AI 경험 요약:</span>
                       <span className="line-clamp-2">{item.interviewSummary}</span>
                     </div>
                   ) : null}
@@ -1913,6 +2059,11 @@ export function CompanyHomePage() {
         action: '프로젝트 관리 →',
       }
     : null;
+  const companyName =
+    getLocalCompanyProfile(user?.uid)?.companyName ||
+    (user?.name && user.name !== '채용담당자' ? user.name : '') ||
+    '채용';
+
   return (
     <MobilePage
       activeNav="home"
@@ -1931,10 +2082,10 @@ export function CompanyHomePage() {
             isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl',
           )}
         >
-          그로우랩 담당자님 👋
+          {companyName} 담당자님
         </h2>
         <p className="text-xs md:text-base font-medium text-slate-500 mt-1">
-          프로젝트와 새 제안을 확인하세요.
+          등록한 프로젝트와 시니어 지원서를 한눈에 관리하세요.
         </p>
       </div>
 
@@ -1945,7 +2096,7 @@ export function CompanyHomePage() {
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard label="등록 프로젝트" role="company" value={`${companyProjects.length}개`} />
-        <SummaryCard label="받은 제안" role="company" value={`${companyProposals.length}건`} />
+        <SummaryCard label="받은 지원/제안" role="company" value={`${companyProposals.length}건`} />
         {!isMobile && (
           <SummaryCard
             caption="현재 모집 중인 프로젝트"
@@ -1956,15 +2107,41 @@ export function CompanyHomePage() {
         )}
         {!isMobile && (
           <SummaryCard
-            caption="연락 받음·승인 상태"
+            caption="지원서 검토 및 대화 상태"
             label="후속 진행"
             role="company"
             value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
           />
         )}
       </div>
-      <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B]">
-        최근 프로젝트
+
+      {/* Quick Action Navigation Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        <button
+          onClick={() => void navigate('/company/projects/new')}
+          type="button"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3 py-2.5 text-xs sm:text-sm font-extrabold text-[#173F3A] hover:bg-[#DDEBE7] transition-all shadow-2xs"
+        >
+          <span>새 프로젝트 등록</span>
+        </button>
+        <button
+          onClick={() => void navigate('/company/projects')}
+          type="button"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs sm:text-sm font-extrabold text-[#17212B] hover:bg-slate-50 transition-all shadow-2xs"
+        >
+          <span>지원서·프로젝트 관리</span>
+        </button>
+        <button
+          onClick={() => void navigate('/company-info')}
+          type="button"
+          className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs sm:text-sm font-extrabold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs"
+        >
+          <span>기업 정보 수정</span>
+        </button>
+      </div>
+
+      <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B] mt-1">
+        최근 등록 프로젝트
       </h3>
       {latestProjectCard ? (
         <ProjectCard
@@ -2303,7 +2480,7 @@ export function ReceivedProposalDetailPage() {
           <Target className="size-4" />
         </div>
         <strong className="text-xs font-extrabold text-[#F06B4F]">
-          🎯 기업 핵심 프로젝트: {proposal?.projectTitle || '반복되는 납기 지연 개선'}
+          기업 핵심 프로젝트: {proposal?.projectTitle || '반복되는 납기 지연 개선'}
         </strong>
       </div>
 
@@ -2340,7 +2517,7 @@ export function ReceivedProposalDetailPage() {
 
       {showDetailCard && (
         <div className="flex flex-col gap-1.5 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 text-xs">
-          <strong className="font-extrabold text-[#17212B]">📌 인재 대표 경험 카드 Summary</strong>
+          <strong className="font-extrabold text-[#17212B]">인재 대표 경험 카드 Summary</strong>
           <p className="text-[#17212B]/80 font-medium">
             {proposal?.interviewSummary || '저장된 AI 경험 인터뷰 요약이 없습니다.'}
           </p>
@@ -2522,7 +2699,7 @@ export function SeniorProfilePage() {
           기본 정보 수정
         </ActionButton>
         <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
-          {experienceCard ? '🎙️ AI 경험 인터뷰 다시 진행하기' : '🎙️ AI 경험 인터뷰 시작하기'}
+          {experienceCard ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
         </ActionButton>
         <ActionButton
           onClick={() => void navigate('/login')}
@@ -2554,8 +2731,8 @@ export function CompanyProfilePage() {
     >
       {/* Company Profile Header Card */}
       <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-white text-xl font-extrabold shadow-sm">
-          🏢
+        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-lg font-extrabold text-white shadow-sm">
+          기
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">

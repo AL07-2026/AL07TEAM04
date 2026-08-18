@@ -102,7 +102,7 @@ export function SignupPage() {
     setResendStatus('');
     try {
       await sendVerificationEmail();
-      setResendStatus('✉️ 인증 메일을 재발송했습니다. 메일함을 확인해 주세요.');
+      setResendStatus('인증 메일을 재발송했습니다. 메일함을 확인해 주세요.');
     } catch (err: unknown) {
       const error = err as Error;
       setMessage(error.message || '인증 메일 재발송에 실패했습니다.');
@@ -174,11 +174,11 @@ export function SignupPage() {
 
             <div className="flex flex-col gap-2.5 w-full pt-2">
               <ActionButton onClick={() => void handleVerifyComplete()} role={selectedRole} disabled={isSubmitting}>
-                {isSubmitting ? '인증 확인 중...' : '✅ 이메일 인증 완료 및 다음 단계 →'}
+                {isSubmitting ? '인증 확인 중...' : '이메일 인증 완료 및 다음 단계 →'}
               </ActionButton>
 
               <ActionButton onClick={() => void handleResendEmail()} secondary type="button">
-                🔄 인증 메일 재발송
+                인증 메일 재발송
               </ActionButton>
             </div>
           </div>
@@ -196,7 +196,7 @@ export function SignupPage() {
                     : 'text-slate-500 hover:text-[#17212B]',
                 )}
               >
-                🙋‍♂️ 인재 회원가입
+                인재 회원가입
               </button>
               <button
                 type="button"
@@ -208,7 +208,7 @@ export function SignupPage() {
                     : 'text-slate-500 hover:text-[#17212B]',
                 )}
               >
-                🏢 회사 회원가입
+                회사 회원가입
               </button>
             </div>
 
@@ -219,7 +219,7 @@ export function SignupPage() {
               <p className="text-[13px] font-medium text-slate-500">
                 {selectedRole === 'senior'
                   ? '인재 전용 프로젝트 매칭 계정을 생성합니다.'
-                  : '기업 전용 실무 과제 등록 계정을 생성합니다.'}
+                  : '기업 전용 실무 프로젝트 등록 계정을 생성합니다.'}
               </p>
             </div>
 
@@ -282,7 +282,7 @@ export function SignupPage() {
               </p>
             ) : null}
             <ActionButton type="submit" role={selectedRole} disabled={isSubmitting}>
-              {isSubmitting ? '인증 메일 발송 중...' : '✉️ 인증 메일 받기 및 다음 단계 →'}
+              {isSubmitting ? '인증 메일 발송 중...' : '인증 메일 받기 및 다음 단계 →'}
             </ActionButton>
 
             <div className="relative my-1 flex items-center justify-center">

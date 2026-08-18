@@ -108,7 +108,7 @@ export function CompanyInfoPage() {
                   {form.companyName || user?.name || '기업 회원'}
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
-                  🏢 기업 회원
+                  기업 회원
                 </span>
               </div>
               <span className="text-xs font-medium text-slate-500">
@@ -119,7 +119,7 @@ export function CompanyInfoPage() {
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-xs font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-400 hover:from-white hover:to-rose-100 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
           >
             <LogOut className="size-3.5" />
             <span>로그아웃</span>
@@ -157,7 +157,7 @@ export function CompanyInfoPage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#173F3A] text-white text-xs font-extrabold shadow-xs hover:bg-[#12332F] transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white text-xs font-extrabold border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
               >
                 <Pencil className="size-3.5" />
                 <span>정보 수정</span>
@@ -210,7 +210,7 @@ export function CompanyInfoPage() {
                 onClick={() => void navigate('/company/projects/new')}
                 className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
               >
-                🏢 새 프로젝트 등록하기 →
+                새 프로젝트 등록하기 →
               </button>
             </div>
           </div>

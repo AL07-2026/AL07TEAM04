@@ -7,13 +7,11 @@ import { cn } from '@/lib/utils';
 const roles = [
   {
     id: 'senior',
-    icon: '🙋‍♂️',
     title: '인재',
     description: '경험을 등록하고 (AI 경험 인터뷰 1/3) 프로젝트에 제안합니다.',
   },
   {
     id: 'company',
-    icon: '🏢',
     title: '회사',
     description: '프로젝트를 등록하고 적합한 인재의 제안을 확인합니다.',
   },
@@ -62,7 +60,6 @@ export function RoleSelectionPage() {
           >
             <span className="flex items-center justify-between">
               <span className="flex items-center gap-2.5">
-                <span className="text-xl">{role.icon}</span>
                 <strong className="text-base font-extrabold text-[#17212B]">
                   {role.title}
                 </strong>

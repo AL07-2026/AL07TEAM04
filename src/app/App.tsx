@@ -1,36 +1,56 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
-import { BasicProfilePage } from '@/app/BasicProfilePage';
-import { CompanyInfoPage } from '@/app/CompanyInfoPage';
-import { JobDatabasePage } from '@/app/JobDatabasePage';
-import { LoginPage } from '@/app/LoginPage';
-import { RoleSelectionPage } from '@/app/RoleSelectionPage';
-import { SignupPage } from '@/app/SignupPage';
-import {
-  CompanyHomePage,
-  CompanyProfilePage,
-  ExperienceCardPage,
-  ExperienceInterviewPage,
-  ExperienceSelectionPage,
-  MyProposalDetailPage,
-  MyProposalsPage,
-  ProjectCompletePage,
-  ProjectDetailPage,
-  ProjectListPage,
-  ProjectManagementPage,
-  ProjectRegisterPage,
-  ProposalCompletePage,
-  ProposalPage,
-  ReceivedProposalDetailPage,
-  ReceivedProposalsPage,
-  SeniorHomePage,
-  SeniorProfilePage,
-} from '@/app/wireframe/FlowPages';
-
 import { ViewportProvider } from '@/app/wireframe/Ui';
 import { AuthProvider } from '@/lib/authContext';
+
+function lazyPage<TModule, TKey extends keyof TModule>(
+  loader: () => Promise<TModule>,
+  exportName: TKey,
+) {
+  return lazy(async () => ({
+    default: (await loader())[exportName] as unknown as ComponentType,
+  }));
+}
+
+const loadFlowPages = () => import('@/app/wireframe/FlowPages');
+const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
+const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
+const JobDatabasePage = lazy(() =>
+  import('@/app/JobDatabasePage').then((module) => ({ default: module.JobDatabasePage })),
+);
+const LoginPage = lazyPage(() => import('@/app/LoginPage'), 'LoginPage');
+const RoleSelectionPage = lazyPage(() => import('@/app/RoleSelectionPage'), 'RoleSelectionPage');
+const SignupPage = lazyPage(() => import('@/app/SignupPage'), 'SignupPage');
+const CompanyHomePage = lazyPage(loadFlowPages, 'CompanyHomePage');
+const CompanyProfilePage = lazyPage(loadFlowPages, 'CompanyProfilePage');
+const ExperienceCardPage = lazyPage(loadFlowPages, 'ExperienceCardPage');
+const ExperienceInterviewPage = lazyPage(loadFlowPages, 'ExperienceInterviewPage');
+const ExperienceSelectionPage = lazyPage(loadFlowPages, 'ExperienceSelectionPage');
+const MyProposalDetailPage = lazyPage(loadFlowPages, 'MyProposalDetailPage');
+const MyProposalsPage = lazyPage(loadFlowPages, 'MyProposalsPage');
+const ProjectCompletePage = lazyPage(loadFlowPages, 'ProjectCompletePage');
+const ProjectDetailPage = lazyPage(loadFlowPages, 'ProjectDetailPage');
+const ProjectListPage = lazyPage(loadFlowPages, 'ProjectListPage');
+const ProjectManagementPage = lazyPage(loadFlowPages, 'ProjectManagementPage');
+const ProjectRegisterPage = lazyPage(loadFlowPages, 'ProjectRegisterPage');
+const ProposalCompletePage = lazyPage(loadFlowPages, 'ProposalCompletePage');
+const ProposalPage = lazyPage(loadFlowPages, 'ProposalPage');
+const ReceivedProposalDetailPage = lazyPage(loadFlowPages, 'ReceivedProposalDetailPage');
+const ReceivedProposalsPage = lazyPage(loadFlowPages, 'ReceivedProposalsPage');
+const SeniorHomePage = lazyPage(loadFlowPages, 'SeniorHomePage');
+const SeniorProfilePage = lazyPage(loadFlowPages, 'SeniorProfilePage');
+
+function RouteLoadingFallback() {
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#f7f4ef] text-[#0f3f38]">
+      <p role="status" className="text-sm font-semibold">
+        화면을 불러오는 중입니다.
+      </p>
+    </main>
+  );
+}
 
 function createAppRouter() {
   return createBrowserRouter([
@@ -72,7 +92,9 @@ export function App() {
   return (
     <AuthProvider>
       <ViewportProvider>
-        <RouterProvider router={router} />
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <RouterProvider router={router} />
+        </Suspense>
       </ViewportProvider>
     </AuthProvider>
   );

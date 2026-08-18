@@ -10,9 +10,10 @@ import {
   useViewportMode,
 } from '@/app/wireframe/Ui';
 import {
-  getOccupationCategoryLabel,
-  normalizeOccupationPreferences,
+  getOccupationPreferenceLabel,
+  normalizeOccupationPreferenceValues,
   occupationCategoryOptions,
+  OTHER_OCCUPATION_PREFERENCE,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
@@ -31,11 +32,13 @@ function createEmptyProfile(email = ''): ProfileForm {
     desiredCategory: undefined,
     desiredCategory2: undefined,
     desiredCategory3: undefined,
+    desiredOccupationText: '',
     desiredLocation: '전국',
+    desiredWorkType: '시간제·파트타임 (오전/오후)',
     field: '',
     keySkills: '',
     period: '',
-    experience: '',
+    experience: '시간제·파트타임 (오전/오후)',
     solvedExperiences: '',
     phone: '',
     email,
@@ -87,10 +90,10 @@ function OccupationPreferenceSelect({
 
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[13px] font-extrabold text-[#173F3A]">{label}</span>
+      <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">{label}</span>
       <select
         aria-label={label}
-        className="h-12 w-full truncate rounded-xl border border-[#E0D9C8] bg-white px-3 text-[14px] font-bold text-[#17212B] shadow-2xs outline-none focus:border-[#173F3A]"
+        className="h-11 md:h-12 w-full truncate rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs md:text-sm font-bold text-[#17212B] shadow-2xs outline-none focus:border-[#173F3A]"
         onChange={(event) => onChange(event.target.value)}
         value={value || ''}
       >
@@ -102,6 +105,12 @@ function OccupationPreferenceSelect({
             {option.label} — {option.description}
           </option>
         ))}
+        <option
+          disabled={selectedByAnotherRank.has(OTHER_OCCUPATION_PREFERENCE)}
+          value={OTHER_OCCUPATION_PREFERENCE}
+        >
+          기타 직종 — 목록에 없을 때 직접 입력
+        </option>
       </select>
     </label>
   );
@@ -166,9 +175,14 @@ export function BasicProfilePage() {
       setMessage('희망 직종 1·2·3순위는 서로 다른 직종으로 선택해 주세요.');
       return;
     }
-    const desiredCategories = normalizeOccupationPreferences(rawDesiredCategories);
+    const desiredPreferences = normalizeOccupationPreferenceValues(rawDesiredCategories);
+    const usesOtherOccupation = desiredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
+    if (usesOtherOccupation && (form.desiredOccupationText?.trim().length ?? 0) < 2) {
+      setMessage('기타 직종을 선택한 경우 희망 직종명을 2자 이상 입력해 주세요.');
+      return;
+    }
     if (
-      desiredCategories.length === 0 ||
+      desiredPreferences.length === 0 ||
       !form.field.trim() ||
       !form.period.trim() ||
       !form.experience.trim() ||
@@ -182,9 +196,12 @@ export function BasicProfilePage() {
     }
     const normalizedForm: ProfileForm = {
       ...form,
-      desiredCategory: desiredCategories[0],
-      desiredCategory2: desiredCategories[1],
-      desiredCategory3: desiredCategories[2],
+      desiredCategory: desiredPreferences[0],
+      desiredCategory2: desiredPreferences[1],
+      desiredCategory3: desiredPreferences[2],
+      desiredOccupationText: usesOtherOccupation
+        ? form.desiredOccupationText?.trim()
+        : undefined,
     };
     setForm(normalizedForm);
     saveLocalSeniorProfile(normalizedForm, user?.uid);
@@ -250,7 +267,7 @@ export function BasicProfilePage() {
                   <div className="flex items-center gap-2">
                     <span className="text-base font-extrabold text-[#17212B]">{displayName}</span>
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
-                      🙋‍♂️ 인재 회원
+                      인재 회원
                     </span>
                   </div>
                   <span className="text-xs font-medium text-slate-500">
@@ -261,7 +278,7 @@ export function BasicProfilePage() {
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-xs font-extrabold text-rose-600 hover:bg-rose-50 transition-all shadow-2xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-400 hover:from-white hover:to-rose-100 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
               >
                 <LogOut className="size-3.5" />
                 <span>로그아웃</span>
@@ -298,7 +315,7 @@ export function BasicProfilePage() {
                   type="button"
                   onClick={() => setIsEditing(true)}
                   className={cn(
-                    'flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-[#173F3A] font-extrabold text-white shadow-xs transition-all hover:bg-[#12332F]',
+                    'flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer',
                     isMobile
                       ? 'h-11 min-h-11 min-w-[108px] rounded-xl px-4 text-[13px]'
                       : 'h-11 rounded-full px-5 text-[14px]',
@@ -317,18 +334,30 @@ export function BasicProfilePage() {
               <dl className="overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xs">
                 <ProfileInfoRow
                   label="1순위 희망직종"
-                  value={getOccupationCategoryLabel(form.desiredCategory, '미입력')}
+                  value={getOccupationPreferenceLabel(
+                    form.desiredCategory,
+                    form.desiredOccupationText,
+                    '미입력',
+                  )}
                 />
                 {form.desiredCategory2 ? (
                   <ProfileInfoRow
                     label="2순위 희망직종"
-                    value={getOccupationCategoryLabel(form.desiredCategory2, '미입력')}
+                    value={getOccupationPreferenceLabel(
+                      form.desiredCategory2,
+                      form.desiredOccupationText,
+                      '미입력',
+                    )}
                   />
                 ) : null}
                 {form.desiredCategory3 ? (
                   <ProfileInfoRow
                     label="3순위 희망직종"
-                    value={getOccupationCategoryLabel(form.desiredCategory3, '미입력')}
+                    value={getOccupationPreferenceLabel(
+                      form.desiredCategory3,
+                      form.desiredOccupationText,
+                      '미입력',
+                    )}
                   />
                 ) : null}
                 <ProfileInfoRow
@@ -356,17 +385,21 @@ export function BasicProfilePage() {
                 <div className="flex flex-col gap-2 rounded-2xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-4 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
-                      🎯 희망 직종 (1차 · 2차 · 3차 순위) 및 희망 지역
+                      희망 직종 (1차 · 2차 · 3차 순위) 및 희망 지역
                     </span>
                     <span className="text-xs font-extrabold text-[#173F3A] bg-white border border-[#BBD5CE] px-2.5 py-0.5 rounded-full shadow-2xs">
-                      📍 희망지역: {form.desiredLocation || '전국'}
+                      희망지역: {form.desiredLocation || '전국'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
                       <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
                       <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
-                        {getOccupationCategoryLabel(form.desiredCategory, '미입력')}
+                        {getOccupationPreferenceLabel(
+                          form.desiredCategory,
+                          form.desiredOccupationText,
+                          '미입력',
+                        )}
                       </span>
                     </div>
                     <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
@@ -375,7 +408,10 @@ export function BasicProfilePage() {
                       </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
                         {form.desiredCategory2
-                          ? getOccupationCategoryLabel(form.desiredCategory2)
+                          ? getOccupationPreferenceLabel(
+                              form.desiredCategory2,
+                              form.desiredOccupationText,
+                            )
                           : '선택 안 함'}
                       </span>
                     </div>
@@ -385,7 +421,10 @@ export function BasicProfilePage() {
                       </span>
                       <span className="text-xs md:text-sm font-bold text-slate-700">
                         {form.desiredCategory3
-                          ? getOccupationCategoryLabel(form.desiredCategory3)
+                          ? getOccupationPreferenceLabel(
+                              form.desiredCategory3,
+                              form.desiredOccupationText,
+                            )
                           : '선택 안 함'}
                       </span>
                     </div>
@@ -410,7 +449,7 @@ export function BasicProfilePage() {
                 {form.keySkills ? (
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
                     <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
-                      💪 경력 분야 세부 핵심 강점
+                      경력 분야 세부 핵심 강점
                     </span>
                     <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
                       {form.keySkills}
@@ -420,19 +459,19 @@ export function BasicProfilePage() {
 
                 <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
-                    💡 해결했던 핵심 문제 및 성과 사례
+                    해결했던 핵심 문제 및 성과 사례
                   </span>
                   <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
                     {form.solvedExperiences || form.experience}
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
-                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                    대표 실무 경험 요약
+                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#BBD5CE]/80 bg-[#F4F9F8]">
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    ⏰ 원하는 근무 형태
                   </span>
-                  <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
-                    {form.experience}
+                  <p className="text-sm font-extrabold text-[#173F3A] whitespace-pre-wrap leading-relaxed">
+                    {form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
                   </p>
                 </div>
 
@@ -469,7 +508,7 @@ export function BasicProfilePage() {
                 onClick={() => void navigate('/senior/experience')}
                 className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
               >
-                🎙️ AI 경험 인터뷰 진행하기 (1/3) →
+                AI 경험 인터뷰 진행하기 (1/3) →
               </button>
             </div>
           </div>
@@ -491,10 +530,10 @@ export function BasicProfilePage() {
             {/* Section 1: 희망 직종 1차 / 2차 / 3차 선택 */}
             <div className="flex flex-col gap-2.5 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
               <div className="flex flex-col gap-0.5">
-                <label className="text-[14px] font-extrabold text-[#173F3A]">
-                  🎯 희망 직종 선택 (1차 · 2차 · 3차)
+                <label className="text-sm md:text-base font-extrabold text-[#173F3A]">
+                  희망 직종 선택 (1차 · 2차 · 3차)
                 </label>
-                <p className="text-[12px] font-medium text-slate-500">
+                <p className="text-xs md:text-[13px] font-medium text-slate-500">
                   희망 직종을 1순위부터 3순위까지 지정하면 프로젝트 DB 추천 순위에 순서대로
                   반영됩니다.
                 </p>
@@ -523,15 +562,30 @@ export function BasicProfilePage() {
                 />
               </div>
 
+              {selectedOccupationValues.includes(OTHER_OCCUPATION_PREFERENCE) ? (
+                <div className="rounded-xl border border-[#BBD5CE] bg-white p-3">
+                  <Field
+                    label="기타 희망 직종명 (필수)"
+                    maxLength={60}
+                    onChange={(event) => update('desiredOccupationText')(event.target.value)}
+                    placeholder="예: UX 리서처, 보석 감정사, ESG 컨설턴트"
+                    value={form.desiredOccupationText || ''}
+                  />
+                  <p className="mt-1.5 text-[11px] font-medium leading-5 text-slate-500">
+                    입력한 직무명과 경력·핵심 역량·AI 경험 인터뷰의 공통 키워드로 공고를 찾습니다.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="pt-2 border-t border-[#E0D9C8]">
                 <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[12px] font-extrabold text-[#173F3A]">
+                  <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
                     📍 희망 근무 지역 (선택 / 기본값: 전국)
                   </span>
                   <select
                     value={form.desiredLocation || '전국'}
                     onChange={(e) => update('desiredLocation')(e.target.value)}
-                    className="h-11 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                    className="h-11 md:h-12 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
                   >
                     <option value="전국">전국 (전체 지역 무관)</option>
                     <option value="서울">서울 특별시</option>
@@ -585,13 +639,30 @@ export function BasicProfilePage() {
               value={form.solvedExperiences || ''}
             />
 
-            {/* Section 5: 대표 실무 경험 요약 */}
-            <TextAreaField
-              label="📝 대표 실무 경험 요약"
-              onChange={(e) => update('experience')(e.target.value)}
-              placeholder="주요 실무 경험과 역량 요약을 입력해주세요"
-              value={form.experience}
-            />
+            {/* Section 5: 원하는 근무 형태 (시간제/계약직/정규직 선택) */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs md:text-sm font-extrabold text-[#173F3A]" htmlFor="desired-work-type-select">
+                ⏰ 원하는 근무 형태 (시간제/계약직/정규직 선택)
+              </label>
+              <select
+                id="desired-work-type-select"
+                aria-label="원하는 근무 형태"
+                className="w-full rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] px-4 py-3.5 text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm((prev) => ({ ...prev, desiredWorkType: val, experience: val }));
+                }}
+                value={form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
+              >
+                <option value="시간제·파트타임 (오전/오후)">⏰ 시간제·파트타임 (오전/오후 선택)</option>
+                <option value="오전 시간제 (오전 파트타임: 09:00~13:00)">☀️ 오전 시간제 (오전 파트타임: 09:00~13:00)</option>
+                <option value="오후 시간제 (오후 파트타임: 13:00~17:00)">🌙 오후 시간제 (오후 파트타임: 13:00~17:00)</option>
+                <option value="계약직·기간제 (1년 등)">📄 계약직·기간제 (1년 등)</option>
+                <option value="전체 무관 (시간제/계약직/정규직)">✨ 전체 무관 (시간제/계약직/정규직 모두 가능)</option>
+                <option value="정규직">💼 정규직</option>
+                <option value="자문·프로젝트">🤝 자문·프로젝트</option>
+              </select>
+            </div>
 
             {/* Section 6: 연락처 & 이메일 */}
             <div
@@ -618,7 +689,7 @@ export function BasicProfilePage() {
 
             {/* Section 7: 이력서 첨부 */}
             <div className="flex flex-col gap-2">
-              <span className="text-[13px] font-extrabold text-[#17212B]">이력서 첨부 (선택)</span>
+              <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">이력서 첨부 (선택)</span>
               <input
                 accept=".pdf,.doc,.docx"
                 className="sr-only"

@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
@@ -9,28 +8,40 @@ import { cn } from '@/lib/utils';
 const bannerSlides = [
   {
     id: 1,
-    image: '/eojob_main_banner.jpg',
-    tag: '✨ 이어잡 메인',
+    imagePcHome: '/eojob_pc_home_banner.png',
+    imageLoginPc: '/eojob_login_pc_banner.png',
+    imageMobile: '/eojob_mobile_banner.png',
+    tag: '이어잡 메인',
     title: '당신의 경험이, 다음 해답이 되도록',
     description: '해결해 본 사람과 해결이 필요한 조직을 잇습니다.',
   },
   {
     id: 2,
-    image: '/eojob_main_banner.jpg',
-    tag: '🎙️ AI 경험 인터뷰',
+    imagePcHome: '/eojob_pc_home_banner.png',
+    imageLoginPc: '/eojob_login_pc_banner.png',
+    imageMobile: '/eojob_mobile_banner.png',
+    tag: 'AI 경험 인터뷰',
     title: '10분 만에 완성하는 경험 카드',
     description: '음성 대화로 답하면 전용 경험 카드가 자동 생성됩니다.',
   },
   {
     id: 3,
-    image: '/eojob_main_banner.jpg',
-    tag: '🏢 핵심 프로젝트 연결',
-    title: '검증된 실무 인재 ↔ 기업 프로젝트 매칭',
+    imagePcHome: '/eojob_pc_home_banner.png',
+    imageLoginPc: '/eojob_login_pc_banner.png',
+    imageMobile: '/eojob_mobile_banner.png',
+    tag: '핵심 프로젝트 연결',
+    title: '검증된 실무 인재와 기업 프로젝트 매칭',
     description: '필요한 전문 프로젝트를 경험 카드로 연결해 보세요.',
   },
 ];
 
-export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
+export function RollingBanner({
+  isCompact = false,
+  variant = 'pc-home',
+}: {
+  isCompact?: boolean;
+  variant?: 'pc-home' | 'login-desktop' | 'mobile';
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -41,59 +52,38 @@ export function RollingBanner({ isCompact = false }: { isCompact?: boolean }) {
   }, []);
 
   const slide = bannerSlides[currentIndex]!;
+  const effectiveVariant = isCompact ? 'mobile' : variant;
+  const slideImage =
+    effectiveVariant === 'mobile'
+      ? slide.imageMobile
+      : effectiveVariant === 'login-desktop'
+        ? slide.imageLoginPc
+        : slide.imagePcHome;
+  const imageFitClassName =
+    effectiveVariant === 'login-desktop'
+      ? 'w-full h-full object-cover object-[center_40%]'
+      : effectiveVariant === 'mobile'
+        ? 'w-full h-full object-cover object-[center_45%]'
+        : 'w-full h-full object-cover object-[center_45%]';
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      {/* 100% Pure Unobscured Banner Graphic Image */}
+      {/* 100% Full-Width Dimension-Matched Banner Graphic Image */}
       <div
         className={cn(
-          'relative w-full overflow-hidden rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs group',
-          isCompact ? 'h-32 sm:h-36' : 'h-44 md:h-56 lg:h-[245px]',
+          'relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-[#E0D9C8] bg-[#FAF6EF] shadow-2xs',
+          effectiveVariant === 'mobile'
+            ? 'h-[clamp(170px,26dvh,225px)]'
+            : effectiveVariant === 'login-desktop'
+              ? 'h-[clamp(210px,32dvh,310px)]'
+              : 'h-[clamp(250px,32vw,380px)]',
         )}
       >
         <img
-          src={slide.image}
+          src={slideImage}
           alt={slide.title}
-          className="h-full w-full object-cover object-center transition-all duration-700 hover:scale-102"
+          className={cn('h-full w-full', imageFitClassName)}
         />
-
-        {/* Manual Slide Controls */}
-        <button
-          type="button"
-          aria-label="이전 배너"
-          onClick={() =>
-            setCurrentIndex((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)
-          }
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
-        >
-          <ChevronLeft className="size-4 text-[#17212B]" />
-        </button>
-        <button
-          type="button"
-          aria-label="다음 배너"
-          onClick={() => setCurrentIndex((prev) => (prev + 1) % bannerSlides.length)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-white/90 text-[#17212B] shadow-md border border-[#E0D9C8] hover:bg-white transition"
-        >
-          <ChevronRight className="size-4 text-[#17212B]" />
-        </button>
-
-        {/* Dot Indicators */}
-        <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 z-10">
-          {bannerSlides.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-label={`배너 ${index + 1} 이동`}
-              onClick={() => setCurrentIndex(index)}
-              className={cn(
-                'h-1 rounded-full transition-all duration-300',
-                index === currentIndex
-                  ? 'w-5 bg-[#F06B4F]'
-                  : 'w-1.5 bg-[#173F3A]/30 hover:bg-[#173F3A]/60',
-              )}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Clean Text Description Below the Image */}
@@ -171,7 +161,11 @@ export function LoginPage() {
 
   if (isMobile) {
     return (
-      <MobilePage contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto" showBack={false} title="경험매칭">
+      <MobilePage
+        contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
+        showBack={false}
+        title="경험매칭"
+      >
         <div className="flex flex-col gap-4 w-full max-w-sm mx-auto my-auto py-2">
           {/* Initial Role Choice Tabs */}
           <div className="flex w-full rounded-full border border-[#E0D9C8] bg-white p-1 shadow-2xs">
@@ -188,7 +182,7 @@ export function LoginPage() {
                   : 'text-slate-500 hover:text-[#17212B]',
               )}
             >
-              🙋‍♂️ 인재로 시작
+              인재로 시작
             </button>
             <button
               type="button"
@@ -203,7 +197,7 @@ export function LoginPage() {
                   : 'text-slate-500 hover:text-[#17212B]',
               )}
             >
-              🏢 기업으로 시작
+              기업으로 시작
             </button>
           </div>
 
@@ -270,11 +264,11 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            {/* Main Action Button - Dark Green (#173F3A) & Unified h-11 height */}
+            {/* Main Action Button - 3D Tactile Luxury Gradient */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.99] disabled:opacity-40"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-xs sm:text-sm font-extrabold text-white border border-[#173F3A] shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -287,16 +281,18 @@ export function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#E0D9C8]" />
               </div>
-              <span className="relative bg-[#F7F3EA] px-2.5 text-[11px] font-bold text-slate-400">간편 로그인</span>
+              <span className="relative bg-[#F7F3EA] px-2.5 text-[11px] font-bold text-slate-400">
+                간편 로그인
+              </span>
             </div>
 
             <button
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs sm:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] active:scale-[0.99]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-white via-[#FAF7F2] to-[#F2EDE2] px-4 text-xs sm:text-sm font-extrabold text-[#17212B] border border-[#D4CBB8] shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-[#173F3A] hover:from-white hover:to-[#E8F2EF] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-40"
             >
-              <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
+              <svg className="size-5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -320,7 +316,11 @@ export function LoginPage() {
   }
 
   return (
-    <MobilePage contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1" showBack={false} title="경험매칭">
+    <MobilePage
+      contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1"
+      showBack={false}
+      title="경험매칭"
+    >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">
@@ -346,7 +346,7 @@ export function LoginPage() {
           </div>
 
           {/* Borderless Rolling Banner */}
-          <RollingBanner />
+          <RollingBanner variant="login-desktop" />
         </div>
 
         {/* Right Side: Role Selector Tabs & Login Form (PC: col-span-5) */}
@@ -363,7 +363,7 @@ export function LoginPage() {
                   : 'text-slate-500 hover:text-[#17212B]',
               )}
             >
-              🙋‍♂️ 인재로 시작
+              인재로 시작
             </button>
             <button
               type="button"
@@ -375,7 +375,7 @@ export function LoginPage() {
                   : 'text-slate-500 hover:text-[#17212B]',
               )}
             >
-              🏢 기업으로 시작
+              기업으로 시작
             </button>
           </div>
 
@@ -409,11 +409,11 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            {/* RESTORED TO DARK GREEN (#173F3A) AS REQUESTED BY USER - Unified h-11 height */}
+            {/* 3D Tactile Luxury Gradient Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[#173F3A] px-4 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all hover:bg-[#0E2825] active:scale-[0.995] disabled:opacity-40"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-xs sm:text-sm font-extrabold text-white border border-[#173F3A] shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-40"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -426,16 +426,18 @@ export function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#E0D9C8]" />
               </div>
-              <span className="relative bg-white px-3 text-[11px] font-bold text-slate-400">간편 로그인</span>
+              <span className="relative bg-white px-3 text-[11px] font-bold text-slate-400">
+                간편 로그인
+              </span>
             </div>
 
             <button
               type="button"
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#E0D9C8] bg-white px-4 text-xs sm:text-sm font-extrabold text-[#17212B] shadow-2xs transition-all hover:bg-[#FAF7F2] hover:border-[#173F3A] active:scale-[0.992]"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-white via-[#FAF7F2] to-[#F2EDE2] px-4 text-xs sm:text-sm font-extrabold text-[#17212B] border border-[#D4CBB8] shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-[#173F3A] hover:from-white hover:to-[#E8F2EF] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer disabled:opacity-40"
             >
-              <svg className="size-4.5 shrink-0" viewBox="0 0 24 24">
+              <svg className="size-5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />

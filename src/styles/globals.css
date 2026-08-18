@@ -24,6 +24,11 @@
   --color-ink: #17212b;
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 :root {
   color-scheme: light;
   --background: #f7f3ea; /* Background: Warm Ivory */

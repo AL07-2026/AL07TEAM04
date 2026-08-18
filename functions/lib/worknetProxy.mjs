@@ -57,7 +57,7 @@ export async function proxyWorknetJobs(req, res, configuredApiKey = '') {
       return res.status(502).json({ error: `고용24 응답 오류 (${response.status})` });
     }
 
-    res.set('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.type('application/xml');
     return res.status(200).send(body);
   } catch (error) {
