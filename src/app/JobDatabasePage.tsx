@@ -39,8 +39,6 @@ import {
   databaseSummary,
   employmentTypeLabels,
   hiringStageLabels,
-  seniorityLabels,
-  workTypeLabels,
 } from '@/data/jobPostings';
 import type {
   EmploymentType,
@@ -391,6 +389,41 @@ function PostingCard({
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
 
+  // Clean problem statement text to avoid repeating company name and title
+  let cleanProblemStatement = posting.problemStatement || '';
+  if (cleanProblemStatement.includes(`${posting.companyName}의`) && cleanProblemStatement.includes('과제 해결')) {
+    const safeCompany = posting.companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    cleanProblemStatement = cleanProblemStatement
+      .replace(/^\[[^\]]+\]\s*/g, '')
+      .replace(new RegExp(`^${safeCompany}의\\s*.*과제\\s*해결입니다\\.?`, 'i'), '')
+      .trim();
+  }
+  if (!cleanProblemStatement || cleanProblemStatement.length < 8) {
+    cleanProblemStatement = `${getPostingOccupationLabel(posting)} 분야 주요 업무 프로세스를 분석·개선하고 시니어 인재의 실무 노하우를 발휘하는 핵심 프로젝트입니다.`;
+  }
+
+  // Pick max 3 essential badges so top never clutters into multiple rows
+  const essentialBadges: { isMint?: boolean; label: string }[] = [];
+  if (posting.workType === 'remote' || posting.title.includes('재택')) {
+    essentialBadges.push({ isMint: true, label: '💻 재택·원격' });
+  } else if (posting.workType === 'hybrid' || posting.title.includes('하이브리드')) {
+    essentialBadges.push({ isMint: true, label: '🏢 하이브리드' });
+  }
+
+  if (posting.employmentType === 'contract' || posting.title.includes('계약직')) {
+    essentialBadges.push({ label: '계약직' });
+  } else if (posting.employmentType === 'part-time' || posting.title.includes('시간제')) {
+    essentialBadges.push({ label: '시간제' });
+  }
+
+  const categoryLabel = getPostingOccupationLabel(posting);
+  if (categoryLabel && essentialBadges.length < 3) {
+    essentialBadges.push({ isMint: true, label: categoryLabel });
+  }
+  if (essentialBadges.length === 0) {
+    essentialBadges.push({ label: hiringStageLabels[posting.hiringStage] || '모집 중' });
+  }
+
   return (
     <article
       className={cn(
@@ -399,90 +432,63 @@ function PostingCard({
       )}
       onClick={onSelect}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap gap-1.5">
-            {posting.workType === 'remote' || posting.title.includes('재택') || posting.title.includes('원격') ? (
-              <span className="rounded-full border border-[#173F3A]/30 bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                💻 재택·원격근무
-              </span>
-            ) : null}
-            {posting.workType === 'hybrid' || posting.title.includes('하이브리드') ? (
-              <span className="rounded-full border border-[#173F3A]/30 bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                🏢 하이브리드(재택+출근)
-              </span>
-            ) : null}
-            {posting.source === 'worknet' ? (
-              <span className="rounded-full border border-[#BBD5CE] bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                시니어 우대 공고
-              </span>
-            ) : null}
-            {posting.experienceYears?.includes('경력무관') || posting.experienceYears?.includes('경력 무관') || posting.title.includes('경력무관') ? (
-              <span className="rounded-full border border-[#BBD5CE] bg-[#F4F9F8] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                경력무관
-              </span>
-            ) : null}
-            {posting.employmentType === 'part-time' || posting.title.includes('시간제') || posting.title.includes('파트타임') || posting.title.includes('오전') || posting.title.includes('오후') ? (
-              <span className="rounded-full border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                시간제(오전/오후)
-              </span>
-            ) : null}
-            {posting.employmentType === 'contract' || posting.title.includes('계약직') ? (
-              <span className="rounded-full border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-                계약직
-              </span>
-            ) : null}
-            <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-              {posting.source === 'worknet' ? posting.industry : getPostingOccupationLabel(posting)}
-            </span>
-            <span className="rounded-full border border-[#F06B4F]/30 bg-[#FDF0ED] px-2.5 py-1 text-[11px] font-extrabold text-[#F06B4F]">
-              {hiringStageLabels[posting.hiringStage]}
-            </span>
-          </div>
-          <p className="mt-2.5 flex items-center gap-1.5 text-[12px] font-bold text-[#173F3A]">
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF7F2] px-2 py-0.5 text-[11px] font-extrabold text-[#173F3A] border border-[#E0D9C8]">
-              <Building2 className="size-3 text-[#173F3A]" />
-              {posting.companyName}
-            </span>
-            <span className="text-slate-400">·</span>
-            <span className="text-slate-600">{posting.industry}</span>
-          </p>
-          <h3 className="mt-1.5 text-[17px] font-extrabold leading-snug text-[#17212B]">
-            <button
-              className="text-left hover:text-[#173F3A] transition-colors"
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelect();
-              }}
-              type="button"
-            >
-              {posting.title}
-            </button>
-          </h3>
+      {/* Card Header: Company Badge + Fit Score Badge */}
+      <div className="flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-extrabold text-[#173F3A] border border-[#E0D9C8] truncate">
+            <Building2 className="size-3.5 shrink-0 text-[#173F3A]" />
+            {posting.companyName}
+          </span>
+          <span className="text-slate-400 shrink-0">·</span>
+          <span className="text-[12px] font-bold text-slate-500 truncate">{posting.industry}</span>
         </div>
+
         {showScore ? (
-          <div
-            aria-label={`적합도 ${displayScore}점, ${fitTone.label}`}
-            className={cn(
-              'shrink-0 rounded-xl border px-3 py-2 text-center',
-              fitTone.containerClassName,
-            )}
-          >
-            <p className={cn('text-[11px] font-bold', fitTone.labelClassName)}>{fitTone.label}</p>
-            <p className={cn('text-[18px] font-extrabold', fitTone.scoreClassName)}>
-              {displayScore}점
-            </p>
-          </div>
+          <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-extrabold border', fitTone.containerClassName)}>
+            <span className={fitTone.labelClassName}>{fitTone.label}</span>
+            <span className={cn('font-black text-[13px]', fitTone.scoreClassName)}>{displayScore}점</span>
+          </span>
         ) : (
-          <span className="shrink-0 whitespace-nowrap rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A] shadow-none cursor-default select-none">
+          <span className="shrink-0 rounded-lg border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A]">
             직종 탐색
           </span>
         )}
       </div>
 
-      {/* Personalized Match Reason Badge */}
-      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE] bg-[#DDEBE7]/60 px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-        <Sparkles className="size-3 shrink-0 text-[#173F3A]" />
+      {/* Position Title */}
+      <h3 className="mt-2.5 text-[16.5px] font-extrabold leading-snug text-[#17212B]">
+        <button
+          className="text-left hover:text-[#173F3A] transition-colors"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect();
+          }}
+          type="button"
+        >
+          {posting.title}
+        </button>
+      </h3>
+
+      {/* Streamlined Essential Badges Row (Max 3 Badges, Single Line) */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {essentialBadges.map((badge, idx) => (
+          <span
+            className={cn(
+              'rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border',
+              badge.isMint
+                ? 'border-[#BBD5CE] bg-[#DDEBE7] text-[#173F3A]'
+                : 'border-[#E0D9C8] bg-[#FAF7F2] text-slate-700',
+            )}
+            key={`${badge.label}-${idx}`}
+          >
+            {badge.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Match Highlight Callout */}
+      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-[#F4F9F8] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#173F3A]">
+        <Sparkles className="size-3.5 shrink-0 text-[#173F3A]" />
         <span className="truncate">
           {showScore
             ? displayReasons[0]
@@ -492,45 +498,38 @@ function PostingCard({
         </span>
       </div>
 
-      <p className="mt-2.5 text-[13px] font-medium leading-relaxed text-slate-600">
-        {posting.problemStatement}
+      {/* Clean AI Problem Statement */}
+      <p className="mt-2 text-[13px] font-medium leading-relaxed text-slate-600 line-clamp-2">
+        {cleanProblemStatement}
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-[12px] font-semibold text-slate-500">
+      {/* Location, Experience & Deadline Footer */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] font-semibold text-slate-500">
         <span className="inline-flex items-center gap-1">
-          <MapPin className="size-3.5" />
+          <MapPin className="size-3.5 text-slate-400" />
           {posting.location}
-          {posting.source === 'worknet'
-            ? posting.workSchedule
-              ? ` · ${posting.workSchedule}`
-              : ''
-            : ` · ${workTypeLabels[posting.workType]}`}
         </span>
-        {posting.source === 'worknet' ? (
-          <span>{posting.experienceYears}</span>
-        ) : (
-          <>
-            <span>{employmentTypeLabels[posting.employmentType]}</span>
-            <span>{seniorityLabels[posting.seniority]}</span>
-          </>
-        )}
+        <span>·</span>
+        <span>{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
+        <span>·</span>
         <span>마감 {getDeadlineText(posting)}</span>
       </div>
 
-      <div className="mt-3.5 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5">
-        <span className="text-[12px] font-bold text-[#F06B4F]">{posting.salaryRange}</span>
+      {/* Bottom Bar: Salary + Apply Button */}
+      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5">
+        <span className="text-[13px] font-extrabold text-[#F06B4F]">{posting.salaryRange}</span>
         <button
-          type="button"
+          className={cn(
+            'inline-flex items-center gap-1 rounded-xl px-4 py-1.5 text-[13px] font-extrabold text-white transition-all duration-200 cursor-pointer shadow-2xs',
+            role === 'senior'
+              ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] active:scale-[0.98]'
+              : 'border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]',
+          )}
           onClick={(e) => {
             e.stopPropagation();
             onApply?.(posting);
           }}
-          className={cn(
-            'inline-flex items-center gap-1 rounded-xl px-3.5 py-1.5 text-xs font-extrabold text-white transition-all duration-200 cursor-pointer',
-            role === 'senior'
-              ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98]'
-              : 'border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] shadow-[0_3px_8px_rgba(240,107,79,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(240,107,79,0.35)] active:translate-y-0 active:scale-[0.98]',
-          )}
+          type="button"
         >
           {role === 'senior' ? '지원하기' : '제안하기'}
         </button>
