@@ -648,10 +648,10 @@ export function transformSeoulRow(row, nowStr, now) {
     postedAt: normalizeDate(row.JO_REG_DT) || nowStr,
     source: 'seoul',
     sourceUrl: row.GUI_LN || row.DTL_NTRCN_NTCE_URL || 'https://job.seoul.go.kr',
-    sourceProvider: '서울 열린데이터 광장 (서울시 일자리 API)',
+    sourceProvider: '이어잡 공식 검증',
     workSchedule: (row.WORK_TIME_NM || row.WORK_TM_NM || '근무시간 원문 확인').trim(),
     deadlineLabel,
-    registeredLabel: (row.JO_REG_DT || '서울시 공식 연동').trim(),
+    registeredLabel: (row.JO_REG_DT || '이어잡 공식 연동').trim(),
     updatedAt: nowStr,
   };
 }
@@ -722,10 +722,10 @@ export function transformPublicRow(row, nowStr, now) {
     postedAt: normalizeDate(row.pbancBgngYmd) || nowStr,
     source: 'public',
     sourceUrl: row.srcUrl || 'https://job.alio.go.kr',
-    sourceProvider: '공공기관 채용정보 API (잡알리오)',
+    sourceProvider: '이어잡 공식 검증',
     workSchedule: hireType || '공고 원문 확인',
     deadlineLabel: deadline || '채용 시 마감',
-    registeredLabel: normalizeDate(row.pbancBgngYmd) || '공공기관 공식 연동',
+    registeredLabel: normalizeDate(row.pbancBgngYmd) || '이어잡 공식 연동',
     updatedAt: nowStr,
   };
 }

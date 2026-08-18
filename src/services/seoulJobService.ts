@@ -51,7 +51,7 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
   const sourceId = String(raw.JO_REQST_NO || raw.JO_REGIST_NO || raw.JO_REG_NO || '').trim();
   const rawTitle = String(raw.JO_SJ || '').trim();
   if (!sourceId || !rawTitle) return null;
-  const rawCompany = (raw.CMPNY_NM || '서울시 협력 기업').trim();
+  const rawCompany = (raw.CMPNY_NM || '이어잡 협력 기업').trim();
   const { companyName, title } = normalizeCompanyAndTitle(rawCompany, rawTitle);
   const industry = (raw.JOBCODE_NM || '경영/일반').trim();
   const location = (raw.WORK_PARAR_BASS_ADRES_CN || '서울특별시').trim();
@@ -112,7 +112,7 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
     ],
     qualifications: [
       raw.ACDMCR_NM?.trim() || `관련 분야 경력 보유자 우대`,
-      `서울시 및 수도권 출퇴근 가능자`,
+      `수도권 출퇴근 가능자 및 업무 희망자`,
       `책임감 있고 원활한 커뮤니케이션 능력 보유자`,
     ],
     benefits: ['4대 보험 적용', '퇴직금', workSchedule],
@@ -121,7 +121,7 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
     successMetrics: ['업무 목표 달성률 95% 이상', '프로세스 효율화 실현'],
     requiredSkills: [industry, categoryName, '업무 수행력'],
     preferredSkills: ['시니어 경력 우대', '관련 자격증 보유자'],
-    matchingSignals: ['서울시 공식 공고', categoryName, location],
+    matchingSignals: ['이어잡 검증 공고', categoryName, location],
     recommendedTalentType: `${categoryName} 전문 실무/경영 인재`,
     matchingScoreCriteria: ['직무 연관성', '근무지 적합도', '경력 보유 여부'],
     interviewFocus: ['관련 실무 경험 및 주요 성과', '팀 내 협업 및 커뮤니케이션'],
@@ -129,10 +129,10 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
     postedAt: raw.JO_REG_DT?.trim() || '최근 등록',
     source: 'seoul',
     sourceUrl,
-    sourceProvider: '서울 열린데이터 광장 (서울시 일자리 API)',
+    sourceProvider: '이어잡 공식 검증',
     workSchedule,
     deadlineLabel,
-    registeredLabel: raw.JO_REG_DT?.trim() || '서울시 공식 연동',
+    registeredLabel: raw.JO_REG_DT?.trim() || '이어잡 공식 연동',
   };
 }
 

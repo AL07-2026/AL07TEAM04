@@ -16,19 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 기업명 및 채용 포지션 정규화/규격화 및 카드 UI 명확화
+### [2026-08-18] `서울시 일자리` 및 외부 기관 명칭 전면 정제 & `이어잡 공식 검증` 단일 브랜드 통일
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
-  - `normalizeCompanyAndTitle` 함수를 고도화하여 무분별하게 혼재된 홍보성 문구("에서 함께 성장하세요!", "녹지 공간과 활력을 더하는...", "...를 모집합니다", "외 (학교/관공서...)") 및 `[서울시 일자리]`, `[긴급]`, 중복 `채용 채용`을 자동 정제하여 **핵심 직무/포지션명**만 깔끔하게 추출함.
-  - 공고 제목 전면에 반복 출현하는 기업명(`(주)시영디자인의 인테리어...` -> `인테리어...`)을 자동 감지/제거하여 기업명과 포지션이 이중으로 중복되지 않도록 정리함.
-  - **프로젝트 탭 (JobDatabasePage) 카드 UI 개선**: 기업명을 `🏢 (주)지안` 태그 형태의 시각적 배지(Pill)로 명확히 분리하고, 그 아래에 채용 포지션 타이틀을 볼드 체형으로 표기하여 기업명과 채용 포지션이 한눈에 규격화되어 구분되도록 구현함.
+  - 사용자 요청에 따라 프로젝트 탭 상세 패널, 카드 뱃지, 모달 팝업 등에 표기되던 `서울시 일자리`, `서울 열린데이터 광장`, `공공기관 채용정보 Open API` 등의 외부 데이터 소스 명칭을 전면 정제함.
+  - 제공 기관 항목을 **`이어잡 공식 검증`** 브랜드로 100% 통일하고, 지원 모달의 안내 문구도 원문 접수처 안내로 직관적이고 일관성 있게 변경함.
 - **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
 - **변경 파일**:
-  - [MODIFY] `src/data/occupationCategories.ts`
-  - [MODIFY] `functions/lib/backendAccumulator.mjs`
-  - [MODIFY] `functions/lib/jobSearch.mjs`
-  - [MODIFY] `src/services/dataSyncService.ts`
   - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/services/seoulJobService.ts`
+  - [MODIFY] `src/services/seoulJobService.test.ts`
+  - [MODIFY] `src/services/publicJobService.ts`
+  - [MODIFY] `src/services/publicJobService.test.ts`
+  - [MODIFY] `functions/lib/backendAccumulator.mjs`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 
 ### [2026-08-18] `leedongwook` 브랜치 생성 및 전체 작업 내역 원격 푸시

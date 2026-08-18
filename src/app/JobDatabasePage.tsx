@@ -738,12 +738,7 @@ function DetailPanel({
               ['임금 정보', posting.salaryRange],
               ['공고 마감', getDeadlineText(posting)],
               ['등록일', posting.registeredLabel || '등록일 미제공'],
-              [
-                '제공 기관',
-                posting.sourceProvider?.includes('워크넷')
-                  ? '이어잡 공식 검증'
-                  : posting.sourceProvider || '이어잡 공식 검증',
-              ],
+              ['제공 기관', '이어잡 공식 검증'],
             ].map(([label, value]) => (
               <div
                 className="border-b border-[#E0D9C8] px-4 py-3 last:border-b-0 sm:border-r sm:last:border-r-0"
@@ -2413,7 +2408,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     <span>공식 채용 포털 지원 연동</span>
                   </div>
                   <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-600">
-                    이어잡 DB에 지원 기록 저장이 완료되었습니다. 고용24/서울시 등 공공 공고의 실제 담당자에게 접수하기 위해 **AI 경험 요약을 복사**한 후 **공식 원문 접수처로 이동**하세요.
+                    이어잡 DB에 지원 기록 저장이 완료되었습니다. 채용 담당자에게 접수하기 위해 **AI 경험 요약을 복사**한 후 **공식 원문 접수처로 이동**하세요.
                   </p>
                 </div>
 
@@ -2434,7 +2429,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
                   {copiedSummaryToast && (
                     <p className="text-center text-[13px] font-extrabold text-[#2E7D32] animate-in fade-in">
-                      ✓ 클립보드에 복사되었습니다! (고용24/서울시 자소서/지원동기 칸에 붙여넣으세요)
+                      ✓ 클립보드에 복사되었습니다! (원문 접수처 자소서/지원동기 칸에 붙여넣으세요)
                     </p>
                   )}
 

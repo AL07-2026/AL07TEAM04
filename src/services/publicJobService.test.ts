@@ -25,7 +25,7 @@ describe('publicJobService', () => {
     expect(posting?.companyName).toBe('한국전력공사');
     expect(posting?.title).toBe('2026년도 시니어 신재생에너지 사업관리 전문가 채용');
     expect(posting?.source).toBe('public');
-    expect(posting?.sourceProvider).toContain('공공기관 채용정보 Open API');
+    expect(posting?.sourceProvider).toContain('이어잡 공식 검증');
     expect(posting?.companySize).toBe('공공기관/공기업');
     expect(posting?.deadline).toBe('2026-08-31');
   });

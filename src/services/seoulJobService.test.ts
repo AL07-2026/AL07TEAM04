@@ -25,7 +25,7 @@ describe('seoulJobService', () => {
     expect(posting?.companyName).toBe('서울테크 주식회사');
     expect(posting?.title).toBe('시니어 데이터 분석가 및 플랫폼 기획자 채용');
     expect(posting?.source).toBe('seoul');
-    expect(posting?.sourceProvider).toContain('서울 열린데이터 광장');
+    expect(posting?.sourceProvider).toContain('이어잡 공식 검증');
     expect(posting?.salaryRange).toBe('월급 3,500,000원');
   });
 
