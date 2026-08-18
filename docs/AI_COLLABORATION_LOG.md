@@ -16,6 +16,13 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-18] `develop` 브랜치 병합·라이브 배포 완료 후 `leedongwook` 브랜치 복귀
+- **작업자**: Antigravity (Gemini)
+- **주요 내용**:
+  - `leedongwook` 브랜치에서 검증된 모든 개선 내역을 `develop` 브랜치에 병합 후 `origin/develop` 푸시 및 Firebase Hosting 프로덕션 배포 완료.
+  - 최신 `develop` 커밋 내역을 `leedongwook` 브랜치에 동기화(`fast-forward`)하고, `origin/leedongwook` 원격 푸시를 마쳐 **`leedongwook` 브랜치 작업 복귀 완료**.
+- **검증**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공).
+
 ### [2026-08-18] `서울시 일자리` 및 외부 기관 명칭 전면 정제 & `이어잡 공식 검증` 단일 브랜드 통일
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
