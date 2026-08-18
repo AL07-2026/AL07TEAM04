@@ -64,6 +64,7 @@ import {
   updateProposalStatus,
 } from '@/services/proposalService';
 import {
+  calculatePersonalizedMatch,
   getExperienceCardRecommendationText,
   getProfileMatchedRankedProjects,
   getProfilePrimaryCategory,
@@ -441,10 +442,23 @@ export function SeniorHomePage() {
             .join(' '),
           sortBy: 'fit-desc',
         });
-        setRecommendedJobs(result.items);
+        const unifiedItems = result.items.map((item) => {
+          const matchResult = calculatePersonalizedMatch(
+            item,
+            profile,
+            primaryCategory,
+            experienceCard,
+          );
+          return {
+            ...item,
+            seniorFitScore: matchResult.personalizedScore,
+            recommendationReasons: matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
+          };
+        });
+        setRecommendedJobs(unifiedItems);
         setRecommendedProjectsCount(result.total);
         setHomeTotalPages(result.totalPages);
-        if (homePage === 1) setHighestFitScore(result.items[0]?.seniorFitScore ?? null);
+        if (homePage === 1) setHighestFitScore(unifiedItems[0]?.seniorFitScore ?? null);
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
           result.total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',

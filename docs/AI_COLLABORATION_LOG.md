@@ -16,7 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 모바일 화면 우측 짤림 현상 및 가로 스크롤 방지 레이아웃 최적화
+### [2026-08-18] 홈 메인(`/senior`)과 프로젝트 목록(`/senior/projects`) 점수 불일치 완정 통일
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - 기존 백엔드 API 점수(92점 등)와 프론트엔드 개인화 산출 점수가 달라 **홈 화면과 프로젝트 목록 화면에서 동일한 공고의 점수가 다르게 표기되던 현상**을 원인 추적하여 완전 통일함.
+  - 백엔드 검색 API (`functions/lib/jobSearch.mjs`)의 점수 구간 산출 알고리즘을 프론트엔드(`recommendationEngine.ts`) 다단계 차등 체계(1순위: 72~98점, 2순위: 58~85점, 3순위: 48~72점, 무관: 15~45점)와 100% 동일하게 동기화.
+  - 홈 메인 피드 렌더링 시(`FlowPages.tsx`) `calculatePersonalizedMatch`를 거치도록 통합하여, 이제 **홈 화면과 프로젝트 목록 화면 어느 곳에서 확인하더라도 동일한 공고에 대해 100% 일치하는 정밀 맞춤 점수**가 노출됩니다.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - 모바일 화면에서 `경기 안양시디지털엠파이어 빌딩` 등 장문의 위치 텍스트로 인해 카드가 100% 폭을 초과하고 화면 우측이 짤리던 레이아웃 현상 수정.

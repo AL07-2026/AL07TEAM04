@@ -270,39 +270,39 @@ function calculateFitMatch(entry, options, context) {
     desiredOccupationPriority >= 0 &&
     (categoryPriority < 0 || desiredOccupationPriority < categoryPriority);
   if (directOccupationMatchApplied) categoryPriority = desiredOccupationPriority;
-  let score = categoryPriority === 0 ? 94 : categoryPriority === 1 ? 84 : categoryPriority === 2 ? 76 : 40;
+  let score = categoryPriority === 0 ? 78 : categoryPriority === 1 ? 64 : categoryPriority === 2 ? 52 : 28;
   const reasons = [];
   if (directOccupationMatchApplied) {
     reasons.push(
       `내 정보의 ${options.desiredOccupationRank}순위 기타 희망 직종 ‘${options.desiredOccupationText}’과 공고 내용이 일치합니다.`,
     );
-  } else if (categoryPriority === 0) reasons.push('내 정보의 1순위 희망 직종과 일치합니다.');
-  else if (categoryPriority === 1) reasons.push('내 정보의 2순위 희망 직종과 일치합니다.');
-  else if (categoryPriority === 2) reasons.push('내 정보의 3순위 희망 직종과 일치합니다.');
+  } else if (categoryPriority === 0) reasons.push('1순위 희망 직종과 일치합니다.');
+  else if (categoryPriority === 1) reasons.push('2순위 희망 직종과 일치합니다.');
+  else if (categoryPriority === 2) reasons.push('3순위 희망 직종과 일치합니다.');
 
   const matchingKeywords = solvedKeywords.filter(
     (keyword) => context.profileText.includes(keyword) && postingText.includes(keyword),
   );
   if (matchingKeywords.length >= 3) {
-    score += 4;
-    reasons.push(`내 정보 핵심 역량 ${matchingKeywords.slice(0, 3).join(', ')}을 반영했습니다.`);
+    score += 6;
+    reasons.push(`핵심 역량 ${matchingKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
   } else if (matchingKeywords.length > 0) {
-    score += 2;
-    reasons.push(`내 정보 경력 키워드 ${matchingKeywords.join(', ')}를 반영했습니다.`);
+    score += 3;
+    reasons.push(`경력 키워드 ${matchingKeywords.join(', ')}가 공고와 연결됩니다.`);
   }
 
   const postingTokens = tokenizeRecommendationText(postingText);
   const sharedProfileTokens = [...context.profileTokens].filter((token) => postingTokens.has(token));
   if (sharedProfileTokens.length >= 3) {
-    score += 7;
+    score += 6;
     reasons.push(
       `내 정보의 ${sharedProfileTokens.slice(0, 3).join(', ')} 전문 분야가 공고와 밀접하게 일치합니다.`,
     );
   } else if (sharedProfileTokens.length === 2) {
-    score += 5;
+    score += 4;
     reasons.push(`내 정보의 ${sharedProfileTokens.join(', ')} 전문 분야가 공고와 일치합니다.`);
   } else if (sharedProfileTokens.length === 1) {
-    score += 1;
+    score += 2;
     reasons.push(`내 정보의 ${sharedProfileTokens[0]} 관련 경험을 반영했습니다.`);
   }
 
@@ -310,7 +310,7 @@ function calculateFitMatch(entry, options, context) {
   if (context.experienceOccupationCategory === occupationCategory) {
     score += 3;
     experienceRecommendationApplied = true;
-    reasons.push('AI 경험 인터뷰의 직무 분야가 공고와 일치합니다.');
+    reasons.push('AI 경험 인터뷰의 직무 분야가 이 공고와 일치합니다.');
   }
 
   if (context.experienceTokens.size > 0) {
@@ -318,19 +318,19 @@ function calculateFitMatch(entry, options, context) {
       postingTokens.has(token),
     );
     if (sharedExperienceTokens.length >= 3) {
-      score += 5;
+      score += 4;
       experienceRecommendationApplied = true;
       reasons.push(
-        `AI 경험 인터뷰의 ${sharedExperienceTokens.slice(0, 3).join(', ')} 경험을 반영했습니다.`,
+        `AI 경험 인터뷰의 ${sharedExperienceTokens.slice(0, 3).join(', ')} 경험이 공고와 연결됩니다.`,
       );
     } else if (sharedExperienceTokens.length > 0) {
       score += 2;
       experienceRecommendationApplied = true;
-      reasons.push(`AI 경험 인터뷰의 ${sharedExperienceTokens.join(', ')} 경험을 반영했습니다.`);
+      reasons.push(`AI 경험 인터뷰의 ${sharedExperienceTokens.slice(0, 2).join(', ')} 경험을 반영했습니다.`);
     }
   }
 
-  if (options.experienceYears >= 10) score += 1;
+  if (options.experienceYears >= 10) score += 2;
 
   if (options.desiredLocation && !['전국', '전체'].includes(options.desiredLocation)) {
     const locationKeyword = options.desiredLocation.replace(/(특별시|광역시|특별자치도|도|시)$/, '');
@@ -338,14 +338,25 @@ function calculateFitMatch(entry, options, context) {
     score +=
       postingLocation.includes(locationKeyword) || postingLocation.includes(options.desiredLocation)
         ? 2
-        : -3;
+        : -5;
+  }
+
+  let finalScore = score;
+  if (categoryPriority < 0) {
+    finalScore = Math.min(45, Math.max(15, finalScore));
+  } else if (categoryPriority === 0) {
+    finalScore = Math.min(98, Math.max(72, finalScore));
+  } else if (categoryPriority === 1) {
+    finalScore = Math.min(85, Math.max(58, finalScore));
+  } else if (categoryPriority === 2) {
+    finalScore = Math.min(72, Math.max(48, finalScore));
   }
 
   return {
     experienceRecommendationApplied,
-    rankScore: score,
+    rankScore: Math.round(score),
     reasons,
-    score: Math.min(99, Math.max(0, score)),
+    score: Math.round(finalScore),
   };
 }
 
