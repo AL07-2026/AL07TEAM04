@@ -49,6 +49,13 @@ export type FullJobSearchResult = {
   totalPages: number;
 };
 
+const SEARCH_CLIENT_CACHE_TTL_MS = 60 * 1000;
+const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSearchResult }>();
+
+export function clearClientSearchCache() {
+  clientSearchCache.clear();
+}
+
 function setListParam(params: URLSearchParams, key: string, values?: string[]) {
   if (values && values.length > 0) params.set(key, values.join(','));
 }
@@ -83,7 +90,14 @@ export async function searchFullJobDatabase(
   if (options.sortBy) params.set('sortBy', options.sortBy);
   if (options.workType) params.set('workType', options.workType);
 
-  const response = await fetch(`/api/jobs/search?${params.toString()}`, {
+  const cacheKey = params.toString();
+  const now = Date.now();
+  const cached = clientSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > now && !options.signal?.aborted) {
+    return cached.result;
+  }
+
+  const response = await fetch(`/api/jobs/search?${cacheKey}`, {
     headers: { Accept: 'application/json' },
     signal: options.signal,
   });
@@ -96,7 +110,7 @@ export async function searchFullJobDatabase(
     throw new Error('Full job database search returned an invalid response');
   }
 
-  return {
+  const searchResult: FullJobSearchResult = {
     catalogRefreshedAt: result.catalogRefreshedAt,
     catalogTotal: Number(result.catalogTotal) || 0,
     closingSoonTotal: Number(result.closingSoonTotal) || 0,
@@ -109,4 +123,15 @@ export async function searchFullJobDatabase(
     total: Number(result.total) || 0,
     totalPages: Math.max(1, Number(result.totalPages) || 1),
   };
+
+  if (clientSearchCache.size >= 100) {
+    const oldestKey = clientSearchCache.keys().next().value;
+    if (oldestKey) clientSearchCache.delete(oldestKey);
+  }
+  clientSearchCache.set(cacheKey, {
+    expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS,
+    result: searchResult,
+  });
+
+  return searchResult;
 }

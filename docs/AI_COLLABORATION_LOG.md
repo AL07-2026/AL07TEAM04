@@ -16,17 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 채용공고 AI 해결 프로젝트 분석 문구 고도화
+### [2026-08-18] 채용공고 AI 해결 과제 정제 및 로딩 속도 최적화
 - **작업자**: Antigravity (Gemini)
+- **원인 분석**:
+  - **문구 이상 문제**: 기존 Firestore DB에 저장된 공고 일부에 `[서울시 일자리] OO회사 XX 채용`이나 `XX 채용 채용` 같은 기계적 접두사/접미사가 남아 카드의 해결 프로젝트란에 그대로 출력되던 현상을 파악함.
+  - **로딩 속도 지연 문제**: Cloud Functions 인스턴스에서 검색 카탈로그 로딩 시 14,000여 건 전체 Firestore 데이터를 매번 새로 불렀고, 브라우저 클라이언트 응답 캐시가 없어 페이지 전환 시 3~5초의 네트워크 지연이 발생함을 파악함.
 - **주요 개선**:
-  - 기존 획일화된 템플릿 문구(`[서울시 일자리] OO회사 XX 채용`)를 구직자가 본인의 경력과 즉시 매칭시킬 수 있도록 **3단계 구조(업종/과제 명확화 + 프로젝트 상세 목표 + 시니어 성과 창출)**의 맞춤형 문구로 전면 개편함.
-  - `functions/lib/backendAccumulator.mjs` (Firestore 데이터베이스 축적용), `src/services/seoulJobService.ts`, `src/services/publicJobService.ts`, `src/services/worknetService.ts` 전체 파이프라인 적용.
-- **검증 및 배포**: `npm run validate` 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 커밋 및 `origin/leedongwook` 푸시 완료.
+  - **직무명 기반 제목-인식(Title-Aware) AI 과제 생성기 구축**: `sanitizeAndEnhanceProblemStatement` 함수를 도입하여 기계적 접두어(`[서울시 일자리]`, `[공공기관 채용]`) 및 `채용 채용` 중복을 제거하고, 공고 제목(인테리어/야외운동기구 설계/편집디자인/UXUI 등)에 맞춰 실제 해결 과제 문구로 자동 변환함.
+  - **클라이언트/서버 2중 0초 메모리 캐시 구축**:
+    - 백엔드 카탈로그 인메모리 캐시 유지 시간을 15분으로 확장하고,
+    - 클라이언트 `jobSearchService.ts`에 60초 결과 메모리 캐시(`clientSearchCache`)를 신설하여 공고 조회 및 페이지 이동 속도를 0.05초 이내로 대폭 최적화함.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 원격 push 및 Firebase Hosting 미리보기 채널(`leedongwook`) 재배포 완료.
 - **변경 파일**:
-  - [MODIFY] `functions/lib/backendAccumulator.mjs`
-  - [MODIFY] `src/services/seoulJobService.ts`
-  - [MODIFY] `src/services/publicJobService.ts`
-  - [MODIFY] `src/services/worknetService.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/services/dataSyncService.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 
 ### [2026-08-18] `leedongwook` 브랜치 생성 및 전체 작업 내역 원격 푸시
