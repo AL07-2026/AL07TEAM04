@@ -16,7 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 공고 제목 중복 문구 정제 및 개인 맞춤 적합도 점수 알고리즘 정밀 고도화
+### [2026-08-18] 메인/로그인 배너 텍스트 태그 UI 정돈 (주황색 버튼 박스 제거 ➡️ 주황색 텍스트 변경)
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - `[이어잡 메인]` 태그가 주황색 알약 버튼 박스로 표기되어 클릭 가능한 버튼처럼 혼동을 주던 현상을 개선함.
+  - 주황색 배경 박스를 완전히 제거하고, **주황색 강조 텍스트 (`text-[#F06B4F] font-extrabold`)**로 깔끔하게 전환함.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - **제목 중복 정제 (`normalizeCompanyAndTitle`)**: `아이디플러스 (IDPLUS)`와 같이 기업명에 괄호 영문명이 있을 때 `아이디플러스 의 아이디플러스`처럼 이중 중복 표기되던 현상 및 `채용합니다 채용` 등 뒤에 무분별하게 붙던 중복 채용 텍스트 정제.
