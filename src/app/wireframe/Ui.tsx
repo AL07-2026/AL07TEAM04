@@ -466,7 +466,7 @@ export function ActionButton({
     <button
       className={cn(
         'flex w-full items-center justify-center rounded-full font-extrabold leading-none transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
-        isMobile ? 'h-12 min-h-12 px-5 text-[14px]' : 'h-14 min-h-14 px-6 text-[16px]',
+        isMobile ? 'h-[50px] min-h-[50px] px-5 text-[15px]' : 'h-14 min-h-14 px-6 text-[16px]',
         secondary
           ? 'border border-[#D4CBB8] bg-gradient-to-b from-white via-[#FAF7F2] to-[#F2EDE2] text-[#17212B] shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-[#173F3A] hover:from-white hover:to-[#E8F2EF] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98]'
           : role === 'company'
@@ -497,7 +497,7 @@ export function Chip({
       aria-pressed={onClick ? selected : undefined}
       className={cn(
         'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition-all duration-200',
-        isMobile ? 'h-10 min-h-10 px-4 text-[13px]' : 'h-11 min-h-11 px-5 text-[14px]',
+        isMobile ? 'h-[42px] min-h-[42px] px-4 text-[13.5px]' : 'h-11 min-h-11 px-5 text-[14px]',
         onClick ? 'cursor-pointer' : 'cursor-default select-none',
         selected
           ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]'
@@ -550,7 +550,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
               <span
                 className={cn(
                   'truncate font-extrabold text-[#173F3A]',
-                  isMobile ? 'text-[13px]' : 'text-[16px]',
+                  isMobile ? 'text-[14px]' : 'text-[16px]',
                 )}
               >
                 {project.company}
@@ -560,7 +560,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
               <span
                 className={cn(
                   'inline-flex items-center rounded-full border px-2.5 py-1 font-extrabold shadow-2xs',
-                  isMobile ? 'text-[11px]' : 'text-[13px]',
+                  isMobile ? 'text-[11.5px]' : 'text-[13px]',
                   statusText === '연락 받음' || statusText === '연락함'
                     ? 'bg-[#DDEBE7] text-[#173F3A] border-[#BBD5CE]'
                     : statusText === '공개 중'
@@ -576,7 +576,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
             ) : null}
           </div>
           {isMobile ? (
-            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-extrabold text-[#F06B4F]">
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12.5px] font-extrabold text-[#F06B4F]">
               {actionLabel}
               <ChevronRight aria-hidden="true" className="size-4" strokeWidth={2.5} />
             </span>
@@ -586,7 +586,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
         <strong
           className={cn(
             'text-left font-extrabold leading-snug text-[#17212B] transition-colors group-hover:text-[#F06B4F]',
-            isMobile ? 'mt-2.5 text-[16px]' : 'mt-2 text-[22px]',
+            isMobile ? 'mt-2.5 text-[17px]' : 'mt-2 text-[22px]',
           )}
         >
           {project.title}
@@ -596,7 +596,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
           <div className="mt-3 flex flex-wrap gap-1.5">
             {detailParts.map((part, index) => (
               <span
-                className="rounded-md bg-[#F7F3EA] px-2 py-1 text-[11px] font-bold leading-4 text-[#4B5768]"
+                className="rounded-md bg-[#F7F3EA] px-2 py-1 text-[11.5px] font-bold leading-4 text-[#4B5768]"
                 key={`${part}-${index}`}
               >
                 {isStatusMeta && index === 0 ? `제안일 ${part}` : part}
@@ -654,21 +654,21 @@ export function SummaryCard({
         'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs',
         isMobile
           ? caption
-            ? 'min-h-[126px] p-4'
-            : 'h-[108px] p-4'
+            ? 'min-h-[128px] p-4'
+            : 'h-[110px] p-4'
           : caption
             ? 'min-h-[152px] p-6'
             : 'h-[136px] p-6',
       )}
     >
-      <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13px]' : 'text-[17px]')}>
+      <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
         {label}
       </span>
       <div className="mt-auto">
         <strong
           className={cn(
             'block font-extrabold tracking-tight text-[#173F3A]',
-            isMobile ? 'text-[26px]' : 'text-[38px]',
+            isMobile ? 'text-[27px]' : 'text-[38px]',
           )}
         >
           {value}
@@ -677,7 +677,7 @@ export function SummaryCard({
           <span
             className={cn(
               'mt-1 block font-semibold leading-5 text-slate-400',
-              isMobile ? 'text-[11px]' : 'text-[13px]',
+              isMobile ? 'text-[11.5px]' : 'text-[13px]',
             )}
           >
             {caption}
@@ -700,14 +700,14 @@ export function InfoPanel({ children, label }: { children: ReactNode; label: str
       )}
     >
       <strong
-        className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[14px]' : 'text-[18px]')}
+        className={cn('font-extrabold text-[#17212B]', isMobile ? 'text-[15px]' : 'text-[18px]')}
       >
         {label}
       </strong>
       <div
         className={cn(
           'font-medium text-[#17212B]/85',
-          isMobile ? 'text-[15px] leading-6' : 'text-[18px] leading-8',
+          isMobile ? 'text-[15.5px] leading-6' : 'text-[18px] leading-8',
         )}
       >
         {children}
@@ -720,11 +720,11 @@ type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string 
 
 export function Field({ className, label, ...props }: FieldProps) {
   return (
-    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-xs md:text-sm">
+    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-[13px] md:text-sm">
       <span>{label}</span>
       <input
         className={cn(
-          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-11 md:h-12 text-xs md:text-sm',
+          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-[46px] md:h-12 text-[13.5px] md:text-sm',
           className,
         )}
         {...props}
@@ -737,11 +737,11 @@ type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { 
 
 export function TextAreaField({ className, label, ...props }: TextAreaFieldProps) {
   return (
-    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-xs md:text-sm">
+    <label className="flex w-full flex-col gap-1.5 font-extrabold text-[#173F3A] text-[13px] md:text-sm">
       <span>{label}</span>
       <textarea
         className={cn(
-          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-24 md:h-28 text-xs md:text-sm leading-relaxed',
+          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-26 md:h-28 text-[13.5px] md:text-sm leading-relaxed',
           className,
         )}
         {...props}

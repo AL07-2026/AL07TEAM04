@@ -86,28 +86,34 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Shared readable type scale for project, recommendation, and application flows. */
+/* Shared readable type scale for project, recommendation, and application flows (~5% boosted for mobile clarity). */
 .project-ui-readable [class~='text-[10px]'],
 .project-ui-readable [class~='text-[11px]'] {
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.5;
 }
 
 .project-ui-readable .text-xs,
 .project-ui-readable [class~='text-[12px]'] {
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.5;
 }
 
 .project-ui-readable .text-sm,
 .project-ui-readable [class~='text-[13px]'] {
-  font-size: 15px;
+  font-size: 15.5px;
   line-height: 1.5;
 }
 
 .project-ui-readable [class~='text-[14px]'] {
-  font-size: 16px;
+  font-size: 16.5px;
   line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  body {
+    font-size: 15px;
+  }
 }
 
 @media (min-width: 768px) {

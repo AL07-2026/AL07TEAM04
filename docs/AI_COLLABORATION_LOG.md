@@ -16,7 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-08-18] 모바일 화면 짤림 최적화 & 기업회원 정보 수정 저장 메커니즘 보완
+### [2026-08-18] 모바일 버전 텍스트 & 버튼 터치 영역 +5% 가독성/터치성 확대 최적화
+- **작업자**: Antigravity (Gemini)
+- **주요 개선**:
+  - 사용자 피드백에 따라 모바일 기기에서의 시인성과 터치 편의성을 위해 전체 텍스트 크기 및 주요 버튼/입력창의 높이를 레이아웃 파손 없이 약 +5% 일괄 확대함.
+  - `globals.css`: 모바일 미디어 쿼리(`max-width: 767px`) 기반 폰트 스케일 상향 (13px ➡️ 13.5px, 14px ➡️ 14.5px, 15px ➡️ 15.5px, 16px ➡️ 16.5px).
+  - `Ui.tsx`: `ActionButton` 터치 높이 `h-[50px]`, `Chip` 높이 `h-[42px]`, `Field` 입력창 `h-[46px]` 및 라벨/안내문구 폰트를 +5% 확대하여 오버플로우 없이 터치감과 가독성을 보완함.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 테스트 pass, typecheck/lint/build 성공). `leedongwook` 브랜치 푸시 및 미리보기 채널 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/styles/globals.css`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
   - **모바일 레이아웃 최적화**:
