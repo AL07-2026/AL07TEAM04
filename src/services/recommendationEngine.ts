@@ -307,13 +307,50 @@ export function calculatePersonalizedMatch(
   const postingTokens = new Set(tokenizeRecommendationText(postingText));
   const sharedProfileTokens = profileSpecialtyTokens.filter((token) => postingTokens.has(token));
 
+  const specialtyDomainStopWords = new Set([
+    '디자인',
+    '설계',
+    '개발',
+    '기획',
+    '관리',
+    '운영',
+    '전략',
+    '자료',
+    '고도화',
+    '서비스',
+    '프로세스',
+    '구축',
+    '표준화',
+    '개선',
+    '전문',
+    '분야',
+    '핵심',
+    '강점',
+    '경험',
+    '경력',
+    '업무',
+    '프로젝트',
+    '채용',
+    '지원',
+  ]);
+
+  const domainSpecificProfileTokens = profileSpecialtyTokens.filter(
+    (token) => !specialtyDomainStopWords.has(token),
+  );
+  const sharedDomainTokens = domainSpecificProfileTokens.filter((token) =>
+    postingTokens.has(token),
+  );
+
   const matchedKeywords = solvedKeywords.filter(
     (keyword) => userExperienceText.includes(keyword) && postingText.includes(keyword),
   );
+  const domainSpecificKeywords = matchedKeywords.filter(
+    (keyword) => !specialtyDomainStopWords.has(keyword),
+  );
 
   const hasStrongSubSpecialtyMatch =
-    sharedProfileTokens.length >= 2 ||
-    (sharedProfileTokens.length >= 1 && matchedKeywords.length >= 1);
+    sharedDomainTokens.length >= 2 ||
+    (sharedDomainTokens.length >= 1 && domainSpecificKeywords.length >= 1);
 
   if (isSpecificCategoryActive || isCustomOccupationActive) {
     if (categoryPriority >= 0) {

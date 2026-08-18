@@ -276,9 +276,43 @@ function calculateFitMatch(entry, options, context) {
     (keyword) => context.profileText.includes(keyword) && postingText.includes(keyword),
   );
 
+  const specialtyDomainStopWords = new Set([
+    '디자인',
+    '설계',
+    '개발',
+    '기획',
+    '관리',
+    '운영',
+    '전략',
+    '자료',
+    '고도화',
+    '서비스',
+    '프로세스',
+    '구축',
+    '표준화',
+    '개선',
+    '전문',
+    '분야',
+    '핵심',
+    '강점',
+    '경험',
+    '경력',
+    '업무',
+    '프로젝트',
+    '채용',
+    '지원',
+  ]);
+
+  const domainSpecificProfileTokens = sharedProfileTokens.filter(
+    (token) => !specialtyDomainStopWords.has(token),
+  );
+  const domainSpecificKeywords = matchingKeywords.filter(
+    (keyword) => !specialtyDomainStopWords.has(keyword),
+  );
+
   const hasStrongSubSpecialtyMatch =
-    sharedProfileTokens.length >= 2 ||
-    (sharedProfileTokens.length >= 1 && matchingKeywords.length >= 1);
+    domainSpecificProfileTokens.length >= 2 ||
+    (domainSpecificProfileTokens.length >= 1 && domainSpecificKeywords.length >= 1);
 
   let score = categoryPriority === 0 ? (hasStrongSubSpecialtyMatch ? 88 : 78) : categoryPriority === 1 ? (hasStrongSubSpecialtyMatch ? 74 : 66) : categoryPriority === 2 ? (hasStrongSubSpecialtyMatch ? 60 : 54) : 28;
   const reasons = [];
