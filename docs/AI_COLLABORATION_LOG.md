@@ -16,6 +16,32 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-19] `develop` 브랜치를 `main` 브랜치로 병합 및 원격 푸시 완료
+- **작업자**: Antigravity (Gemini)
+- **주요 내용**:
+  - 사용자 요청에 따라 `develop` 브랜치의 검증 완료된 최신 변경 사항 전체를 `main` 브랜치에 동기화(`fast-forward merge`)하고 `origin/main`으로 원격 푸시 수행.
+  - 병합 전 사전 검증 (`npm run validate` - TypeScript typecheck, ESLint, 198개 Vitest 유닛 테스트, Vite 프로덕션 빌드) 100% 통과 완료.
+- **검증**: `npm run validate` 통과 완료.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-18] 파이어베이스 테스트 계정 및 테스트 데이터 전면 정리
+- **작업자**: Antigravity (Gemini)
+- **주요 내용**:
+  - 사용자 요청에 따라 파이어베이스(Firebase Auth 및 Firestore) 내 자동 생성된 테스트 계정 및 테스트 데이터 전수 감사 및 삭제 수행.
+  - **보존 처리 (총 8개 회원 계정 및 관련 데이터 100% 보존)**:
+    - **구글 가입자 (7명)**: `dkiichoi@gmail.com`, `dbswndtla77777@gmail.com`, `hanpuuu@gmail.com`, `godonglee4@gmail.com`, `sehddnr2@gmail.com`, `phj1120@gmail.com`, `oz9564@nextrunners.co.kr`
+    - **일반 이메일 가입자 (1명)**: `heal1120@daum.net`
+  - **삭제 처리 완료 내역**:
+    - **Firebase Authentication**: 자동 생성된 테스트 사용자 계정 **275개 100% 삭제 완료** (283개 중 8개 실가입자만 완전 보존).
+    - **Firestore `users` 컬렉션**: 테스트 사용자 문서 **118개 삭제 완료** (8개 실가입자 문서 보존).
+    - **Firestore `senior_profiles` 컬렉션**: 테스트 시니어 프로필 문서 **64개 삭제 완료** (5개 실가입자 프로필 보존).
+    - **Firestore `company_profiles` 컬렉션**: 테스트 기업 프로필 문서 **66개 삭제 완료** (1개 실기업 프로필 보존).
+    - **Firestore `user_proposals` 컬렉션**: 테스트 제안서 문서 **33개 삭제 완료**.
+- **검증**: `npm run validate` 통과 및 Firebase Auth Admin API/Firestore REST API를 통한 삭제 후 8개 실가입자 명단 최종 확인 완료.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-18] 공고 요약 문구(Problem Statement) 분야 자동 분류 오류 수정 및 90점대 오발급 차단
 - **작업자**: Antigravity (Gemini)
 - **주요 개선**:
