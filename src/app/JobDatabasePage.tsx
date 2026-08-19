@@ -1198,6 +1198,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       | 'totalPages'
     > | null
   >(null);
+  const [stableOverviewMetrics, setStableOverviewMetrics] = useState<{
+    catalogTotal: number;
+    preferredTotal: number;
+    partTimeTotal: number;
+    closingSoonTotal: number;
+  } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const detailContainerRef = useRef<HTMLDivElement>(null);
@@ -1534,6 +1540,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             total: result.total + additionalCompanyProjectCount,
             totalPages: result.totalPages,
           });
+          if (!query.trim()) {
+            setStableOverviewMetrics({
+              catalogTotal: result.catalogTotal,
+              preferredTotal: result.preferredTotal,
+              partTimeTotal: result.partTimeTotal,
+              closingSoonTotal: result.closingSoonTotal,
+            });
+          }
           setPostings(mergedProjects);
           setCurrentPage(result.page);
           setSelectedId((current) =>
@@ -1872,7 +1886,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const activeCategoryFilters = role === 'senior' ? seniorCategoryFilters : categoryFilters;
   const effectiveSelectedCategory =
     query.trim()
-      ? all
+      ? role === 'senior'
+        ? allDatabase
+        : all
       : role === 'senior' && selectedCategory === all && effectivePrimaryProfileFilter
       ? effectivePrimaryProfileFilter
       : selectedCategory;
@@ -2131,6 +2147,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const closingSoonPostingsCount = isServerSearchActive
     ? (serverSearchMeta?.closingSoonTotal ?? 0)
     : postings.filter((posting) => posting.hiringStage === 'closing').length;
+  const overviewCatalogTotal = stableOverviewMetrics?.catalogTotal ?? (serverSearchMeta?.catalogTotal ?? postings.length);
+  const overviewPreferredTotal = stableOverviewMetrics?.preferredTotal ?? preferredPostingsCount;
+  const overviewPartTimeTotal = stableOverviewMetrics?.partTimeTotal ?? partTimePostingsCount;
+  const overviewClosingSoonTotal = stableOverviewMetrics?.closingSoonTotal ?? closingSoonPostingsCount;
 
   function changeQuery(value: string) {
     beginResultTransition();
@@ -2875,7 +2895,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         <DatabaseMetric
           caption={role === 'senior' ? '실시간 기준' : '회사 직접 등록 기준'}
           label={role === 'senior' ? '조회 공고' : '등록 프로젝트'}
-          value={`${role === 'senior' ? (serverSearchMeta?.catalogTotal ?? postings.length) : postings.length}건`}
+          value={`${role === 'senior' ? overviewCatalogTotal : postings.length}건`}
         />
         <DatabaseMetric
           caption={
@@ -2885,18 +2905,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           }
           label="추천 건수"
           value={
-            role === 'senior' ? `${preferredPostingsCount}건` : `${postings.length}건`
+            role === 'senior' ? `${overviewPreferredTotal}건` : `${postings.length}건`
           }
         />
         <DatabaseMetric
           caption={role === 'senior' ? '시간제·파트타임·유연근무 기준' : '현재 지원 접수 가능'}
           label="시간제 채용"
-          value={`${partTimePostingsCount}건`}
+          value={`${overviewPartTimeTotal}건`}
         />
         <DatabaseMetric
           caption={role === 'senior' ? '마감일까지 7일 이내' : '등록 마감일 기준'}
           label="마감 임박"
-          value={`${closingSoonPostingsCount}건`}
+          value={`${overviewClosingSoonTotal}건`}
         />
       </div>
 
