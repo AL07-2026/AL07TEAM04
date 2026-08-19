@@ -859,11 +859,13 @@ export function DetailPanel({
           </div>
         </header>
       ) : (
+        <>
         <header className="pb-3">
           <p className="text-[12px] font-extrabold text-[#F06B4F]">
             {hiringStageLabels[posting.hiringStage]} ·{' '}
             {getPostingOccupationLabel(posting) || posting.industry}
           </p>
+        </header>
           <div className="sticky top-0 z-10 -mx-4 mt-1 flex items-start justify-between gap-3 border-b border-[#E0D9C8] bg-white px-4 py-2">
             <h2 className="min-w-0 line-clamp-2 text-[22px] font-extrabold leading-tight text-[#17212B]">
               {posting.title}
@@ -892,7 +894,7 @@ export function DetailPanel({
                 : ''
               : ` · ${employmentTypeLabels[posting.employmentType]}`}
           </p>
-        </header>
+        </>
       )}
 
       {!isMobile ? (
