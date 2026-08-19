@@ -27,6 +27,7 @@ import {
 import {
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent,
   type ReactNode,
   useEffect,
   useMemo,
@@ -83,6 +84,9 @@ import {
   searchProjectFilterChoices,
 } from '@/services/projectFilterPresentation';
 import {
+  shouldMergePublicProjectsForDiscovery,
+} from '@/services/homeMetricNavigation';
+import {
   searchFullJobDatabase,
   type FullJobSearchResult,
   type JobOccupationFilter,
@@ -119,7 +123,7 @@ const all = 'all';
 const allDatabase = 'all_db';
 const customOccupationMatch = 'custom-match';
 const unclassifiedOccupation = 'unclassified';
-type CategoryFilter =
+export type CategoryFilter =
   | ProjectCategory
   | OccupationCategory
   | typeof all
@@ -131,7 +135,7 @@ type EmploymentTypeFilter = EmploymentType | typeof all;
 type HiringStageFilter = HiringStage | typeof all;
 type SortOption = 'fit-desc' | 'deadline-asc' | 'latest-desc';
 
-type FilterOption = {
+export type FilterOption = {
   badge?: string;
   id: CategoryFilter;
   label: string;
@@ -290,11 +294,12 @@ function CategoryFilterButton({
         </span>
       ) : null}
       <span>{label}</span>
+      {selected ? <span aria-hidden="true" className="text-[12px]">✓</span> : null}
     </button>
   );
 }
 
-function CategoryPickerDialog({
+export function CategoryPickerDialog({
   choices,
   onClose,
   onSelect,
@@ -309,6 +314,18 @@ function CategoryPickerDialog({
 }) {
   const [query, setQuery] = useState('');
   const visibleChoices = searchProjectFilterChoices(choices, query);
+
+  function selectChoice(choice: FilterOption) {
+    onSelect(choice.id);
+    setQuery('');
+  }
+
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (visibleChoices.length === 1) selectChoice(visibleChoices[0]!);
+  }
 
   return (
     <div
@@ -347,18 +364,41 @@ function CategoryPickerDialog({
             autoFocus
             className="h-full min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
             placeholder="직무명으로 찾기"
             type="search"
             value={query}
           />
         </label>
-        <div aria-live="polite" className="mt-4 flex flex-wrap gap-2" role="group">
-          {visibleChoices.map((choice) => (
+        <div className="mt-4">
+          {query.trim() ? null : (
+            <p className="mb-2 text-[12px] font-extrabold text-[#4B756E]">전체</p>
+          )}
+          {query.trim() ? null : (
+            <div className="mb-4" role="group">
+              {visibleChoices.filter((choice) => choice.id === allDatabase || choice.id === all).map((choice) => (
+                <CategoryFilterButton badge={choice.badge} key={choice.id} label="전체" onClick={() => selectChoice(choice)} selected={selectedCategory === choice.id} />
+              ))}
+            </div>
+          )}
+          {query.trim() ? null : (
+            <p className="mb-2 text-[12px] font-extrabold text-[#4B756E]">내 희망 직무</p>
+          )}
+          {query.trim() ? null : (
+            <div className="mb-4 flex flex-wrap gap-2" role="group">
+              {visibleChoices.filter((choice) => Boolean(choice.badge)).map((choice) => (
+                <CategoryFilterButton badge={choice.badge} key={choice.id} label={choice.label} onClick={() => selectChoice(choice)} selected={selectedCategory === choice.id} />
+              ))}
+            </div>
+          )}
+          {!query.trim() ? <p className="mb-2 text-[12px] font-extrabold text-[#4B756E]">다른 직무</p> : null}
+          <div aria-live="polite" className="grid gap-2 sm:grid-cols-2" role="group">
+          {visibleChoices.filter((choice) => query.trim() || (!choice.badge && choice.id !== allDatabase && choice.id !== all)).map((choice) => (
             <CategoryFilterButton
               badge={choice.badge}
               key={choice.id}
               label={choice.label}
-              onClick={() => onSelect(choice.id)}
+              onClick={() => selectChoice(choice)}
               selected={selectedCategory === choice.id}
             />
           ))}
@@ -367,6 +407,7 @@ function CategoryPickerDialog({
               일치하는 직무가 없습니다. 다른 검색어로 찾아보세요.
             </p>
           ) : null}
+          </div>
         </div>
       </section>
     </div>
@@ -456,11 +497,13 @@ function DetailBulletList({ items, tone = 'mint' }: { items?: string[]; tone?: '
 function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSummary }) {
   return (
     <div className="flex flex-col gap-3">
-      <div>
-        <p className="text-[11px] font-extrabold tracking-[0.08em] text-[#4B756E]">이 일에서 맡게 될 역할</p>
-        <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">{summary.roleLabel}</p>
-      </div>
-      {summary.hasSourceBackedWork ? <DetailBulletList items={summary.items} /> : null}
+      <p className="text-[15px] font-extrabold leading-6 text-[#17212B]">{summary.summary}</p>
+      {summary.hasSourceBackedWork ? (
+        <div>
+          <p className="text-[11px] font-extrabold tracking-[0.08em] text-[#4B756E]">실제로 하는 일</p>
+          <div className="mt-2"><DetailBulletList items={summary.duties} /></div>
+        </div>
+      ) : null}
       <p className="rounded-lg bg-[#F8FCFB] px-3 py-2 text-[12px] font-semibold leading-5 text-[#4B5768]">
         {summary.hasSourceBackedWork
           ? summary.evidenceLabel
@@ -735,10 +778,6 @@ function DetailPanel({
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
   const workSummary = getPostingWorkSummary(posting);
-  const sourceBackedCoreResponsibilities =
-    posting.sourceDetailProvenance?.coreResponsibilities === 'source'
-      ? posting.coreResponsibilities
-      : ['공고 원문에 상세 업무가 제공되지 않았습니다.'];
 
   return (
     <article
@@ -942,9 +981,6 @@ function DetailPanel({
           <MobileDetailRow label="이 일에서 맡게 될 역할" tone="mint">
             <PostingWorkSummaryContent summary={workSummary} />
           </MobileDetailRow>
-          <MobileDetailRow label="핵심 업무">
-            <DetailBulletList items={sourceBackedCoreResponsibilities} />
-          </MobileDetailRow>
           <MobileDetailRow label="자격 요건">
             <DetailBulletList items={posting.qualifications} />
           </MobileDetailRow>
@@ -997,20 +1033,6 @@ function DetailPanel({
           </div>
 
           <div className="mt-4 flex flex-col gap-3.5">
-            <section className="rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-3xs">
-              <p className="text-xs font-extrabold text-[#173F3A] flex items-center gap-1.5">
-                <BriefcaseBusiness className="size-4 text-[#173F3A]" />
-                <span>핵심 업무</span>
-              </p>
-              <ul className="mt-2.5 space-y-2 text-[13.5px] font-bold text-[#17212B] leading-relaxed">
-                {sourceBackedCoreResponsibilities.map((item) => (
-                  <li className="flex items-start gap-2" key={item}>
-                    <span className="shrink-0 text-[#173F3A]">•</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
             <section className="rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-3xs">
               <p className="text-xs font-extrabold text-[#173F3A] flex items-center gap-1.5">
                 <CheckCircle2 className="size-4 text-[#173F3A]" />
@@ -1124,8 +1146,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return getDefaultSeniorJobPostings();
   });
 
+  const homeRecommendationCategory = normalizeOccupationCategory(searchParams.get('recommendedCategory'));
+  const isHomeRecommendationContext = role === 'senior' && Boolean(homeRecommendationCategory);
   const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(all);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
+    () => homeRecommendationCategory ?? all,
+  );
   const [selectedWorkType, setSelectedWorkType] = useState<WorkTypeFilter>(all);
   const [selectedEmploymentType, setSelectedEmploymentType] = useState<EmploymentTypeFilter>(all);
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
@@ -1159,6 +1185,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const detailContainerRef = useRef<HTMLDivElement>(null);
+  const focusedViewportIdRef = useRef<string | null>(null);
   const preferredProfileCategories = useMemo(
     () => getProfilePreferredCategories(seniorProfile),
     [seniorProfile],
@@ -1447,7 +1474,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       })
         .then((result) => {
           if (!active) return;
-          const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
+          const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
             matchesPublishedCompanyProject(project, {
               employmentType: selectedEmploymentType,
               hiringStage: selectedHiringStage,
@@ -1455,7 +1482,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               selectedCategory,
               workType: selectedWorkType,
             }),
-          );
+          ) : [];
           const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, result.items);
           const catalogProjectIds = new Set(result.items.map((project) => project.id));
           const additionalCompanyProjectCount = matchingCompanyProjects.filter(
@@ -1494,7 +1521,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             });
             if (!active) return;
             setServerSearchMeta(null);
-            const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
+            const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
               matchesPublishedCompanyProject(project, {
                 employmentType: selectedEmploymentType,
                 hiringStage: selectedHiringStage,
@@ -1502,7 +1529,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 selectedCategory,
                 workType: selectedWorkType,
               }),
-            );
+            ) : [];
             const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, fallback.projects);
             setPostings(mergedProjects);
             setSelectedId(mergedProjects[0]?.id ?? '');
@@ -1543,6 +1570,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     sortBy,
     publishedCompanyProjects,
     worknetReloadKey,
+    isHomeRecommendationContext,
   ]);
 
   function handleApply(posting: JobPosting) {
@@ -1791,7 +1819,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
     options.push({
       id: unclassifiedOccupation,
-      label: '기타·직무 확인 필요',
+      label: '기타 직무',
     });
 
     return options;
@@ -1945,6 +1973,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     : undefined;
   const selectedPosting =
     focusedPosting ?? filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
+
+  useEffect(() => {
+    if (!focusProjectId || !focusedPosting || focusedViewportIdRef.current === focusProjectId) return;
+    focusedViewportIdRef.current = focusProjectId;
+    const frame = window.requestAnimationFrame(() => {
+      if (detailContainerRef.current) {
+        detailContainerRef.current.scrollTop = 0;
+        detailContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusProjectId, focusedPosting]);
   const activeFilterCount =
     Number(selectedCategory !== all && selectedCategory !== allDatabase) +
     Number(selectedWorkType !== all) +
@@ -1968,6 +2008,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     () => getRemainingProjectFilterChoices(activeCategoryFilters, quickCategoryFilters),
     [activeCategoryFilters, quickCategoryFilters],
   );
+  const hasRankedCategory = activeCategoryFilters.some((choice) => Boolean(choice.badge));
+  const isCustomCategorySelection =
+    selectedCategory !== all &&
+    selectedCategory !== allDatabase &&
+    !activeCategoryFilters.find((choice) => choice.id === selectedCategory)?.badge;
+  const categoryPickerTriggerLabel = isCustomCategorySelection
+    ? '직무 바꾸기'
+    : hasRankedCategory
+      ? '다른 직무 선택'
+      : '직무 선택';
   const activeDetailFilters = [
     selectedEmploymentType !== all
       ? {
@@ -2852,7 +2902,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   ref={categoryPickerTriggerRef}
                   type="button"
                 >
-                  직무 찾기 <Search aria-hidden="true" className="size-3.5" />
+                  {categoryPickerTriggerLabel} <Search aria-hidden="true" className="size-3.5" />
                 </button>
               ) : null}
             </div>
@@ -2934,7 +2984,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     ref={categoryPickerTriggerRef}
                     type="button"
                   >
-                    직무 찾기 <Search aria-hidden="true" className="size-3.5" />
+                  {categoryPickerTriggerLabel} <Search aria-hidden="true" className="size-3.5" />
                   </button>
                 ) : null}
               </div>
@@ -2988,7 +3038,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           onClose={closeCategoryPicker}
           onSelect={selectCategoryFromPicker}
           selectedCategory={effectiveSelectedCategory}
-          title={role === 'senior' ? '내게 맞는 직무 선택' : '프로젝트 유형 선택'}
+          title={role === 'senior' ? '직무 선택' : '프로젝트 유형 선택'}
         />
       ) : null}
 

@@ -636,11 +636,11 @@ export function SeniorHomePage() {
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard
-          actionHint="추천 결과 확인"
-          caption={`1순위 ${recommendationPrimaryLabel} 기준`}
+          actionHint="추천 프로젝트 보기"
+          caption={`1순위 희망 직무 · ${recommendationPrimaryLabel}`}
           interactiveLabel={`추천 프로젝트 ${recommendedProjectsCount}개 보기`}
           label="추천 프로젝트"
-          onClick={() => void navigate(getRecommendedProjectsDestination())}
+          onClick={() => void navigate(getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined))}
           role="senior"
           value={`${recommendedProjectsCount}개`}
         />
@@ -654,8 +654,8 @@ export function SeniorHomePage() {
           value={`${activeProposalsCount}건`}
         />
         <SummaryCard
-          actionHint={savedExperienceCount > 0 ? '저장 경험 확인' : '경험 만들기'}
-          caption="프로필·경험 카드 저장 기준"
+          actionHint={savedExperienceCount > 0 ? '내 경험카드 보기' : '내 경험 정리하기'}
+          caption={savedExperienceCount > 0 ? '경험카드 준비됨' : '아직 없어요'}
           interactiveLabel={
             savedExperienceCount > 0
               ? `저장된 경험 정보 ${savedExperienceCount}건 확인`
@@ -669,14 +669,14 @@ export function SeniorHomePage() {
           value={`${savedExperienceCount}건`}
         />
         <SummaryCard
-          actionHint={highestFitProject ? '가장 높은 점수 공고 열기' : '추천 공고 탐색'}
-          caption="등록 경험 기준 최고 추천 점수"
+          actionHint={highestFitProject ? '바로 보기' : '추천 공고 탐색'}
+          caption={highestFitProject?.title ?? '등록 경험 기준 최고 추천 점수'}
           interactiveLabel={
             highestFitProject
               ? `최고 적합도 ${highestFitProject.seniorFitScore}점 프로젝트 보기`
               : '추천 프로젝트 탐색하기'
           }
-          label="최고 프로젝트 적합도"
+          label="가장 잘 맞는 프로젝트"
           onClick={() => void navigate(getHighestFitDestination(highestFitProject?.id))}
           role="senior"
           value={highestFitProject === null ? '—' : `${highestFitProject.seniorFitScore}점`}
@@ -970,7 +970,7 @@ export function ExperienceInterviewPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [voiceNotice, setVoiceNotice] = useState('버튼을 누르면 마이크 권한을 요청합니다.');
+  const [voiceNotice, setVoiceNotice] = useState('');
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [currentAnswer, setCurrentAnswer] = useState<InterviewAnswer | null>(null);
   const currentQuestion = interviewQuestions[questionIndex];
@@ -1353,10 +1353,13 @@ export function ExperienceInterviewPage() {
           ) : null}
         </div>
 
-        <form onSubmit={handleTextSubmit} className="flex w-full items-center gap-2">
+        <form onSubmit={handleTextSubmit} className="flex w-full flex-col gap-2 rounded-xl border border-[#E0D9C8] bg-white p-3 shadow-xs">
+          <label className="text-[12px] font-extrabold text-[#173F3A]" htmlFor="interview-text-answer">직접 입력하기</label>
+          <div className="flex items-center gap-2">
           <input
             aria-label="현재 인터뷰 답변"
             disabled={interviewComplete || isRecording || isTranscribing}
+            id="interview-text-answer"
             type="text"
             placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
             value={inputText}
@@ -1370,6 +1373,7 @@ export function ExperienceInterviewPage() {
           >
             입력
           </button>
+          </div>
         </form>
 
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#173F3A]">
@@ -1939,7 +1943,7 @@ export function MyProposalsPage() {
           isMobile ? 'text-[16px]' : 'text-xl md:text-2xl',
         )}
       >
-        보낸 제안 {visible.length}건
+        {filter === '진행 중' ? `진행 중인 제안 ${visible.length}건` : `보낸 제안 ${visible.length}건`}
       </h2>
 
       <div className="flex flex-col gap-4">
@@ -1950,11 +1954,12 @@ export function MyProposalsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">
-                아직 제출된 지원/제안 내역이 없습니다
+                {filter === '진행 중' ? '아직 진행 중인 제안이 없어요.' : '아직 제출된 지원/제안 내역이 없습니다'}
               </h3>
               <p className="text-xs md:text-sm font-medium text-slate-500">
-                마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해
-                보세요!
+                {filter === '진행 중'
+                  ? '마음에 드는 프로젝트를 찾아 첫 지원을 시작해 보세요.'
+                  : '마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해 보세요!'}
               </p>
             </div>
             <button
@@ -1962,7 +1967,7 @@ export function MyProposalsPage() {
               onClick={() => void navigate('/senior/projects')}
               className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-xs md:text-sm font-extrabold text-white shadow-xs hover:bg-[#12332F] transition cursor-pointer"
             >
-              프로젝트 탐색하러 가기 →
+              프로젝트 둘러보기 →
             </button>
           </div>
         ) : (

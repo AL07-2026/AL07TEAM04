@@ -8,6 +8,7 @@ import {
   getHighestFitProject,
   getRecommendedProjectsDestination,
   isActiveProposalStatus,
+  shouldMergePublicProjectsForDiscovery,
 } from '@/services/homeMetricNavigation';
 
 describe('home metric navigation contracts', () => {
@@ -19,8 +20,13 @@ describe('home metric navigation contracts', () => {
     expect(getActiveProposalsDestination()).toBe('/senior/proposals?filter=active');
   });
 
-  it('uses the project list’s existing recommendation view for the recommendation metric', () => {
+  it('hands the exact home recommendation category to the existing project list route', () => {
+    expect(getRecommendedProjectsDestination('marketing-sales')).toBe(
+      '/senior/projects?recommendedCategory=marketing-sales',
+    );
     expect(getRecommendedProjectsDestination()).toBe('/senior/projects');
+    expect(shouldMergePublicProjectsForDiscovery(true)).toBe(false);
+    expect(shouldMergePublicProjectsForDiscovery(false)).toBe(true);
   });
 
   it('uses the saved card route or the interview route according to card existence', () => {

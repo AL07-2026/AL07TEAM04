@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { JobPosting } from '@/data/jobPostings';
-import { getPostingWorkSummary } from '@/services/postingWorkSummary';
+import { composeGroundedRoleSummary, getPostingWorkSummary, splitSourceDuties } from '@/services/postingWorkSummary';
 import { fallbackWorknetJobs, transformWorknetToSeniorProject } from '@/services/worknetService';
 
 function createPosting(overrides: Partial<JobPosting> = {}): JobPosting {
@@ -69,17 +69,18 @@ describe('posting work summary provenance guard', () => {
     expect(summary.items).toEqual([]);
   });
 
-  it('source-backed 상세 업무는 최대 세 개까지 원문 그대로 보여준다', () => {
+  it('엘레오스처럼 하나의 원문 줄에 연결된 실제 업무는 독립 RoleFact로 분해한다', () => {
     const summary = getPostingWorkSummary(
       createPosting({
-        coreResponsibilities: ['상품 발주 데이터를 분석합니다.', '협력사와 출시 일정을 조율합니다.'],
+        companyName: '엘레오스',
+        coreResponsibilities: ['수제비누 제조 - 수제비누 제조기록서 작성 - 포장'],
         sourceDetailProvenance: { coreResponsibilities: 'source' },
       }),
     );
 
     expect(summary.hasSourceBackedWork).toBe(true);
-    expect(summary.items).toEqual(['상품 발주 데이터를 분석합니다.', '협력사와 출시 일정을 조율합니다.']);
-    expect(summary.roleLabel).toBe('상품기획 PM');
+    expect(summary.duties).toEqual(['수제비누 제조', '수제비누 제조기록서 작성', '포장']);
+    expect(summary.summary).not.toBe('수제비누 제조 - 수제비누 제조기록서 작성 - 포장');
     expect(summary.evidenceLabel).toBe('공고에 명시된 업무를 바탕으로 정리했어요.');
   });
 
@@ -97,8 +98,8 @@ describe('posting work summary provenance guard', () => {
       }),
     );
 
-    expect(summary.items).toEqual(['반품 데이터를 줄일 운영 방안을 마련합니다.', '반품률 개선']);
-    expect(summary.items.join(' ')).not.toContain('synthetic 업무');
+    expect(summary.duties).toEqual(['반품 데이터를 줄일 운영 방안을 마련합니다.']);
+    expect(summary.duties.join(' ')).not.toContain('synthetic 업무');
   });
 
   it('상세 업무 provenance가 없으면 확인 가능한 공고 조건만 fallback facts로 제공한다', () => {
@@ -129,6 +130,43 @@ describe('posting work summary provenance guard', () => {
       expect(summary.hasSourceBackedWork).toBe(false);
       expect(summary.items).toEqual([]);
       expect(summary.facts).toContainEqual({ label: '모집 역할', value: posting.title });
+    });
+  });
+
+  it('업무 evidence를 제거하면 요약과 duties에서도 같은 의미가 함께 제거된다', () => {
+    const withPacking = getPostingWorkSummary(
+      createPosting({
+        coreResponsibilities: ['제조 - 포장 - 출고'],
+        sourceDetailProvenance: { coreResponsibilities: 'source' },
+      }),
+    );
+    const withoutPacking = getPostingWorkSummary(
+      createPosting({
+        coreResponsibilities: ['제조 - 출고'],
+        sourceDetailProvenance: { coreResponsibilities: 'source' },
+      }),
+    );
+
+    expect(withPacking.summary).toContain('포장');
+    expect(withoutPacking.summary).not.toContain('포장');
+    expect(withoutPacking.duties).not.toContain('포장');
+  });
+
+  it('서로 다른 실제 업무 유형도 결정론적으로 source 범위 안에서만 통역한다', () => {
+    const fixtures = [
+      '고객 상담 - 문의 기록 작성',
+      '운영 일정 기획 - 협력사 조율',
+      'API 개발 - 배포 문서 작성',
+      '영업 제안서 작성 - 고객 미팅',
+      '현장 안전 점검 - 돌봄 기록 작성',
+    ];
+
+    fixtures.forEach((source) => {
+      const duties = splitSourceDuties(source);
+      const first = composeGroundedRoleSummary(duties);
+      expect(composeGroundedRoleSummary(duties)).toBe(first);
+      expect(first).not.toMatch(/AI|RPA|레거시 개선|혁신|효율화|비용 절감|매출 향상|고객 만족 향상|성장/);
+      duties.forEach((duty) => expect(first).toContain(duty));
     });
   });
 });

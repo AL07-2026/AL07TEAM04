@@ -22,8 +22,15 @@ export function getExperienceMetricDestination(hasExperienceCard: boolean) {
   return hasExperienceCard ? '/senior/experience/card' : '/senior/experience/interview';
 }
 
-export function getRecommendedProjectsDestination() {
-  return '/senior/projects';
+export function getRecommendedProjectsDestination(recommendedCategory?: string) {
+  return recommendedCategory
+    ? `/senior/projects?recommendedCategory=${encodeURIComponent(recommendedCategory)}`
+    : '/senior/projects';
+}
+
+/** The home metric is catalog-only, while normal discovery keeps company projects visible. */
+export function shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext: boolean) {
+  return !isHomeRecommendationContext;
 }
 
 export function getActiveProposalsDestination() {
