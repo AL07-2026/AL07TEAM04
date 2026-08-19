@@ -31,14 +31,70 @@ function normalizeStringArray(value: unknown, fallback: string[] = []): string[]
   return normalized.length > 0 ? normalized : fallback;
 }
 
+export function extractCleanPositionTitle(rawTitle?: string, companyName?: string): string {
+  if (!rawTitle || typeof rawTitle !== 'string') return '실무 전문가';
+  let title = rawTitle.trim();
+
+  // Strip company name prefix if inside title
+  if (companyName) {
+    const safeComp = companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    title = title.replace(new RegExp(`^(?:\\(주\\)\\s*)?${safeComp}(?:의|\\s+)+`, 'i'), '').trim();
+    title = title.replace(new RegExp(`^${safeComp}\\s*`, 'i'), '').trim();
+  }
+
+  // Strip leading brackets like [급구], [신입/경력], [주 5일], [서울]
+  title = title.replace(/^\[[^\]]+\]\s*/g, '').trim();
+
+  // Strip leading promotional slogans & complex descriptors
+  title = title
+    .replace(/^기업\s*글로벌\s*브랜드\s*리디자인\s*및\s*/gi, '')
+    .replace(/^글로벌\s*브랜드\s*리디자인\s*및\s*/gi, '')
+    .replace(/^녹지\s*공간과\s*활력을\s*더하는\s*/gi, '')
+    .replace(/^경험\s*풍부한\s*/gi, '')
+    .replace(/^최고의\s*/gi, '')
+    .replace(/^혁신적인\s*/gi, '')
+    .replace(/^[가-힣0-9A-Za-z\s]+와\s*함께할\s*/gi, '')
+    .trim();
+
+  // Strip trailing marketing & recruitment suffixes
+  title = title
+    .replace(/\s*로\s*함께\s*성장하세요!?$/gi, '')
+    .replace(/\s*함께\s*성장하세요!?$/gi, '')
+    .replace(/\s*공개\s*채용$/gi, '')
+    .replace(/\s*공개채용$/gi, '')
+    .replace(/\s*경력직\s*채용$/gi, '')
+    .replace(/\s*경력직$/gi, '')
+    .replace(/\s*채용$/gi, '')
+    .replace(/\s*모집합니다!?$/gi, '')
+    .replace(/\s*모집$/gi, '')
+    .trim();
+
+  // Clean up software dump strings
+  title = title.replace(/캐드\s*,\s*3D\s*,\s*스케치업/gi, 'CAD/3D');
+  title = title.replace(/\(모델하우스\s*,\s*주택전시관\)/gi, '');
+  title = title.trim();
+
+  if (!title || title.length < 2) {
+    return rawTitle.trim();
+  }
+
+  return title;
+}
+
 export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>): string {
   let ps = typeof posting.problemStatement === 'string' ? posting.problemStatement.trim() : '';
 
   ps = ps.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤)\]\s*/g, '').trim();
   ps = ps.replace(/^\[[^\]]+\]\s*/g, '').trim();
-  ps = ps.replace(/\s*채용\s*채용$/g, '').trim();
-  ps = ps.replace(/\s*채용입니다\.?$/g, '').trim();
-  ps = ps.replace(/\s*모집합니다\.?\s*(?:채용)?$/g, '').trim();
+  ps = ps.replace(/\s*공개채용(?:\s*프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*경력직(?:\s*프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*채용\s*채용$/gi, '').trim();
+  ps = ps.replace(/\s*채용입니다\.?$/gi, '').trim();
+  ps = ps.replace(/\s*모집합니다\.?\s*(?:채용)?\s*(?:프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*채용\s*프로젝트입니다\.?$/gi, '').trim();
+
+  // Clean leading grammar fragments
+  ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
 
   const title = typeof posting.title === 'string' ? posting.title.trim() : '';
   const companyName = typeof posting.companyName === 'string' ? posting.companyName.trim() : '';
@@ -58,11 +114,21 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
     ps = ps.replace(new RegExp(`^['"‘“]?${safeTitle}['"’”]?\\s*(?:주요\\s*과제|과제|프로젝트)?[:\\s]*`, 'i'), '').trim();
     ps = ps.replace(/^주요\s*과제[:\s]*/i, '').trim();
     ps = ps.replace(/\s*과제\s*해결입니다\.?$/i, '').trim();
+    ps = ps.replace(/\s*프로젝트입니다\.?$/i, '').trim();
   }
+
+  // Clean remaining slogan fragments or recruitment junk
+  ps = ps
+    .replace(/함께\s*성장하세요!?/gi, '')
+    .replace(/캐드\s*,\s*3D\s*,\s*스케치업\s*외\s*\(.*?\)/gi, '')
+    .replace(/HC\s*공개/gi, '')
+    .trim();
+
+  ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
 
   const isDryBoilerplate =
     !ps ||
-    ps.length < 8 ||
+    ps.length < 10 ||
     ps === title ||
     ps === `${companyName}의 ${title}` ||
     (companyName && title && ps.includes(companyName) && ps.includes(title));
@@ -85,8 +151,17 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
       if (/모션그래픽|모션|영상|광고\s*영상|미디어|애니메이션|pd|비디오|youtube|유튜브|방송/.test(titleLower)) {
         return '영화·드라마·광고 영상의 모션그래픽 연출 및 시각적 완성도가 높은 비주얼 미디어 콘텐츠를 제작하는 프로젝트입니다.';
       }
-      if (/인테리어|공간|건축|시공|모델하우스|전시|무대|리하우스|가구\s*설계/.test(titleLower)) {
-        return '공간 인테리어 설계 및 시공 품질 관리 프로세스를 표준화하여 공간 가치와 시공 완성도를 높이는 프로젝트입니다.';
+      if (/주거|커뮤니티|모델하우스|주택전시관/.test(titleLower)) {
+        return '주거·커뮤니티 공간 및 모델하우스 인테리어 설계와 현장 시공 프로세스를 최적화하는 프로젝트입니다.';
+      }
+      if (/실내\s*인테리어|스케치업|3d|cad|캐드/.test(titleLower)) {
+        return '실내 공간 CAD/3D 도면 설계 및 상업·공공 시설 인테리어 마감 품질을 고도화하는 프로젝트입니다.';
+      }
+      if (/수원광교|한샘디자인|매장|쇼룸|디스플레이/.test(titleLower)) {
+        return '매장 공간 디스플레이 설계 및 고객 경험 쇼룸을 구성하는 브랜딩 인테리어 프로젝트입니다.';
+      }
+      if (/인테리어|공간|건축|시공|전시|무대|리하우스|가구\s*설계/.test(titleLower)) {
+        return '주거 및 공간 인테리어 설계, 3D 도면 작성 및 시공 품질 관리 프로세스를 표준화하는 프로젝트입니다.';
       }
       if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템|플랫폼/.test(titleLower)) {
         return '디지털 UX/UI 디자인 시스템 구축 및 사용자 경험 모델을 설계하여 제품 완성도를 높이는 프로젝트입니다.';
@@ -104,8 +179,8 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
       return '전사 조직 체계 정비, 평가·보상 시스템 고도화 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.';
 
     case 'r-and-d-manufacturing':
-      if (/설계|기계|cad|3d|도면|기구/.test(titleLower)) {
-        return '제품 메커니즘 설계 고도화 및 도면 표준화를 통해 구조 안정성과 생산 효율성을 높이는 설계 프로젝트입니다.';
+      if (/야외운동기구|운동기구|설계|기계|cad|3d|도면|기구/.test(titleLower)) {
+        return '야외 운동기구 메커니즘 설계 고도화 및 도면 표준화를 통해 구조 안정성과 생산성을 높이는 설계 프로젝트입니다.';
       }
       return '스마트 팩토리 공정 자동화, 생산 수율 향상 및 품질 인증 체계를 정립하는 생산 공정 최적화 프로젝트입니다.';
 

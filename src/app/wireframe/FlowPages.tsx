@@ -49,6 +49,7 @@ import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/inte
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import { createProject, fetchProjectById, fetchProjects } from '@/services/projectService';
 import {
+  extractCleanPositionTitle,
   formatCleanProblemStatement,
   formatSimpleLocation,
   formatSimpleSalary,
@@ -713,6 +714,7 @@ export function SeniorHomePage() {
           ) : recommendedJobs.length > 0 ? (
             <>
               {recommendedJobs.map((job) => {
+                const cleanTitle = extractCleanPositionTitle(job.title, job.companyName);
                 const cleanProblem = formatCleanProblemStatement(job);
                 const simpleLoc = formatSimpleLocation(job.location);
                 const simpleSch = formatSimpleWorkSchedule(job.workSchedule);
@@ -729,7 +731,7 @@ export function SeniorHomePage() {
                     onClick={() => void navigate('/senior/projects')}
                     problem={cleanProblem}
                     salary={simpleSal}
-                    title={job.title}
+                    title={cleanTitle}
                   />
                 );
               })}

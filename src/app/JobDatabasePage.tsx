@@ -70,6 +70,7 @@ import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { sendApplicationEmailToManager } from '@/services/emailService';
 import {
+  extractCleanPositionTitle,
   formatCleanProblemStatement,
   formatSimpleLocation,
   formatSimpleSalary,
@@ -396,7 +397,8 @@ function PostingCard({
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
 
-  // Clean problem statement text to avoid repeating company name and title
+  // Clean position title and problem statement text to avoid raw promotional slogans
+  const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
   const cleanProblemStatement = formatCleanProblemStatement(posting);
   const simpleLocation = formatSimpleLocation(posting.location);
   const simpleSalary = formatSimpleSalary(posting.salaryRange);
@@ -471,7 +473,7 @@ function PostingCard({
           }}
           type="button"
         >
-          {posting.title}
+          {cleanPositionTitle}
         </button>
       </h3>
 
