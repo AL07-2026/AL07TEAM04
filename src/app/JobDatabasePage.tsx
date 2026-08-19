@@ -1248,8 +1248,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       const isCustomMatchSelected =
         selectedCategory === customOccupationMatch || isDefaultCustomMatch;
       const isAllDatabaseSelected = selectedCategory === allDatabase;
+      const customFallbackCategories = isCustomMatchSelected
+        ? preferredProfileCategories
+        : [];
       let categories: JobOccupationFilter[] = [];
-      if (!isAllDatabaseSelected && !isCustomMatchSelected) {
+      if (isCustomMatchSelected && customFallbackCategories.length > 0) {
+        categories = customFallbackCategories;
+      } else if (!isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -1259,7 +1264,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         }
       }
       let desiredCategories: OccupationPreference[] = [];
-      if (isAllDatabaseSelected) {
+      if (isCustomMatchSelected && customFallbackCategories.length > 0) {
+        desiredCategories = customFallbackCategories;
+      } else if (isAllDatabaseSelected) {
         desiredCategories = preferredProfilePreferences;
       } else if (!isCustomMatchSelected && selectedOccupationCategory) {
         desiredCategories = [selectedOccupationCategory];
@@ -1306,7 +1313,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         pageSize: itemsPerPage,
         profileText,
         query,
-        requireDesiredOccupationMatch: isCustomMatchSelected,
+        requireDesiredOccupationMatch:
+          isCustomMatchSelected && customFallbackCategories.length === 0,
         signal: abortController.signal,
         sortBy,
         workType: selectedWorkType,
@@ -1315,15 +1323,28 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           if (!active) return;
           const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
             matchesPublishedCompanyProject(project, {
+              desiredOccupationText: isCustomMatchSelected
+                ? seniorProfile?.desiredOccupationText
+                : undefined,
               employmentType: selectedEmploymentType,
+              fallbackOccupationCategories: customFallbackCategories,
               hiringStage: selectedHiringStage,
               query,
               selectedCategory: companyProjectCategoryFilter,
               workType: selectedWorkType,
             }),
           );
-          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, result.items);
-          const catalogProjectIds = new Set(result.items.map((project) => project.id));
+          const matchingCatalogProjects = isCustomMatchSelected
+            ? result.items.filter((project) =>
+                doesPostingMatchDesiredOccupationText(
+                  project,
+                  seniorProfile?.desiredOccupationText,
+                ) ||
+                customFallbackCategories.includes(getPostingOccupationCategory(project)),
+              )
+            : result.items;
+          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, matchingCatalogProjects);
+          const catalogProjectIds = new Set(matchingCatalogProjects.map((project) => project.id));
           const additionalCompanyProjectCount = matchingCompanyProjects.filter(
             (project) => !catalogProjectIds.has(project.id),
           ).length;
@@ -1362,14 +1383,30 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             setServerSearchMeta(null);
             const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
               matchesPublishedCompanyProject(project, {
+                desiredOccupationText: isCustomMatchSelected
+                  ? seniorProfile?.desiredOccupationText
+                  : undefined,
                 employmentType: selectedEmploymentType,
+                fallbackOccupationCategories: customFallbackCategories,
                 hiringStage: selectedHiringStage,
                 query,
                 selectedCategory: companyProjectCategoryFilter,
                 workType: selectedWorkType,
               }),
             );
-            const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, fallback.projects);
+            const matchingFallbackProjects = isCustomMatchSelected
+              ? fallback.projects.filter((project) =>
+                  doesPostingMatchDesiredOccupationText(
+                    project,
+                    seniorProfile?.desiredOccupationText,
+                  ) ||
+                  customFallbackCategories.includes(getPostingOccupationCategory(project)),
+                )
+              : fallback.projects;
+            const mergedProjects = mergeSeniorPostings(
+              matchingCompanyProjects,
+              matchingFallbackProjects,
+            );
             setPostings(mergedProjects);
             setSelectedId(mergedProjects[0]?.id ?? '');
           } catch {
@@ -1398,6 +1435,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     interviewCard,
     primaryProfileCategory,
     primaryProfilePreference,
+    preferredProfileCategories,
     preferredProfilePreferences,
     query,
     role,

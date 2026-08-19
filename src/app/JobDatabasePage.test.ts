@@ -104,4 +104,41 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     expect(resolveSeniorCategoryFilter('it-development-data', 'design')).toBe('it-development-data');
     expect(resolveSeniorCategoryFilter('all')).toBe('all');
   });
+
+  it('기타 직접 입력 1순위에는 키워드 또는 후순위 직무가 맞는 공고만 표시한다', () => {
+    const matchingProject = {
+      ...companyProject,
+      coreResponsibilities: ['재활 학술 자료를 검토합니다.'],
+      id: 'rehabilitation-project',
+      title: '재활 학술 전문가',
+    };
+    const unrelatedProject = {
+      ...companyProject,
+      coreResponsibilities: ['고객 집청소와 식사를 지원합니다.'],
+      id: 'home-helper-project',
+      title: '홈프로텍터',
+    };
+    const fallbackCategoryProject = {
+      ...companyProject,
+      category: 'r-and-d-manufacturing' as const,
+      id: 'research-project',
+      occupationCategory: 'research-rd' as const,
+      title: '기업 연구개발 자문',
+    };
+    const filters = {
+      desiredOccupationText: '재활 학술',
+      employmentType: 'all' as const,
+      fallbackOccupationCategories: ['research-rd' as const, 'education' as const],
+      hiringStage: 'all' as const,
+      query: '',
+      selectedCategory: 'custom-match' as const,
+      workType: 'all' as const,
+    };
+
+    expect(
+      [matchingProject, fallbackCategoryProject, unrelatedProject].filter((project) =>
+        matchesPublishedCompanyProject(project, filters),
+      ),
+    ).toEqual([matchingProject, fallbackCategoryProject]);
+  });
 });

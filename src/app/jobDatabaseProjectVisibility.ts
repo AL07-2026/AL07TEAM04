@@ -6,6 +6,10 @@ import type {
   WorkType,
 } from '@/data/jobPostings';
 import type { OccupationCategory } from '@/data/occupationCategories';
+import {
+  doesPostingMatchDesiredOccupationText,
+  getPostingOccupationCategory,
+} from '@/services/recommendationEngine';
 
 export type CategoryFilter =
   | ProjectCategory
@@ -16,7 +20,9 @@ export type CategoryFilter =
   | 'unclassified';
 
 type ProjectVisibilityFilters = {
+  desiredOccupationText?: string | null;
   employmentType: EmploymentType | 'all';
+  fallbackOccupationCategories?: OccupationCategory[];
   hiringStage: HiringStage | 'all';
   query: string;
   selectedCategory: CategoryFilter;
@@ -46,13 +52,17 @@ export function matchesPublishedCompanyProject(
   project: JobPosting,
   filters: ProjectVisibilityFilters,
 ) {
+  const projectOccupationCategory = getPostingOccupationCategory(project);
   const matchesExplicitCategory =
     filters.selectedCategory === 'all' ||
     filters.selectedCategory === 'all_db' ||
-    filters.selectedCategory === 'custom-match' ||
-    filters.selectedCategory === 'unclassified' ||
+    (filters.selectedCategory === 'custom-match' &&
+      (doesPostingMatchDesiredOccupationText(project, filters.desiredOccupationText) ||
+        filters.fallbackOccupationCategories?.includes(projectOccupationCategory) === true)) ||
+    (filters.selectedCategory === 'unclassified' &&
+      project.occupationClassificationStatus === 'ambiguous') ||
     project.category === filters.selectedCategory ||
-    project.occupationCategory === filters.selectedCategory;
+    projectOccupationCategory === filters.selectedCategory;
   const matchesWorkType = filters.workType === 'all' || project.workType === filters.workType;
   const matchesEmploymentType =
     filters.employmentType === 'all' || project.employmentType === filters.employmentType;
