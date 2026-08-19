@@ -636,12 +636,14 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
 }
 
 export function SummaryCard({
+  actionHint,
   caption,
   interactiveLabel,
   label,
   onClick,
   value,
 }: {
+  actionHint?: string;
   caption?: string;
   interactiveLabel?: string;
   label: string;
@@ -689,6 +691,11 @@ export function SummaryCard({
             )}
           >
             {caption}
+          </span>
+        ) : null}
+        {actionHint ? (
+          <span className="mt-2 inline-flex items-center gap-1 text-[12px] font-extrabold text-[#173F3A]">
+            {actionHint} <ChevronRight aria-hidden="true" className="size-3.5" />
           </span>
         ) : null}
       </div>

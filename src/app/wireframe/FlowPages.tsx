@@ -636,6 +636,7 @@ export function SeniorHomePage() {
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard
+          actionHint="추천 결과 확인"
           caption={`1순위 ${recommendationPrimaryLabel} 기준`}
           interactiveLabel={`추천 프로젝트 ${recommendedProjectsCount}개 보기`}
           label="추천 프로젝트"
@@ -644,6 +645,7 @@ export function SeniorHomePage() {
           value={`${recommendedProjectsCount}개`}
         />
         <SummaryCard
+          actionHint="진행 중 제안 확인"
           caption="검토 중·연락 받은 제안"
           interactiveLabel={`진행 중인 제안 ${activeProposalsCount}건 보기`}
           label="진행 중인 제안"
@@ -652,6 +654,7 @@ export function SeniorHomePage() {
           value={`${activeProposalsCount}건`}
         />
         <SummaryCard
+          actionHint={savedExperienceCount > 0 ? '저장 경험 확인' : '경험 만들기'}
           caption="프로필·경험 카드 저장 기준"
           interactiveLabel={
             savedExperienceCount > 0
@@ -666,6 +669,7 @@ export function SeniorHomePage() {
           value={`${savedExperienceCount}건`}
         />
         <SummaryCard
+          actionHint={highestFitProject ? '가장 높은 점수 공고 열기' : '추천 공고 탐색'}
           caption="등록 경험 기준 최고 추천 점수"
           interactiveLabel={
             highestFitProject
