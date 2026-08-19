@@ -805,7 +805,7 @@ export function DetailPanel({
     <article
       className={cn(
         'rounded-2xl border border-[#E0D9C8] bg-white shadow-xs',
-        isMobile ? 'p-3.5' : 'p-4',
+        isMobile ? 'p-3.5' : 'p-4 md:contents',
       )}
     >
       {isMobile ? (
@@ -1540,7 +1540,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             total: result.total + additionalCompanyProjectCount,
             totalPages: result.totalPages,
           });
-          if (!query.trim()) {
+          const isFirstPreferenceOverviewContext =
+            selectedCategory === all ||
+            (primaryProfileCategory &&
+              normalizeOccupationCategory(selectedCategory) === primaryProfileCategory);
+          if (!query.trim() && isFirstPreferenceOverviewContext) {
             setStableOverviewMetrics({
               catalogTotal: result.catalogTotal,
               preferredTotal: result.preferredTotal,
@@ -3329,7 +3333,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             {!isMobile && selectedPosting ? (
               <div
                 ref={detailContainerRef}
-                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 transition-all rounded-2xl"
+                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 pr-1 shadow-xs transition-all"
               >
                 <DetailPanel
                   activePrimaryCategory={effectiveSelectedCategory}
