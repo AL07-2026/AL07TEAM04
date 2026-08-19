@@ -16,6 +16,7 @@ import {
   type EmploymentType,
   type HiringStage,
   type JobPosting,
+  type ProjectAttachment,
   type ProjectCategory,
   type Seniority,
   type WorkType,
@@ -27,7 +28,8 @@ import {
   uniqueByKey,
   writeVersionedStorage,
 } from '@/lib/browserStorage';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 const PROJECTS_COLLECTION = 'projects';
 const LOCAL_PROJECTS_KEY = 'eojob_projects';
@@ -45,6 +47,29 @@ function stringArray(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
     : [];
+}
+
+function attachments(value: unknown): ProjectAttachment[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const attachment = item as Record<string, unknown>;
+    const name = stringValue(attachment.name);
+    const type = stringValue(attachment.type, 'application/octet-stream');
+    const size = typeof attachment.size === 'number' && Number.isFinite(attachment.size)
+      ? Math.max(0, attachment.size)
+      : 0;
+    if (!name) return [];
+
+    return [{
+      name,
+      type,
+      size,
+      url: stringValue(attachment.url) || undefined,
+      storagePath: stringValue(attachment.storagePath) || undefined,
+    }];
+  });
 }
 
 export function normalizeProject(id: string, source: unknown): JobPosting | null {
@@ -78,6 +103,7 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
     location: stringValue(value.location, '근무 위치 협의'),
     experienceYears: stringValue(value.experienceYears, '경력 협의'),
     salaryRange: stringValue(value.salaryRange, '보상 협의'),
+    attachments: attachments(value.attachments),
     deadline: stringValue(value.deadline, postedAt),
     projectDuration: stringValue(value.projectDuration, '기간 협의'),
     collaborationTargets: stringArray(value.collaborationTargets),
@@ -188,6 +214,32 @@ export async function createProject(
     console.warn('Firestore createProject failed, project remains in local storage:', error);
     return { project, savedToFirestore: false };
   }
+}
+
+function fileNameForStorage(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+export async function uploadProjectAttachments(
+  projectId: string,
+  files: File[],
+): Promise<ProjectAttachment[]> {
+  return Promise.all(
+    files.map(async (file, index) => {
+      const uniqueName = `${Date.now()}-${index}-${fileNameForStorage(file.name)}`;
+      const storagePath = `project-attachments/${projectId}/${uniqueName}`;
+      const storageRef = ref(storage, storagePath);
+      const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
+
+      return {
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        storagePath,
+        url: await getDownloadURL(snapshot.ref),
+      };
+    }),
+  );
 }
 
 export async function updateProject(

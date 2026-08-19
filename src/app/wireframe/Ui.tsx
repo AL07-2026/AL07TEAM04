@@ -396,7 +396,7 @@ function BottomNav({
     <nav
       aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
       className={cn(
-        'sticky bottom-0 z-40 flex h-16 shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-1.5 shadow-lg pb-[env(safe-area-inset-bottom)]',
+        'sticky bottom-0 z-40 flex h-[72px] shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-2 shadow-lg pb-[env(safe-area-inset-bottom)]',
         forceShow ? 'w-full' : 'md:hidden',
       )}
     >

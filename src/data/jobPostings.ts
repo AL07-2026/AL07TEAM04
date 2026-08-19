@@ -18,6 +18,14 @@ export type Seniority = 'senior' | 'lead' | 'principal';
 export type EmploymentType = 'full-time' | 'contract' | 'part-time' | 'advisory' | 'project';
 export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing';
 
+export type ProjectAttachment = {
+  name: string;
+  type: string;
+  size: number;
+  url?: string;
+  storagePath?: string;
+};
+
 export type JobPosting = {
   id: string;
   ownerId?: string;
@@ -37,6 +45,7 @@ export type JobPosting = {
   location: string;
   experienceYears: string;
   salaryRange: string;
+  attachments?: ProjectAttachment[];
   deadline: string;
   projectDuration: string;
   collaborationTargets: string[];

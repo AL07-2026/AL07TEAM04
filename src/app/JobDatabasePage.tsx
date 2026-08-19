@@ -40,6 +40,11 @@ import {
   employmentTypeLabels,
   hiringStageLabels,
 } from '@/data/jobPostings';
+import {
+  getPublishedCompanyProjects,
+  matchesPublishedCompanyProject,
+  mergeSeniorPostings,
+} from '@/app/jobDatabaseProjectVisibility';
 import type {
   EmploymentType,
   HiringStage,
@@ -998,6 +1003,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [worknetFeedMessage, setWorknetFeedMessage] = useState('');
   const [worknetFeedStatus, setWorknetFeedStatus] = useState<WorknetProjectFeedStatus>('success');
   const [worknetReloadKey, setWorknetReloadKey] = useState(0);
+  const [publishedCompanyProjects, setPublishedCompanyProjects] = useState<JobPosting[]>([]);
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
   const [isSeniorProfileResolved, setIsSeniorProfileResolved] = useState(role !== 'senior');
   const [serverSearchMeta, setServerSearchMeta] = useState<
@@ -1104,8 +1110,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         role === 'senior'
           ? getLatestUserExperienceCard(user?.uid)
           : Promise.resolve<StoredExperienceCard | null>(null);
-      const [userProjects, resolvedProfile, worknetFeed, resolvedInterviewCard] = await Promise.all([
-        role === 'company' ? fetchProjects() : Promise.resolve([]),
+      const [registeredProjects, resolvedProfile, worknetFeed, resolvedInterviewCard] = await Promise.all([
+        fetchProjects(),
         profilePromise,
         worknetFeedPromise,
         interviewCardPromise,
@@ -1118,9 +1124,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       setWorknetFeedStatus(worknetFeed.status);
       const visibleUserProjects =
         role === 'company' && user?.uid
-          ? userProjects.filter((project) => !project.ownerId || project.ownerId === user.uid)
-          : userProjects;
-      const sourceProjects = role === 'senior' ? worknetFeed.projects : visibleUserProjects;
+          ? registeredProjects.filter((project) => !project.ownerId || project.ownerId === user.uid)
+          : registeredProjects;
+      const publicProjects = getPublishedCompanyProjects(registeredProjects);
+      if (role === 'senior') setPublishedCompanyProjects(publicProjects);
+      const sourceProjects = role === 'senior' ? publicProjects : visibleUserProjects;
       setWorknetFeedMessage(
         role === 'senior' && worknetFeed.status === 'success' && sourceProjects.length === 0
           ? '내 정보의 희망 직종과 일치하는 고용24 공고를 찾지 못했습니다.'
@@ -1204,13 +1212,24 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     );
     if (selectedCategory === all && !hasUsablePrimaryPreference) {
       const profileRequiredTimer = window.setTimeout(() => {
+        const visibleCompanyProjects = publishedCompanyProjects.filter((project) =>
+          matchesPublishedCompanyProject(project, {
+            employmentType: selectedEmploymentType,
+            hiringStage: selectedHiringStage,
+            query,
+            selectedCategory,
+            workType: selectedWorkType,
+          }),
+        );
         setIsLoadingPostings(false);
-        setPostings([]);
-        setSelectedId('');
+        setPostings(visibleCompanyProjects);
+        setSelectedId(visibleCompanyProjects[0]?.id ?? '');
         setServerSearchMeta(null);
         setWorknetFeedStatus('profile-required');
         setWorknetFeedMessage(
-          '내 정보에서 1순위 희망 직종을 선택하면 해당 직종의 맞춤 공고만 표시됩니다.',
+          visibleCompanyProjects.length > 0
+            ? '기업이 공개한 프로젝트를 먼저 보여드립니다. 내 정보에서 1순위 희망 직종을 선택하면 맞춤 공고도 함께 볼 수 있습니다.'
+            : '내 정보에서 1순위 희망 직종을 선택하면 해당 직종의 맞춤 공고를 볼 수 있습니다.',
         );
       }, 0);
       return () => window.clearTimeout(profileRequiredTimer);
@@ -1288,25 +1307,41 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       })
         .then((result) => {
           if (!active) return;
+          const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
+            matchesPublishedCompanyProject(project, {
+              employmentType: selectedEmploymentType,
+              hiringStage: selectedHiringStage,
+              query,
+              selectedCategory,
+              workType: selectedWorkType,
+            }),
+          );
+          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, result.items);
+          const catalogProjectIds = new Set(result.items.map((project) => project.id));
+          const additionalCompanyProjectCount = matchingCompanyProjects.filter(
+            (project) => !catalogProjectIds.has(project.id),
+          ).length;
           setServerSearchMeta({
             catalogTotal: result.catalogTotal,
             closingSoonTotal: result.closingSoonTotal,
             page: result.page,
             partTimeTotal: result.partTimeTotal,
             preferredTotal: result.preferredTotal,
-            total: result.total,
+            total: result.total + additionalCompanyProjectCount,
             totalPages: result.totalPages,
           });
-          setPostings(result.items);
+          setPostings(mergedProjects);
           setCurrentPage(result.page);
           setSelectedId((current) =>
-            result.items.some((posting) => posting.id === current)
+            mergedProjects.some((posting) => posting.id === current)
               ? current
-              : (result.items[0]?.id ?? ''),
+              : (mergedProjects[0]?.id ?? ''),
           );
           setWorknetFeedStatus('success');
           setWorknetFeedMessage(
-            result.total === 0 ? '전체 데이터베이스에서 조건에 맞는 채용공고를 찾지 못했습니다.' : '',
+            mergedProjects.length === 0
+              ? '전체 데이터베이스에서 조건에 맞는 채용공고를 찾지 못했습니다.'
+              : '',
           );
         })
         .catch(async (error: unknown) => {
@@ -1319,8 +1354,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             });
             if (!active) return;
             setServerSearchMeta(null);
-            setPostings(fallback.projects);
-            setSelectedId(fallback.projects[0]?.id ?? '');
+            const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
+              matchesPublishedCompanyProject(project, {
+                employmentType: selectedEmploymentType,
+                hiringStage: selectedHiringStage,
+                query,
+                selectedCategory,
+                workType: selectedWorkType,
+              }),
+            );
+            const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, fallback.projects);
+            setPostings(mergedProjects);
+            setSelectedId(mergedProjects[0]?.id ?? '');
           } catch {
             if (!active) return;
             setPostings([]);
@@ -1356,6 +1401,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     selectedWorkType,
     seniorProfile,
     sortBy,
+    publishedCompanyProjects,
     worknetReloadKey,
   ]);
 
@@ -1881,10 +1927,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {role === 'senior' ? (
         <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[13px] font-extrabold text-[#173F3A]">내 정보 기반 추천 조건</p>
             <button
-              className="inline-flex h-8 items-center rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 text-[12px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              className="inline-flex min-h-11 items-center justify-center self-start rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 py-2 text-[12px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer sm:self-auto"
               onClick={() => void navigate('/basic-profile')}
               type="button"
             >
