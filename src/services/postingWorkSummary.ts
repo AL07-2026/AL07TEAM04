@@ -1,9 +1,11 @@
 import { employmentTypeLabels, type JobPosting } from '@/data/jobPostings';
 
 export type PostingWorkSummary = {
+  evidenceLabel: string;
   facts: { label: string; value: string }[];
   hasSourceBackedWork: boolean;
   items: string[];
+  roleLabel: string;
 };
 
 const unknownValuePattern = /(미제공|원문 확인|상세 공고|협의)/;
@@ -38,5 +40,15 @@ export function getPostingWorkSummary(posting: JobPosting): PostingWorkSummary {
     { label: '급여', value: usableValue(posting.salaryRange) },
   ].filter((fact) => Boolean(fact.value));
 
-  return { facts, hasSourceBackedWork: items.length > 0, items };
+  const hasSourceBackedWork = items.length > 0;
+
+  return {
+    evidenceLabel: hasSourceBackedWork
+      ? '공고에 명시된 업무를 바탕으로 정리했어요.'
+      : '공고에 명시된 역할과 근무 조건만 안내합니다.',
+    facts,
+    hasSourceBackedWork,
+    items,
+    roleLabel: usableValue(posting.title) || '모집 역할 확인 필요',
+  };
 }

@@ -374,23 +374,28 @@ function DetailBulletList({ items, tone = 'mint' }: { items?: string[]; tone?: '
 }
 
 function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSummary }) {
-  if (summary.hasSourceBackedWork) {
-    return <DetailBulletList items={summary.items} />;
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      <p className="font-semibold leading-relaxed text-[#17212B]">
-        공고에서 상세 업무가 충분히 제공되지 않았습니다. 확인 가능한 공고 조건을 기준으로 검토해 주세요.
+      <div>
+        <p className="text-[11px] font-extrabold tracking-[0.08em] text-[#4B756E]">이 일에서 맡게 될 역할</p>
+        <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">{summary.roleLabel}</p>
+      </div>
+      {summary.hasSourceBackedWork ? <DetailBulletList items={summary.items} /> : null}
+      <p className="rounded-lg bg-[#F8FCFB] px-3 py-2 text-[12px] font-semibold leading-5 text-[#4B5768]">
+        {summary.hasSourceBackedWork
+          ? summary.evidenceLabel
+          : '상세 업무는 공고에 충분히 적혀 있지 않습니다. 아래 조건을 확인해 지원 여부를 판단해 주세요.'}
       </p>
-      <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
-        {summary.facts.map((fact) => (
-          <div className="flex min-w-0 gap-2" key={fact.label}>
-            <dt className="shrink-0 font-extrabold text-[#173F3A]">{fact.label}</dt>
-            <dd className="min-w-0 font-medium text-[#17212B]">{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {!summary.hasSourceBackedWork ? (
+        <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+          {summary.facts.map((fact) => (
+            <div className="flex min-w-0 gap-2" key={fact.label}>
+              <dt className="shrink-0 font-extrabold text-[#173F3A]">{fact.label}</dt>
+              <dd className="min-w-0 font-medium text-[#17212B]">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
     </div>
   );
 }
@@ -800,7 +805,7 @@ function DetailPanel({
           <div className="rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>공고 핵심 업무 요약</span>
+              <span>이 일에서 맡게 될 역할</span>
             </div>
             <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
@@ -854,7 +859,7 @@ function DetailPanel({
         </div>
       ) : isMobile ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-[#E0D9C8]">
-          <MobileDetailRow label="공고 핵심 업무 요약" tone="mint">
+            <MobileDetailRow label="이 일에서 맡게 될 역할" tone="mint">
             <PostingWorkSummaryContent summary={workSummary} />
           </MobileDetailRow>
           <MobileDetailRow label="핵심 업무">
@@ -902,7 +907,7 @@ function DetailPanel({
           <div className="mt-5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>공고 핵심 업무 요약</span>
+              <span>이 일에서 맡게 될 역할</span>
             </div>
             <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">

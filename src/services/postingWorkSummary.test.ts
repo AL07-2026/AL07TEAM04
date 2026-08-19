@@ -79,6 +79,26 @@ describe('posting work summary provenance guard', () => {
 
     expect(summary.hasSourceBackedWork).toBe(true);
     expect(summary.items).toEqual(['상품 발주 데이터를 분석합니다.', '협력사와 출시 일정을 조율합니다.']);
+    expect(summary.roleLabel).toBe('상품기획 PM');
+    expect(summary.evidenceLabel).toBe('공고에 명시된 업무를 바탕으로 정리했어요.');
+  });
+
+  it('source로 표시된 문제와 목표만 역할 해석의 근거에 포함한다', () => {
+    const summary = getPostingWorkSummary(
+      createPosting({
+        coreResponsibilities: ['synthetic 업무'],
+        problemStatement: '반품 데이터를 줄일 운영 방안을 마련합니다.',
+        projectGoal: '반품률 개선',
+        sourceDetailProvenance: {
+          coreResponsibilities: 'synthetic',
+          problemStatement: 'source',
+          projectGoal: 'source',
+        },
+      }),
+    );
+
+    expect(summary.items).toEqual(['반품 데이터를 줄일 운영 방안을 마련합니다.', '반품률 개선']);
+    expect(summary.items.join(' ')).not.toContain('synthetic 업무');
   });
 
   it('상세 업무 provenance가 없으면 확인 가능한 공고 조건만 fallback facts로 제공한다', () => {
@@ -86,6 +106,7 @@ describe('posting work summary provenance guard', () => {
 
     expect(summary.hasSourceBackedWork).toBe(false);
     expect(summary.items).toEqual([]);
+    expect(summary.evidenceLabel).toBe('공고에 명시된 역할과 근무 조건만 안내합니다.');
     expect(summary.facts).toEqual(
       expect.arrayContaining([
         { label: '모집 역할', value: '상품기획 PM' },
