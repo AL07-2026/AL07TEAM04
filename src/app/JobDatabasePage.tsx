@@ -1449,7 +1449,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         selectedCategory === customOccupationMatch || isDefaultCustomMatch;
       const isAllDatabaseSelected = selectedCategory === allDatabase;
       let categories: JobOccupationFilter[] = [];
-      if (!isAllDatabaseSelected && !isCustomMatchSelected) {
+      if (!query.trim() && !isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -1459,7 +1459,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         }
       }
       let desiredCategories: OccupationPreference[] = [];
-      if (isAllDatabaseSelected) {
+      if (query.trim()) {
+        desiredCategories = [];
+      } else if (isAllDatabaseSelected) {
         desiredCategories = preferredProfilePreferences;
       } else if (!isCustomMatchSelected && selectedOccupationCategory) {
         desiredCategories = [selectedOccupationCategory];
@@ -1869,7 +1871,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   const activeCategoryFilters = role === 'senior' ? seniorCategoryFilters : categoryFilters;
   const effectiveSelectedCategory =
-    role === 'senior' && selectedCategory === all && effectivePrimaryProfileFilter
+    query.trim()
+      ? all
+      : role === 'senior' && selectedCategory === all && effectivePrimaryProfileFilter
       ? effectivePrimaryProfileFilter
       : selectedCategory;
   const isServerSearchActive = role === 'senior' && serverSearchMeta !== null;
@@ -1884,23 +1888,24 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         const postingOccupationCategory = getPostingOccupationCategory(posting);
         const hasConfidentOccupation =
           posting.occupationClassificationStatus !== 'ambiguous';
-        const selectedOccupationCategory = normalizeOccupationCategory(selectedCategory);
+        const effectiveFilterCategory = query.trim() ? allDatabase : selectedCategory;
+        const selectedOccupationCategory = normalizeOccupationCategory(effectiveFilterCategory);
         const isDirectOccupationMatch = doesPostingMatchDesiredOccupationText(
           posting,
           seniorProfile?.desiredOccupationText,
         );
         const matchesCategory =
-          selectedCategory === allDatabase ||
-          (selectedCategory === unclassifiedOccupation && !hasConfidentOccupation) ||
-          (selectedCategory === customOccupationMatch && isDirectOccupationMatch) ||
-          (selectedCategory === all
+          effectiveFilterCategory === allDatabase ||
+          (effectiveFilterCategory === unclassifiedOccupation && !hasConfidentOccupation) ||
+          (effectiveFilterCategory === customOccupationMatch && isDirectOccupationMatch) ||
+          (effectiveFilterCategory === all
             ? primaryProfilePreference === OTHER_OCCUPATION_PREFERENCE
               ? isDirectOccupationMatch
               : !primaryProfileCategory ||
                 (hasConfidentOccupation && postingOccupationCategory === primaryProfileCategory)
             : selectedOccupationCategory
               ? hasConfidentOccupation && postingOccupationCategory === selectedOccupationCategory
-              : (posting.category as string) === (selectedCategory as string));
+              : (posting.category as string) === (effectiveFilterCategory as string));
         const matchesWorkType = selectedWorkType === all || posting.workType === selectedWorkType;
         const matchesEmploymentType =
           selectedEmploymentType === all ||
@@ -2135,6 +2140,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function changeCategory(value: CategoryFilter) {
     beginResultTransition();
+    if (query.trim() && value !== all && value !== allDatabase) setQuery('');
     setSelectedCategory(value);
     setCurrentPage(1);
   }
