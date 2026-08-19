@@ -27,6 +27,12 @@ export function getPublishedCompanyProjects(projects: JobPosting[]) {
   return projects.filter((project) => project.hiringStage === 'open');
 }
 
+/** Projects in a company workspace must never fall back to another company's legacy postings. */
+export function getCompanyOwnedProjects(projects: JobPosting[], companyOwnerId?: string) {
+  if (!companyOwnerId) return [];
+  return projects.filter((project) => project.ownerId === companyOwnerId);
+}
+
 export function matchesPublishedCompanyProject(
   project: JobPosting,
   filters: ProjectVisibilityFilters,

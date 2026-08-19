@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { JobPosting } from '@/data/jobPostings';
 import {
+  getCompanyOwnedProjects,
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
@@ -46,6 +47,17 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     const closedProject = { ...companyProject, id: 'company-project-2', hiringStage: 'closing' as const };
 
     expect(getPublishedCompanyProjects([companyProject, closedProject])).toEqual([companyProject]);
+  });
+
+  it('기업 관리 화면에는 로그인한 기업이 등록한 공고만 포함한다', () => {
+    const legacyProject = { ...companyProject, id: 'legacy-project', ownerId: undefined };
+    const anotherCompanyProject = { ...companyProject, id: 'company-project-2', ownerId: 'company-b' };
+
+    expect(
+      getCompanyOwnedProjects([companyProject, legacyProject, anotherCompanyProject], 'company-user'),
+    ).toEqual([companyProject]);
+    expect(getCompanyOwnedProjects([companyProject], undefined)).toEqual([]);
+    expect(getPublishedCompanyProjects([legacyProject])).toEqual([legacyProject]);
   });
 
   it('기업이 입력한 프로젝트 제목으로 검색할 수 있고, 목록 중복을 제거한다', () => {

@@ -24,6 +24,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
+import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
 import {
   categoryLabels,
   type JobPosting,
@@ -2072,9 +2073,7 @@ export function CompanyHomePage() {
         getCompanyProposals(user?.uid),
       ]);
       setCompanyProjects(
-        projectsFromDatabase.filter(
-          (project) => !project.ownerId || !user?.uid || project.ownerId === user.uid,
-        ),
+        getCompanyOwnedProjects(projectsFromDatabase, user?.uid),
       );
       setCompanyProposals(proposalsFromDatabase);
     })();
@@ -2291,6 +2290,10 @@ export function ProjectRegisterPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!complete || isSaving) return;
+    if (!user?.uid) {
+      setSaveError('기업 로그인 후에만 프로젝트를 등록할 수 있습니다.');
+      return;
+    }
 
     setIsSaving(true);
     setSaveError('');
@@ -2962,9 +2965,7 @@ export function CompanyProfilePage() {
   useEffect(() => {
     void fetchProjects().then((projectsFromDatabase) => {
       setProjectCount(
-        projectsFromDatabase.filter(
-          (project) => !project.ownerId || !user?.uid || project.ownerId === user.uid,
-        ).length,
+        getCompanyOwnedProjects(projectsFromDatabase, user?.uid).length,
       );
     });
   }, [user?.uid]);

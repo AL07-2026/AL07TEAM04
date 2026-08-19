@@ -41,6 +41,7 @@ import {
   hiringStageLabels,
 } from '@/data/jobPostings';
 import {
+  getCompanyOwnedProjects,
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
@@ -1123,8 +1124,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       setIsSeniorProfileResolved(true);
       setWorknetFeedStatus(worknetFeed.status);
       const visibleUserProjects =
-        role === 'company' && user?.uid
-          ? registeredProjects.filter((project) => !project.ownerId || project.ownerId === user.uid)
+        role === 'company'
+          ? getCompanyOwnedProjects(registeredProjects, user?.uid)
           : registeredProjects;
       const publicProjects = getPublishedCompanyProjects(registeredProjects);
       if (role === 'senior') setPublishedCompanyProjects(publicProjects);
@@ -1541,6 +1542,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!user?.uid) {
+      setActionNotice('기업 로그인 후에만 프로젝트를 등록할 수 있습니다.');
+      setTimeout(() => setActionNotice(''), 7000);
+      return;
+    }
     const formData = new FormData(event.currentTarget);
     const title = (formData.get('title') as string) || '';
     const companyName = (formData.get('companyName') as string) || '';
