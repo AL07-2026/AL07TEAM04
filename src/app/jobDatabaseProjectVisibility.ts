@@ -7,7 +7,7 @@ import type {
 } from '@/data/jobPostings';
 import type { OccupationCategory } from '@/data/occupationCategories';
 
-type CategoryFilter =
+export type CategoryFilter =
   | ProjectCategory
   | OccupationCategory
   | 'all'
@@ -25,6 +25,15 @@ type ProjectVisibilityFilters = {
 
 export function getPublishedCompanyProjects(projects: JobPosting[]) {
   return projects.filter((project) => project.hiringStage === 'open');
+}
+
+export function resolveSeniorCategoryFilter(
+  selectedCategory: CategoryFilter,
+  primaryProfileCategory?: CategoryFilter,
+) {
+  return selectedCategory === 'all' && primaryProfileCategory
+    ? primaryProfileCategory
+    : selectedCategory;
 }
 
 /** Projects in a company workspace must never fall back to another company's legacy postings. */

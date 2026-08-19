@@ -45,6 +45,7 @@ import {
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
+  resolveSeniorCategoryFilter,
 } from '@/app/jobDatabaseProjectVisibility';
 import type {
   EmploymentType,
@@ -1280,6 +1281,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         .join(' ');
 
       setIsLoadingPostings(true);
+      const companyProjectCategoryFilter = resolveSeniorCategoryFilter(
+        selectedCategory,
+        effectivePrimaryProfileFilter,
+      );
       void searchFullJobDatabase({
         categories,
         desiredCategories,
@@ -1313,7 +1318,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               employmentType: selectedEmploymentType,
               hiringStage: selectedHiringStage,
               query,
-              selectedCategory,
+              selectedCategory: companyProjectCategoryFilter,
               workType: selectedWorkType,
             }),
           );
@@ -1360,7 +1365,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 employmentType: selectedEmploymentType,
                 hiringStage: selectedHiringStage,
                 query,
-                selectedCategory,
+                selectedCategory: companyProjectCategoryFilter,
                 workType: selectedWorkType,
               }),
             );
@@ -2028,7 +2033,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <input
                   name="companyName"
                   required
-                  defaultValue="(주) 기업명"
+                  placeholder="회사명을 입력하세요"
                   className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                 />
               </label>

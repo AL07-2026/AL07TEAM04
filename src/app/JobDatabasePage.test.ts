@@ -6,15 +6,16 @@ import {
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
+  resolveSeniorCategoryFilter,
 } from '@/app/jobDatabaseProjectVisibility';
 
 const companyProject: JobPosting = {
   id: 'company-project-1',
   ownerId: 'company-user',
-  companyName: '(주)기업명',
+  companyName: '테스트 기업',
   industry: '서비스업',
   companySize: '10명',
-  title: '가나다라',
+  title: '기업 운영 프로젝트',
   category: 'operations',
   seniority: 'lead',
   employmentType: 'project',
@@ -30,7 +31,7 @@ const companyProject: JobPosting = {
   qualifications: [],
   benefits: [],
   problemStatement: '운영 체계를 정비합니다.',
-  projectGoal: '가나다라 프로젝트를 완성합니다.',
+  projectGoal: '기업 운영 프로젝트를 완성합니다.',
   successMetrics: [],
   requiredSkills: ['서비스 운영'],
   preferredSkills: [],
@@ -65,11 +66,42 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       matchesPublishedCompanyProject(companyProject, {
         employmentType: 'all',
         hiringStage: 'all',
-        query: '가나다라',
+        query: '기업 운영',
         selectedCategory: 'all',
         workType: 'all',
       }),
     ).toBe(true);
     expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
+  });
+
+  it('새로고침 후에도 1순위 직무를 기업 공개 공고 필터에 적용한다', () => {
+    const selectedCategory = resolveSeniorCategoryFilter('all', 'design');
+    const designCompanyProject = {
+      ...companyProject,
+      category: 'design-brand' as const,
+      id: 'design-company-project',
+      occupationCategory: 'design' as const,
+    };
+    const itCompanyProject = {
+      ...companyProject,
+      category: 'dev-engineering' as const,
+      id: 'it-company-project',
+      occupationCategory: 'it-development-data' as const,
+    };
+
+    expect(selectedCategory).toBe('design');
+    expect(
+      [designCompanyProject, itCompanyProject].filter((project) =>
+        matchesPublishedCompanyProject(project, {
+          employmentType: 'all',
+          hiringStage: 'all',
+          query: '',
+          selectedCategory,
+          workType: 'all',
+        }),
+      ),
+    ).toEqual([designCompanyProject]);
+    expect(resolveSeniorCategoryFilter('it-development-data', 'design')).toBe('it-development-data');
+    expect(resolveSeniorCategoryFilter('all')).toBe('all');
   });
 });
