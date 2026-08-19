@@ -34,3 +34,16 @@ export function getRemainingProjectFilterChoices<T extends string>(
   const quickChoiceIds = new Set(quickChoices.map((choice) => choice.id));
   return choices.filter((choice) => !quickChoiceIds.has(choice.id));
 }
+
+/** Finds a category by the label users see, without changing the filter engine itself. */
+export function searchProjectFilterChoices<T extends string>(
+  choices: readonly ProjectFilterChoice<T>[],
+  query: string,
+) {
+  const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
+  if (!normalizedQuery) return choices;
+
+  return choices.filter((choice) =>
+    `${choice.label} ${choice.badge ?? ''}`.toLocaleLowerCase('ko-KR').includes(normalizedQuery),
+  );
+}

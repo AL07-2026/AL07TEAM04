@@ -80,6 +80,7 @@ import { getPostingWorkSummary, type PostingWorkSummary } from '@/services/posti
 import {
   getQuickProjectFilterChoices,
   getRemainingProjectFilterChoices,
+  searchProjectFilterChoices,
 } from '@/services/projectFilterPresentation';
 import {
   searchFullJobDatabase,
@@ -290,6 +291,85 @@ function CategoryFilterButton({
       ) : null}
       <span>{label}</span>
     </button>
+  );
+}
+
+function CategoryPickerDialog({
+  choices,
+  onClose,
+  onSelect,
+  selectedCategory,
+  title,
+}: {
+  choices: FilterOption[];
+  onClose: () => void;
+  onSelect: (category: CategoryFilter) => void;
+  selectedCategory: CategoryFilter;
+  title: string;
+}) {
+  const [query, setQuery] = useState('');
+  const visibleChoices = searchProjectFilterChoices(choices, query);
+
+  return (
+    <div
+      aria-labelledby="project-category-picker-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] flex items-end bg-[#17212B]/35 p-3 sm:items-center sm:justify-center"
+      id="project-category-picker"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onClose();
+      }}
+      role="dialog"
+    >
+      <section className="max-h-[min(680px,calc(100dvh-24px))] w-full max-w-xl overflow-auto rounded-3xl border border-[#E0D9C8] bg-white p-5 shadow-xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[12px] font-extrabold text-[#4B756E]">프로젝트 탐색</p>
+            <h2 className="mt-1 text-[20px] font-extrabold text-[#17212B]" id="project-category-picker-title">
+              {title}
+            </h2>
+          </div>
+          <button
+            aria-label="직무 선택 닫기"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] hover:text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-5" />
+          </button>
+        </div>
+        <label className="mt-4 flex h-12 items-center gap-3 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-4 focus-within:border-[#173F3A] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/10">
+          <Search aria-hidden="true" className="size-5 text-[#173F3A]" />
+          <input
+            autoFocus
+            className="h-full min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="직무명으로 찾기"
+            type="search"
+            value={query}
+          />
+        </label>
+        <div aria-live="polite" className="mt-4 flex flex-wrap gap-2" role="group">
+          {visibleChoices.map((choice) => (
+            <CategoryFilterButton
+              badge={choice.badge}
+              key={choice.id}
+              label={choice.label}
+              onClick={() => onSelect(choice.id)}
+              selected={selectedCategory === choice.id}
+            />
+          ))}
+          {visibleChoices.length === 0 ? (
+            <p className="w-full rounded-xl bg-[#FAF7F2] px-4 py-5 text-center text-[14px] font-semibold text-slate-600">
+              일치하는 직무가 없습니다. 다른 검색어로 찾아보세요.
+            </p>
+          ) : null}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -859,7 +939,7 @@ function DetailPanel({
         </div>
       ) : isMobile ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-[#E0D9C8]">
-            <MobileDetailRow label="이 일에서 맡게 될 역할" tone="mint">
+          <MobileDetailRow label="이 일에서 맡게 될 역할" tone="mint">
             <PostingWorkSummaryContent summary={workSummary} />
           </MobileDetailRow>
           <MobileDetailRow label="핵심 업무">
@@ -1122,8 +1202,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     sourceUrl?: string;
   } | null>(null);
   const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
-  const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isDetailFiltersExpanded, setIsDetailFiltersExpanded] = useState(false);
+  const categoryPickerTriggerRef = useRef<HTMLButtonElement>(null);
   const [applicationFiles, setApplicationFiles] = useState<File[]>([]);
   const [applicantNote, setApplicantNote] = useState('');
   const [applicationError, setApplicationError] = useState('');
@@ -1963,6 +2044,20 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setCurrentPage(1);
   }
 
+  function openCategoryPicker() {
+    setIsCategoryPickerOpen(true);
+  }
+
+  function closeCategoryPicker() {
+    setIsCategoryPickerOpen(false);
+    window.setTimeout(() => categoryPickerTriggerRef.current?.focus(), 0);
+  }
+
+  function selectCategoryFromPicker(value: CategoryFilter) {
+    changeCategory(value);
+    closeCategoryPicker();
+  }
+
   function changeWorkType(value: WorkTypeFilter) {
     setSelectedWorkType(value);
     setCurrentPage(1);
@@ -2750,34 +2845,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               ))}
               {remainingCategoryFilters.length > 0 ? (
                 <button
-                  aria-controls="mobile-more-job-categories"
-                  aria-expanded={isCategoryExpanded}
+                  aria-controls="project-category-picker"
+                  aria-haspopup="dialog"
                   className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-                  onClick={() => setIsCategoryExpanded((value) => !value)}
+                  onClick={openCategoryPicker}
+                  ref={categoryPickerTriggerRef}
                   type="button"
                 >
-                  직무 {isCategoryExpanded ? '접기' : '더보기'}
-                  <ChevronDown className={cn('size-4 transition-transform', isCategoryExpanded && 'rotate-180')} />
+                  직무 찾기 <Search aria-hidden="true" className="size-3.5" />
                 </button>
               ) : null}
             </div>
-            {isCategoryExpanded && remainingCategoryFilters.length > 0 ? (
-              <div
-                className="mt-3 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3"
-                id="mobile-more-job-categories"
-                role="group"
-              >
-                {remainingCategoryFilters.map((category) => (
-                  <CategoryFilterButton
-                    badge={category.badge}
-                    key={category.id}
-                    label={category.label}
-                    onClick={() => changeCategory(category.id)}
-                    selected={effectiveSelectedCategory === category.id}
-                  />
-                ))}
-              </div>
-            ) : null}
           </div>
 
           <div className="mt-5 border-t border-[#E0D9C8] pt-4">
@@ -2849,30 +2927,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 ))}
                 {remainingCategoryFilters.length > 0 ? (
                   <button
-                    aria-controls="desktop-more-job-categories"
-                    aria-expanded={isCategoryExpanded}
+                    aria-controls="project-category-picker"
+                    aria-haspopup="dialog"
                     className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-                    onClick={() => setIsCategoryExpanded((value) => !value)}
+                    onClick={openCategoryPicker}
+                    ref={categoryPickerTriggerRef}
                     type="button"
                   >
-                    직무 {isCategoryExpanded ? '접기' : '더보기'}
-                    <ChevronDown className={cn('size-4 transition-transform', isCategoryExpanded && 'rotate-180')} />
+                    직무 찾기 <Search aria-hidden="true" className="size-3.5" />
                   </button>
                 ) : null}
               </div>
-              {isCategoryExpanded && remainingCategoryFilters.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3" id="desktop-more-job-categories" role="group">
-                  {remainingCategoryFilters.map((category) => (
-                    <CategoryFilterButton
-                      badge={category.badge}
-                      key={category.id}
-                      label={category.label}
-                      onClick={() => changeCategory(category.id)}
-                      selected={effectiveSelectedCategory === category.id}
-                    />
-                  ))}
-                </div>
-              ) : null}
             </div>
 
             <div className="mt-4 border-t border-[#E0D9C8] pt-4">
@@ -2916,6 +2981,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           </section>
         </>
       )}
+
+      {isCategoryPickerOpen ? (
+        <CategoryPickerDialog
+          choices={activeCategoryFilters}
+          onClose={closeCategoryPicker}
+          onSelect={selectCategoryFromPicker}
+          selectedCategory={effectiveSelectedCategory}
+          title={role === 'senior' ? '내게 맞는 직무 선택' : '프로젝트 유형 선택'}
+        />
+      ) : null}
 
       {actionNotice ? (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border border-[#10B981] bg-[#ECFDF5] px-6 py-3.5 text-xs md:text-sm font-extrabold text-[#059669] shadow-xl">

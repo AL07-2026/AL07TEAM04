@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getQuickProjectFilterChoices,
   getRemainingProjectFilterChoices,
+  searchProjectFilterChoices,
 } from '@/services/projectFilterPresentation';
 import type { ProjectFilterChoice } from '@/services/projectFilterPresentation';
 
@@ -42,6 +43,13 @@ describe('project filter presentation', () => {
     expect(getRemainingProjectFilterChoices(choices, quick).map((choice) => choice.id)).toEqual([
       'design',
       'it',
+    ]);
+  });
+
+  it('finds a category by its visible label or ranked preference badge', () => {
+    expect(searchProjectFilterChoices(choices, '개발').map((choice) => choice.id)).toEqual(['it']);
+    expect(searchProjectFilterChoices(choices, '2순위').map((choice) => choice.id)).toEqual([
+      'strategy',
     ]);
   });
 });
