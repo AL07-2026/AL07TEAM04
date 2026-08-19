@@ -33,7 +33,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import {
   databaseSummary,
@@ -1018,6 +1018,7 @@ function DetailPanel({
 
 export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
@@ -1045,7 +1046,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
   const [sortBy, setSortBy] = useState<SortOption>('fit-desc');
   const [selectedId, setSelectedId] = useState('');
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
+    Boolean(searchParams.get('focusProject')),
+  );
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
@@ -1850,8 +1853,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return filteredPostings.slice(start, start + itemsPerPage);
   }, [filteredPostings, isServerSearchActive, safeCurrentPage, itemsPerPage]);
 
+  const focusProjectId = searchParams.get('focusProject');
+  const focusedPosting = focusProjectId
+    ? filteredPostings.find((posting) => posting.id === focusProjectId)
+    : undefined;
   const selectedPosting =
-    filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
+    focusedPosting ?? filteredPostings.find((posting) => posting.id === selectedId) ?? filteredPostings[0];
   const activeFilterCount =
     Number(selectedCategory !== all && selectedCategory !== allDatabase) +
     Number(selectedWorkType !== all) +

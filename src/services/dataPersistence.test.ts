@@ -60,6 +60,16 @@ describe('데이터 저장 및 조회 정합성', () => {
       title: '프로세스 개선',
       category: 'operations',
       seniorFitScore: 120,
+      coreResponsibilities: ['현장 운영 프로세스를 개선합니다.'],
+      problemStatement: '현장 운영 병목을 개선합니다.',
+      projectGoal: '운영 품질을 높입니다.',
+      requiredSkills: ['운영 경험'],
+      sourceDetailProvenance: {
+        coreResponsibilities: 'source',
+        problemStatement: 'source',
+        projectGoal: 'source',
+        requiredSkills: 'source',
+      },
       attachments: [
         {
           name: 'project-guide.pdf',
@@ -73,7 +83,7 @@ describe('데이터 저장 및 조회 정합성', () => {
 
     expect(project?.id).toBe('document-id');
     expect(project?.seniorFitScore).toBe(100);
-    expect(project?.coreResponsibilities).toEqual([]);
+    expect(project?.coreResponsibilities).toEqual(['현장 운영 프로세스를 개선합니다.']);
     expect(project?.workType).toBe('hybrid');
     expect(project?.attachments).toEqual([
       {
@@ -84,6 +94,31 @@ describe('데이터 저장 및 조회 정합성', () => {
         storagePath: 'project-attachments/document-id/project-guide.pdf',
       },
     ]);
+    expect(project?.sourceDetailProvenance).toEqual({
+      coreResponsibilities: 'source',
+      problemStatement: 'source',
+      projectGoal: 'source',
+      requiredSkills: 'source',
+    });
+  });
+
+  it('기업이 직접 등록한 프로젝트의 저장 업무는 provenance가 없더라도 source로 유지한다', () => {
+    const project = normalizeProject('company-project', {
+      ownerId: 'company-a',
+      companyName: '테스트 기업',
+      title: '운영 개선 프로젝트',
+      category: 'operations',
+      coreResponsibilities: ['현장 운영 절차를 개선합니다.'],
+      problemStatement: '현장 운영 병목을 줄입니다.',
+      projectGoal: '운영 품질을 높입니다.',
+    });
+
+    expect(project?.sourceDetailProvenance).toMatchObject({
+      coreResponsibilities: 'source',
+      problemStatement: 'source',
+      projectGoal: 'source',
+      requiredSkills: 'unknown',
+    });
   });
 
   it('필수 프로젝트 정보가 없으면 잘못된 문서를 출력하지 않는다', () => {

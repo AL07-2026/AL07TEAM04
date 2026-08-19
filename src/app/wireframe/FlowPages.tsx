@@ -53,6 +53,14 @@ import {
 } from '@/lib/applicationFlow';
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
+import {
+  getActiveProposalsDestination,
+  getExperienceMetricDestination,
+  getHighestFitDestination,
+  getHighestFitProject,
+  getRecommendedProjectsDestination,
+  isActiveProposalStatus,
+} from '@/services/homeMetricNavigation';
 import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/interviewService';
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import {
@@ -67,7 +75,6 @@ import {
   getLocalSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
-  saveLocalCompanyProfile,
   saveLocalSeniorProfile,
   type CompanyProfileData,
   type SeniorProfileData,
@@ -407,7 +414,7 @@ export function SeniorHomePage() {
   const [activeProposalsCount, setActiveProposalsCount] = useState<number>(0);
   const [recommendedProjectsCount, setRecommendedProjectsCount] = useState(0);
   const [savedExperienceCount, setSavedExperienceCount] = useState<number>(0);
-  const [highestFitScore, setHighestFitScore] = useState<number | null>(null);
+  const [highestFitProject, setHighestFitProject] = useState<JobPosting | null>(null);
   const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
@@ -427,9 +434,7 @@ export function SeniorHomePage() {
       ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
-        proposals.filter(
-          (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
-        ).length,
+        proposals.filter((proposal) => isActiveProposalStatus(proposal.status)).length,
       );
       setSavedExperienceCount(experienceCard ? 1 : 0);
 
@@ -438,7 +443,7 @@ export function SeniorHomePage() {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHomeTotalPages(1);
-        setHighestFitScore(null);
+        setHighestFitProject(null);
         setIsExperienceRecommendationApplied(false);
         setRecommendationFeedMessage('내 정보에서 1순위 희망 직종을 먼저 선택해 주세요.');
         return;
@@ -475,7 +480,7 @@ export function SeniorHomePage() {
         setRecommendedJobs(unifiedItems);
         setRecommendedProjectsCount(result.total);
         setHomeTotalPages(result.totalPages);
-        if (homePage === 1) setHighestFitScore(unifiedItems[0]?.seniorFitScore ?? null);
+        if (homePage === 1) setHighestFitProject(getHighestFitProject(unifiedItems));
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
           result.total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
@@ -497,7 +502,7 @@ export function SeniorHomePage() {
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
-        if (homePage === 1) setHighestFitScore(pageJobs[0]?.seniorFitScore ?? null);
+        if (homePage === 1) setHighestFitProject(getHighestFitProject(pageJobs));
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(worknetFeed.message ?? '');
       }
@@ -510,6 +515,7 @@ export function SeniorHomePage() {
           setRecommendedJobs([]);
           setRecommendedProjectsCount(0);
           setHomeTotalPages(1);
+          setHighestFitProject(null);
           setRecommendationFeedMessage(
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
           );
@@ -631,32 +637,46 @@ export function SeniorHomePage() {
       >
         <SummaryCard
           caption={`1순위 ${recommendationPrimaryLabel} 기준`}
+          interactiveLabel={`추천 프로젝트 ${recommendedProjectsCount}개 보기`}
           label="추천 프로젝트"
+          onClick={() => void navigate(getRecommendedProjectsDestination())}
           role="senior"
           value={`${recommendedProjectsCount}개`}
         />
         <SummaryCard
           caption="검토 중·연락 받은 제안"
+          interactiveLabel={`진행 중인 제안 ${activeProposalsCount}건 보기`}
           label="진행 중인 제안"
+          onClick={() => void navigate(getActiveProposalsDestination())}
           role="senior"
           value={`${activeProposalsCount}건`}
         />
-        {!isMobile && (
-          <SummaryCard
-            caption="프로필·경험 카드 저장 기준"
-            label="저장된 경험 정보"
-            role="senior"
-            value={`${savedExperienceCount}건`}
-          />
-        )}
-        {!isMobile && (
-          <SummaryCard
-            caption="등록 경험 기준 최고 추천 점수"
-            label="최고 프로젝트 적합도"
-            role="senior"
-            value={highestFitScore === null ? '—' : `${highestFitScore}점`}
-          />
-        )}
+        <SummaryCard
+          caption="프로필·경험 카드 저장 기준"
+          interactiveLabel={
+            savedExperienceCount > 0
+              ? `저장된 경험 정보 ${savedExperienceCount}건 확인`
+              : '새 경험 정보 만들기'
+          }
+          label="저장된 경험 정보"
+          onClick={() =>
+            void navigate(getExperienceMetricDestination(savedExperienceCount > 0))
+          }
+          role="senior"
+          value={`${savedExperienceCount}건`}
+        />
+        <SummaryCard
+          caption="등록 경험 기준 최고 추천 점수"
+          interactiveLabel={
+            highestFitProject
+              ? `최고 적합도 ${highestFitProject.seniorFitScore}점 프로젝트 보기`
+              : '추천 프로젝트 탐색하기'
+          }
+          label="최고 프로젝트 적합도"
+          onClick={() => void navigate(getHighestFitDestination(highestFitProject?.id))}
+          role="senior"
+          value={highestFitProject === null ? '—' : `${highestFitProject.seniorFitScore}점`}
+        />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -1870,7 +1890,9 @@ export function MyProposalsPage() {
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const [filter, setFilter] = useState('전체');
+  const [searchParams] = useSearchParams();
+  const initialProposalFilter = searchParams.get('filter') === 'active' ? '진행 중' : '전체';
+  const [filter, setFilter] = useState(initialProposalFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
@@ -1882,7 +1904,11 @@ export function MyProposalsPage() {
   }, [user?.uid]);
 
   const visible =
-    filter === '전체' ? proposals : proposals.filter((item) => item.status === filter);
+    filter === '전체'
+      ? proposals
+      : filter === '진행 중'
+        ? proposals.filter((item) => isActiveProposalStatus(item.status))
+        : proposals.filter((item) => item.status === filter);
 
   return (
     <MobilePage
@@ -1896,7 +1922,7 @@ export function MyProposalsPage() {
       title="내 제안"
     >
       <div className="flex gap-2.5">
-        {['전체', '검토 중', '연락 받음'].map((item) => (
+        {['전체', '진행 중', '검토 중', '연락 받음'].map((item) => (
           <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
             {item}
           </Chip>
@@ -2341,6 +2367,12 @@ export function ProjectRegisterPage() {
         recommendedTalentType: `${form.experience.trim()} 경험을 보유한 시니어 전문가`,
         matchingScoreCriteria: ['관련 경험', '진행 조건', '근무 위치'],
         interviewFocus: [form.body.trim(), form.experience.trim()],
+        sourceDetailProvenance: {
+          coreResponsibilities: 'source',
+          problemStatement: 'source',
+          projectGoal: 'source',
+          requiredSkills: 'unknown',
+        },
         seniorFitScore: 90,
       });
       let attachmentSync = attachments.length === 0 ? 'none' : 'local';

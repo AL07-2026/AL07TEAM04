@@ -637,32 +637,40 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
 
 export function SummaryCard({
   caption,
+  interactiveLabel,
   label,
+  onClick,
   value,
 }: {
   caption?: string;
+  interactiveLabel?: string;
   label: string;
+  onClick?: () => void;
   role?: Role;
   value: string;
 }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
 
-  return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs',
-        isMobile
-          ? caption
-            ? 'min-h-[128px] p-4'
-            : 'h-[110px] p-4'
-          : caption
-            ? 'min-h-[152px] p-6'
-            : 'h-[136px] p-6',
-      )}
-    >
-      <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
-        {label}
+  const classes = cn(
+    'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs text-left',
+    onClick &&
+      'cursor-pointer transition hover:-translate-y-px hover:border-[#BBD5CE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+    isMobile
+      ? caption
+        ? 'min-h-[128px] p-4'
+        : 'h-[110px] p-4'
+      : caption
+        ? 'min-h-[152px] p-6'
+        : 'h-[136px] p-6',
+  );
+  const content = (
+    <>
+      <span className="flex items-start justify-between gap-2">
+        <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
+          {label}
+        </span>
+        {onClick ? <span aria-hidden="true" className="text-[#173F3A]">→</span> : null}
       </span>
       <div className="mt-auto">
         <strong
@@ -684,6 +692,16 @@ export function SummaryCard({
           </span>
         ) : null}
       </div>
+    </>
+  );
+
+  return onClick ? (
+    <button aria-label={interactiveLabel ?? `${label} ${value} 보기`} className={classes} onClick={onClick} type="button">
+      {content}
+    </button>
+  ) : (
+    <div className={classes}>
+      {content}
     </div>
   );
 }

@@ -16,6 +16,8 @@ import {
   type EmploymentType,
   type HiringStage,
   type JobPosting,
+  type PostingDetailProvenance,
+  type PostingDetailProvenanceMap,
   type ProjectAttachment,
   type ProjectCategory,
   type Seniority,
@@ -72,6 +74,29 @@ function attachments(value: unknown): ProjectAttachment[] {
   });
 }
 
+function sourceDetailProvenance(
+  value: unknown,
+  ownerId: string | undefined,
+  fields: Pick<JobPosting, 'coreResponsibilities' | 'problemStatement' | 'projectGoal' | 'requiredSkills'>,
+): PostingDetailProvenanceMap | undefined {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : null;
+  const allowed = new Set<PostingDetailProvenance>(['source', 'synthetic', 'unknown']);
+  const keys = ['coreResponsibilities', 'problemStatement', 'projectGoal', 'requiredSkills'] as const;
+  const explicit = Object.fromEntries(
+    keys.flatMap((key) => (allowed.has(source?.[key] as PostingDetailProvenance) ? [[key, source?.[key]]] : [])),
+  ) as PostingDetailProvenanceMap;
+
+  if (Object.keys(explicit).length > 0) return explicit;
+  if (!ownerId) return undefined;
+
+  return {
+    coreResponsibilities: fields.coreResponsibilities.length > 0 ? 'source' : 'unknown',
+    problemStatement: fields.problemStatement ? 'source' : 'unknown',
+    projectGoal: fields.projectGoal ? 'source' : 'unknown',
+    requiredSkills: fields.requiredSkills.length > 0 ? 'source' : 'unknown',
+  };
+}
+
 export function normalizeProject(id: string, source: unknown): JobPosting | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
@@ -82,9 +107,14 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   if (!id || !title || !companyName || !categories.has(category)) return null;
 
   const postedAt = stringValue(value.postedAt, new Date().toISOString().slice(0, 10));
+  const ownerId = stringValue(value.ownerId) || undefined;
+  const coreResponsibilities = stringArray(value.coreResponsibilities);
+  const problemStatement = stringValue(value.problemStatement, title);
+  const projectGoal = stringValue(value.projectGoal, title);
+  const requiredSkills = stringArray(value.requiredSkills);
   return {
     id,
-    ownerId: stringValue(value.ownerId) || undefined,
+    ownerId,
     companyName,
     industry: stringValue(value.industry, '산업 정보 미등록'),
     companySize: stringValue(value.companySize, '기업 규모 협의'),
@@ -107,13 +137,13 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
     deadline: stringValue(value.deadline, postedAt),
     projectDuration: stringValue(value.projectDuration, '기간 협의'),
     collaborationTargets: stringArray(value.collaborationTargets),
-    coreResponsibilities: stringArray(value.coreResponsibilities),
+    coreResponsibilities,
     qualifications: stringArray(value.qualifications),
     benefits: stringArray(value.benefits),
-    problemStatement: stringValue(value.problemStatement, title),
-    projectGoal: stringValue(value.projectGoal, title),
+    problemStatement,
+    projectGoal,
     successMetrics: stringArray(value.successMetrics),
-    requiredSkills: stringArray(value.requiredSkills),
+    requiredSkills,
     preferredSkills: stringArray(value.preferredSkills),
     matchingSignals: stringArray(value.matchingSignals),
     recommendedTalentType: stringValue(
@@ -122,6 +152,12 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
     ),
     matchingScoreCriteria: stringArray(value.matchingScoreCriteria),
     interviewFocus: stringArray(value.interviewFocus),
+    sourceDetailProvenance: sourceDetailProvenance(value.sourceDetailProvenance, ownerId, {
+      coreResponsibilities,
+      problemStatement,
+      projectGoal,
+      requiredSkills,
+    }),
     seniorFitScore:
       typeof value.seniorFitScore === 'number' && Number.isFinite(value.seniorFitScore)
         ? Math.min(100, Math.max(0, value.seniorFitScore))
