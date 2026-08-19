@@ -37,6 +37,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     render(<App />);
 
     const answerInput = await screen.findByLabelText('현재 인터뷰 답변');
+    expect(screen.getAllByText('버튼을 누르면 마이크 권한을 요청합니다.')).toHaveLength(1);
     for (const answer of [
       '고객 문의 기준이 없어 응답이 지연되었습니다.',
       '서비스 운영 책임자로 개선을 주도했습니다.',
@@ -47,12 +48,66 @@ describe('Figma v2 통합 화면 라우팅', () => {
       fireEvent.click(screen.getByRole('button', { name: '입력' }));
     }
 
+    fireEvent.click(screen.getAllByRole('button', { name: '답변 수정' })[0]!);
+    fireEvent.change(screen.getByLabelText('수정할 인터뷰 답변'), {
+      target: { value: '고객 문의 기준이 부족해 광고 운영 문의 응답이 지연되었습니다.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '수정한 답변 저장' }));
+
     fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인 →' }));
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('고객 문의 기준이 없어 응답이 지연되었습니다.')).toBeInTheDocument();
+    expect(
+      screen.getByText('고객 문의 기준이 부족해 광고 운영 문의 응답이 지연되었습니다.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('평균 응답 시간을 30% 줄였습니다.')).toBeInTheDocument();
+  });
+
+  it('인재 홈의 AI 경험 인터뷰 CTA는 경험 선택 화면으로 먼저 이동한다', async () => {
+    window.history.pushState({}, '', '/senior');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /AI 경험 인터뷰 시작하기/ }));
+
+    expect(await screen.findByRole('heading', { name: '경험 선택' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/senior/experience');
+  });
+
+  it('경험 선택 화면에서 고른 분야를 AI 인터뷰 기준에 반영한다', async () => {
+    window.history.pushState({}, '', '/senior/experience');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '인사/경영전략' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI 경험 인터뷰 진행 (추천)' }));
+
+    expect(
+      await screen.findByText('운영 효율화 · 마케팅/영업 · 인사/경영전략'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '운영 효율화 · 마케팅/영업 · 인사/경영전략 분야에서 가장 해결하기 어려웠던 실제 업무 문제는 무엇이었나요?',
+      ),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/senior/experience/interview');
+  });
+
+  it('AI 인터뷰 직접 입력칸에서 Enter는 답변 제출 대신 줄바꿈으로 사용한다', async () => {
+    window.history.pushState({}, '', '/senior/experience/interview');
+    render(<App />);
+
+    const answerInput = await screen.findByLabelText('현재 인터뷰 답변');
+    fireEvent.change(answerInput, {
+      target: { value: '첫 번째 줄\n두 번째 줄' },
+    });
+    fireEvent.keyDown(answerInput, { key: 'Enter', code: 'Enter' });
+
+    expect(screen.getByText('질문 1/4')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '입력' }));
+
+    expect(screen.getByText('질문 2/4')).toBeInTheDocument();
+    expect(screen.getByText(/첫 번째 줄/)).toBeInTheDocument();
   });
 
   it('회원가입 후 이메일 인증 및 인재 기본정보 입력으로 바로 이동한다', async () => {

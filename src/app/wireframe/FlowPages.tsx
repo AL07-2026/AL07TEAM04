@@ -4,10 +4,12 @@ import {
   AudioLines,
   Award,
   BarChart2,
+  Check,
   FileText,
   Info,
   Loader2,
   Mic,
+  Pencil,
   RefreshCw,
   Send,
   Settings,
@@ -15,6 +17,7 @@ import {
   Sparkles,
   Target,
   User,
+  X,
   Zap,
 } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
@@ -108,6 +111,16 @@ type InterviewQuestion = {
   field: keyof ExperienceInterviewAnswers;
   prompt: string;
 };
+
+type InterviewMessage = {
+  answerField?: keyof ExperienceInterviewAnswers;
+  id: number;
+  sender: 'ai' | 'user';
+  text: string;
+};
+
+const defaultVoiceNotice = '버튼을 누르면 마이크 권한을 요청합니다.';
+const transcribingVoiceNotice = '음성을 글자로 바꾸고 있어요...';
 
 function toProjectCategory(value: string | undefined) {
   if (value && value in categoryLabels) return value as ProjectCategory;
@@ -574,7 +587,7 @@ export function SeniorHomePage() {
 
       {/* AI Experience Interview Banner */}
       <button
-        onClick={() => void navigate('/senior/experience/interview')}
+        onClick={() => void navigate('/senior/experience')}
         type="button"
         className="group w-full rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.99]"
       >
@@ -823,7 +836,40 @@ const experienceOptions = [
   '기획/전략',
   '재무/회계',
   '교육/코칭',
-];
+] as const;
+
+const experienceOptionCategoryMap: Record<(typeof experienceOptions)[number], ProjectCategory> = {
+  '개발/엔지니어링': 'dev-engineering',
+  '디자인/브랜딩': 'design-brand',
+  '마케팅/영업': 'marketing-sales',
+  '인사/경영전략': 'hr-strategy',
+  '제조/R&D': 'r-and-d-manufacturing',
+  '운영 효율화': 'operations',
+  '성장/그로스': 'growth',
+  '레거시 개선': 'legacy-modernization',
+  'AI 자동화': 'ai-automation',
+  '데이터 플랫폼': 'data-platform',
+  '보안/리스크': 'security',
+  '기획/전략': 'growth',
+  '재무/회계': 'hr-strategy',
+  '교육/코칭': 'hr-strategy',
+};
+
+function getExperienceOptionCategory(option: string) {
+  return experienceOptionCategoryMap[option as (typeof experienceOptions)[number]];
+}
+
+function buildExperienceInterviewPath(selectedOptions: string[]) {
+  const params = new URLSearchParams();
+  const primaryCategory = selectedOptions.map(getExperienceOptionCategory).find(Boolean);
+  const selectedLabel = selectedOptions.join(' · ');
+
+  if (primaryCategory) params.set('category', primaryCategory);
+  if (selectedLabel) params.set('label', selectedLabel);
+
+  const queryString = params.toString();
+  return `/senior/experience/interview${queryString ? `?${queryString}` : ''}`;
+}
 
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
@@ -848,7 +894,11 @@ export function ExperienceSelectionPage() {
         window.dispatchEvent(new Event('eojob_senior_profile_updated'));
       }
     }
-    void navigate(targetUrl);
+    void navigate(
+      targetUrl === '/senior/experience/interview'
+        ? buildExperienceInterviewPath(selected)
+        : targetUrl,
+    );
   }
 
   return (
@@ -904,32 +954,41 @@ export function ExperienceSelectionPage() {
 
 export function ExperienceInterviewPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const applicationReturn = getPendingApplicationInterview();
+  const selectedCategory = toProjectCategory(searchParams.get('category') ?? undefined);
+  const selectedCategoryLabel = searchParams.get('label')?.trim();
   const profileCategoryValue = getLocalSeniorProfile(user?.uid)?.desiredCategory;
   const profileOccupationCategory = normalizeOccupationCategory(profileCategoryValue);
   const profileCategory = toProjectCategory(profileCategoryValue);
-  const targetCategory = applicationReturn?.targetCategory ?? profileCategory;
+  const targetCategory = applicationReturn?.targetCategory ?? selectedCategory ?? profileCategory;
   const targetCategoryLabel = applicationReturn?.targetCategory
     ? categoryLabels[applicationReturn.targetCategory]
-    : getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
+    : selectedCategoryLabel || getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
   const interviewQuestions = getInterviewQuestions(targetCategory, targetCategoryLabel);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSecondsRef = useRef(0);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const recordingMimeTypeRef = useRef('audio/webm');
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<InterviewMessage[]>([
     { id: 1, sender: 'ai', text: interviewQuestions[0]!.prompt },
   ]);
   const [answers, setAnswers] = useState<Partial<ExperienceInterviewAnswers>>({});
+  const [editingAnswer, setEditingAnswer] = useState<{
+    field: keyof ExperienceInterviewAnswers;
+    messageId: number;
+    text: string;
+  } | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [voiceNotice, setVoiceNotice] = useState('버튼을 누르면 마이크 권한을 요청합니다.');
+  const [voiceNotice, setVoiceNotice] = useState(defaultVoiceNotice);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [currentAnswer, setCurrentAnswer] = useState<InterviewAnswer | null>(null);
   const currentQuestion = interviewQuestions[questionIndex];
@@ -980,7 +1039,7 @@ export function ExperienceInterviewPage() {
     }
 
     setIsTranscribing(true);
-    setVoiceNotice('음성을 글자로 바꾸고 있어요...');
+    setVoiceNotice(transcribingVoiceNotice);
 
     try {
       const formData = new FormData();
@@ -1029,6 +1088,15 @@ export function ExperienceInterviewPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const messagesContainer = messagesScrollRef.current;
+    if (!messagesContainer) return;
+
+    requestAnimationFrame(() => {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  }, [messages.length]);
 
   async function handleVoiceInput() {
     if (isTranscribing) return;
@@ -1132,11 +1200,12 @@ export function ExperienceInterviewPage() {
 
     const nextQuestionIndex = questionIndex + 1;
     const nextQuestion = interviewQuestions[nextQuestionIndex];
+    const answerField = currentQuestion.field;
     setAnswers((current) => ({ ...current, [currentQuestion.field]: answer.answerText }));
     setQuestionIndex(nextQuestionIndex);
     setMessages((current) => [
       ...current,
-      { id: Date.now(), sender: 'user', text: answer.answerText },
+      { answerField, id: Date.now(), sender: 'user', text: answer.answerText },
       {
         id: Date.now() + 1,
         sender: 'ai',
@@ -1145,6 +1214,32 @@ export function ExperienceInterviewPage() {
           : '네 가지 답변을 모두 확인했습니다. 실제 입력 내용으로 경험 카드를 만들었어요.',
       },
     ]);
+    if (!nextQuestion) {
+      setVoiceNotice('');
+    }
+  }
+
+  function startEditingAnswer(message: InterviewMessage) {
+    if (!message.answerField) return;
+    setEditingAnswer({
+      field: message.answerField,
+      messageId: message.id,
+      text: message.text,
+    });
+  }
+
+  function saveEditedAnswer() {
+    const nextText = editingAnswer?.text.trim();
+    if (!editingAnswer || !nextText) return;
+
+    setAnswers((current) => ({ ...current, [editingAnswer.field]: nextText }));
+    setMessages((current) =>
+      current.map((message) =>
+        message.id === editingAnswer.messageId ? { ...message, text: nextText } : message,
+      ),
+    );
+    setEditingAnswer(null);
+    setVoiceNotice('수정한 답변을 반영했습니다.');
   }
 
   function handleAnswerTextChange(answerText: string) {
@@ -1221,7 +1316,10 @@ export function ExperienceInterviewPage() {
         </span>
       </div>
 
-      <div className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+      <div
+        ref={messagesScrollRef}
+        className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs"
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -1239,8 +1337,55 @@ export function ExperienceInterviewPage() {
                   : 'rounded-tl-xs border border-[#BBD5CE] bg-[#DDEBE7]/70 text-[#17212B]'
               }`}
             >
-              {msg.text}
+              {editingAnswer?.messageId === msg.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    aria-label="수정할 인터뷰 답변"
+                    className="min-h-20 w-full resize-none rounded-xl border border-white/30 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none focus:border-[#F06B4F]"
+                    value={editingAnswer.text}
+                    onChange={(event) =>
+                      setEditingAnswer((current) =>
+                        current ? { ...current, text: event.target.value } : current,
+                      )
+                    }
+                  />
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      aria-label="답변 수정 취소"
+                      className="flex size-8 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+                      onClick={() => setEditingAnswer(null)}
+                      type="button"
+                    >
+                      <X className="size-4" />
+                    </button>
+                    <button
+                      aria-label="수정한 답변 저장"
+                      className="flex size-8 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!editingAnswer.text.trim()}
+                      onClick={saveEditedAnswer}
+                      type="button"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p>{msg.text}</p>
+                </>
+              )}
             </div>
+            {msg.answerField && editingAnswer?.messageId !== msg.id ? (
+              <button
+                aria-label="답변 수정"
+                className="order-first mt-1 flex h-8 shrink-0 items-center gap-1 rounded-full border border-[#D4CBB8] bg-white px-2.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs transition hover:border-[#173F3A] hover:bg-[#F4FAF8]"
+                onClick={() => startEditingAnswer(msg)}
+                type="button"
+              >
+                <Pencil className="size-3" />
+                <span>수정</span>
+              </button>
+            ) : null}
           </div>
         ))}
       </div>
@@ -1293,14 +1438,17 @@ export function ExperienceInterviewPage() {
         <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-center shadow-xs">
           <span className="text-[11px] font-extrabold text-[#173F3A]">
             {isTranscribing
-              ? '음성을 글자로 바꾸고 있어요...'
+              ? transcribingVoiceNotice
               : isRecording
                 ? `녹음 중 · ${formatRecordingTime(recordingSeconds)}`
                 : interviewComplete
                   ? '답변이 모두 저장되었습니다. 아래에서 경험 카드를 확인해 주세요.'
-                  : '버튼을 누르면 마이크 권한을 요청합니다.'}
+                  : defaultVoiceNotice}
           </span>
-          {voiceNotice ? (
+          {!interviewComplete &&
+          voiceNotice &&
+          voiceNotice !== defaultVoiceNotice &&
+          voiceNotice !== transcribingVoiceNotice ? (
             <span aria-live="polite" className="text-[11px] font-semibold text-[#F06B4F]">
               {voiceNotice}
             </span>
@@ -1312,20 +1460,19 @@ export function ExperienceInterviewPage() {
           ) : null}
         </div>
 
-        <form onSubmit={handleTextSubmit} className="flex w-full items-center gap-2">
-          <input
+        <form onSubmit={handleTextSubmit} className="flex w-full items-stretch gap-2">
+          <textarea
             aria-label="현재 인터뷰 답변"
             disabled={interviewComplete || isRecording || isTranscribing}
-            type="text"
             placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
             value={inputText}
             onChange={(e) => handleAnswerTextChange(e.target.value)}
-            className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
+            className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
           />
           <button
             disabled={interviewComplete || isRecording || isTranscribing}
             type="submit"
-            className="flex h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
             입력
           </button>
