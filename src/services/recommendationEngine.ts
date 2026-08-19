@@ -182,7 +182,11 @@ export function getProfileWorknetKeywords(profile?: SeniorProfileData | null) {
   const otherOccupationKeywords = tokenizeRecommendationText(
     profile?.desiredOccupationText || '',
   );
-  return [...new Set([...otherOccupationKeywords, ...keywords])].slice(0, 9);
+  const certificationKeywords = tokenizeRecommendationText(profile?.certifications || '');
+  return [...new Set([...otherOccupationKeywords, ...certificationKeywords, ...keywords])].slice(
+    0,
+    9,
+  );
 }
 
 export function doesPostingMatchDesiredOccupationText(

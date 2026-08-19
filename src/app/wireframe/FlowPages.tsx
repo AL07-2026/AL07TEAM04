@@ -67,7 +67,6 @@ import {
   getLocalSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
-  saveLocalCompanyProfile,
   saveLocalSeniorProfile,
   type CompanyProfileData,
   type SeniorProfileData,
