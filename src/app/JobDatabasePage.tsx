@@ -491,21 +491,44 @@ function DetailBulletList({ items, tone = 'mint' }: { items?: string[]; tone?: '
   );
 }
 
-function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSummary }) {
+export function TaskStack({ items }: { items?: string[] }) {
+  return (
+    <ul
+      aria-label="실제로 하는 일"
+      className="list-none overflow-hidden rounded-lg border border-[#E0D9C8]/80 bg-[#F8FCFB]"
+      data-testid="posting-task-stack"
+    >
+      {(items ?? []).map((item) => (
+        <li
+          className="grid grid-cols-[4px_minmax(0,1fr)] items-stretch gap-3 border-b border-[#E0D9C8]/80 px-3 py-2.5 last:border-b-0"
+          data-testid="posting-task-row"
+          key={item}
+        >
+          <span aria-hidden="true" className="my-0.5 rounded-sm bg-[#173F3A]" />
+          <span className="min-w-0 break-words text-[13px] font-semibold leading-6 text-[#17212B]">
+            {item}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSummary }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[15px] font-extrabold leading-6 text-[#17212B]">{summary.summary}</p>
       {summary.hasSourceBackedWork ? (
         <div>
           <p className="text-[11px] font-extrabold tracking-[0.08em] text-[#4B756E]">실제로 하는 일</p>
-          <div className="mt-2"><DetailBulletList items={summary.duties} /></div>
+          <div className="mt-2"><TaskStack items={summary.duties} /></div>
         </div>
       ) : null}
-      <p className="rounded-lg bg-[#F8FCFB] px-3 py-2 text-[12px] font-semibold leading-5 text-[#4B5768]">
-        {summary.hasSourceBackedWork
-          ? summary.evidenceLabel
-          : '상세 업무는 공고에 충분히 적혀 있지 않습니다. 아래 조건을 확인해 지원 여부를 판단해 주세요.'}
-      </p>
+      {!summary.hasSourceBackedWork ? (
+        <p className="rounded-lg bg-[#F8FCFB] px-3 py-2 text-[12px] font-semibold leading-5 text-[#4B5768]">
+          상세 업무는 공고에 충분히 적혀 있지 않습니다. 아래 조건을 확인해 지원 여부를 판단해 주세요.
+        </p>
+      ) : null}
       {!summary.hasSourceBackedWork ? (
         <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
           {summary.facts.map((fact) => (
@@ -553,7 +576,7 @@ function shouldShowScoreBadge(
   return isPostingPreferred;
 }
 
-function PostingCard({
+export function PostingCard({
   activePrimaryCategory,
   experienceCard,
   onApply,
@@ -624,9 +647,12 @@ function PostingCard({
 
   return (
     <article
+      aria-current={selected ? 'true' : undefined}
       className={cn(
         'w-full max-w-full overflow-hidden cursor-pointer rounded-2xl border bg-white p-4 text-left shadow-xs transition hover:shadow-md min-w-0',
-        selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/10' : 'border-[#E0D9C8]',
+        selected
+          ? 'border-[#BBD5CE] bg-[#F4F9F8] shadow-[inset_3px_0_0_#173F3A,0_1px_2px_rgba(23,63,58,0.08)]'
+          : 'border-[#E0D9C8]',
       )}
       onClick={onSelect}
     >
@@ -663,7 +689,7 @@ function PostingCard({
       {/* Position Title */}
       <h3 className="mt-2.5 text-[16.5px] font-extrabold leading-snug text-[#17212B] min-w-0 break-keep overflow-hidden">
         <button
-          className="text-left hover:text-[#173F3A] transition-colors line-clamp-2"
+          className="line-clamp-2 rounded-sm text-left transition-colors hover:text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
           onClick={(event) => {
             event.stopPropagation();
             onSelect();
@@ -691,17 +717,16 @@ function PostingCard({
         ))}
       </div>
 
-      {/* Match Highlight Callout */}
-      <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-[#F4F9F8] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#173F3A] min-w-0 overflow-hidden">
-        <Sparkles className="size-3.5 shrink-0 text-[#173F3A]" />
-        <span className="truncate min-w-0 flex-1">
-          {showScore
-            ? displayReasons[0]
-            : isUnclassifiedFilter
-              ? '자동 분류 확신이 낮아 직무 확인이 필요한 공고입니다.'
-              : `선택 직종 (${getPostingOccupationLabel(posting)}) 채용 공고입니다.`}
-        </span>
-      </div>
+      {showScore ? (
+        <div className="mt-2.5 flex min-w-0 items-center gap-1.5 overflow-hidden rounded-lg border border-[#BBD5CE]/80 bg-[#F4F9F8] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#173F3A]">
+          <Sparkles className="size-3.5 shrink-0 text-[#173F3A]" />
+          <span className="min-w-0 flex-1 truncate">{displayReasons[0]}</span>
+        </div>
+      ) : isUnclassifiedFilter ? (
+        <p className="mt-2.5 text-[11.5px] font-semibold leading-5 text-[#4B756E]">
+          자동 분류 확신이 낮아 직무 확인이 필요한 공고입니다.
+        </p>
+      ) : null}
 
       {/* Clean AI Problem Statement */}
       <p className="mt-2 text-[13px] font-medium leading-relaxed text-slate-600 line-clamp-2 break-keep min-w-0">
@@ -743,7 +768,7 @@ function PostingCard({
   );
 }
 
-function DetailPanel({
+export function DetailPanel({
   activePrimaryCategory,
   experienceCard,
   onApply,
@@ -834,13 +859,13 @@ function DetailPanel({
           </div>
         </header>
       ) : (
-        <div className="flex items-start justify-between gap-3">
+        <header className="sticky top-0 z-10 -mx-4 -mt-4 flex items-start justify-between gap-3 border-b border-[#E0D9C8] bg-white/95 px-4 pb-3 pt-4 backdrop-blur-sm">
           <div>
             <p className="text-[12px] font-extrabold text-[#F06B4F]">
               {hiringStageLabels[posting.hiringStage]} ·{' '}
               {getPostingOccupationLabel(posting) || posting.industry}
             </p>
-            <h2 className="mt-1 text-[22px] font-extrabold leading-tight text-[#17212B]">
+            <h2 className="mt-1 line-clamp-2 text-[22px] font-extrabold leading-tight text-[#17212B]">
               {posting.title}
             </h2>
             <p className="mt-1 text-[13px] font-bold text-[#173F3A]">
@@ -867,7 +892,7 @@ function DetailPanel({
               직종 탐색
             </span>
           )}
-        </div>
+        </header>
       )}
 
       {!isMobile ? (
@@ -884,36 +909,27 @@ function DetailPanel({
       ) : null}
 
       {/* Personalized Profile Match Analysis */}
-      {role === 'senior' ? (
+      {role === 'senior' && showScore ? (
         <div className="mt-4 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-3.5 flex flex-col gap-2 shadow-2xs">
           <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#173F3A]">
             <Sparkles className="size-4 text-[#173F3A]" />
-            {showScore
-              ? '내 정보 기반 적합도 분석'
-              : isUnclassifiedFilter
-                ? '직무 분류 확인 안내'
-                : '선택 직종 탐색 안내'}
+            내 정보 기반 적합도 분석
           </div>
           <div className="flex flex-col gap-1 text-xs">
-            {showScore ? (
-              displayReasons.map((reason, idx) => (
-                <p key={idx} className="font-semibold text-[#17212B] flex items-center gap-1">
-                  <span>•</span>
-                  <span>{reason}</span>
-                </p>
-              ))
-            ) : (
-              <p className="font-semibold text-[#17212B] flex items-center gap-1">
+            {displayReasons.map((reason, idx) => (
+              <p key={idx} className="flex items-center gap-1 font-semibold text-[#17212B]">
                 <span>•</span>
-                <span>
-                  {isUnclassifiedFilter
-                    ? '자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.'
-                    : `선택하신 ${getPostingOccupationLabel(posting)} 직종의 채용 공고를 탐색 중입니다.`}
-                </span>
+                <span>{reason}</span>
               </p>
-            )}
+            ))}
           </div>
         </div>
+      ) : null}
+
+      {role === 'senior' && !showScore && isUnclassifiedFilter ? (
+        <p className="mt-4 border-l-2 border-[#7AA99E] pl-2.5 text-[12px] font-semibold leading-5 text-[#4B756E]">
+          자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.
+        </p>
       ) : null}
 
       {posting.source === 'worknet' ? (

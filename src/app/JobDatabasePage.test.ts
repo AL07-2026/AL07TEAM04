@@ -9,7 +9,14 @@ import {
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
 } from '@/app/jobDatabaseProjectVisibility';
-import { CategoryPickerDialog, type FilterOption } from '@/app/JobDatabasePage';
+import {
+  CategoryPickerDialog,
+  DetailPanel,
+  PostingCard,
+  PostingWorkSummaryContent,
+  type FilterOption,
+} from '@/app/JobDatabasePage';
+import type { PostingWorkSummary } from '@/services/postingWorkSummary';
 
 const companyProject: JobPosting = {
   id: 'company-project-1',
@@ -74,6 +81,102 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       }),
     ).toBe(true);
     expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
+  });
+});
+
+const sourceBackedSummary: PostingWorkSummary = {
+  duties: ['업무 흐름을 정리하는 일', '운영 체계 만들기', '협업 일정을 조율하는 일'],
+  evidence: [],
+  evidenceLabel: '공고에 명시된 업무를 바탕으로 정리했어요.',
+  facts: [],
+  hasSourceBackedWork: true,
+  items: [],
+  summary: '업무 흐름을 정리하는 일과 운영 체계 만들기를 함께 맡아요.',
+};
+
+describe('공고 실제 업무의 task stack 표현', () => {
+  it('source-backed 업무를 순서가 보존된 정적 semantic list로 보여주고 일반 provenance 문구는 숨긴다', () => {
+    render(createElement(PostingWorkSummaryContent, { summary: sourceBackedSummary }));
+
+    const stack = screen.getByRole('list', { name: '실제로 하는 일' });
+    const rows = screen.getAllByTestId('posting-task-row');
+    expect(rows).toHaveLength(3);
+    expect(rows.map((row) => row.textContent)).toEqual(sourceBackedSummary.duties);
+    expect(stack).toHaveClass('list-none');
+    expect(stack.innerHTML).not.toContain('rounded-full');
+    const firstRow = rows.at(0);
+    if (!firstRow) throw new Error('첫 번째 task row를 찾지 못했습니다.');
+    expect(firstRow.querySelector('[aria-hidden="true"]')).toHaveClass('rounded-sm');
+    expect(firstRow.querySelector('span:last-child')).toHaveClass('break-words');
+    expect(screen.queryByText('공고에 명시된 업무를 바탕으로 정리했어요.')).toBeNull();
+  });
+
+  it('한 개의 길게 줄바꿈되는 업무도 clip 없이 같은 task row로 유지한다', () => {
+    const longDuty = '여러 이해관계자의 일정과 운영 기준을 함께 정리하고 공유하는 업무를 담당합니다.';
+    render(
+      createElement(PostingWorkSummaryContent, {
+        summary: { ...sourceBackedSummary, duties: [longDuty] },
+      }),
+    );
+
+    expect(screen.getAllByTestId('posting-task-row')).toHaveLength(1);
+    expect(screen.getByText(longDuty)).toHaveClass('break-words');
+  });
+});
+
+describe('선택된 프로젝트 카드의 조용한 강조', () => {
+  it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
+    const { container, rerender } = render(
+      createElement(PostingCard, {
+        onSelect: vi.fn(),
+        posting: companyProject,
+        selected: false,
+      }),
+    );
+    const unselected = container.querySelector('article')!;
+    expect(unselected).not.toHaveAttribute('aria-current');
+    expect(unselected.className).not.toContain('inset_3px');
+
+    rerender(
+      createElement(PostingCard, {
+        onSelect: vi.fn(),
+        posting: companyProject,
+        selected: true,
+      }),
+    );
+    const selected = container.querySelector('article')!;
+    expect(selected).toHaveAttribute('aria-current', 'true');
+    expect(selected.className).toContain('inset_3px');
+    expect(screen.getByRole('button', { name: companyProject.title })).toHaveClass('focus-visible:ring-2');
+  });
+});
+
+describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
+  it('정상 탐색 상태에는 양성 안내를 만들지 않고, desktop title은 하나의 sticky header에만 둔다', () => {
+    render(
+      createElement(DetailPanel, {
+        activePrimaryCategory: 'all_db',
+        posting: companyProject,
+        role: 'senior',
+      }),
+    );
+
+    expect(screen.queryByText('선택 직종 탐색 안내')).toBeNull();
+    expect(screen.queryByText(/채용 공고를 탐색 중입니다/)).toBeNull();
+    expect(screen.getAllByRole('heading', { name: companyProject.title })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: companyProject.title }).closest('header')).toHaveClass('sticky', 'top-0');
+  });
+
+  it('기타 직무 예외에서는 compact mismatch 안내를 유지한다', () => {
+    render(
+      createElement(DetailPanel, {
+        activePrimaryCategory: 'unclassified',
+        posting: { ...companyProject, occupationClassificationStatus: 'ambiguous' },
+        role: 'senior',
+      }),
+    );
+
+    expect(screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.')).toBeTruthy();
   });
 });
 
