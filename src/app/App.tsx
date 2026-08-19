@@ -90,12 +90,14 @@ export function App() {
   const [router] = useState(createAppRouter);
 
   return (
-    <AuthProvider>
-      <ViewportProvider>
-        <Suspense fallback={<RouteLoadingFallback />}>
-          <RouterProvider router={router} />
-        </Suspense>
-      </ViewportProvider>
-    </AuthProvider>
+    <div className="eojob-readable">
+      <AuthProvider>
+        <ViewportProvider>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </ViewportProvider>
+      </AuthProvider>
+    </div>
   );
 }
