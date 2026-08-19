@@ -35,69 +35,170 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
   let ps = typeof posting.problemStatement === 'string' ? posting.problemStatement.trim() : '';
 
   ps = ps.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤)\]\s*/g, '').trim();
-  ps = ps.replace(/\s*채용\s*채용$/g, ' 채용').trim();
+  ps = ps.replace(/^\[[^\]]+\]\s*/g, '').trim();
+  ps = ps.replace(/\s*채용\s*채용$/g, '').trim();
+  ps = ps.replace(/\s*채용입니다\.?$/g, '').trim();
+  ps = ps.replace(/\s*모집합니다\.?\s*(?:채용)?$/g, '').trim();
 
   const title = typeof posting.title === 'string' ? posting.title.trim() : '';
   const companyName = typeof posting.companyName === 'string' ? posting.companyName.trim() : '';
   const industry = typeof posting.industry === 'string' ? posting.industry.trim() : '';
   const category = posting.category || (posting.occupationCategory ? occupationToProjectCategory[posting.occupationCategory] : undefined) || 'operations';
 
+  // Strip company name prefix if present in problemStatement
+  if (companyName) {
+    const safeComp = companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    ps = ps.replace(new RegExp(`^(?:\\(주\\)\\s*)?${safeComp}(?:의|에서|\\s+)+`, 'i'), '').trim();
+    ps = ps.replace(new RegExp(`^${safeComp}\\s*`, 'i'), '').trim();
+  }
+
+  // Strip title prefix or quote prefix if present in problemStatement
+  if (title) {
+    const safeTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    ps = ps.replace(new RegExp(`^['"‘“]?${safeTitle}['"’”]?\\s*(?:주요\\s*과제|과제|프로젝트)?[:\\s]*`, 'i'), '').trim();
+    ps = ps.replace(/^주요\s*과제[:\s]*/i, '').trim();
+    ps = ps.replace(/\s*과제\s*해결입니다\.?$/i, '').trim();
+  }
+
   const isDryBoilerplate =
     !ps ||
-    ps === `${companyName}의 ${title} 채용` ||
-    ps === `${title} 채용` ||
+    ps.length < 8 ||
+    ps === title ||
     ps === `${companyName}의 ${title}` ||
-    (ps.endsWith('채용입니다.') && ps.includes('프로젝트 해결을 위한 전문 인재 채용입니다.')) ||
-    (ps.endsWith('채용입니다.') && ps.includes('공공 프로젝트 핵심 인재 채용입니다.'));
+    (companyName && title && ps.includes(companyName) && ps.includes(title));
 
   if (!isDryBoilerplate) {
+    if (!ps.endsWith('.') && !ps.endsWith('다')) {
+      ps += ' 프로젝트입니다.';
+    }
     return ps;
   }
 
-  const companyStr = companyName ? `${companyName}의 ` : '';
-  const indStr = industry && !['업종 정보 미제공', '경영/일반', '공공행정/경영'].includes(industry) ? `[${industry}] ` : '';
-  const titleLower = `${title} ${industry}`.toLowerCase();
+  const titleLower = `${title} ${industry} ${ps}`.toLowerCase();
 
   switch (category) {
     case 'dev-engineering':
     case 'legacy-modernization':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 기존 시스템 고도화 및 레거시 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 엔지니어링 프로젝트입니다.`;
+      return '기존 시스템 고도화, 레거시 개선 및 개발 환경 표준화를 통해 시스템 안정성 및 생산성을 극대화하는 엔지니어링 프로젝트입니다.';
+
     case 'design-brand':
+      if (/모션그래픽|모션|영상|광고\s*영상|미디어|애니메이션|pd|비디오|youtube|유튜브|방송/.test(titleLower)) {
+        return '영화·드라마·광고 영상의 모션그래픽 연출 및 시각적 완성도가 높은 비주얼 미디어 콘텐츠를 제작하는 프로젝트입니다.';
+      }
+      if (/인테리어|공간|건축|시공|모델하우스|전시|무대|리하우스|가구\s*설계/.test(titleLower)) {
+        return '공간 인테리어 설계 및 시공 품질 관리 프로세스를 표준화하여 공간 가치와 시공 완성도를 높이는 프로젝트입니다.';
+      }
+      if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템|플랫폼/.test(titleLower)) {
+        return '디지털 UX/UI 디자인 시스템 구축 및 사용자 경험 모델을 설계하여 제품 완성도를 높이는 프로젝트입니다.';
+      }
       if (/편집|인쇄|출판|패키지|시각|그래픽|디지털인쇄|디지털 인쇄/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 시각/인쇄 디자인 표준 가이드라인 정립 및 결과물 제작 품질을 향상하는 프로젝트입니다.`;
+        return '시각 및 인쇄 디자인 표준 가이드라인 정립과 가공·제작 결과물의 품질을 고도화하는 프로젝트입니다.';
       }
-      if (/인테리어|공간|건축|시공|모델하우스|전시|무대/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 공간 인테리어 설계 및 시공 품질 정립을 위한 마감 제작 프로젝트입니다.`;
-      }
-      if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 디지털 UX/UI 디자인 시스템 수립 및 사용자 경험을 개선하는 프로젝트입니다.`;
-      }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 기업 브랜드 아이덴티티 수립 및 실무 디자인 제작 품질을 강화하는 프로젝트입니다.`;
+      return '기업 브랜드 아이덴티티 수립 및 실무 디자인 시스템의 완성도를 강화하는 브랜드 리디자인 프로젝트입니다.';
+
     case 'marketing-sales':
     case 'growth':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 신규 타깃 마케팅 전략 수립 및 세일즈 파이프라인 개척을 통해 지속 가능한 매출 성장을 달성하는 마케팅 프로젝트입니다.`;
+      return '신규 타깃 마케팅 전략 수립 및 세일즈 파이프라인 개척을 통해 지속 가능한 매출 성장을 달성하는 마케팅 프로젝트입니다.';
+
     case 'hr-strategy':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 전사 조직 체계 정비, 평가/보상 시스템 고도화 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.`;
+      return '전사 조직 체계 정비, 평가·보상 시스템 고도화 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.';
+
     case 'r-and-d-manufacturing':
-      if (/설계|기계|cad|3d|도면/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 제품 메커니즘 설계 고도화 및 도면 표준화를 통해 품질과 생산 효율성을 높이는 설계 프로젝트입니다.`;
+      if (/설계|기계|cad|3d|도면|기구/.test(titleLower)) {
+        return '제품 메커니즘 설계 고도화 및 도면 표준화를 통해 구조 안정성과 생산 효율성을 높이는 설계 프로젝트입니다.';
       }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 스마트 팩토리 품질 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
+      return '스마트 팩토리 공정 자동화, 생산 수율 향상 및 품질 인증 체계를 정립하는 생산 공정 최적화 프로젝트입니다.';
+
     case 'ai-automation':
     case 'data-platform':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 사내 반복 업무의 AI/RPA 자동화 도입 및 데이터 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
+      return '사내 반복 업무의 AI/RPA 자동화 도입 및 데이터 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축 프로젝트입니다.';
+
     case 'security':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 정보보호 컴플라이언스 준수, 보안 위험 진단 및 사내 인프라 보안 관리 체계를 고도화하는 리스크 프로젝트입니다.`;
+      return '정보보호 컴플라이언스 준수, 보안 위험 진단 및 사내 인프라 보안 관리 체계를 고도화하는 보안 프로젝트입니다.';
+
     case 'operations':
     default:
       if (/총무|자산|시설/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 전사 총무/시설 관리 프로세스 표준화 및 자산 운영 효율성을 극대화하는 프로젝트입니다.`;
+        return '전사 총무·시설 관리 프로세스 표준화 및 자산 운영 효율성을 극대화하는 프로젝트입니다.';
       }
       if (/인테리어|설계|시공|가구/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 공간 인테리어 설계 및 현장 시공 운영 품질을 향상하는 실무 프로젝트입니다.`;
+        return '공간 인테리어 설계 및 시공 운영 품질 프로세스를 표준화하는 프로젝트입니다.';
       }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 전사 운영 프로세스 리드타임 단축, 현장 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.`;
+      return '전사 운영 프로세스 리드타임 단축 및 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.';
   }
+}
+
+export const formatCleanProblemStatement = sanitizeAndEnhanceProblemStatement;
+
+export function formatSimpleLocation(rawLocation?: string): string {
+  if (!rawLocation || typeof rawLocation !== 'string') return '근무지 미지정';
+  const loc = rawLocation.trim();
+
+  // Extract Region + City/District/County
+  const regionMatch = loc.match(/(서울|경기|인천|부산|대구|광주|대전|울산|세종|강원|충북|충남|전북|전남|경북|경남|제주)\s*([가-힣]+(?:시|군|구))/);
+  if (regionMatch) {
+    return `${regionMatch[1]} ${regionMatch[2]}`;
+  }
+
+  return loc.split(/\s+/).slice(0, 2).join(' ');
+}
+
+export function formatSimpleWorkSchedule(rawSchedule?: string): string {
+  if (!rawSchedule || typeof rawSchedule !== 'string') return '';
+  const sch = rawSchedule.trim();
+
+  // Pattern: "(근무시간) (오전) 10시 00분 ~ (오후) 7시 00분" or "(오전) 9시 00분 ~ (오후) 6시 00분"
+  const timeMatch = sch.match(/(?:\(오전\)\s*)?(\d{1,2})시(?:\s*(\d{1,2})분)?\s*~\s*(?:\(오후\)\s*)?(\d{1,2})시(?:\s*(\d{1,2})분)?/);
+  if (timeMatch) {
+    let startH = parseInt(timeMatch[1] || '0', 10);
+    const startM = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+    let endH = parseInt(timeMatch[3] || '0', 10);
+    const endM = timeMatch[4] ? parseInt(timeMatch[4], 10) : 0;
+
+    if (sch.includes('(오후)') || (endH > 0 && endH < 12)) {
+      if (endH < 12) endH += 12;
+    }
+    if (sch.includes('(오전)') && startH === 12) {
+      startH = 0;
+    }
+
+    const startStr = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
+    const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+    return `${startStr} ~ ${endStr}`;
+  }
+
+  const dayMatch = sch.match(/주\s*(\d)일/);
+  if (dayMatch) {
+    const isFlexible = /유연/.test(sch);
+    return `주 ${dayMatch[1]}일${isFlexible ? ' (유연근무)' : ''}`;
+  }
+
+  return sch
+    .replace(/\(근무시간\)\s*/g, '')
+    .replace(/\(오전\)\s*/g, '')
+    .replace(/\(오후\)\s*/g, '')
+    .trim();
+}
+
+export function formatSimpleSalary(rawSalary?: string): string {
+  if (!rawSalary || typeof rawSalary !== 'string') return '';
+  let sal = rawSalary.trim();
+
+  // Pattern: "최소연봉 / 2600만원" or "최소연봉 / 3000만원 - 면접 후 협의가능"
+  const minAnnualMatch = sal.match(/최소연봉\s*\/\s*(\d+)만원(?:\s*-\s*(.*))?/);
+  if (minAnnualMatch) {
+    const amount = parseInt(minAnnualMatch[1] || '0', 10).toLocaleString('ko-KR');
+    const note = minAnnualMatch[2] ? minAnnualMatch[2].trim() : '';
+    if (note.includes('면접 후 협의') || note.includes('협의')) {
+      return `연 ${amount}만원 (협의가능)`;
+    }
+    return `연 ${amount}만원 이상`;
+  }
+
+  sal = sal.replace(/월\s*(\d+(?:,\d+)?)\s*만원\s*~\s*(\d+(?:,\d+)?)\s*만원/g, '월 $1만 ~ $2만원');
+  sal = sal.replace(/^최소연봉\s*\/\s*/g, '');
+
+  return sal;
 }
 
 /**

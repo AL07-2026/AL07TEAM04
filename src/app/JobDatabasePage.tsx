@@ -69,6 +69,11 @@ import {
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { sendApplicationEmailToManager } from '@/services/emailService';
+import {
+  formatCleanProblemStatement,
+  formatSimpleLocation,
+  formatSimpleSalary,
+} from '@/services/dataSyncService';
 import { getLatestUserExperienceCard } from '@/services/interviewService';
 import {
   searchFullJobDatabase,
@@ -392,17 +397,9 @@ function PostingCard({
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
 
   // Clean problem statement text to avoid repeating company name and title
-  let cleanProblemStatement = posting.problemStatement || '';
-  if (cleanProblemStatement.includes(`${posting.companyName}의`) && cleanProblemStatement.includes('과제 해결')) {
-    const safeCompany = posting.companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    cleanProblemStatement = cleanProblemStatement
-      .replace(/^\[[^\]]+\]\s*/g, '')
-      .replace(new RegExp(`^${safeCompany}의\\s*.*과제\\s*해결입니다\\.?`, 'i'), '')
-      .trim();
-  }
-  if (!cleanProblemStatement || cleanProblemStatement.length < 8) {
-    cleanProblemStatement = `${getPostingOccupationLabel(posting)} 분야 주요 업무 프로세스를 분석·개선하고 시니어 인재의 실무 노하우를 발휘하는 핵심 프로젝트입니다.`;
-  }
+  const cleanProblemStatement = formatCleanProblemStatement(posting);
+  const simpleLocation = formatSimpleLocation(posting.location);
+  const simpleSalary = formatSimpleSalary(posting.salaryRange);
 
   // Pick max 3 essential badges so top never clutters into multiple rows
   const essentialBadges: { isMint?: boolean; label: string }[] = [];
@@ -516,7 +513,7 @@ function PostingCard({
       <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-semibold text-slate-500 min-w-0 overflow-hidden break-keep">
         <span className="inline-flex items-center gap-1 min-w-0 max-w-[65%] sm:max-w-none truncate">
           <MapPin className="size-3.5 shrink-0 text-slate-400" />
-          <span className="truncate">{posting.location}</span>
+          <span className="truncate">{simpleLocation}</span>
         </span>
         <span className="shrink-0">·</span>
         <span className="shrink-0">{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
@@ -526,7 +523,7 @@ function PostingCard({
 
       {/* Bottom Bar: Salary + Apply Button */}
       <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 min-w-0 w-full">
-        <span className="text-[13px] font-extrabold text-[#F06B4F] truncate min-w-0 pr-2">{posting.salaryRange}</span>
+        <span className="text-[13px] font-extrabold text-[#F06B4F] truncate min-w-0 pr-2">{simpleSalary}</span>
         <button
           className={cn(
             'inline-flex shrink-0 items-center gap-1 rounded-xl px-4 py-1.5 text-[13px] font-extrabold text-white transition-all duration-200 cursor-pointer shadow-2xs',

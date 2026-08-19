@@ -49,6 +49,12 @@ import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/inte
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import { createProject, fetchProjectById, fetchProjects } from '@/services/projectService';
 import {
+  formatCleanProblemStatement,
+  formatSimpleLocation,
+  formatSimpleSalary,
+  formatSimpleWorkSchedule,
+} from '@/services/dataSyncService';
+import {
   getLocalCompanyProfile,
   getLocalSeniorProfile,
   resolveSeniorProfile,
@@ -706,19 +712,27 @@ export function SeniorHomePage() {
             </div>
           ) : recommendedJobs.length > 0 ? (
             <>
-              {recommendedJobs.map((job) => (
+              {recommendedJobs.map((job) => {
+                const cleanProblem = formatCleanProblemStatement(job);
+                const simpleLoc = formatSimpleLocation(job.location);
+                const simpleSch = formatSimpleWorkSchedule(job.workSchedule);
+                const simpleSal = formatSimpleSalary(job.salaryRange);
+                const metaStr = `${simpleLoc}${simpleSch ? ` · ${simpleSch}` : ''}`;
+
+                return (
                   <HomeRecommendationRow
                     company={job.companyName}
                     fitScore={job.seniorFitScore}
                     isMobile={isMobile}
                     key={job.id}
-                    meta={`${job.location}${job.workSchedule ? ` · ${job.workSchedule}` : ''}`}
+                    meta={metaStr}
                     onClick={() => void navigate('/senior/projects')}
-                    problem={job.problemStatement}
-                    salary={job.salaryRange}
+                    problem={cleanProblem}
+                    salary={simpleSal}
                     title={job.title}
                   />
-                ))}
+                );
+              })}
 
               {/* Home Pagination Controls */}
               {homeTotalPages > 1 && (
