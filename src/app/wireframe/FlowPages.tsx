@@ -62,9 +62,9 @@ import {
   uploadProjectAttachments,
 } from '@/services/projectService';
 import {
-  getCompanyProfile,
   getLocalCompanyProfile,
   getLocalSeniorProfile,
+  resolveCompanyProfile,
   resolveSeniorProfile,
   saveLocalCompanyProfile,
   saveLocalSeniorProfile,
@@ -2061,6 +2061,9 @@ export function CompanyHomePage() {
   const isMobile = mode === 'mobile';
   const [companyProjects, setCompanyProjects] = useState<JobPosting[]>([]);
   const [companyProposals, setCompanyProposals] = useState<UserProposal[]>([]);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
+    getLocalCompanyProfile(user?.uid),
+  );
 
   useEffect(() => {
     void (async () => {
@@ -2077,6 +2080,12 @@ export function CompanyHomePage() {
     })();
   }, [user?.uid]);
 
+  useEffect(() => {
+    void resolveCompanyProfile(user?.uid).then((profile) => {
+      if (profile) setCompanyProfile(profile);
+    });
+  }, [user?.uid]);
+
   const latestProject = companyProjects[0];
   const latestProjectProposalCount = latestProject
     ? companyProposals.filter((proposal) => proposal.projectId === latestProject.id).length
@@ -2090,7 +2099,7 @@ export function CompanyHomePage() {
       }
     : null;
   const companyName =
-    getLocalCompanyProfile(user?.uid)?.companyName ||
+    companyProfile?.companyName ||
     (user?.name && user.name !== '채용담당자' ? user.name : '') ||
     '채용';
 
@@ -2944,9 +2953,8 @@ export function CompanyProfilePage() {
       if (localProfile) setCompanyProfile(localProfile);
       if (!user?.uid) return;
 
-      const remoteProfile = await getCompanyProfile(user.uid);
+      const remoteProfile = await resolveCompanyProfile(user.uid);
       if (!remoteProfile) return;
-      saveLocalCompanyProfile(remoteProfile, user.uid);
       setCompanyProfile(remoteProfile);
     })();
   }, [user?.uid]);
@@ -2961,9 +2969,9 @@ export function CompanyProfilePage() {
     });
   }, [user?.uid]);
 
-  const companyName = companyProfile?.companyName || user?.name || '기업 회원';
+  const companyName = companyProfile?.companyName || '회사명 미입력';
   const managerName = companyProfile?.managerName || '담당자 정보 미입력';
-  const email = companyProfile?.email || user?.email || '이메일 정보 미입력';
+  const email = companyProfile?.email || '이메일 정보 미입력';
   const companyAddress = companyProfile?.companyAddress || '주소 정보 미입력';
   const phone = companyProfile?.phone || '연락처 정보 미입력';
   const industry = companyProfile?.industry || '산업 정보 미입력';
