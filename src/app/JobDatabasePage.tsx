@@ -308,15 +308,15 @@ export function CategoryPickerDialog({
 }: {
   choices: FilterOption[];
   onClose: () => void;
-  onSelect: (category: CategoryFilter) => void;
+  onSelect: (category: CategoryFilter, source: 'click' | 'enter') => void;
   selectedCategory: CategoryFilter;
   title: string;
 }) {
   const [query, setQuery] = useState('');
   const visibleChoices = searchProjectFilterChoices(choices, query);
 
-  function selectChoice(choice: FilterOption) {
-    onSelect(choice.id);
+  function selectChoice(choice: FilterOption, source: 'click' | 'enter' = 'click') {
+    onSelect(choice.id, source);
     setQuery('');
   }
 
@@ -324,7 +324,7 @@ export function CategoryPickerDialog({
     if (event.key !== 'Enter') return;
     event.preventDefault();
     event.stopPropagation();
-    if (visibleChoices.length === 1) selectChoice(visibleChoices[0]!);
+    if (visibleChoices.length === 1) selectChoice(visibleChoices[0]!, 'enter');
   }
 
   return (
@@ -372,10 +372,7 @@ export function CategoryPickerDialog({
         </label>
         <div className="mt-4">
           {query.trim() ? null : (
-            <p className="mb-2 text-[12px] font-extrabold text-[#4B756E]">전체</p>
-          )}
-          {query.trim() ? null : (
-            <div className="mb-4" role="group">
+            <div aria-label="전체 직무" className="mb-4" role="group">
               {visibleChoices.filter((choice) => choice.id === allDatabase || choice.id === all).map((choice) => (
                 <CategoryFilterButton badge={choice.badge} key={choice.id} label="전체" onClick={() => selectChoice(choice)} selected={selectedCategory === choice.id} />
               ))}
@@ -1232,6 +1229,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isDetailFiltersExpanded, setIsDetailFiltersExpanded] = useState(false);
   const categoryPickerTriggerRef = useRef<HTMLButtonElement>(null);
+  const suppressPickerEnterKeyUpRef = useRef(false);
   const [applicationFiles, setApplicationFiles] = useState<File[]>([]);
   const [applicantNote, setApplicantNote] = useState('');
   const [applicationError, setApplicationError] = useState('');
@@ -1368,6 +1366,21 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
     };
   }, [role, user?.uid, worknetReloadKey]);
+
+  useEffect(() => {
+    const containFollowUpPickerEnter = (event: globalThis.KeyboardEvent) => {
+      if (!suppressPickerEnterKeyUpRef.current || event.key !== 'Enter') return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (event.type === 'keyup') suppressPickerEnterKeyUpRef.current = false;
+    };
+    document.addEventListener('keypress', containFollowUpPickerEnter, true);
+    document.addEventListener('keyup', containFollowUpPickerEnter, true);
+    return () => {
+      document.removeEventListener('keypress', containFollowUpPickerEnter, true);
+      document.removeEventListener('keyup', containFollowUpPickerEnter, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (role !== 'senior' || !isSeniorProfileResolved) return undefined;
@@ -2103,7 +2116,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     window.setTimeout(() => categoryPickerTriggerRef.current?.focus(), 0);
   }
 
-  function selectCategoryFromPicker(value: CategoryFilter) {
+  function selectCategoryFromPicker(value: CategoryFilter, source: 'click' | 'enter') {
+    if (source === 'enter') {
+      suppressPickerEnterKeyUpRef.current = true;
+      window.setTimeout(() => {
+        suppressPickerEnterKeyUpRef.current = false;
+      }, 500);
+    }
     changeCategory(value);
     closeCategoryPicker();
   }

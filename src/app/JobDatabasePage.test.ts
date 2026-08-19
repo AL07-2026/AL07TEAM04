@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { createElement } from 'react';
+import { createElement, type ChangeEvent, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { JobPosting } from '@/data/jobPostings';
@@ -81,7 +81,8 @@ const pickerChoices: FilterOption[] = [
   { id: 'all_db', label: '전체' },
   { id: 'marketing-sales', label: '마케팅·홍보·조사', badge: '1순위' },
   { id: 'accounting-tax-finance', label: '회계·세무·재무' },
-  { id: 'planning-strategy', label: '회계 기획' },
+  { id: 'planning-strategy', label: '기획 전략' },
+  { id: 'product-planning-md', label: '기획 운영' },
   { id: 'unclassified', label: '기타 직무' },
 ];
 
@@ -105,13 +106,13 @@ describe('직무 선택 picker의 실제 DOM 흐름', () => {
     fireEvent.change(input, { target: { value: '세무' } });
     expect(screen.getByRole('button', { name: /회계·세무·재무/ })).toBeTruthy();
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance');
+    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance', 'enter');
   });
 
   it('여러 결과 또는 결과 없음에서 Enter는 선택이나 닫힘을 만들지 않는다', () => {
     const { onClose, onSelect } = renderPicker();
     const input = screen.getByPlaceholderText('직무명으로 찾기');
-    fireEvent.change(input, { target: { value: '회계' } });
+    fireEvent.change(input, { target: { value: '기획' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSelect).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
@@ -128,15 +129,74 @@ describe('직무 선택 picker의 실제 DOM 흐름', () => {
     fireEvent.mouseDown(container.querySelector('#project-category-picker')!);
     expect(onClose).toHaveBeenCalledTimes(2);
     fireEvent.click(screen.getByRole('button', { name: /회계·세무·재무/ }));
-    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance');
+    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance', 'click');
   });
 
   it('희망 직무와 다른 직무를 분리하고, 전체·기타 직무와 선택 표시를 보여준다', () => {
     renderPicker();
     expect(screen.getByText('내 희망 직무')).toBeTruthy();
     expect(screen.getByText('다른 직무')).toBeTruthy();
-    expect(screen.getAllByText('전체').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('전체')).toHaveLength(1);
     expect(screen.getByText('기타 직무')).toBeTruthy();
     expect(screen.getByText('✓')).toBeTruthy();
+  });
+});
+
+function PickerPageHarness() {
+  const [globalQuery, setGlobalQuery] = useState('서울');
+  const [isOpen, setIsOpen] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<FilterOption['id']>('all_db');
+  return createElement(
+    'div',
+    null,
+    createElement('input', {
+      'aria-label': 'global project search',
+      onChange: (event: ChangeEvent<HTMLInputElement>) => setGlobalQuery(event.target.value),
+      value: globalQuery,
+    }),
+    createElement('output', { 'data-testid': 'selected-category' }, selectedCategory),
+    isOpen
+      ? createElement(CategoryPickerDialog, {
+          choices: pickerChoices,
+          onClose: () => setIsOpen(false),
+          onSelect: (category) => {
+            setSelectedCategory(category);
+            setIsOpen(false);
+          },
+          selectedCategory,
+          title: '직무 선택',
+        })
+      : null,
+  );
+}
+
+function getInputByLabel(label: string) {
+  const element = screen.getByLabelText(label);
+  if (!(element instanceof HTMLInputElement)) throw new Error(`${label} input을 찾지 못했습니다.`);
+  return element;
+}
+
+describe('picker와 global search의 전체 DOM lifecycle', () => {
+  it('sentinel global query는 회계 Enter 이후에도 DOM/state 모두 유지되고, picker node와 재사용되지 않는다', () => {
+    render(createElement(PickerPageHarness));
+    const globalInput = getInputByLabel('global project search');
+    const pickerInput = screen.getByPlaceholderText('직무명으로 찾기');
+    expect(pickerInput).not.toBe(globalInput);
+
+    fireEvent.change(pickerInput, { target: { value: '회계' } });
+    fireEvent.keyDown(pickerInput, { key: 'Enter' });
+    fireEvent.keyPress(pickerInput, { key: 'Enter' });
+    fireEvent.keyUp(document.body, { key: 'Enter' });
+
+    expect(screen.queryByPlaceholderText('직무명으로 찾기')).toBeNull();
+    expect(globalInput.value).toBe('서울');
+    expect(screen.getByTestId('selected-category')).toHaveTextContent('accounting-tax-finance');
+  });
+
+  it('global search itself remains controlled and normally editable', () => {
+    render(createElement(PickerPageHarness));
+    const globalInput = getInputByLabel('global project search');
+    fireEvent.change(globalInput, { target: { value: '부산' } });
+    expect(globalInput.value).toBe('부산');
   });
 });

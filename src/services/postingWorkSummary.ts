@@ -21,6 +21,8 @@ export type RoleFact = {
   text: string;
 };
 
+type FactShape = 'action-noun' | 'role-phrase' | 'sentence-like' | 'unknown-safe';
+
 const unknownValuePattern = /(미제공|원문 확인|상세 공고|협의)/;
 
 function usableValue(value?: string) {
@@ -81,11 +83,72 @@ function buildRoleFacts(posting: JobPosting): RoleFact[] {
  * A deterministic, evidence-only sentence composer. Its rhythm is warm, but every
  * work meaning comes directly from the role facts it receives.
  */
+function getFactShape(fact: string): FactShape {
+  if (/(역할|업무|일)$/.test(fact)) return 'role-phrase';
+  if (/(합니다\.|해요\.|입니다\.|됩니다\.|한다\.)$/.test(fact)) return 'sentence-like';
+  if (/[가-힣A-Za-z0-9]$/.test(fact)) return 'action-noun';
+  return 'unknown-safe';
+}
+
+function hasFinalConsonant(value: string) {
+  const lastCode = value.trim().charCodeAt(value.trim().length - 1);
+  return lastCode >= 0xac00 && lastCode <= 0xd7a3 ? (lastCode - 0xac00) % 28 !== 0 : null;
+}
+
+function attachParticle(value: string, withFinal: string, withoutFinal: string) {
+  const hasFinal = hasFinalConsonant(value);
+  return hasFinal === null ? null : `${value}${hasFinal ? withFinal : withoutFinal}`;
+}
+
+function normalizeSentenceLike(fact: string) {
+  if (fact.endsWith('합니다.')) return `${fact.slice(0, -4)}하는 일`;
+  if (fact.endsWith('해요.')) return `${fact.slice(0, -3)}하는 일`;
+  return null;
+}
+
+function isUnsafeSummary(summary: string) {
+  return (
+    !summary.trim() ||
+    /(을\(를\)|\(을\)를|이\(가\)|\(이\)가|은\(는\)|\(은\)는|와\(과\)|\(와\)과)/.test(summary) ||
+    /(역할을 맡는 역할|업무를 맡는 업무|역할[^.]{0,30}역할이에요)/.test(summary) ||
+    /\.(부터|까지|와|과|을|를)|[.!?]{2,}|\s{2,}/.test(summary)
+  );
+}
+
+function safeFallback() {
+  return '이 역할에서 맡게 될 일은 아래처럼 정리돼 있어요.';
+}
+
+/**
+ * Composes only already-grounded facts. Korean particles are used only when the
+ * final Hangul syllable makes the choice deterministic; otherwise it falls back.
+ */
 export function composeGroundedRoleSummary(duties: readonly string[]) {
   if (duties.length === 0) return '공고에 구체적인 업무 설명이 많지 않아, 확인된 내용부터 보여드릴게요.';
-  if (duties.length === 1) return `${duties[0]}을(를) 맡는 역할이에요.`;
-  if (duties.length === 2) return `${duties[0]}부터 ${duties[1]}까지 맡는 역할이에요.`;
-  return `${duties[0]}부터 ${duties.slice(1, -1).join(', ')}, ${duties.at(-1)}까지 맡는 역할이에요.`;
+  const normalized = duties.map((fact) => {
+    const shape = getFactShape(fact);
+    return shape === 'sentence-like' ? normalizeSentenceLike(fact) : shape === 'unknown-safe' ? null : fact;
+  });
+  if (normalized.some((fact) => !fact)) return safeFallback();
+
+  const facts = normalized as string[];
+  const shapes = facts.map(getFactShape);
+  let summary: string | null;
+  if (facts.length === 1 && shapes[0] === 'role-phrase') {
+    summary = `${facts[0]}이에요.`;
+  } else if (facts.length === 1) {
+    const object = attachParticle(facts[0]!, '을', '를');
+    summary = object ? `${object} 맡아요.` : null;
+  } else if (facts.length === 2) {
+    const connector = attachParticle(facts[0]!, '과', '와');
+    const object = attachParticle(facts[1]!, '을', '를');
+    summary = connector && object ? `${connector} ${object} 함께 맡아요.` : null;
+  } else {
+    const connector = attachParticle(facts[0]!, '에', '에');
+    const middle = attachParticle(facts[1]!, '과', '와');
+    summary = connector && middle ? `${connector} 더해 ${middle} ${facts[2]}까지 맡아요.` : null;
+  }
+  return summary && !isUnsafeSummary(summary) ? summary : safeFallback();
 }
 
 /**

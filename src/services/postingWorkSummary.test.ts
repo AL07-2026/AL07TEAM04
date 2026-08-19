@@ -169,4 +169,32 @@ describe('posting work summary provenance guard', () => {
       duties.forEach((duty) => expect(first).toContain(duty));
     });
   });
+
+  it('실제 Preview grammar fixtures를 조사 placeholder나 깨진 연결 없이 통역한다', () => {
+    const outputs = {
+      elleos: composeGroundedRoleSummary(['수제비누 제조', '수제비누 제조기록서 작성', '포장']),
+      homeProtector: composeGroundedRoleSummary([
+        '힘든 나날들을 보내고 있는 직장인에게 집청소, 밥을 해주고 고민을 들어주는 역할',
+      ]),
+      operatingSystem: composeGroundedRoleSummary([
+        '업무 흐름을 정리합니다.',
+        '운영 체계 만들기',
+      ]),
+    };
+
+    expect(outputs.elleos).toBe('수제비누 제조에 더해 수제비누 제조기록서 작성과 포장까지 맡아요.');
+    expect(outputs.homeProtector).toBe(
+      '힘든 나날들을 보내고 있는 직장인에게 집청소, 밥을 해주고 고민을 들어주는 역할이에요.',
+    );
+    expect(outputs.operatingSystem).toBe('업무 흐름을 정리하는 일과 운영 체계 만들기를 함께 맡아요.');
+    Object.values(outputs).forEach((summary) => {
+      expect(summary).not.toMatch(/을\(를\)|\(을\)를|이\(가\)|은\(는\)|와\(과\)|합니다\.부터|역할을 맡는 역할/);
+    });
+  });
+
+  it('지원하지 않는 문장형은 깨진 connector 대신 안전한 fallback으로 내려간다', () => {
+    expect(composeGroundedRoleSummary(['프로젝트는 안정적으로 운영됩니다.'])).toBe(
+      '이 역할에서 맡게 될 일은 아래처럼 정리돼 있어요.',
+    );
+  });
 });
