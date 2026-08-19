@@ -1,6 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createElement, type ChangeEvent, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { waitFor } from '@testing-library/react';
+
+const { mockedSearch, mockedProfile, mockedProjects, mockedExperienceCard } = vi.hoisted(() => ({
+  mockedSearch: vi.fn(),
+  mockedProfile: vi.fn(),
+  mockedProjects: vi.fn(),
+  mockedExperienceCard: vi.fn(),
+}));
+
+vi.mock('react-router', () => ({
+  useNavigate: () => vi.fn(),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+}));
+vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: { uid: 'senior-test-user' } }) }));
+vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
+vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
+vi.mock('@/services/projectService', () => ({ createProject: vi.fn(), fetchProjects: mockedProjects }));
+vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
 
 import type { JobPosting } from '@/data/jobPostings';
 import {
@@ -12,6 +30,7 @@ import {
 import {
   CategoryPickerDialog,
   DetailPanel,
+  JobDatabasePage,
   PostingCard,
   PostingWorkSummaryContent,
   type FilterOption,
@@ -164,7 +183,7 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
     expect(screen.queryByText('선택 직종 탐색 안내')).toBeNull();
     expect(screen.queryByText(/채용 공고를 탐색 중입니다/)).toBeNull();
     expect(screen.getAllByRole('heading', { name: companyProject.title })).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: companyProject.title }).closest('header')).toHaveClass('sticky', 'top-0');
+    expect(screen.getByRole('heading', { name: companyProject.title }).parentElement).toHaveClass('sticky', 'top-0');
   });
 
   it('기타 직무 예외에서는 compact mismatch 안내를 유지한다', () => {
@@ -179,6 +198,111 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
     expect(screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.')).toBeTruthy();
   });
 });
+
+describe('검색 결과 generation transition', () => {
+  it('pending 동안 stale count/list/detail을 숨기고 새 snapshot을 함께 commit한다', async () => {
+    const profile = {
+      desiredCategory: 'accounting-tax-finance',
+      desiredCategory2: 'service',
+      email: 'senior@example.com',
+      experience: '재무 운영',
+      field: '재무 운영',
+      period: '12년',
+      phone: '010-0000-0000',
+    };
+    const initialPosting = { ...companyProject, id: 'posting-a', title: '기존 결과 A' };
+    const nextPosting = { ...companyProject, id: 'posting-b', title: '새 결과 B' };
+    const result = (total: number, item: JobPosting) => ({
+      catalogTotal: 13761,
+      closingSoonTotal: 0,
+      items: [item],
+      page: 1,
+      pageSize: 12,
+      partTimeTotal: 0,
+      preferredTotal: total,
+      status: 'success' as const,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 12)),
+    });
+    let resolveNext!: (value: ReturnType<typeof result>) => void;
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch
+      .mockReset()
+      .mockResolvedValueOnce(result(64, initialPosting))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveNext = resolve; }));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: '기존 결과 A' })).toBeTruthy();
+    expect(screen.getAllByText('64').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /회계·세무·재무/ }).at(-1)!);
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(2));
+    expect(screen.queryAllByText('64')).toHaveLength(0);
+    expect(screen.getByText('업데이트 중…')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '기존 결과 A' })).toBeNull();
+
+    resolveNext(result(241, nextPosting));
+    await waitFor(() => expect(screen.getAllByText('241').length).toBeGreaterThan(0));
+    expect(screen.getByRole('button', { name: '새 결과 B' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '기존 결과 A' })).toBeNull();
+  });
+
+  it('빠른 연속 전환에서 늦은 이전 generation 응답이 현재 결과를 덮지 않는다', async () => {
+    const profile = {
+      desiredCategory: 'accounting-tax-finance',
+      email: 'senior@example.com',
+      experience: '재무 운영',
+      field: '재무 운영',
+      period: '12년',
+      phone: '010-0000-0000',
+    };
+    const resolvers: Array<(value: ReturnType<typeof makeSearchResult>) => void> = [];
+    function makeSearchResult(total: number, title: string) {
+      return {
+        catalogTotal: 13761,
+        closingSoonTotal: 0,
+        items: [{ ...companyProject, id: `posting-${total}`, title }],
+        page: 1,
+        pageSize: 12,
+        partTimeTotal: 0,
+        preferredTotal: total,
+        status: 'success' as const,
+        total,
+        totalPages: 1,
+      };
+    }
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch.mockReset().mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    await waitFor(() => expect(resolvers).toHaveLength(1));
+
+    resolveFirst(resolvers.shift(), makeSearchResult(64, '기존'));
+    await waitFor(() => expect(screen.getByRole('button', { name: '기존' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /회계·세무·재무/ }).at(-1)!);
+    await waitFor(() => expect(resolvers).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: /서비스/ }));
+    await waitFor(() => expect(resolvers).toHaveLength(2));
+
+    resolveFirst(resolvers.shift(), makeSearchResult(241, '늦은 회계'));
+    resolveFirst(resolvers.shift(), makeSearchResult(18, '최종 서비스'));
+    await waitFor(() => expect(screen.getByRole('button', { name: '최종 서비스' })).toBeTruthy());
+    expect(screen.queryByRole('button', { name: '늦은 회계' })).toBeNull();
+  });
+});
+
+function resolveFirst<T>(resolver: ((value: T) => void) | undefined, value: T) {
+  if (!resolver) throw new Error('해결할 pending search가 없습니다.');
+  resolver(value);
+}
 
 const pickerChoices: FilterOption[] = [
   { id: 'all_db', label: '전체' },

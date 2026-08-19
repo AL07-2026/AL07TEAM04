@@ -859,39 +859,39 @@ export function DetailPanel({
           </div>
         </header>
       ) : (
-        <header className="sticky top-0 z-10 -mx-4 -mt-4 flex items-start justify-between gap-3 border-b border-[#E0D9C8] bg-white/95 px-4 pb-3 pt-4 backdrop-blur-sm">
-          <div>
-            <p className="text-[12px] font-extrabold text-[#F06B4F]">
-              {hiringStageLabels[posting.hiringStage]} ·{' '}
-              {getPostingOccupationLabel(posting) || posting.industry}
-            </p>
-            <h2 className="mt-1 line-clamp-2 text-[22px] font-extrabold leading-tight text-[#17212B]">
+        <header className="pb-3">
+          <p className="text-[12px] font-extrabold text-[#F06B4F]">
+            {hiringStageLabels[posting.hiringStage]} ·{' '}
+            {getPostingOccupationLabel(posting) || posting.industry}
+          </p>
+          <div className="sticky top-0 z-10 -mx-4 mt-1 flex items-start justify-between gap-3 border-b border-[#E0D9C8] bg-white px-4 py-2">
+            <h2 className="min-w-0 line-clamp-2 text-[22px] font-extrabold leading-tight text-[#17212B]">
               {posting.title}
             </h2>
-            <p className="mt-1 text-[13px] font-bold text-[#173F3A]">
-              {posting.companyName} · {posting.companySize}
-              {posting.source === 'worknet'
-                ? posting.workSchedule
-                  ? ` · ${posting.workSchedule}`
-                  : ''
-                : ` · ${employmentTypeLabels[posting.employmentType]}`}
-            </p>
+            {showScore ? (
+              <div
+                aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
+                className={cn('shrink-0 rounded-xl border px-3 py-2 text-center', fitTone.containerClassName)}
+              >
+                <p className={cn('text-[12px] font-bold', fitTone.labelClassName)}>{fitTone.label}</p>
+                <p className={cn('text-[24px] font-extrabold', fitTone.scoreClassName)}>
+                  {displayScore}점
+                </p>
+              </div>
+            ) : (
+              <span className="shrink-0 whitespace-nowrap rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A] shadow-none cursor-default select-none">
+                직종 탐색
+              </span>
+            )}
           </div>
-          {showScore ? (
-            <div
-              aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
-              className={cn('rounded-xl border px-3 py-2 text-center', fitTone.containerClassName)}
-            >
-              <p className={cn('text-[12px] font-bold', fitTone.labelClassName)}>{fitTone.label}</p>
-              <p className={cn('text-[24px] font-extrabold', fitTone.scoreClassName)}>
-                {displayScore}점
-              </p>
-            </div>
-          ) : (
-            <span className="shrink-0 whitespace-nowrap rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A] shadow-none cursor-default select-none">
-              직종 탐색
-            </span>
-          )}
+          <p className="mt-2 text-[13px] font-bold text-[#173F3A]">
+            {posting.companyName} · {posting.companySize}
+            {posting.source === 'worknet'
+              ? posting.workSchedule
+                ? ` · ${posting.workSchedule}`
+                : ''
+              : ` · ${employmentTypeLabels[posting.employmentType]}`}
+          </p>
         </header>
       )}
 
@@ -1180,6 +1180,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [worknetFeedMessage, setWorknetFeedMessage] = useState('');
   const [worknetFeedStatus, setWorknetFeedStatus] = useState<WorknetProjectFeedStatus>('success');
   const [worknetReloadKey, setWorknetReloadKey] = useState(0);
+  const resultGenerationRef = useRef(1);
+  const [resultGeneration, setResultGeneration] = useState(1);
+  const [pendingResultGeneration, setPendingResultGeneration] = useState<number | null>(null);
   const [publishedCompanyProjects, setPublishedCompanyProjects] = useState<JobPosting[]>([]);
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
   const [isSeniorProfileResolved, setIsSeniorProfileResolved] = useState(role !== 'senior');
@@ -1421,6 +1424,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         setPostings(visibleCompanyProjects);
         setSelectedId(visibleCompanyProjects[0]?.id ?? '');
         setServerSearchMeta(null);
+        setPendingResultGeneration(null);
         setWorknetFeedStatus('profile-required');
         setWorknetFeedMessage(
           visibleCompanyProjects.length > 0
@@ -1433,6 +1437,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
     const abortController = new AbortController();
     let active = true;
+    const generation = resultGeneration;
+    resultGenerationRef.current = generation;
     const delay = query.trim() ? 300 : 0;
     const timer = window.setTimeout(() => {
       const selectedOccupationCategory = normalizeOccupationCategory(selectedCategory);
@@ -1502,7 +1508,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         workType: selectedWorkType,
       })
         .then((result) => {
-          if (!active) return;
+          if (!active || generation !== resultGenerationRef.current) return;
           const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
             matchesPublishedCompanyProject(project, {
               employmentType: selectedEmploymentType,
@@ -1539,16 +1545,21 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               ? '전체 데이터베이스에서 조건에 맞는 채용공고를 찾지 못했습니다.'
               : '',
           );
+          setPendingResultGeneration(null);
         })
         .catch(async (error: unknown) => {
-          if (!active || (error instanceof DOMException && error.name === 'AbortError')) return;
+          if (
+            !active ||
+            generation !== resultGenerationRef.current ||
+            (error instanceof DOMException && error.name === 'AbortError')
+          ) return;
           console.warn('Full job database search failed:', error);
           try {
             const fallback = await fetchWorknetSeniorProjectFeed({
               forceRefresh: true,
               includeAnyCareer: true,
             });
-            if (!active) return;
+            if (!active || generation !== resultGenerationRef.current) return;
             setServerSearchMeta(null);
             const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
               matchesPublishedCompanyProject(project, {
@@ -1563,7 +1574,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             setPostings(mergedProjects);
             setSelectedId(mergedProjects[0]?.id ?? '');
           } catch {
-            if (!active) return;
+            if (!active || generation !== resultGenerationRef.current) return;
             setPostings([]);
             setSelectedId('');
           }
@@ -1571,9 +1582,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           setWorknetFeedMessage(
             '전체 데이터베이스 검색 연결이 원활하지 않아 임시 목록을 표시합니다. 잠시 후 다시 시도해 주세요.',
           );
+          setPendingResultGeneration(null);
         })
         .finally(() => {
-          if (active) setIsLoadingPostings(false);
+          if (active && generation === resultGenerationRef.current) setIsLoadingPostings(false);
         });
     }, delay);
 
@@ -1598,6 +1610,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     seniorProfile,
     sortBy,
     publishedCompanyProjects,
+    resultGeneration,
     worknetReloadKey,
     isHomeRecommendationContext,
   ]);
@@ -1985,6 +1998,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const displayedResultCount = isServerSearchActive
     ? (serverSearchMeta?.total ?? 0)
     : filteredPostings.length;
+  const isFilterTransition = pendingResultGeneration !== null;
   const totalPages = isServerSearchActive
     ? Math.max(1, serverSearchMeta?.totalPages ?? 1)
     : Math.max(1, Math.ceil(filteredPostings.length / itemsPerPage));
@@ -2114,13 +2128,26 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     : postings.filter((posting) => posting.hiringStage === 'closing').length;
 
   function changeQuery(value: string) {
+    beginResultTransition();
     setQuery(value);
     setCurrentPage(1);
   }
 
   function changeCategory(value: CategoryFilter) {
+    beginResultTransition();
     setSelectedCategory(value);
     setCurrentPage(1);
+  }
+
+  function beginResultTransition() {
+    if (role !== 'senior') return;
+    const generation = resultGeneration + 1;
+    setResultGeneration(generation);
+    setPendingResultGeneration(generation);
+    setServerSearchMeta(null);
+    setPostings([]);
+    setSelectedId('');
+    setIsLoadingPostings(true);
   }
 
   function openCategoryPicker() {
@@ -2144,26 +2171,31 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   }
 
   function changeWorkType(value: WorkTypeFilter) {
+    beginResultTransition();
     setSelectedWorkType(value);
     setCurrentPage(1);
   }
 
   function changeEmploymentType(value: EmploymentTypeFilter) {
+    beginResultTransition();
     setSelectedEmploymentType(value);
     setCurrentPage(1);
   }
 
   function changeHiringStage(value: HiringStageFilter) {
+    beginResultTransition();
     setSelectedHiringStage(value);
     setCurrentPage(1);
   }
 
   function changeSort(value: SortOption) {
+    beginResultTransition();
     setSortBy(value);
     setCurrentPage(1);
   }
 
   function resetFilters() {
+    beginResultTransition();
     setQuery('');
     setSelectedCategory(all);
     setSelectedWorkType(all);
@@ -3095,7 +3127,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       <div className="flex items-center justify-between gap-3 text-[13px] font-bold text-slate-500">
         <span className="min-w-0 truncate">
           {query.trim() ? '검색 결과' : '추천 결과'}{' '}
-          <strong className="text-[#173F3A]">{displayedResultCount}</strong>건
+          {isFilterTransition ? (
+            <strong aria-label="결과 업데이트 중" className="text-[#4B756E]">···</strong>
+          ) : (
+            <strong className="text-[#173F3A]">{displayedResultCount}</strong>
+          )}
+          {isFilterTransition ? null : '건'}
         </span>
         <label className="inline-flex shrink-0 items-center gap-2 text-[12px] font-extrabold text-[#17212B]">
           <span className="sr-only">정렬 기준</span>
@@ -3115,6 +3152,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       </div>
 
       <div
+        aria-busy={isLoadingPostings || isFilterTransition ? 'true' : 'false'}
         className={cn(
           'grid gap-4',
           isMobile || filteredPostings.length === 0
@@ -3122,11 +3160,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             : 'lg:grid-cols-[0.9fr_1.1fr]',
         )}
       >
-        {isLoadingPostings ? (
+        {isLoadingPostings && !isFilterTransition ? (
           <div className="col-span-full rounded-2xl border border-[#E0D9C8] bg-white p-8 text-center text-sm font-bold text-slate-500 shadow-xs">
             {role === 'senior'
               ? '맞춤 채용 공고를 불러오는 중입니다...'
               : '프로젝트를 불러오는 중입니다...'}
+          </div>
+        ) : isFilterTransition ? (
+          <div
+            aria-live="polite"
+            className="col-span-full flex min-h-[320px] items-center justify-center text-sm font-bold text-[#4B756E]"
+          >
+            업데이트 중…
           </div>
         ) : filteredPostings.length === 0 ? (
           <div
