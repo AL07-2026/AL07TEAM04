@@ -5,9 +5,9 @@ import {
   CalendarClock,
   CheckCircle,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
   Copy,
-  Database,
   ExternalLink,
   FileText,
   Filter,
@@ -78,6 +78,10 @@ import { sendApplicationEmailToManager } from '@/services/emailService';
 import { getLatestUserExperienceCard } from '@/services/interviewService';
 import { getPostingWorkSummary, type PostingWorkSummary } from '@/services/postingWorkSummary';
 import {
+  getQuickProjectFilterChoices,
+  getRemainingProjectFilterChoices,
+} from '@/services/projectFilterPresentation';
+import {
   searchFullJobDatabase,
   type FullJobSearchResult,
   type JobOccupationFilter,
@@ -108,7 +112,7 @@ import type {
   OccupationPreference,
 } from '@/data/occupationCategories';
 
-import { Chip, MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
+import { MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
 
 const all = 'all';
 const allDatabase = 'all_db';
@@ -248,6 +252,44 @@ function SelectField<T extends string>({
         ))}
       </select>
     </label>
+  );
+}
+
+function CategoryFilterButton({
+  badge,
+  label,
+  onClick,
+  selected,
+}: {
+  badge?: string;
+  label: string;
+  onClick: () => void;
+  selected: boolean;
+}) {
+  return (
+    <button
+      aria-pressed={selected}
+      className={cn(
+        'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+        selected
+          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
+          : 'border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
+      )}
+      onClick={onClick}
+      type="button"
+    >
+      {badge ? (
+        <span
+          className={cn(
+            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
+            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
+          )}
+        >
+          {badge}
+        </span>
+      ) : null}
+      <span>{label}</span>
+    </button>
   );
 }
 
@@ -1072,7 +1114,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     sourceUrl?: string;
   } | null>(null);
   const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
-  const [isMobileCategoryExpanded, setIsMobileCategoryExpanded] = useState(false);
+  const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
+  const [isDetailFiltersExpanded, setIsDetailFiltersExpanded] = useState(false);
   const [applicationFiles, setApplicationFiles] = useState<File[]>([]);
   const [applicantNote, setApplicantNote] = useState('');
   const [applicationError, setApplicationError] = useState('');
@@ -1816,11 +1859,47 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     Number(selectedHiringStage !== all) +
     Number(sortBy !== 'fit-desc');
   const hasActiveFilters = activeFilterCount > 0 || Boolean(query);
-  const selectedCategoryLabel =
-    activeCategoryFilters.find((category) => category.id === effectiveSelectedCategory)?.label ??
-    '전체';
   const activeHiringStageFilters =
     role === 'senior' ? worknetPostingStatusFilters : companyHiringStageFilters;
+  const allCategoryFilterId = role === 'senior' ? allDatabase : all;
+  const quickCategoryFilters = useMemo(
+    () =>
+      getQuickProjectFilterChoices(
+        activeCategoryFilters,
+        allCategoryFilterId,
+        effectiveSelectedCategory,
+      ),
+    [activeCategoryFilters, allCategoryFilterId, effectiveSelectedCategory],
+  );
+  const remainingCategoryFilters = useMemo(
+    () => getRemainingProjectFilterChoices(activeCategoryFilters, quickCategoryFilters),
+    [activeCategoryFilters, quickCategoryFilters],
+  );
+  const activeDetailFilters = [
+    selectedEmploymentType !== all
+      ? {
+          label:
+            employmentTypeFilters.find((option) => option.id === selectedEmploymentType)?.label ??
+            selectedEmploymentType,
+          onClear: () => changeEmploymentType(all),
+        }
+      : null,
+    selectedWorkType !== all
+      ? {
+          label: workTypeFilters.find((option) => option.id === selectedWorkType)?.label ?? selectedWorkType,
+          onClear: () => changeWorkType(all),
+        }
+      : null,
+    selectedHiringStage !== all
+      ? {
+          label:
+            activeHiringStageFilters.find((option) => option.id === selectedHiringStage)?.label ??
+            selectedHiringStage,
+          onClear: () => changeHiringStage(all),
+        }
+      : null,
+  ].filter((filter): filter is { label: string; onClear: () => void } => Boolean(filter));
+  const activeDetailFilterCount = activeDetailFilters.length;
 
   const preferredPostingsForScore = useMemo(() => {
     if (!seniorProfile || preferredProfilePreferences.length === 0) return [];
@@ -2598,14 +2677,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <Filter className="size-[18px] text-[#173F3A]" />
               프로젝트 찾기
             </div>
-            <button
-              className="min-h-10 rounded-full px-2 text-[12px] font-extrabold text-[#F06B4F] disabled:opacity-35"
-              disabled={!hasActiveFilters}
-              onClick={resetFilters}
-              type="button"
-            >
-              전체 초기화
-            </button>
+            {hasActiveFilters ? (
+              <button
+                className="min-h-10 rounded-full px-2 text-[12px] font-extrabold text-[#F06B4F]"
+                onClick={resetFilters}
+                type="button"
+              >
+                전체 초기화
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-3">
@@ -2643,227 +2723,185 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           </div>
 
           <div className="mt-5 border-t border-[#E0D9C8] pt-4">
-            <div className="flex items-center justify-between gap-3 pb-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <p className="text-[13px] font-extrabold text-[#17212B] truncate">
-                  {role === 'senior' ? '🎯 직무 분야 필터' : '프로젝트 유형'}
-                </p>
-                {selectedCategory !== all && role === 'senior' && (
-                  <span className="rounded-full bg-[#173F3A]/10 px-2 py-0.5 text-[10px] font-extrabold text-[#173F3A] truncate">
-                    {selectedCategoryLabel}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileCategoryExpanded((prev) => !prev)}
-                className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-extrabold text-[#173F3A] hover:underline cursor-pointer"
-              >
-                <span>{isMobileCategoryExpanded ? '접기 ∧' : '전체 직무 보기 ∨'}</span>
-              </button>
+            <p className="text-[13px] font-extrabold text-[#17212B]">
+              {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
+            </p>
+            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1.5" role="group">
+              {quickCategoryFilters.map((category) => (
+                <CategoryFilterButton
+                  badge={category.badge}
+                  key={category.id}
+                  label={category.id === allCategoryFilterId ? '전체' : category.label}
+                  onClick={() => changeCategory(category.id)}
+                  selected={effectiveSelectedCategory === category.id}
+                />
+              ))}
+              {remainingCategoryFilters.length > 0 ? (
+                <button
+                  aria-controls="mobile-more-job-categories"
+                  aria-expanded={isCategoryExpanded}
+                  className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                  onClick={() => setIsCategoryExpanded((value) => !value)}
+                  type="button"
+                >
+                  직무 {isCategoryExpanded ? '접기' : '더보기'}
+                  <ChevronDown className={cn('size-4 transition-transform', isCategoryExpanded && 'rotate-180')} />
+                </button>
+              ) : null}
             </div>
-
-            {!isMobileCategoryExpanded ? (
-              /* Default Horizontal Scroll Chip Stream (Compact 44px Height) */
+            {isCategoryExpanded && remainingCategoryFilters.length > 0 ? (
               <div
-                aria-label={role === 'senior' ? '직무 분야 가로 스크롤' : '프로젝트 유형'}
-                className="mt-2.5 flex w-full overflow-x-auto pb-1.5 pt-0.5 scrollbar-none gap-2"
+                className="mt-3 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3"
+                id="mobile-more-job-categories"
                 role="group"
               >
-                {activeCategoryFilters.map((category) => {
-                  const selected = effectiveSelectedCategory === category.id;
-                  const badge = 'badge' in category ? category.badge : undefined;
-                  return (
-                    <button
-                      aria-pressed={selected}
-                      className={cn(
-                        'inline-flex h-[38px] min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition whitespace-nowrap shadow-2xs',
-                        selected
-                          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
-                          : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
-                      )}
-                      key={category.id}
-                      onClick={() => changeCategory(category.id)}
-                      type="button"
-                    >
-                      {badge ? (
-                        <span
-                          className={cn(
-                            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
-                            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
-                          )}
-                        >
-                          {badge}
-                        </span>
-                      ) : null}
-                      <span>{category.label}</span>
-                    </button>
-                  );
-                })}
+                {remainingCategoryFilters.map((category) => (
+                  <CategoryFilterButton
+                    badge={category.badge}
+                    key={category.id}
+                    label={category.label}
+                    onClick={() => changeCategory(category.id)}
+                    selected={effectiveSelectedCategory === category.id}
+                  />
+                ))}
               </div>
-            ) : (
-              /* Expanded Flex-Wrap Tag Cloud (100% Full Text, No Truncation) */
-              <div
-                aria-label={role === 'senior' ? '직무 분야 전체 보기' : '프로젝트 유형'}
-                className="mt-2.5 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3 animate-in fade-in duration-200"
-                role="group"
-              >
-                {activeCategoryFilters.map((category) => {
-                  const selected = effectiveSelectedCategory === category.id;
-                  const badge = 'badge' in category ? category.badge : undefined;
-                  return (
-                    <button
-                      aria-pressed={selected}
-                      className={cn(
-                        'inline-flex h-[38px] items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition whitespace-nowrap shadow-2xs',
-                        selected
-                          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
-                          : 'border-[#E0D9C8] bg-white text-[#17212B] hover:border-[#173F3A]/40 hover:bg-white',
-                      )}
-                      key={category.id}
-                      onClick={() => changeCategory(category.id)}
-                      type="button"
-                    >
-                      {badge ? (
-                        <span
-                          className={cn(
-                            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
-                            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
-                          )}
-                        >
-                          {badge}
-                        </span>
-                      ) : null}
-                      <span>{category.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            ) : null}
           </div>
 
           <div className="mt-5 border-t border-[#E0D9C8] pt-4">
-            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
-              <SlidersHorizontal className="size-4 text-[#173F3A]" />
-              상세 조건
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <SelectField
-                label="고용 형태"
-                mobile
-                onChange={changeEmploymentType}
-                options={employmentTypeFilters}
-                value={selectedEmploymentType}
-              />
-              <SelectField
-                label="근무 방식"
-                mobile
-                onChange={changeWorkType}
-                options={workTypeFilters}
-                value={selectedWorkType}
-              />
-              <SelectField
-                label={role === 'senior' ? '공고 상태' : '진행 단계'}
-                mobile
-                onChange={changeHiringStage}
-                options={activeHiringStageFilters}
-                value={selectedHiringStage}
-              />
-              <SelectField
-                label="정렬 기준"
-                mobile
-                onChange={changeSort}
-                options={sortOptions}
-                value={sortBy}
-              />
-            </div>
+            <button
+              aria-controls="mobile-project-detail-filters"
+              aria-expanded={isDetailFiltersExpanded}
+              className="flex min-h-10 w-full items-center justify-between gap-2 rounded-xl px-1 text-left text-[13px] font-extrabold text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+              onClick={() => setIsDetailFiltersExpanded((value) => !value)}
+              type="button"
+            >
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-[#173F3A]" />
+                상세 조건{activeDetailFilterCount ? ` (${activeDetailFilterCount})` : ''}
+              </span>
+              <ChevronDown className={cn('size-4 text-[#173F3A] transition-transform', isDetailFiltersExpanded && 'rotate-180')} />
+            </button>
+            {isDetailFiltersExpanded ? (
+              <div className="mt-3 grid grid-cols-2 gap-3" id="mobile-project-detail-filters">
+                <SelectField label="고용 형태" mobile onChange={changeEmploymentType} options={employmentTypeFilters} value={selectedEmploymentType} />
+                <SelectField label="근무 방식" mobile onChange={changeWorkType} options={workTypeFilters} value={selectedWorkType} />
+                <SelectField label={role === 'senior' ? '공고 상태' : '진행 단계'} mobile onChange={changeHiringStage} options={activeHiringStageFilters} value={selectedHiringStage} />
+              </div>
+            ) : null}
+            {activeDetailFilters.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeDetailFilters.map((filter) => (
+                  <button
+                    aria-label={`${filter.label} 해제`}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#173F3A]/10 px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A]"
+                    key={filter.label}
+                    onClick={filter.onClear}
+                    type="button"
+                  >
+                    {filter.label}<X aria-hidden="true" className="size-3.5" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : (
         <>
           <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-            <div className="flex items-center justify-between gap-2 text-[13px] font-extrabold text-[#17212B]">
-              <div className="flex items-center gap-2">
+            <label className="flex h-12 items-center gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 focus-within:border-[#173F3A] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/10">
+              <Search className="size-5 text-slate-400" />
+              <input
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
+                onChange={(event) => changeQuery(event.target.value)}
+                placeholder={role === 'senior' ? '회사명, 직무, 업종 또는 지역 검색' : '회사명, 기술스택, 해결 프로젝트 검색'}
+                type="search"
+                value={query}
+              />
+            </label>
+
+            <div className="mt-4 border-t border-[#E0D9C8] pt-4">
+              <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
                 <Filter className="size-4 text-[#173F3A]" />
-                {role === 'senior' ? '직무 분야 필터 (기본값: 내 정보 1순위)' : '프로젝트 유형 필터'}
+                {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
               </div>
-              {selectedCategory !== all && role === 'senior' && (
-                <span className="rounded-full bg-[#173F3A]/10 px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
-                  {selectedCategory === unclassifiedOccupation
-                    ? `분류 확인 공고 탐색 중: ${selectedCategoryLabel}`
-                    : `✨ 선택 직종 1순위 탐색 중: ${selectedCategoryLabel}`}
-                </span>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {activeCategoryFilters.map((category) => {
-                const badge = 'badge' in category ? category.badge : undefined;
-                const isSelected = effectiveSelectedCategory === category.id;
-                return (
-                  <Chip
+              <div className="mt-3 flex flex-wrap gap-2" role="group">
+                {quickCategoryFilters.map((category) => (
+                  <CategoryFilterButton
+                    badge={category.badge}
                     key={category.id}
+                    label={category.id === allCategoryFilterId ? '전체' : category.label}
                     onClick={() => changeCategory(category.id)}
-                    selected={isSelected}
+                    selected={effectiveSelectedCategory === category.id}
+                  />
+                ))}
+                {remainingCategoryFilters.length > 0 ? (
+                  <button
+                    aria-controls="desktop-more-job-categories"
+                    aria-expanded={isCategoryExpanded}
+                    className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                    onClick={() => setIsCategoryExpanded((value) => !value)}
+                    type="button"
                   >
-                    {badge ? (
-                      <span
-                        className={cn(
-                          'mr-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
-                          isSelected
-                            ? 'bg-white/25 text-white'
-                            : 'bg-[#173F3A]/12 text-[#173F3A]',
-                        )}
-                      >
-                        {badge}
-                      </span>
-                    ) : null}
-                    {category.label}
-                  </Chip>
-                );
-              })}
+                    직무 {isCategoryExpanded ? '접기' : '더보기'}
+                    <ChevronDown className={cn('size-4 transition-transform', isCategoryExpanded && 'rotate-180')} />
+                  </button>
+                ) : null}
+              </div>
+              {isCategoryExpanded && remainingCategoryFilters.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2 rounded-2xl border border-[#E0D9C8]/80 bg-[#FAF7F2] p-3" id="desktop-more-job-categories" role="group">
+                  {remainingCategoryFilters.map((category) => (
+                    <CategoryFilterButton
+                      badge={category.badge}
+                      key={category.id}
+                      label={category.label}
+                      onClick={() => changeCategory(category.id)}
+                      selected={effectiveSelectedCategory === category.id}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4 border-t border-[#E0D9C8] pt-4">
+              <button
+                aria-controls="desktop-project-detail-filters"
+                aria-expanded={isDetailFiltersExpanded}
+                className="flex min-h-10 items-center gap-2 rounded-xl px-1 text-[13px] font-extrabold text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                onClick={() => setIsDetailFiltersExpanded((value) => !value)}
+                type="button"
+              >
+                <SlidersHorizontal className="size-4 text-[#173F3A]" />
+                상세 조건{activeDetailFilterCount ? ` (${activeDetailFilterCount})` : ''}
+                <ChevronDown className={cn('size-4 text-[#173F3A] transition-transform', isDetailFiltersExpanded && 'rotate-180')} />
+              </button>
+              {isDetailFiltersExpanded ? (
+                <div className="mt-3 grid gap-3 md:grid-cols-3" id="desktop-project-detail-filters">
+                  <SelectField label="고용 형태" onChange={changeEmploymentType} options={employmentTypeFilters} value={selectedEmploymentType} />
+                  <SelectField label="근무 방식" onChange={changeWorkType} options={workTypeFilters} value={selectedWorkType} />
+                  <SelectField label={role === 'senior' ? '공고 상태' : '진행 단계'} onChange={changeHiringStage} options={activeHiringStageFilters} value={selectedHiringStage} />
+                </div>
+              ) : null}
+              {activeDetailFilters.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {activeDetailFilters.map((filter) => (
+                    <button
+                      aria-label={`${filter.label} 해제`}
+                      className="inline-flex items-center gap-1 rounded-full bg-[#173F3A]/10 px-3 py-1.5 text-[12px] font-extrabold text-[#173F3A]"
+                      key={filter.label}
+                      onClick={filter.onClear}
+                      type="button"
+                    >
+                      {filter.label}<X aria-hidden="true" className="size-3.5" />
+                    </button>
+                  ))}
+                  <button className="text-[12px] font-extrabold text-[#F06B4F] hover:underline" onClick={resetFilters} type="button">
+                    전체 초기화
+                  </button>
+                </div>
+              ) : null}
             </div>
           </section>
-
-          <section className="grid gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs md:grid-cols-4">
-            <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B] md:col-span-4">
-              <SlidersHorizontal className="size-4 text-[#173F3A]" />
-              {role === 'senior' ? '채용 공고 상세 조건' : '프로젝트 상세 조건'}
-            </div>
-            <SelectField
-              label="고용 형태"
-              onChange={changeEmploymentType}
-              options={employmentTypeFilters}
-              value={selectedEmploymentType}
-            />
-            <SelectField
-              label="근무 방식"
-              onChange={changeWorkType}
-              options={workTypeFilters}
-              value={selectedWorkType}
-            />
-            <SelectField
-              label={role === 'senior' ? '공고 상태' : '진행 단계'}
-              onChange={changeHiringStage}
-              options={activeHiringStageFilters}
-              value={selectedHiringStage}
-            />
-            <SelectField label="정렬" onChange={changeSort} options={sortOptions} value={sortBy} />
-          </section>
-
-          <label className="flex h-12 items-center gap-3 rounded-2xl border border-[#E0D9C8] bg-white px-4 shadow-xs focus-within:border-[#173F3A]">
-            <Search className="size-5 text-slate-400" />
-            <input
-              className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
-              onChange={(event) => changeQuery(event.target.value)}
-              placeholder={
-                role === 'senior'
-                  ? '회사명, 직무, 업종 또는 지역 검색'
-                  : '회사명, 기술스택, 해결 프로젝트 검색'
-              }
-              type="search"
-              value={query}
-            />
-          </label>
         </>
       )}
 
@@ -2882,18 +2920,26 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between text-[13px] font-bold text-slate-500">
-        <span>
-          검색 결과 <strong className="text-[#173F3A]">{displayedResultCount}</strong>건
+      <div className="flex items-center justify-between gap-3 text-[13px] font-bold text-slate-500">
+        <span className="min-w-0 truncate">
+          {query.trim() ? '검색 결과' : '추천 결과'}{' '}
+          <strong className="text-[#173F3A]">{displayedResultCount}</strong>건
         </span>
-        {isMobile ? (
-          <span>{activeFilterCount ? `필터 ${activeFilterCount}개 적용` : '추천순으로 정렬'}</span>
-        ) : (
-          <span className="inline-flex items-center gap-1">
-            <Database className="size-4" />
-            {role === 'senior' ? '시니어 맞춤 채용 공고' : '회사 등록 프로젝트'}
-          </span>
-        )}
+        <label className="inline-flex shrink-0 items-center gap-2 text-[12px] font-extrabold text-[#17212B]">
+          <span className="sr-only">정렬 기준</span>
+          <select
+            aria-label="정렬 기준"
+            className="h-9 max-w-32 rounded-lg border border-[#E0D9C8] bg-white px-2 text-[12px] font-extrabold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
+            onChange={(event) => changeSort(event.target.value as SortOption)}
+            value={sortBy}
+          >
+            {sortOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div
