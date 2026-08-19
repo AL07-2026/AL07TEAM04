@@ -76,6 +76,7 @@ import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { sendApplicationEmailToManager } from '@/services/emailService';
 import { getLatestUserExperienceCard } from '@/services/interviewService';
+import { getPostingWorkSummary, type PostingWorkSummary } from '@/services/postingWorkSummary';
 import {
   searchFullJobDatabase,
   type FullJobSearchResult,
@@ -330,6 +331,28 @@ function DetailBulletList({ items, tone = 'mint' }: { items?: string[]; tone?: '
   );
 }
 
+function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSummary }) {
+  if (summary.hasSourceBackedWork) {
+    return <DetailBulletList items={summary.items} />;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="font-semibold leading-relaxed text-[#17212B]">
+        공고에서 상세 업무가 충분히 제공되지 않았습니다. 확인 가능한 공고 조건을 기준으로 검토해 주세요.
+      </p>
+      <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+        {summary.facts.map((fact) => (
+          <div className="flex min-w-0 gap-2" key={fact.label}>
+            <dt className="shrink-0 font-extrabold text-[#173F3A]">{fact.label}</dt>
+            <dd className="min-w-0 font-medium text-[#17212B]">{fact.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 function shouldShowScoreBadge(
   posting: JobPosting,
   profile?: SeniorProfileData | null,
@@ -407,7 +430,7 @@ function PostingCard({
       .trim();
   }
   if (!cleanProblemStatement || cleanProblemStatement.length < 8) {
-    cleanProblemStatement = `${getPostingOccupationLabel(posting)} 분야 주요 업무 프로세스를 분석·개선하고 시니어 인재의 실무 노하우를 발휘하는 핵심 프로젝트입니다.`;
+    cleanProblemStatement = '공고의 상세 업무는 원문 공고에서 확인해 주세요.';
   }
 
   // Pick max 3 essential badges so top never clutters into multiple rows
@@ -584,6 +607,11 @@ function DetailPanel({
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
   const isUnclassifiedFilter = activePrimaryCategory === unclassifiedOccupation;
+  const workSummary = getPostingWorkSummary(posting);
+  const sourceBackedCoreResponsibilities =
+    posting.sourceDetailProvenance?.coreResponsibilities === 'source'
+      ? posting.coreResponsibilities
+      : ['공고 원문에 상세 업무가 제공되지 않았습니다.'];
 
   return (
     <article
@@ -727,20 +755,14 @@ function DetailPanel({
 
       {posting.source === 'worknet' ? (
         <div className="mt-4 flex flex-col gap-3">
-          {/* Gemini AI Detailed Problem Analysis */}
           <div className="rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>AI 해결 프로젝트 분석</span>
+              <span>공고 핵심 업무 요약</span>
             </div>
             <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">
-                  해결해야 할 핵심 프로젝트 진단
-                </p>
-                <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
-                  {posting.problemStatement}
-                </p>
+                <PostingWorkSummaryContent summary={workSummary} />
               </section>
             </div>
           </div>
@@ -790,20 +812,11 @@ function DetailPanel({
         </div>
       ) : isMobile ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-[#E0D9C8]">
-          <MobileDetailRow label="AI 해결 프로젝트 분석" tone="mint">
-            <div className="flex flex-col gap-2">
-              <p className="font-bold text-[#17212B] leading-relaxed">
-                <span className="font-extrabold text-[#173F3A]">핵심 프로젝트:</span>{' '}
-                {posting.problemStatement}
-              </p>
-              <p className="font-bold text-[#17212B] leading-relaxed">
-                <span className="font-extrabold text-[#173F3A]">목표 지표:</span>{' '}
-                {posting.projectGoal}
-              </p>
-            </div>
+          <MobileDetailRow label="공고 핵심 업무 요약" tone="mint">
+            <PostingWorkSummaryContent summary={workSummary} />
           </MobileDetailRow>
           <MobileDetailRow label="핵심 업무">
-            <DetailBulletList items={posting.coreResponsibilities} />
+            <DetailBulletList items={sourceBackedCoreResponsibilities} />
           </MobileDetailRow>
           <MobileDetailRow label="자격 요건">
             <DetailBulletList items={posting.qualifications} />
@@ -844,20 +857,14 @@ function DetailPanel({
         </div>
       ) : (
         <>
-          {/* Gemini AI Detailed Problem Analysis */}
           <div className="mt-5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-4 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-extrabold text-[#173F3A]">
               <Sparkles className="size-4 text-[#173F3A]" />
-              <span>🤖 AI 해결 프로젝트 분석</span>
+              <span>공고 핵심 업무 요약</span>
             </div>
             <div className="mt-3">
               <section className="rounded-xl border border-[#E0D9C8]/80 bg-white p-3.5 shadow-3xs">
-                <p className="text-[12px] font-extrabold text-[#173F3A]">
-                  🎯 해결해야 할 핵심 프로젝트 진단
-                </p>
-                <p className="mt-2 text-[13px] font-semibold leading-relaxed text-[#17212B]">
-                  {posting.problemStatement}
-                </p>
+                <PostingWorkSummaryContent summary={workSummary} />
               </section>
             </div>
           </div>
@@ -869,7 +876,7 @@ function DetailPanel({
                 <span>핵심 업무</span>
               </p>
               <ul className="mt-2.5 space-y-2 text-[13.5px] font-bold text-[#17212B] leading-relaxed">
-                {(posting.coreResponsibilities ?? []).map((item) => (
+                {sourceBackedCoreResponsibilities.map((item) => (
                   <li className="flex items-start gap-2" key={item}>
                     <span className="shrink-0 text-[#173F3A]">•</span>
                     <span>{item}</span>
@@ -1589,6 +1596,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         recommendedTalentType: '해당 영역 10년+ 총괄 경험을 가진 시니어 리드',
         matchingScoreCriteria: ['직무 연관성', '문제 해결 경험', '협업 적합도'],
         interviewFocus: ['프로젝트 목표 및 성공 경험', '핵심 문제 해결 접근 방식'],
+        sourceDetailProvenance: {
+          coreResponsibilities: 'source',
+          problemStatement: 'source',
+          projectGoal: projectGoal.trim() ? 'source' : 'synthetic',
+          requiredSkills: 'synthetic',
+        },
         seniorFitScore: 95,
       });
 

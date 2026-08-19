@@ -450,67 +450,7 @@ function sanitizeAndEnhanceProblemStatement(posting) {
   ps = ps.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤)\]\s*/g, '').trim();
   ps = ps.replace(/\s*채용\s*채용$/g, ' 채용').trim();
 
-  const title = typeof posting?.title === 'string' ? posting.title.trim() : '';
-  const companyName = typeof posting?.companyName === 'string' ? posting.companyName.trim() : '';
-  const industry = typeof posting?.industry === 'string' ? posting.industry.trim() : '';
-  const category = posting?.category || legacyProjectCategoryMap[posting?.occupationCategory] || 'operations';
-
-  const isDryBoilerplate =
-    !ps ||
-    ps === `${companyName}의 ${title} 채용` ||
-    ps === `${title} 채용` ||
-    ps === `${companyName}의 ${title}` ||
-    (ps.endsWith('채용입니다.') && ps.includes('프로젝트 해결을 위한 전문 인재 채용입니다.')) ||
-    (ps.endsWith('채용입니다.') && ps.includes('공공 프로젝트 핵심 인재 채용입니다.'));
-
-  if (!isDryBoilerplate) {
-    return ps;
-  }
-
-  const companyStr = companyName ? `${companyName}의 ` : '';
-  const indStr = industry && !['업종 정보 미제공', '경영/일반', '공공행정/경영'].includes(industry) ? `[${industry}] ` : '';
-  const titleLower = `${title} ${industry}`.toLowerCase();
-
-  switch (category) {
-    case 'dev-engineering':
-    case 'legacy-modernization':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 기존 시스템 고도화 및 레거시 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 엔지니어링 프로젝트입니다.`;
-    case 'design-brand':
-      if (/편집|인쇄|출판|패키지|시각|그래픽|디지털인쇄|디지털 인쇄/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 시각/인쇄 디자인 표준 가이드라인 정립 및 결과물 제작 품질을 향상하는 프로젝트입니다.`;
-      }
-      if (/인테리어|공간|건축|시공|모델하우스|전시|무대/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 공간 인테리어 설계 및 시공 품질 정립을 위한 마감 제작 프로젝트입니다.`;
-      }
-      if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 디지털 UX/UI 디자인 시스템 수립 및 사용자 경험을 개선하는 프로젝트입니다.`;
-      }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 기업 브랜드 아이덴티티 수립 및 실무 디자인 제작 품질을 강화하는 프로젝트입니다.`;
-    case 'marketing-sales':
-    case 'growth':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 신규 타깃 마케팅 전략 수립 및 세일즈 파이프라인 개척을 통해 지속 가능한 매출 성장을 달성하는 마케팅 프로젝트입니다.`;
-    case 'hr-strategy':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 전사 조직 체계 정비, 평가/보상 시스템 고도화 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.`;
-    case 'r-and-d-manufacturing':
-      if (/설계|기계|cad|3d|도면/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 제품 메커니즘 설계 고도화 및 도면 표준화를 통해 품질과 생산 효율성을 높이는 설계 프로젝트입니다.`;
-      }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 스마트 팩토리 품질 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
-    case 'ai-automation':
-    case 'data-platform':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 사내 반복 업무의 AI/RPA 자동화 도입 및 데이터 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
-    case 'security':
-      return `${indStr}${companyStr}'${title}' 주요 과제: 정보보호 컴플라이언스 준수, 보안 위험 진단 및 사내 인프라 보안 관리 체계를 고도화하는 리스크 프로젝트입니다.`;
-    case 'operations':
-    default:
-      if (/총무|자산|시설/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 전사 총무/시설 관리 프로세스 표준화 및 자산 운영 효율성을 극대화하는 프로젝트입니다.`;
-      }
-      if (/인테리어|설계|시공|가구/.test(titleLower)) {
-        return `${indStr}${companyStr}'${title}' 주요 과제: 공간 인테리어 설계 및 현장 시공 운영 품질을 향상하는 실무 프로젝트입니다.`;
-      }
-      return `${indStr}${companyStr}'${title}' 주요 과제: 전사 운영 프로세스 리드타임 단축, 현장 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.`;
-  }
+  return ps;
 }
 
 export function prepareJobCatalog(postings, now = new Date()) {
