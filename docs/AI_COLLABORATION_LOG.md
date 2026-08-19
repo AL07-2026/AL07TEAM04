@@ -27,7 +27,9 @@
     - **근무지 (`formatSimpleLocation`)**: `경기 안양시디지털엠파이어 빌딩`, `경기 양평군한샘리하우스` 등 건물명 뭉김 텍스트를 `서울 마포구`, `경기 안양시`, `경기 양평군` 등 시/군/구 단위로 깔끔하게 추출.
     - **근무시간 (`formatSimpleWorkSchedule`)**: `(근무시간) (오전) 10시 00분 ~ (오후) 7시 00분` 형태의 원문을 `10:00 ~ 19:00`, `주 5일 (유연근무)` 형태의 간결한 포맷으로 변환.
     - **급여/보상 (`formatSimpleSalary`)**: `최소연봉 / 2600만원`, `최소연봉 / 3000만원 - 면접 후 협의가능`을 `연 2,600만원 이상`, `연 3,000만원 (협의가능)`, `월 750만 ~ 1,100만원` 등 천단위 콤마 및 가독성 높인 포맷으로 정돈.
-- **검증**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite production 빌드 성공).
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite production 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+  - Firebase Hosting 메인 라이브 배포 완료: https://al07team04-bdfcd.web.app
 - **변경 파일**:
   - [MODIFY] `src/services/dataSyncService.ts`
   - [MODIFY] `functions/lib/jobSearch.mjs`
