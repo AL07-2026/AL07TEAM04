@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const env = import.meta.env as Record<string, string | undefined>;
 
@@ -18,4 +19,5 @@ export const auth = getAuth(app);
 auth.languageCode = 'ko';
 
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 export default app;

@@ -60,12 +60,30 @@ describe('데이터 저장 및 조회 정합성', () => {
       title: '프로세스 개선',
       category: 'operations',
       seniorFitScore: 120,
+      attachments: [
+        {
+          name: 'project-guide.pdf',
+          type: 'application/pdf',
+          size: 2048,
+          url: 'https://example.com/project-guide.pdf',
+          storagePath: 'project-attachments/document-id/project-guide.pdf',
+        },
+      ],
     });
 
     expect(project?.id).toBe('document-id');
     expect(project?.seniorFitScore).toBe(100);
     expect(project?.coreResponsibilities).toEqual([]);
     expect(project?.workType).toBe('hybrid');
+    expect(project?.attachments).toEqual([
+      {
+        name: 'project-guide.pdf',
+        type: 'application/pdf',
+        size: 2048,
+        url: 'https://example.com/project-guide.pdf',
+        storagePath: 'project-attachments/document-id/project-guide.pdf',
+      },
+    ]);
   });
 
   it('필수 프로젝트 정보가 없으면 잘못된 문서를 출력하지 않는다', () => {
