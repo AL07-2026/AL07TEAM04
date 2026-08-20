@@ -24,7 +24,7 @@
   - 스케줄 표현을 `0 0 * * *` 크론으로 명시하여 서울시/공공기관 채용공고 누적 동기화가 하루 1회 실행되도록 정리함.
 - **검증 및 배포**:
   - `npm run validate` 통과 (typecheck/lint/Vitest 23개 테스트 파일 246개 테스트/build 성공).
-  - Firebase Functions 배포로 운영 스케줄 반영 예정.
+  - Firebase Functions 배포 완료. 운영 `scheduledJobSync` 스케줄 반영 완료.
 - **변경 파일**:
   - [MODIFY] `functions/index.mjs`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
