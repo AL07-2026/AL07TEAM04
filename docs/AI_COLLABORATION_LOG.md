@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 최신 `develop` 브랜치 내역을 `leedongwook` 브랜치에 병합 및 원격 푸시
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - 사용자 요청에 따라 `origin/develop` 최신 커밋 내역(팀원 `heal1120`, `Yoon` 님의 지원 UX, 직종 필터링, 시니어 우선 공고 및 기업 프로필 동기화 등)을 로컬 `develop`에 동기화(`Fast-forward`).
+  - 로컬 `develop` 브랜치를 `leedongwook` 브랜치에 깔끔하게 병합(`git merge develop`) 완료 (충돌 0건).
+  - 사전 검증 (`npm run validate`: TS typecheck, ESLint, 198개 Vitest 유닛 테스트 pass, Vite 빌드 성공).
+  - `leedongwook` 브랜치를 `origin/leedongwook`으로 원격 푸시 완료.
+- **검증**: `npm run validate` 통과 및 `git push origin leedongwook` 원격 푸시 완결.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-19] 배포 정책 가이드라인 명시: `leedongwook` 브랜치 전용 테스트 주소로만 배포
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:
