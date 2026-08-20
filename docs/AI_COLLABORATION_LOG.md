@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 하네스 엔지니어링(Harness Engineering) 레이어 구축 & 성공적 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **React UI 런타임 에러 하네스 (`ErrorBoundaryHarness.tsx`)**: 렌더링 예외나 컴포넌트 런타임 오류 발생 시 앱 전체가 다운(백화)되지 않도록 감싸는 안전망 하네스 구축. `App.tsx` 최상단 결합 및 복구 UI(`[🔄 다시 시도]`, `[🏠 홈으로 이동]`) 지원.
+  - **테스트 하네스 팩토리 (`src/test/harness.ts`)**: `createMockSeniorProfile`, `createMockCompanyProfile`, `createMockJobPosting` 오프라인 결정론적 테스트 하네스 구축.
+  - **유닛 테스트 하네스 (`ErrorBoundaryHarness.test.tsx`)**: 에러 감지 및 폴백 UI 동작을 가두어 검증하는 유닛 테스트 추가.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `src/components/ui/ErrorBoundaryHarness.tsx`
+  - [NEW] `src/components/ui/ErrorBoundaryHarness.test.tsx`
+  - [NEW] `src/test/harness.ts`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-20] 스마트폰 표준 화면(360px~430px) 모바일 최적화 루프 엔지니어링 구축 & 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
+import { ErrorBoundaryHarness } from '@/components/ui/ErrorBoundaryHarness';
 import { AuthProvider } from '@/lib/authContext';
 
 function lazyPage<TModule, TKey extends keyof TModule>(
@@ -93,9 +94,11 @@ export function App() {
     <div className="eojob-readable">
       <AuthProvider>
         <ViewportProvider>
-          <Suspense fallback={<RouteLoadingFallback />}>
-            <RouterProvider router={router} />
-          </Suspense>
+          <ErrorBoundaryHarness>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </ErrorBoundaryHarness>
         </ViewportProvider>
       </AuthProvider>
     </div>
