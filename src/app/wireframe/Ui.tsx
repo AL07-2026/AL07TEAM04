@@ -107,7 +107,7 @@ export function MobilePage({
     <>
       {isMobileMode ? (
         <main className="h-dvh max-h-dvh overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
-          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-[390px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
+          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
             {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
             <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
@@ -651,24 +651,24 @@ export function SummaryCard({
   return (
     <div
       className={cn(
-        'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs',
+        'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs min-w-0 overflow-hidden',
         isMobile
           ? caption
-            ? 'min-h-[128px] p-4'
-            : 'h-[110px] p-4'
+            ? 'min-h-[128px] p-3.5 sm:p-4'
+            : 'h-[110px] p-3.5 sm:p-4'
           : caption
             ? 'min-h-[152px] p-6'
             : 'h-[136px] p-6',
       )}
     >
-      <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
+      <span className={cn('font-bold text-[#4B5768] min-w-0 truncate', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
         {label}
       </span>
-      <div className="mt-auto">
+      <div className="mt-auto min-w-0">
         <strong
           className={cn(
-            'block font-extrabold tracking-tight text-[#173F3A]',
-            isMobile ? 'text-[27px]' : 'text-[38px]',
+            'block font-extrabold tracking-tight text-[#173F3A] truncate',
+            isMobile ? 'text-[25px] sm:text-[27px]' : 'text-[38px]',
           )}
         >
           {value}
@@ -676,8 +676,8 @@ export function SummaryCard({
         {caption ? (
           <span
             className={cn(
-              'mt-1 block font-semibold leading-5 text-slate-400',
-              isMobile ? 'text-[11.5px]' : 'text-[13px]',
+              'mt-1 block font-semibold leading-4 sm:leading-5 text-slate-400 break-keep min-w-0 line-clamp-2',
+              isMobile ? 'text-[11px] sm:text-[11.5px]' : 'text-[13px]',
             )}
           >
             {caption}

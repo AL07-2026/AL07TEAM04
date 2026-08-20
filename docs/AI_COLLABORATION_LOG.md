@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 스마트폰 표준 화면(360px~430px) 모바일 최적화 루프 엔지니어링 구축 & 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - `leedongwook` 브랜치 상에서 모바일 화면 최적화를 위한 자율 감사·개선 루프(Mobile Optimization Loop Engineering) 적용.
+  - **스마트폰 표준 화면 레터박싱 제거**: `Ui.tsx` 내 `MobilePage` 모바일 컨테이너의 고정 `max-w-[390px]` 제한을 `w-full max-w-full sm:max-w-[430px]`로 개편하여 실제 스마트폰(360px ~ 430px: Galaxy S24, iPhone 15/16 Pro Max 등)에서 여백/좌우 짤림 없이 100% 꽉 찬 모바일 화면 렌더링 제공.
+  - **요약 카드(`SummaryCard`) 모바일 반응형 강화**: `min-w-0`, `overflow-hidden`, `break-keep`, `line-clamp-2` 적용으로 좁은 360px 모바일 화면에서도 텍스트 겹침/넘침 없는 안정적 레이아웃 확보.
+- **검증 & 배포**: `npm run validate` 100% 통과 (19개 테스트 파일, 207개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-20] 최신 `develop` 브랜치 내역을 `leedongwook` 브랜치에 병합 및 원격 푸시
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:
