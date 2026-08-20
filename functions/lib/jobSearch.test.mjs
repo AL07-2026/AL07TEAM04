@@ -31,6 +31,24 @@ function posting(id, overrides = {}) {
 }
 
 describe('full Firestore job database search', () => {
+  it('does not generate a category template when a public posting has no source-backed problem statement', () => {
+    const result = filterAndPaginateJobPostings(
+      [
+        posting('product-planner-no-detail', {
+          title: '상품기획 PM 경력 채용',
+          occupationCategory: 'product-planning-md',
+          problemStatement: '',
+          source: 'public',
+        }),
+      ],
+      {},
+      now,
+    );
+
+    expect(result.items[0]?.problemStatement).toBe('');
+    expect(result.items[0]?.problemStatement).not.toMatch(/마케팅|세일즈|파이프라인/);
+  });
+
   it('keeps ambiguous multi-role notices in all jobs but out of specific occupations', () => {
     const ambiguousPosting = posting('ambiguous-public', {
       title: '2026년 정보통신기획평가원 직원채용(공무직 미화관리, 경비관리, 운전관리)',

@@ -6,8 +6,8 @@ import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wirefram
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import {
-  getCompanyProfile,
   getLocalCompanyProfile,
+  resolveCompanyProfile,
   saveCompanyProfile,
   saveLocalCompanyProfile,
   type CompanyProfileData,
@@ -24,11 +24,11 @@ export function CompanyInfoPage() {
     const savedLocal = getLocalCompanyProfile(user?.uid);
     if (savedLocal) return savedLocal;
     return {
-      companyName: '(주) 이어잡',
-      companyAddress: '서울특별시 강남구 테헤란로 123',
-      managerName: user?.name || '김담당',
-      email: user?.email || 'hr@eojob.com',
-      phone: '02-1234-5678',
+      companyName: '',
+      companyAddress: '',
+      managerName: user?.name || '',
+      email: user?.email || '',
+      phone: '',
     };
   });
 
@@ -38,23 +38,12 @@ export function CompanyInfoPage() {
   useEffect(() => {
     void (async () => {
       const local = getLocalCompanyProfile(user?.uid);
-      if (local) {
-        setForm(local);
-      }
+      if (local) setForm(local);
       if (!user?.uid) return;
 
-      const data = await getCompanyProfile(user.uid);
+      const data = await resolveCompanyProfile(user.uid);
       if (data) {
-        const loadedForm: CompanyForm = {
-          ...data,
-          companyName: data.companyName || local?.companyName || '(주) 이어잡',
-          companyAddress: data.companyAddress || local?.companyAddress || '',
-          managerName: data.managerName || local?.managerName || user.name || '김담당',
-          email: data.email || local?.email || user.email || 'hr@eojob.com',
-          phone: data.phone || local?.phone || '',
-        };
-        setForm(loadedForm);
-        saveLocalCompanyProfile(loadedForm, user.uid);
+        setForm(data);
       }
     })();
   }, [user?.email, user?.name, user?.uid]);
@@ -66,15 +55,16 @@ export function CompanyInfoPage() {
       return;
     }
 
-    saveLocalCompanyProfile(form, user?.uid);
-    setForm(form);
-
-    if (user?.uid) {
-      try {
+    try {
+      if (user?.uid) {
         await saveCompanyProfile(user.uid, form);
-      } catch (err) {
-        console.error('Failed to save company profile to Firestore:', err);
       }
+      saveLocalCompanyProfile(form, user?.uid);
+      setForm(form);
+    } catch (err) {
+      console.error('Failed to save company profile to Firestore:', err);
+      setMessage('회사 정보를 동기화하지 못했습니다. 네트워크를 확인한 뒤 다시 저장해 주세요.');
+      return;
     }
     setIsEditing(false);
     setMessage('✓ 회사 정보가 성공적으로 저장되었습니다.');

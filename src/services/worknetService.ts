@@ -207,63 +207,6 @@ function isExpiredPosting(raw: WorknetJobRaw, now: Date) {
   return startOfDay(new Date(`${closeDate}T00:00:00`)) < startOfDay(now);
 }
 
-function generateAiAnalyzedProblemStatement(
-  title: string,
-  category: ProjectCategory,
-  industry?: string,
-  companyName?: string,
-): string {
-  const companyStr = companyName ? `${companyName}의 ` : '';
-  const indStr = industry && industry !== '업종 정보 미제공' ? `[${industry}] ` : '';
-  switch (category) {
-    case 'dev-engineering':
-    case 'legacy-modernization':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기존 시스템 아키텍처의 고도화 및 레거시 모듈 개선, 개발 환경 표준화를 통해 시스템 안정성 및 효율성을 극대화하는 시니어 엔지니어링 프로젝트입니다.`;
-    case 'design-brand':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 기업 브랜드 아이덴티티 쇄신 및 디지털 채널 통합 UX/UI 디자인 가이드라인을 구축하여 시장 경쟁력을 강화하는 프로젝트입니다.`;
-    case 'marketing-sales':
-    case 'growth':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 신규 고객 파이프라인 개척 및 타겟 기반 마케팅/세일즈 전략 체계화를 통해 지속 가능한 매출 성장 모멘텀을 확보하는 프로젝트입니다.`;
-    case 'hr-strategy':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 조직 성장 단계별 인사 평가 및 보상 체계 재정비, 전사 리더십 체계 구축 및 시니어 경험 기반의 경영 조직 문화를 정립하는 프로젝트입니다.`;
-    case 'r-and-d-manufacturing':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 스마트 팩토리 품질 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화와 품질 인증 체계를 정립하는 핵심 프로젝트입니다.`;
-    case 'ai-automation':
-    case 'data-platform':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 사내 반복 업무의 AI/RPA 자동화 도입, 파편화된 데이터 통합 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축입니다.`;
-    case 'security':
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 정보보안 및 기술 컴플라이언스 위험 진단, 사내 인프라 보안 관리 체계의 대대적인 고도화를 달성하는 현안 프로젝트입니다.`;
-    case 'operations':
-    default:
-      return `${indStr}${companyStr}'${title}' 주요 프로젝트: 전사 SCM 공급망 및 운영 프로세스 리드타임 단축, 현장 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.`;
-  }
-}
-
-function generateAiAnalyzedProjectGoal(title: string, category: ProjectCategory): string {
-  switch (category) {
-    case 'dev-engineering':
-    case 'legacy-modernization':
-      return '시스템 장애율 50% 감축, 신규 모듈 이관 및 개발 생산성 35% 이상 향상 달성';
-    case 'design-brand':
-      return '전사 디자인 가이드라인 수립, 브랜드 인지도 및 사용자 만족도 40% 제고';
-    case 'marketing-sales':
-    case 'growth':
-      return '신규 리드 유입률 250% 증가, 해외 수출 파이프라인 구축 및 세일즈 수율 극대화';
-    case 'hr-strategy':
-      return '시니어 적합 평가 도구 도입 완료, 핵심 인재 이탈률 0% 및 우수 조직문화 안착';
-    case 'r-and-d-manufacturing':
-      return '공정 불량률 25% 감소, 생산 수율 15% 향상 및 품질 인증 100% 달성';
-    case 'ai-automation':
-    case 'data-platform':
-      return '수작업 수율 처리 시간 60% 절감, 실시간 분석 파이프라인 인프라 구축 완비';
-    case 'security':
-      return '보안 취약점 100% 점검 조치, 글로벌 보안 표준 및 컴플라이언스 준수 체계 완성';
-    case 'operations':
-    default:
-      return '운영 프로세스 리드타임 30% 단축, 자원 배치 최적화를 통한 효율성 극대화';
-  }
-}
-
 export function transformWorknetToSeniorProject(
   raw: WorknetJobRaw,
   index: number,
@@ -280,9 +223,6 @@ export function transformWorknetToSeniorProject(
   const education = [raw.minEdubg, raw.maxEdubg].filter(Boolean).join('~');
   const qualifications = [raw.career, education].filter((value): value is string => Boolean(value));
   const sourceUrl = raw.wantedInfoUrl || raw.wantedMobileInfoUrl;
-
-  const problemStatement = generateAiAnalyzedProblemStatement(title, category, raw.indTpNm, companyName);
-  const projectGoal = generateAiAnalyzedProjectGoal(title, category);
 
   return {
     id: `WORKNET-${raw.wantedAuthNo || index + 1}`,
@@ -302,17 +242,13 @@ export function transformWorknetToSeniorProject(
     deadline,
     projectDuration: '상세 공고에서 확인',
     collaborationTargets: ['시니어 실무 총괄', '경영진 직속 자문', '실무 현장 실무진'],
-    coreResponsibilities: [
-      `${title} 관련 현장 문제점 정밀 진단 및 구조화`,
-      '시니어 전문 경험 기반의 핵심 맞춤 솔루션 수립',
-      '실무진 역량 강화를 위한 멘토링 및 프로세스 가이드 전달',
-    ],
+    coreResponsibilities: [],
     qualifications:
       qualifications.length > 0 ? qualifications : [career, '해당 직무 시니어 경력자'],
     benefits: ['근무시간 유연 협의', '경영진 직속 자문', '성과에 따른 자문료 지급'],
-    problemStatement,
-    projectGoal,
-    successMetrics: [projectGoal, '현장 실무진 만족도 90% 이상'],
+    problemStatement: '',
+    projectGoal: '',
+    successMetrics: [],
     requiredSkills: [
       title,
       raw.indTpNm || '전문 기술',
@@ -331,6 +267,12 @@ export function transformWorknetToSeniorProject(
       '문제 발생 시 시니어로서의 해결 접근 방식',
       '실무팀과의 협업 및 자문 커뮤니케이션 스타일',
     ],
+    sourceDetailProvenance: {
+      coreResponsibilities: 'synthetic',
+      problemStatement: 'synthetic',
+      projectGoal: 'synthetic',
+      requiredSkills: 'synthetic',
+    },
     seniorFitScore: 80,
     postedAt,
     source: 'worknet',

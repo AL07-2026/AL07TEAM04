@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { App } from '@/app/App';
+import { saveLocalCompanyProfile } from '@/services/profileService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
@@ -25,6 +26,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/company/projects', '프로젝트 관리'],
     ['/company/proposals', '받은 제안'],
     ['/company/proposals/1', '제안 상세'],
+    ['/company/profile', '내 정보'],
   ])('%s 화면을 표시한다', async (path, heading) => {
     window.history.pushState({}, '', path);
     render(<App />);
@@ -158,6 +160,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
       ['필요 경험', '서비스 운영 5년 이상'],
       ['진행 조건', '주 2회 · 원격'],
       ['근무 위치', '서울'],
+      ['보수/급여', '월 300만원'],
     ] as const)
       fireEvent.change(screen.getByLabelText(label), { target: { value } });
     fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록하기' }));
@@ -228,5 +231,24 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
     expect(await screen.findByText('✓ 회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
     expect(screen.getAllByText('(주) 테크노바').length).toBeGreaterThan(0);
+  });
+
+  it('저장한 회사 정보를 내 정보 탭에서도 같은 내용으로 보여준다', async () => {
+    saveLocalCompanyProfile({
+      companyAddress: '서울특별시 동대문구 고산자로 515',
+      companyName: '엘레오스',
+      email: 'contact@eleos.co.kr',
+      industry: '생활용품 제조',
+      managerName: 'Healing J',
+      phone: '010-5271-3612',
+    });
+    window.history.pushState({}, '', '/company/profile');
+    render(<App />);
+
+    expect(await screen.findByText('엘레오스')).toBeInTheDocument();
+    expect(screen.getByText('Healing J', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('서울특별시 동대문구 고산자로 515')).toBeInTheDocument();
+    expect(screen.getByText('010-5271-3612')).toBeInTheDocument();
+    expect(screen.getByText('생활용품 제조')).toBeInTheDocument();
   });
 });

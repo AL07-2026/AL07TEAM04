@@ -86,70 +86,148 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Shared readable type scale for project, recommendation, and application flows (~5% boosted for mobile clarity). */
-.project-ui-readable [class~='text-[10px]'],
-.project-ui-readable [class~='text-[11px]'] {
-  font-size: 13.5px;
+/*
+ * The service is used by older adults, so small utility text is promoted by one
+ * or two steps everywhere instead of relying on browser zoom. Keep the scale
+ * fixed at each breakpoint so long labels wrap naturally on narrow phones.
+ */
+.eojob-readable {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.eojob-readable :is(p, li, label, input, select, textarea, button) {
+  overflow-wrap: anywhere;
+}
+
+.eojob-readable :is(input, select, textarea) {
+  font-size: 16px;
   line-height: 1.5;
 }
 
-.project-ui-readable .text-xs,
-.project-ui-readable [class~='text-[12px]'] {
-  font-size: 14.5px;
+.eojob-readable button {
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.eojob-readable [class~='text-[10px]'],
+.eojob-readable [class~='text-[11px]'],
+.eojob-readable [class~='text-[11.5px]'] {
+  font-size: 14px;
   line-height: 1.5;
 }
 
-.project-ui-readable .text-sm,
-.project-ui-readable [class~='text-[13px]'] {
-  font-size: 15.5px;
+.eojob-readable .text-xs,
+.eojob-readable [class~='text-[12px]'],
+.eojob-readable [class~='text-[12.5px]'] {
+  font-size: 15px;
   line-height: 1.5;
 }
 
-.project-ui-readable [class~='text-[14px]'] {
-  font-size: 16.5px;
+.eojob-readable .text-sm,
+.eojob-readable [class~='text-[13px]'],
+.eojob-readable [class~='text-[13.5px]'] {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.eojob-readable [class~='text-[14px]'] {
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.eojob-readable [class~='text-[15px]'] {
+  font-size: 18px;
   line-height: 1.5;
 }
 
-@media (max-width: 767px) {
-  body {
-    font-size: 15px;
-  }
+.eojob-readable .text-base,
+.eojob-readable [class~='text-[16px]'],
+.eojob-readable [class~='text-[16.5px]'] {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.eojob-readable [class~='text-[17px]'] {
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+.eojob-readable .text-lg,
+.eojob-readable [class~='text-[18px]'] {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.eojob-readable .text-xl,
+.eojob-readable [class~='text-[21px]'] {
+  font-size: 23px;
+  line-height: 1.35;
+}
+
+.eojob-readable [class~='text-[22px]'],
+.eojob-readable .text-2xl {
+  font-size: 25px;
+  line-height: 1.3;
+}
+
+.eojob-readable [class~='text-[26px]'],
+.eojob-readable .text-3xl {
+  font-size: 29px;
+  line-height: 1.25;
 }
 
 @media (min-width: 768px) {
-  .project-ui-readable [class~='md:text-[13px]'],
-  .project-ui-readable [class~='md:text-sm'] {
-    font-size: 15px;
+  .eojob-readable {
+    font-size: 17px;
   }
 
-  .project-ui-readable [class~='md:text-[14px]'],
-  .project-ui-readable [class~='md:text-base'] {
+  .eojob-readable .text-xs,
+  .eojob-readable [class~='md:text-[13px]'],
+  .eojob-readable [class~='md:text-sm'] {
     font-size: 16px;
   }
 
-  .project-ui-readable [class~='md:text-lg'] {
-    font-size: 18px;
+  .eojob-readable .text-sm,
+  .eojob-readable [class~='md:text-[14px]'],
+  .eojob-readable [class~='md:text-base'] {
+    font-size: 17px;
   }
 
-  .project-ui-readable [class~='md:text-xl'] {
+  .eojob-readable [class~='md:text-lg'] {
     font-size: 20px;
   }
 
-  .project-ui-readable [class~='md:text-2xl'] {
-    font-size: 24px;
+  .eojob-readable [class~='md:text-xl'] {
+    font-size: 23px;
   }
 
-  .project-ui-readable [class~='md:text-3xl'] {
-    font-size: 30px;
+  .eojob-readable [class~='md:text-2xl'] {
+    font-size: 25px;
+  }
+
+  .eojob-readable [class~='md:text-3xl'] {
+    font-size: 29px;
   }
 }
 
 @media (min-width: 1024px) {
-  .project-ui-readable [class~='lg:text-2xl'] {
-    font-size: 24px;
+  .eojob-readable [class~='lg:text-2xl'] {
+    font-size: 25px;
   }
 
-  .project-ui-readable [class~='lg:text-4xl'] {
+  .eojob-readable [class~='lg:text-4xl'] {
     font-size: 36px;
+  }
+}
+
+/* Keep form text above the mobile browser zoom threshold after utility scaling. */
+.eojob-readable :is(input, select, textarea) {
+  font-size: 16px !important;
+}
+
+@media (min-width: 768px) {
+  .eojob-readable :is(input, select, textarea) {
+    font-size: 17px !important;
   }
 }
