@@ -130,6 +130,16 @@ describe('데이터 저장 및 조회 정합성', () => {
     ).toBeNull();
   });
 
+  it('삭제한 가나다라 테스트 공고는 남아 있는 로컬 캐시에서도 제외한다', () => {
+    expect(
+      normalizeProject('PROJECT-c8fb7c64', {
+        companyName: '(주) 기업명',
+        title: '가나다라',
+        category: 'operations',
+      }),
+    ).toBeNull();
+  });
+
   it('인재와 회사 프로필을 계정별 키로 분리하여 다시 읽는다', () => {
     saveLocalSeniorProfile(
       {

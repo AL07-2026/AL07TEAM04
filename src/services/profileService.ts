@@ -26,6 +26,7 @@ export type SeniorProfileData = {
   keySkills?: string;
   period: string;
   phone: string;
+  certifications?: string;
   solvedExperiences?: string;
   updatedAt?: string;
 };
@@ -79,6 +80,7 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     period: stringValue(value.period),
     experience,
     keySkills: stringValue(value.keySkills) || undefined,
+    certifications: stringValue(value.certifications) || undefined,
     solvedExperiences: stringValue(value.solvedExperiences) || undefined,
     phone: stringValue(value.phone),
     email,

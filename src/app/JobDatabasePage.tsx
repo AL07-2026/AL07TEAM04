@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  BriefcaseBusiness,
   Building2,
   CalendarClock,
   CheckCircle,
@@ -19,7 +18,6 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
-  Target,
   Trash2,
   Upload,
   X,
@@ -46,6 +44,7 @@ import {
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
+  resolveSeniorCategoryFilter,
 } from '@/app/jobDatabaseProjectVisibility';
 import type {
   EmploymentType,
@@ -206,6 +205,25 @@ const formatFileSize = (size: number) => `${(size / 1024 / 1024).toFixed(1)}MB`;
 
 function getInterviewSummary(card: StoredExperienceCard) {
   return `직종: ${getExperienceCardCategoryLabel(card)} · 문제: ${card.problem} · 역할: ${card.role} · 실행: ${card.action} · 결과: ${card.result}`;
+}
+
+function getApplicationInterviewSummary({
+  card,
+  isInterviewReady,
+  posting,
+}: {
+  card: StoredExperienceCard | null;
+  isInterviewReady: boolean;
+  posting: JobPosting;
+}) {
+  if (!card) {
+    return `지원 직무(${getPostingOccupationLabel(posting)})에 맞춘 AI 경험 인터뷰 없이 제출했습니다.`;
+  }
+
+  const baseSummary = getInterviewSummary(card);
+  if (isInterviewReady) return baseSummary;
+
+  return `${baseSummary} · 참고: 지원 직무(${getPostingOccupationLabel(posting)})에 맞춘 AI 경험 인터뷰 없이 제출했습니다.`;
 }
 
 function DatabaseMetric({
@@ -1138,6 +1156,43 @@ export function DetailPanel({
   );
 }
 
+function useDocumentScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked || typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    const { body, documentElement } = document;
+    const scrollY = window.scrollY;
+    const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
+    const previous = {
+      bodyOverflow: body.style.overflow,
+      bodyPaddingRight: body.style.paddingRight,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      htmlOverflow: documentElement.style.overflow,
+    };
+
+    documentElement.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      documentElement.style.overflow = previous.htmlOverflow;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.position = previous.bodyPosition;
+      body.style.top = previous.bodyTop;
+      body.style.width = previous.bodyWidth;
+      body.style.paddingRight = previous.bodyPaddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [locked]);
+}
+
 export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -1264,6 +1319,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     readStoredExperienceCard(user?.uid),
   );
   const [isApplying, setIsApplying] = useState(false);
+  const [isInterviewBypassConfirmOpen, setIsInterviewBypassConfirmOpen] = useState(false);
+  const isModalOpen =
+    isRegisterOpen ||
+    Boolean(applyingPosting) ||
+    Boolean(completedApplication) ||
+    isInterviewBypassConfirmOpen ||
+    (isMobile && isMobileDetailOpen);
+
+  useDocumentScrollLock(isModalOpen);
+
   const interviewMatch = useMemo(
     () =>
       applyingPosting && interviewCard
@@ -1456,8 +1521,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       const isCustomMatchSelected =
         selectedCategory === customOccupationMatch || isDefaultCustomMatch;
       const isAllDatabaseSelected = selectedCategory === allDatabase;
+      const customFallbackCategories = isCustomMatchSelected
+        ? preferredProfileCategories
+        : [];
       let categories: JobOccupationFilter[] = [];
-      if (!query.trim() && !isAllDatabaseSelected && !isCustomMatchSelected) {
+      if (!query.trim() && isCustomMatchSelected && customFallbackCategories.length > 0) {
+        categories = customFallbackCategories;
+      } else if (!query.trim() && !isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -1469,6 +1539,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       let desiredCategories: OccupationPreference[] = [];
       if (query.trim()) {
         desiredCategories = [];
+      } else if (isCustomMatchSelected && customFallbackCategories.length > 0) {
+        desiredCategories = customFallbackCategories;
       } else if (isAllDatabaseSelected) {
         desiredCategories = preferredProfilePreferences;
       } else if (!isCustomMatchSelected && selectedOccupationCategory) {
@@ -1491,6 +1563,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         .join(' ');
 
       setIsLoadingPostings(true);
+      const companyProjectCategoryFilter = resolveSeniorCategoryFilter(
+        selectedCategory,
+        effectivePrimaryProfileFilter,
+      );
       void searchFullJobDatabase({
         categories,
         desiredCategories,
@@ -1512,7 +1588,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         pageSize: itemsPerPage,
         profileText,
         query,
-        requireDesiredOccupationMatch: isCustomMatchSelected,
+        requireDesiredOccupationMatch:
+          isCustomMatchSelected && customFallbackCategories.length === 0,
         signal: abortController.signal,
         sortBy,
         workType: selectedWorkType,
@@ -1521,15 +1598,28 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           if (!active || generation !== resultGenerationRef.current) return;
           const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
             matchesPublishedCompanyProject(project, {
+              desiredOccupationText: isCustomMatchSelected
+                ? seniorProfile?.desiredOccupationText
+                : undefined,
               employmentType: selectedEmploymentType,
+              fallbackOccupationCategories: customFallbackCategories,
               hiringStage: selectedHiringStage,
               query,
-              selectedCategory,
+              selectedCategory: companyProjectCategoryFilter,
               workType: selectedWorkType,
             }),
           ) : [];
-          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, result.items);
-          const catalogProjectIds = new Set(result.items.map((project) => project.id));
+          const matchingCatalogProjects = isCustomMatchSelected
+            ? result.items.filter((project) =>
+                doesPostingMatchDesiredOccupationText(
+                  project,
+                  seniorProfile?.desiredOccupationText,
+                ) ||
+                customFallbackCategories.includes(getPostingOccupationCategory(project)),
+              )
+            : result.items;
+          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, matchingCatalogProjects);
+          const catalogProjectIds = new Set(matchingCatalogProjects.map((project) => project.id));
           const additionalCompanyProjectCount = matchingCompanyProjects.filter(
             (project) => !catalogProjectIds.has(project.id),
           ).length;
@@ -1585,14 +1675,30 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             setServerSearchMeta(null);
             const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
               matchesPublishedCompanyProject(project, {
+                desiredOccupationText: isCustomMatchSelected
+                  ? seniorProfile?.desiredOccupationText
+                  : undefined,
                 employmentType: selectedEmploymentType,
+                fallbackOccupationCategories: customFallbackCategories,
                 hiringStage: selectedHiringStage,
                 query,
-                selectedCategory,
+                selectedCategory: companyProjectCategoryFilter,
                 workType: selectedWorkType,
               }),
             ) : [];
-            const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, fallback.projects);
+            const matchingFallbackProjects = isCustomMatchSelected
+              ? fallback.projects.filter((project) =>
+                  doesPostingMatchDesiredOccupationText(
+                    project,
+                    seniorProfile?.desiredOccupationText,
+                  ) ||
+                  customFallbackCategories.includes(getPostingOccupationCategory(project)),
+                )
+              : fallback.projects;
+            const mergedProjects = mergeSeniorPostings(
+              matchingCompanyProjects,
+              matchingFallbackProjects,
+            );
             setPostings(mergedProjects);
             setSelectedId(mergedProjects[0]?.id ?? '');
           } catch {
@@ -1618,10 +1724,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     };
   }, [
     currentPage,
+    effectivePrimaryProfileFilter,
     isSeniorProfileResolved,
     interviewCard,
     primaryProfileCategory,
     primaryProfilePreference,
+    preferredProfileCategories,
     preferredProfilePreferences,
     query,
     role,
@@ -1692,6 +1800,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function handleStartApplicationInterview() {
     if (!applyingPosting) return;
+    setIsInterviewBypassConfirmOpen(false);
     preserveApplicationDraft(applyingPosting.id, applicationFiles, applicantNote);
     beginApplicationInterview(applyingPosting.id, window.location.pathname, {
       targetCategory: applyingPosting.category,
@@ -1702,21 +1811,33 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function handleCloseApplication() {
     cancelApplicationInterview();
+    setIsInterviewBypassConfirmOpen(false);
     setApplyingPosting(null);
     setApplicationError('');
   }
 
-  async function handleConfirmSubmitApplication() {
-    if (!applyingPosting || !interviewCard || !isInterviewReady || applicationFiles.length === 0) {
-      setApplicationError(
-        !interviewCard || !isInterviewReady
-          ? '지원 직종에 맞는 AI 인터뷰를 완료한 뒤 제출해 주세요.'
-          : '1개 이상의 첨부파일을 확인해 주세요.',
-      );
+  async function handleConfirmSubmitApplication({
+    allowInterviewMismatch = false,
+  }: { allowInterviewMismatch?: boolean } = {}) {
+    if (!applyingPosting) return;
+
+    if (applicationFiles.length === 0) {
+      setApplicationError('1개 이상의 첨부파일을 확인해 주세요.');
       return;
     }
+
+    if (!allowInterviewMismatch && !isInterviewReady) {
+      setApplicationError('');
+      setIsInterviewBypassConfirmOpen(true);
+      return;
+    }
+
     const attachedFileNames = applicationFiles.map((file) => file.name).join(', ');
-    const interviewSummary = getInterviewSummary(interviewCard);
+    const interviewSummary = getApplicationInterviewSummary({
+      card: interviewCard,
+      isInterviewReady,
+      posting: applyingPosting,
+    });
     setIsApplying(true);
     try {
       await createProposalFromPosting(
@@ -1760,6 +1881,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       const text = `✓ [${applyingPosting.companyName}] 지원서 제출 및 이어잡 기록 저장 완료!`;
       setActionNotice(text);
+      setIsInterviewBypassConfirmOpen(false);
       setApplyingPosting(null);
       setApplicationFiles([]);
       setApplicationError('');
@@ -2358,8 +2480,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {/* New Project Registration Modal */}
       {isRegisterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl border border-[#E0D9C8] bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/50 p-4 backdrop-blur-xs">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <h3 className="text-lg font-extrabold text-[#17212B]">신규 프로젝트 등록</h3>
               <button
@@ -2376,7 +2498,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <input
                   name="companyName"
                   required
-                  defaultValue="(주) 기업명"
+                  placeholder="회사명을 입력하세요"
                   className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                 />
               </label>
@@ -2450,11 +2572,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {/* Interactive Application Modal with Resume/Portfolio & AI Interview Verification */}
       {applyingPosting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2.5 backdrop-blur-xs md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 p-2.5 backdrop-blur-xs md:p-4">
           <div
             aria-labelledby="application-modal-title"
             aria-modal="true"
-            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl md:p-6"
+            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl md:p-6"
             role="dialog"
           >
             <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/70 pb-4">
@@ -2752,10 +2874,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </button>
                 <button
                   type="button"
-                  disabled={isApplying || !isInterviewReady || applicationFiles.length === 0}
+                  disabled={isApplying}
                   onClick={() => void handleConfirmSubmitApplication()}
                   className={cn(
-                    'h-12 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#12332F] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none',
+                    'h-12 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#12332F] active:scale-[0.99] disabled:cursor-wait disabled:bg-slate-400 disabled:shadow-none',
                     isMobile && 'w-full',
                   )}
                 >
@@ -2763,11 +2885,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </button>
               </div>
               {!isInterviewReady || applicationFiles.length === 0 ? (
-                <p className="text-right text-[13px] font-semibold text-slate-500">
+                <p className="text-right text-[13px] font-semibold text-[#D85A3F]">
                   {!interviewCard
-                    ? 'AI 인터뷰 완료와 첨부파일 1개 이상이 필요합니다.'
+                    ? 'AI 인터뷰 없이 제출하면 기업 담당자에게 관련 경험 검증이 부족하게 보일 수 있습니다.'
                     : !isInterviewReady
-                      ? `${getPostingOccupationLabel(applyingPosting)} 직종에 맞는 인터뷰가 필요합니다.`
+                      ? `${getPostingOccupationLabel(applyingPosting)} 직무 인터뷰 없이도 제출할 수 있지만, 제출 전 확인이 필요합니다.`
                       : '첨부파일을 1개 이상 등록해 주세요.'}
                 </p>
               ) : null}
@@ -2776,9 +2898,79 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
       )}
 
+      {applyingPosting && isInterviewBypassConfirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden overscroll-none bg-black/45 p-4 backdrop-blur-xs">
+          <div
+            aria-labelledby="interview-bypass-confirm-title"
+            aria-modal="true"
+            className="w-full max-w-md rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-2xl"
+            role="dialog"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FDF0ED] text-[#F06B4F]">
+                <CircleAlert className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <h3
+                  className="text-[18px] font-extrabold leading-7 text-[#17212B]"
+                  id="interview-bypass-confirm-title"
+                >
+                  해당 직무에 관련된 인터뷰 없이도 지원하시겠습니까?
+                </h3>
+                <p className="mt-2 text-[14px] font-medium leading-6 text-slate-600">
+                  현재 저장된 AI 경험 인터뷰가{' '}
+                  <strong className="font-extrabold text-[#17212B]">
+                    {getPostingOccupationLabel(applyingPosting)}
+                  </strong>{' '}
+                  직무와 충분히 맞지 않습니다. 그대로 지원하면 기업 담당자가 경험 카드와 지원
+                  직무의 관련성을 낮게 볼 수 있어요.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-[#BBD5CE] bg-[#F4FAF8] p-3.5">
+              <p className="text-[13px] font-extrabold text-[#173F3A]">
+                추천: 지원 직무 맞춤 AI 인터뷰를 먼저 진행해 보세요.
+              </p>
+              <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600">
+                인터뷰를 완료하면 이 공고에 맞는 문제 해결 경험이 지원서와 함께 전달됩니다.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-2.5">
+              <button
+                className="min-h-11 w-full rounded-xl bg-[#173F3A] px-4 py-2.5 text-[14px] font-extrabold leading-5 text-white shadow-sm transition hover:bg-[#12332F]"
+                onClick={handleStartApplicationInterview}
+                type="button"
+              >
+                AI 인터뷰 진행하러 가기
+              </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  className="min-h-11 rounded-xl border border-[#E0D9C8] px-3 py-2.5 text-[13px] font-bold leading-5 text-slate-600 transition hover:bg-slate-50"
+                  onClick={() => setIsInterviewBypassConfirmOpen(false)}
+                  type="button"
+                >
+                  계속 작성
+                </button>
+                <button
+                  className="min-h-11 rounded-xl border border-[#F06B4F]/35 bg-white px-3 py-2.5 text-[13px] font-extrabold leading-5 text-[#D85A3F] transition hover:bg-[#FFF1ED]"
+                  onClick={() =>
+                    void handleConfirmSubmitApplication({ allowInterviewMismatch: true })
+                  }
+                  type="button"
+                >
+                  인터뷰 없이 지원하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {completedApplication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl border border-[#E0D9C8] bg-white p-6 shadow-2xl md:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-[#E0D9C8] bg-white p-6 shadow-2xl md:p-8">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#2E7D32]">
@@ -3354,7 +3546,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       {/* Mobile Detail Popup Modal */}
       {isMobile && isMobileDetailOpen && selectedPosting ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none bg-black/60 p-0 sm:p-4 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
           onClick={() => setIsMobileDetailOpen(false)}
         >
           <div
@@ -3379,7 +3571,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
 
             {/* Modal Content */}
-            <div className="overflow-y-auto p-4">
+            <div className="overflow-y-auto overscroll-contain p-4">
               <DetailPanel
                 activePrimaryCategory={effectiveSelectedCategory}
                 experienceCard={interviewCard}
@@ -3396,31 +3588,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
       ) : null}
 
-      <section className="rounded-2xl border border-[#F06B4F]/30 bg-[#FDF0ED] p-4 shadow-xs">
-        <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#F06B4F]">
-          <Target className="size-4" />
-          다음 연결 지점
-        </div>
-        <p className="mt-2 text-[13px] font-medium leading-6 text-[#17212B]/80">
-          {role === 'senior'
-            ? '검증된 채용 공고와 등록한 경험 카드를 비교해 추천 순서를 계산합니다. 지원 전에는 반드시 상세 공고 조건을 확인하세요.'
-            : '회사가 직접 등록한 프로젝트를 지원자 추천, 지원서 검토, 담당자 인터뷰 단계와 연결해 관리할 수 있습니다.'}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {(role === 'senior'
-            ? ['채용 조건 확인', '경험 기반 추천', 'AI 인터뷰', '지원서 제출']
-            : ['프로젝트 등록', '인재 추천', '지원서 검토', '담당자 인터뷰']
-          ).map((item) => (
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-[#F06B4F]"
-              key={item}
-            >
-              <BriefcaseBusiness className="size-3.5" />
-              {item}
-            </span>
-          ))}
-        </div>
-      </section>
     </MobilePage>
   );
 }

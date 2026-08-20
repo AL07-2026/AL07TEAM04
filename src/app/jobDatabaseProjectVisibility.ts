@@ -6,8 +6,12 @@ import type {
   WorkType,
 } from '@/data/jobPostings';
 import type { OccupationCategory } from '@/data/occupationCategories';
+import {
+  doesPostingMatchDesiredOccupationText,
+  getPostingOccupationCategory,
+} from '@/services/recommendationEngine';
 
-type CategoryFilter =
+export type CategoryFilter =
   | ProjectCategory
   | OccupationCategory
   | 'all'
@@ -16,7 +20,9 @@ type CategoryFilter =
   | 'unclassified';
 
 type ProjectVisibilityFilters = {
+  desiredOccupationText?: string | null;
   employmentType: EmploymentType | 'all';
+  fallbackOccupationCategories?: OccupationCategory[];
   hiringStage: HiringStage | 'all';
   query: string;
   selectedCategory: CategoryFilter;
@@ -25,6 +31,15 @@ type ProjectVisibilityFilters = {
 
 export function getPublishedCompanyProjects(projects: JobPosting[]) {
   return projects.filter((project) => project.hiringStage === 'open');
+}
+
+export function resolveSeniorCategoryFilter(
+  selectedCategory: CategoryFilter,
+  primaryProfileCategory?: CategoryFilter,
+) {
+  return selectedCategory === 'all' && primaryProfileCategory
+    ? primaryProfileCategory
+    : selectedCategory;
 }
 
 /** Projects in a company workspace must never fall back to another company's legacy postings. */
@@ -37,13 +52,17 @@ export function matchesPublishedCompanyProject(
   project: JobPosting,
   filters: ProjectVisibilityFilters,
 ) {
+  const projectOccupationCategory = getPostingOccupationCategory(project);
   const matchesExplicitCategory =
     filters.selectedCategory === 'all' ||
     filters.selectedCategory === 'all_db' ||
-    filters.selectedCategory === 'custom-match' ||
-    filters.selectedCategory === 'unclassified' ||
+    (filters.selectedCategory === 'custom-match' &&
+      (doesPostingMatchDesiredOccupationText(project, filters.desiredOccupationText) ||
+        filters.fallbackOccupationCategories?.includes(projectOccupationCategory) === true)) ||
+    (filters.selectedCategory === 'unclassified' &&
+      project.occupationClassificationStatus === 'ambiguous') ||
     project.category === filters.selectedCategory ||
-    project.occupationCategory === filters.selectedCategory;
+    projectOccupationCategory === filters.selectedCategory;
   const matchesWorkType = filters.workType === 'all' || project.workType === filters.workType;
   const matchesEmploymentType =
     filters.employmentType === 'all' || project.employmentType === filters.employmentType;

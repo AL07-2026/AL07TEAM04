@@ -26,6 +26,7 @@ import {
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
+  resolveSeniorCategoryFilter,
 } from '@/app/jobDatabaseProjectVisibility';
 import {
   CategoryPickerDialog,
@@ -40,10 +41,10 @@ import type { PostingWorkSummary } from '@/services/postingWorkSummary';
 const companyProject: JobPosting = {
   id: 'company-project-1',
   ownerId: 'company-user',
-  companyName: '(주)기업명',
+  companyName: '테스트 기업',
   industry: '서비스업',
   companySize: '10명',
-  title: '가나다라',
+  title: '기업 운영 프로젝트',
   category: 'operations',
   seniority: 'lead',
   employmentType: 'project',
@@ -59,7 +60,7 @@ const companyProject: JobPosting = {
   qualifications: [],
   benefits: [],
   problemStatement: '운영 체계를 정비합니다.',
-  projectGoal: '가나다라 프로젝트를 완성합니다.',
+  projectGoal: '기업 운영 프로젝트를 완성합니다.',
   successMetrics: [],
   requiredSkills: ['서비스 운영'],
   preferredSkills: [],
@@ -94,12 +95,80 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       matchesPublishedCompanyProject(companyProject, {
         employmentType: 'all',
         hiringStage: 'all',
-        query: '가나다라',
+        query: '기업 운영',
         selectedCategory: 'all',
         workType: 'all',
       }),
     ).toBe(true);
     expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
+  });
+
+  it('새로고침 후에도 1순위 직무를 기업 공개 공고 필터에 적용한다', () => {
+    const selectedCategory = resolveSeniorCategoryFilter('all', 'design');
+    const designCompanyProject = {
+      ...companyProject,
+      category: 'design-brand' as const,
+      id: 'design-company-project',
+      occupationCategory: 'design' as const,
+    };
+    const itCompanyProject = {
+      ...companyProject,
+      category: 'dev-engineering' as const,
+      id: 'it-company-project',
+      occupationCategory: 'it-development-data' as const,
+    };
+
+    expect(selectedCategory).toBe('design');
+    expect(
+      [designCompanyProject, itCompanyProject].filter((project) =>
+        matchesPublishedCompanyProject(project, {
+          employmentType: 'all',
+          hiringStage: 'all',
+          query: '',
+          selectedCategory,
+          workType: 'all',
+        }),
+      ),
+    ).toEqual([designCompanyProject]);
+    expect(resolveSeniorCategoryFilter('it-development-data', 'design')).toBe('it-development-data');
+    expect(resolveSeniorCategoryFilter('all')).toBe('all');
+  });
+
+  it('기타 직접 입력 1순위에는 키워드 또는 후순위 직무가 맞는 공고만 표시한다', () => {
+    const matchingProject = {
+      ...companyProject,
+      coreResponsibilities: ['재활 학술 자료를 검토합니다.'],
+      id: 'rehabilitation-project',
+      title: '재활 학술 전문가',
+    };
+    const unrelatedProject = {
+      ...companyProject,
+      coreResponsibilities: ['고객 집청소와 식사를 지원합니다.'],
+      id: 'home-helper-project',
+      title: '홈프로텍터',
+    };
+    const fallbackCategoryProject = {
+      ...companyProject,
+      category: 'r-and-d-manufacturing' as const,
+      id: 'research-project',
+      occupationCategory: 'research-rd' as const,
+      title: '기업 연구개발 자문',
+    };
+    const filters = {
+      desiredOccupationText: '재활 학술',
+      employmentType: 'all' as const,
+      fallbackOccupationCategories: ['research-rd' as const, 'education' as const],
+      hiringStage: 'all' as const,
+      query: '',
+      selectedCategory: 'custom-match' as const,
+      workType: 'all' as const,
+    };
+
+    expect(
+      [matchingProject, fallbackCategoryProject, unrelatedProject].filter((project) =>
+        matchesPublishedCompanyProject(project, filters),
+      ),
+    ).toEqual([matchingProject, fallbackCategoryProject]);
   });
 });
 

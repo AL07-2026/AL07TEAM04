@@ -40,6 +40,10 @@ const workTypes = new Set<WorkType>(['remote', 'hybrid', 'onsite']);
 const seniorities = new Set<Seniority>(['senior', 'lead', 'principal']);
 const employmentTypes = new Set<EmploymentType>(['full-time', 'contract', 'advisory', 'project']);
 const hiringStages = new Set<HiringStage>(['open', 'screening', 'interviewing', 'closing']);
+const RETIRED_TEST_PROJECT = {
+  companyName: '(주) 기업명',
+  title: '가나다라',
+} as const;
 
 function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -105,6 +109,12 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   const category = value.category as ProjectCategory;
 
   if (!id || !title || !companyName || !categories.has(category)) return null;
+  if (
+    companyName === RETIRED_TEST_PROJECT.companyName &&
+    title === RETIRED_TEST_PROJECT.title
+  ) {
+    return null;
+  }
 
   const postedAt = stringValue(value.postedAt, new Date().toISOString().slice(0, 10));
   const ownerId = stringValue(value.ownerId) || undefined;
