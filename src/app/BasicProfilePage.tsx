@@ -38,6 +38,7 @@ function createEmptyProfile(email = ''): ProfileForm {
     field: '',
     keySkills: '',
     period: '',
+    certifications: '',
     experience: '시간제·파트타임 (오전/오후)',
     solvedExperiences: '',
     phone: '',
@@ -367,6 +368,11 @@ export function BasicProfilePage() {
                 <ProfileInfoRow label="경력 분야" value={form.field} />
                 <ProfileInfoRow label="경력 기간" value={form.period} />
                 <ProfileInfoRow
+                  label="보유 자격증"
+                  strong={false}
+                  value={form.certifications || '미입력'}
+                />
+                <ProfileInfoRow
                   label="세부 강점"
                   strong={false}
                   value={form.keySkills || '미입력'}
@@ -444,6 +450,15 @@ export function BasicProfilePage() {
                     </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.period}</span>
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    보유 자격증
+                  </span>
+                  <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
+                    {form.certifications || '미입력'}
+                  </p>
                 </div>
 
                 {form.keySkills ? (
@@ -623,7 +638,15 @@ export function BasicProfilePage() {
               />
             </div>
 
-            {/* Section 3: 경력 분야 세부 핵심 강점 */}
+            {/* Section 3: 보유 자격증 */}
+            <Field
+              label="보유 자격증"
+              onChange={(e) => update('certifications')(e.target.value)}
+              placeholder="예: 전기기능사, 정보처리기사, 지게차운전기능사"
+              value={form.certifications || ''}
+            />
+
+            {/* Section 4: 경력 분야 세부 핵심 강점 */}
             <TextAreaField
               label="💪 경력 분야 세부 핵심 강점 및 주력 역량"
               onChange={(e) => update('keySkills')(e.target.value)}
@@ -631,7 +654,7 @@ export function BasicProfilePage() {
               value={form.keySkills || ''}
             />
 
-            {/* Section 4: 해결했던 핵심 문제 및 성과 사례 */}
+            {/* Section 5: 해결했던 핵심 문제 및 성과 사례 */}
             <TextAreaField
               label="💡 해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
@@ -639,7 +662,7 @@ export function BasicProfilePage() {
               value={form.solvedExperiences || ''}
             />
 
-            {/* Section 5: 원하는 근무 형태 (시간제/계약직/정규직 선택) */}
+            {/* Section 6: 원하는 근무 형태 (시간제/계약직/정규직 선택) */}
             <div className="flex flex-col gap-2">
               <label className="text-xs md:text-sm font-extrabold text-[#173F3A]" htmlFor="desired-work-type-select">
                 ⏰ 원하는 근무 형태 (시간제/계약직/정규직 선택)
@@ -664,7 +687,7 @@ export function BasicProfilePage() {
               </select>
             </div>
 
-            {/* Section 6: 연락처 & 이메일 */}
+            {/* Section 7: 연락처 & 이메일 */}
             <div
               className={cn(
                 'grid gap-3.5',
@@ -687,7 +710,7 @@ export function BasicProfilePage() {
               />
             </div>
 
-            {/* Section 7: 이력서 첨부 */}
+            {/* Section 8: 이력서 첨부 */}
             <div className="flex flex-col gap-2">
               <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">이력서 첨부 (선택)</span>
               <input

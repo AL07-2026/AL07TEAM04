@@ -26,6 +26,7 @@ export type SeniorProfileData = {
   keySkills?: string;
   period: string;
   phone: string;
+  certifications?: string;
   solvedExperiences?: string;
   updatedAt?: string;
 };
@@ -79,6 +80,7 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     period: stringValue(value.period),
     experience,
     keySkills: stringValue(value.keySkills) || undefined,
+    certifications: stringValue(value.certifications) || undefined,
     solvedExperiences: stringValue(value.solvedExperiences) || undefined,
     phone: stringValue(value.phone),
     email,
@@ -113,6 +115,10 @@ function readScopedProfile<T>(
   const scopedKey = getScopedStorageKey(baseKey, ownerId);
   const scoped = normalize(readVersionedStorage<unknown>(scopedKey));
   if (scoped) return scoped;
+
+  // Legacy keys were shared by every account in a browser. Never reuse them
+  // for a signed-in account: they may belong to a different company.
+  if (ownerId) return null;
 
   const legacy = normalize(readVersionedStorage<unknown>(baseKey));
   if (legacy) {
@@ -194,13 +200,11 @@ export async function getCompanyProfile(uid: string): Promise<CompanyProfileData
 }
 
 export async function resolveCompanyProfile(uid?: string): Promise<CompanyProfileData | null> {
-  const localProfile = getLocalCompanyProfile(uid);
-  if (localProfile) return localProfile;
   if (!uid) return null;
 
   const remoteProfile = await getCompanyProfile(uid);
   if (remoteProfile) saveLocalCompanyProfile(remoteProfile, uid);
-  return remoteProfile;
+  return remoteProfile || getLocalCompanyProfile(uid);
 }
 
 export async function saveCompanyProfile(uid: string, profile: CompanyProfileData): Promise<void> {

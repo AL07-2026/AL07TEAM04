@@ -60,12 +60,30 @@ describe('데이터 저장 및 조회 정합성', () => {
       title: '프로세스 개선',
       category: 'operations',
       seniorFitScore: 120,
+      attachments: [
+        {
+          name: 'project-guide.pdf',
+          type: 'application/pdf',
+          size: 2048,
+          url: 'https://example.com/project-guide.pdf',
+          storagePath: 'project-attachments/document-id/project-guide.pdf',
+        },
+      ],
     });
 
     expect(project?.id).toBe('document-id');
     expect(project?.seniorFitScore).toBe(100);
     expect(project?.coreResponsibilities).toEqual([]);
     expect(project?.workType).toBe('hybrid');
+    expect(project?.attachments).toEqual([
+      {
+        name: 'project-guide.pdf',
+        type: 'application/pdf',
+        size: 2048,
+        url: 'https://example.com/project-guide.pdf',
+        storagePath: 'project-attachments/document-id/project-guide.pdf',
+      },
+    ]);
   });
 
   it('필수 프로젝트 정보가 없으면 잘못된 문서를 출력하지 않는다', () => {
@@ -74,6 +92,16 @@ describe('데이터 저장 및 조회 정합성', () => {
     ).toBeNull();
     expect(
       normalizeProject('document-id', { companyName: '회사', title: '제목', category: 'unknown' }),
+    ).toBeNull();
+  });
+
+  it('삭제한 가나다라 테스트 공고는 남아 있는 로컬 캐시에서도 제외한다', () => {
+    expect(
+      normalizeProject('PROJECT-c8fb7c64', {
+        companyName: '(주) 기업명',
+        title: '가나다라',
+        category: 'operations',
+      }),
     ).toBeNull();
   });
 
@@ -103,5 +131,20 @@ describe('데이터 저장 및 조회 정합성', () => {
     expect(getLocalSeniorProfile('senior-b')).toBeNull();
     expect(getLocalCompanyProfile('company-a')?.managerName).toBe('김담당');
     expect(getLocalCompanyProfile('company-b')).toBeNull();
+  });
+
+  it('이전 공용 회사 정보는 다른 로그인 계정에 표시하지 않는다', () => {
+    localStorage.setItem(
+      'eojob_company_profile',
+      JSON.stringify({
+        companyAddress: '서울특별시 강남구 테헤란로 123',
+        companyName: '(주) 이어잡',
+        email: 'hr@eojob.com',
+        managerName: '김담당',
+        phone: '02-1234-5678',
+      }),
+    );
+
+    expect(getLocalCompanyProfile('eleos-company-account')).toBeNull();
   });
 });

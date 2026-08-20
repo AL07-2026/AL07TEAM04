@@ -5,6 +5,7 @@ import {
   Award,
   BarChart2,
   FileText,
+  ImagePlus,
   Info,
   Loader2,
   Mic,
@@ -15,14 +16,21 @@ import {
   Sparkles,
   Target,
   User,
+  X,
   Zap,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
-import { categoryLabels, type JobPosting, type ProjectCategory } from '@/data/jobPostings';
+import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
+import {
+  categoryLabels,
+  type JobPosting,
+  type ProjectAttachment,
+  type ProjectCategory,
+} from '@/data/jobPostings';
 import {
   getOccupationCategoryLabel,
   mapOccupationCategoryToProject,
@@ -47,7 +55,13 @@ import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/interviewService';
 import { searchFullJobDatabase } from '@/services/jobSearchService';
-import { createProject, fetchProjectById, fetchProjects } from '@/services/projectService';
+import {
+  createProject,
+  fetchProjectById,
+  fetchProjects,
+  updateProject,
+  uploadProjectAttachments,
+} from '@/services/projectService';
 import {
   extractCleanPositionTitle,
   formatCleanProblemStatement,
@@ -58,8 +72,10 @@ import {
 import {
   getLocalCompanyProfile,
   getLocalSeniorProfile,
+  resolveCompanyProfile,
   resolveSeniorProfile,
   saveLocalSeniorProfile,
+  type CompanyProfileData,
   type SeniorProfileData,
 } from '@/services/profileService';
 import {
@@ -2061,6 +2077,9 @@ export function CompanyHomePage() {
   const isMobile = mode === 'mobile';
   const [companyProjects, setCompanyProjects] = useState<JobPosting[]>([]);
   const [companyProposals, setCompanyProposals] = useState<UserProposal[]>([]);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
+    getLocalCompanyProfile(user?.uid),
+  );
 
   useEffect(() => {
     void (async () => {
@@ -2069,12 +2088,16 @@ export function CompanyHomePage() {
         getCompanyProposals(user?.uid),
       ]);
       setCompanyProjects(
-        projectsFromDatabase.filter(
-          (project) => !project.ownerId || !user?.uid || project.ownerId === user.uid,
-        ),
+        getCompanyOwnedProjects(projectsFromDatabase, user?.uid),
       );
       setCompanyProposals(proposalsFromDatabase);
     })();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    void resolveCompanyProfile(user?.uid).then((profile) => {
+      if (profile) setCompanyProfile(profile);
+    });
   }, [user?.uid]);
 
   const latestProject = companyProjects[0];
@@ -2090,7 +2113,7 @@ export function CompanyHomePage() {
       }
     : null;
   const companyName =
-    getLocalCompanyProfile(user?.uid)?.companyName ||
+    companyProfile?.companyName ||
     (user?.name && user.name !== '채용담당자' ? user.name : '') ||
     '채용';
 
@@ -2199,15 +2222,93 @@ export function ProjectRegisterPage() {
     experience: '',
     terms: '',
     location: '',
+    salaryRange: '',
   });
+  const [attachments, setAttachments] = useState<
+    Array<{ id: string; file: File; previewUrl?: string }>
+  >([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [attachmentError, setAttachmentError] = useState('');
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const attachmentStateRef = useRef(attachments);
   const update = (key: keyof typeof form) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
   const complete = Object.values(form).every((value) => Boolean(value.trim()));
+
+  useEffect(() => {
+    attachmentStateRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(
+    () => () => {
+      attachmentStateRef.current.forEach((attachment) => {
+        if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+      });
+    },
+    [],
+  );
+
+  function selectAttachments(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (selectedFiles.length === 0) return;
+
+    const supportedFiles = selectedFiles.filter(
+      (file) =>
+        ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) &&
+        file.size <= 10 * 1024 * 1024,
+    );
+    const newFiles = supportedFiles
+      .filter(
+        (file) =>
+          !attachments.some(
+            (attachment) =>
+              attachment.file.name === file.name && attachment.file.size === file.size,
+          ),
+      )
+      .slice(0, Math.max(0, 5 - attachments.length));
+
+    if (newFiles.length > 0) {
+      setAttachments((current) => [
+        ...current,
+        ...newFiles.map((file) => ({
+          id: `${file.name}-${file.size}-${file.lastModified}`,
+          file,
+          previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+        })),
+      ]);
+    }
+
+    if (newFiles.length !== selectedFiles.length) {
+      setAttachmentError(
+        'JPG, PNG, WEBP 이미지 또는 PDF만 첨부할 수 있으며, 파일당 10MB·최대 5개까지 선택할 수 있습니다.',
+      );
+    } else {
+      setAttachmentError('');
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((current) => {
+      const target = current.find((attachment) => attachment.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return current.filter((attachment) => attachment.id !== id);
+    });
+    setAttachmentError('');
+  }
+
+  function formatFileSize(size: number) {
+    return size < 1024 * 1024 ? `${Math.max(1, Math.round(size / 1024))}KB` : `${(size / 1024 / 1024).toFixed(1)}MB`;
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!complete || isSaving) return;
+    if (!user?.uid) {
+      setSaveError('기업 로그인 후에만 프로젝트를 등록할 수 있습니다.');
+      return;
+    }
 
     setIsSaving(true);
     setSaveError('');
@@ -2220,6 +2321,11 @@ export function ProjectRegisterPage() {
         : 'onsite';
 
     try {
+      const attachmentMetadata: ProjectAttachment[] = attachments.map(({ file }) => ({
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+      }));
       const { project, savedToFirestore } = await createProject({
         ownerId: user?.uid,
         companyName: companyProfile?.companyName || user?.name || '등록 기업',
@@ -2233,7 +2339,8 @@ export function ProjectRegisterPage() {
         workType,
         location: form.location.trim(),
         experienceYears: form.experience.trim(),
-        salaryRange: '보상 협의',
+        salaryRange: form.salaryRange.trim(),
+        attachments: attachmentMetadata,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
         projectDuration: form.terms.trim(),
         collaborationTargets: ['기업 담당자', '프로젝트 실무팀'],
@@ -2251,9 +2358,24 @@ export function ProjectRegisterPage() {
         interviewFocus: [form.body.trim(), form.experience.trim()],
         seniorFitScore: 90,
       });
+      let attachmentSync = attachments.length === 0 ? 'none' : 'local';
+      if (savedToFirestore && attachments.length > 0) {
+        try {
+          const uploadedAttachments = await uploadProjectAttachments(
+            project.id,
+            attachments.map((attachment) => attachment.file),
+          );
+          await updateProject(project.id, { attachments: uploadedAttachments });
+          attachmentSync = 'uploaded';
+        } catch (attachmentUploadError) {
+          console.warn('Project attachment upload failed:', attachmentUploadError);
+          attachmentSync = 'pending';
+        }
+      }
       const params = new URLSearchParams({
         projectId: project.id,
         sync: savedToFirestore ? 'firestore' : 'local',
+        attachments: attachmentSync,
       });
       void navigate(`/company/project-complete?${params.toString()}`);
     } catch (error) {
@@ -2305,6 +2427,82 @@ export function ProjectRegisterPage() {
           placeholder="예: 본사(서울시 강남구)"
           value={form.location}
         />
+        <Field
+          label="보수/급여"
+          onChange={(e) => update('salaryRange')(e.target.value)}
+          placeholder="예: 월 300만원 · 협의 가능"
+          value={form.salaryRange}
+        />
+        <section aria-labelledby="project-attachment-title" className="flex flex-col gap-2 pt-1">
+          <div className="flex items-center justify-between gap-3">
+            <p id="project-attachment-title" className="text-sm font-extrabold text-[#173F3A]">
+              이미지·자료 업로드
+            </p>
+            <span className="text-xs font-semibold text-slate-500">선택 · 최대 5개</span>
+          </div>
+          <input
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="sr-only"
+            multiple
+            onChange={selectAttachments}
+            ref={attachmentInputRef}
+            type="file"
+          />
+          <button
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#9DB9DD] bg-[#F5FAFF] px-4 text-sm font-extrabold text-[#174C7E] transition hover:border-[#2563EB] hover:bg-[#EDF6FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#BFDBFE]"
+            onClick={() => attachmentInputRef.current?.click()}
+            type="button"
+          >
+            <ImagePlus aria-hidden="true" className="size-5" />
+            이미지·자료 선택
+          </button>
+          <p className="text-xs font-medium leading-5 text-slate-500">
+            JPG, PNG, WEBP 이미지 또는 PDF · 파일당 10MB 이하
+          </p>
+          {attachments.length > 0 ? (
+            <ul className="flex flex-col gap-2" aria-label="선택한 첨부 자료">
+              {attachments.map((attachment) => (
+                <li
+                  className="flex min-h-16 items-center gap-3 rounded-xl border border-[#D5E5F5] bg-white p-2.5"
+                  key={attachment.id}
+                >
+                  {attachment.previewUrl ? (
+                    <img
+                      alt="선택한 이미지 미리보기"
+                      className="size-11 shrink-0 rounded-lg border border-[#D5E5F5] object-cover"
+                      src={attachment.previewUrl}
+                    />
+                  ) : (
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#2563EB]">
+                      <FileText aria-hidden="true" className="size-5" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[#17212B]">{attachment.file.name}</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {attachment.file.type === 'application/pdf' ? 'PDF' : '이미지'} ·{' '}
+                      {formatFileSize(attachment.file.size)}
+                    </p>
+                  </div>
+                  <button
+                    aria-label={`${attachment.file.name} 삭제`}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                    onClick={() => removeAttachment(attachment.id)}
+                    title="첨부 자료 삭제"
+                    type="button"
+                  >
+                    <X aria-hidden="true" className="size-5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {attachmentError ? (
+            <p aria-live="polite" className="text-xs font-bold text-rose-700">
+              {attachmentError}
+            </p>
+          ) : null}
+        </section>
         <ActionButton disabled={!complete || isSaving} role="company" type="submit">
           {isSaving ? '프로젝트 저장 중...' : '프로젝트 등록하기'}
         </ActionButton>
@@ -2323,6 +2521,7 @@ export function ProjectCompletePage() {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const savedToFirestore = searchParams.get('sync') !== 'local';
+  const attachmentSync = searchParams.get('attachments');
   const [project, setProject] = useState<JobPosting | null>(null);
 
   useEffect(() => {
@@ -2347,6 +2546,14 @@ export function ProjectCompletePage() {
           ? '데이터베이스 저장을 확인했습니다. 조건에 맞는 인재에게 공개됩니다.'
           : '기기에는 저장했지만 서버 동기화가 필요합니다.'}
       </p>
+      {attachmentSync === 'uploaded' ? (
+        <p className="text-xs font-bold text-[#174C7E]">첨부한 이미지·자료도 함께 저장했습니다.</p>
+      ) : null}
+      {attachmentSync === 'pending' ? (
+        <p className="text-xs font-bold text-amber-700">
+          프로젝트는 등록했지만 첨부 자료의 서버 업로드를 완료하지 못했습니다.
+        </p>
+      ) : null}
       <div className="flex h-[110px] w-full flex-col gap-2 rounded-[14px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
         <span className="text-[11px] font-extrabold text-[#173F3A]">등록됨</span>
         <strong className="text-sm font-extrabold text-[#17212B]">
@@ -2355,6 +2562,11 @@ export function ProjectCompletePage() {
         <span className="text-xs font-medium text-slate-500">
           {project ? `${project.projectDuration} · ${project.location}` : '잠시만 기다려 주세요.'}
         </span>
+        {project?.attachments?.length ? (
+          <span className="text-xs font-bold text-[#174C7E]">
+            첨부 자료 {project.attachments.length}개
+          </span>
+        ) : null}
       </div>
       <ActionButton onClick={() => void navigate('/company/projects')} role="company">
         등록한 프로젝트 보기
@@ -2745,8 +2957,40 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
+    getLocalCompanyProfile(user?.uid),
+  );
+  const [projectCount, setProjectCount] = useState(0);
+
+  useEffect(() => {
+    void (async () => {
+      const localProfile = getLocalCompanyProfile(user?.uid);
+      if (localProfile) setCompanyProfile(localProfile);
+      if (!user?.uid) return;
+
+      const remoteProfile = await resolveCompanyProfile(user.uid);
+      if (!remoteProfile) return;
+      setCompanyProfile(remoteProfile);
+    })();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    void fetchProjects().then((projectsFromDatabase) => {
+      setProjectCount(
+        getCompanyOwnedProjects(projectsFromDatabase, user?.uid).length,
+      );
+    });
+  }, [user?.uid]);
+
+  const companyName = companyProfile?.companyName || '회사명 미입력';
+  const managerName = companyProfile?.managerName || '담당자 정보 미입력';
+  const email = companyProfile?.email || '이메일 정보 미입력';
+  const companyAddress = companyProfile?.companyAddress || '주소 정보 미입력';
+  const phone = companyProfile?.phone || '연락처 정보 미입력';
+  const industry = companyProfile?.industry || '산업 정보 미입력';
 
   return (
     <MobilePage
@@ -2762,17 +3006,19 @@ export function CompanyProfilePage() {
       {/* Company Profile Header Card */}
       <div className="flex items-center gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-lg font-extrabold text-white shadow-sm">
-          기
+          {companyName.slice(0, 1)}
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">그로우랩</strong>
+            <strong className="text-base sm:text-lg font-extrabold text-[#17212B] truncate">
+              {companyName}
+            </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              ✓ 인증 기업
+              기업 회원
             </span>
           </div>
-          <span className="text-xs font-bold text-slate-500 truncate">company@growlab.co.kr</span>
-          <span className="text-xs font-extrabold text-[#F06B4F]">기업 회원</span>
+          <span className="text-xs font-bold text-slate-500 truncate">{email}</span>
+          <span className="text-xs font-extrabold text-[#F06B4F]">담당자: {managerName}</span>
         </div>
       </div>
 
@@ -2780,16 +3026,26 @@ export function CompanyProfilePage() {
       <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-2.5">
           <strong className="text-[15px] font-extrabold text-[#17212B]">기업 정보</strong>
-          <span className="text-xs font-extrabold text-[#173F3A]">등록 완료</span>
+          <span className="text-xs font-extrabold text-[#173F3A]">
+            {companyProfile ? '등록 완료' : '정보 입력 필요'}
+          </span>
         </div>
         <div className="flex flex-col gap-2 text-xs">
           <div className="flex items-start gap-2.5">
             <span className="font-extrabold text-[#173F3A] shrink-0">산업 분야:</span>
-            <span className="font-medium text-slate-700">IT / SaaS 플랫폼</span>
+            <span className="font-medium text-slate-700">{industry}</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">회사 주소:</span>
+            <span className="font-medium text-slate-700">{companyAddress}</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="font-extrabold text-[#173F3A] shrink-0">담당자 연락처:</span>
+            <span className="font-medium text-slate-700">{phone}</span>
           </div>
           <div className="flex items-start gap-2.5">
             <span className="font-extrabold text-[#173F3A] shrink-0">등록 프로젝트:</span>
-            <span className="font-medium text-slate-700">2개 진행 중</span>
+            <span className="font-medium text-slate-700">{projectCount}개 진행 중</span>
           </div>
         </div>
       </div>
