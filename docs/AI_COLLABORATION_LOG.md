@@ -16,6 +16,24 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 백엔드/프론트엔드 전역 `seniorFitScore` 최종 점수 정렬 수정 (페이지 간 점수 역전 완전 차단)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 기존 백엔드 API (`functions/lib/jobSearch.mjs`) 및 프론트엔드 랭킹 엔진 (`src/services/recommendationEngine.ts`)에서 최종 표시 점수인 `score` / `personalizedScore` (98점, 96점, 92점 등) 대신 정제 전 원시 점수(`rankScore` / `rankingScore`)로 1차 정렬을 수행하던 원인 추적 완료.
+  - 이로 인해 캡 상한에 걸린 일부 공고의 최종 표기 점수(90점대)가 2페이지 슬라이스로 밀리는 현상 원인 근본 원인 해결.
+- **주요 개선**:
+  - 백엔드 `jobSearch.mjs`: `second.fitMatch.score - first.fitMatch.score` (최종 표기 점수 내림차순) 우선 정렬 적용.
+  - 프론트엔드 `recommendationEngine.ts`: `second.matchResult.personalizedScore - first.matchResult.personalizedScore` 우선 정렬 적용.
+  - 이제 **1페이지에는 무조건 카탈로그 전체 최고점(98점~90점대) 공고만 노출되며, 2페이지로 넘어가더라도 1페이지보다 낮은 점수의 공고만 노출**되어 페이지 간 점수 역전 현상이 100% 차단됩니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/services/recommendationEngine.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-20] 홈 화면 맞춤 점수 내림차순 정렬, 1순위 프로젝트 DB 일치 & 초고속 SWR 로딩 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:

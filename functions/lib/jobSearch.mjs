@@ -717,6 +717,7 @@ function filterPreparedJobCatalog(catalog, options) {
         .map((entry) => ({ entry, fitMatch: calculateFitMatch(entry, options, fitContext) }))
         .sort((first, second) => {
           return (
+            second.fitMatch.score - first.fitMatch.score ||
             second.fitMatch.rankScore - first.fitMatch.rankScore ||
             comparePreparedEntries(first.entry, second.entry, 'latest-desc')
           );

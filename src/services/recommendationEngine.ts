@@ -514,7 +514,10 @@ export function getPersonalizedRankedProjects(
       if (first.matchResult.primaryCategoryMatch !== second.matchResult.primaryCategoryMatch) {
         return first.matchResult.primaryCategoryMatch ? -1 : 1;
       }
-      return second.matchResult.rankingScore - first.matchResult.rankingScore;
+      return (
+        second.matchResult.personalizedScore - first.matchResult.personalizedScore ||
+        second.matchResult.rankingScore - first.matchResult.rankingScore
+      );
     });
 }
 
