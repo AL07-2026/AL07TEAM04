@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-19] 배포 정책 가이드라인 명시: `leedongwook` 브랜치 전용 테스트 주소로만 배포
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - 사용자 지침에 따라 메인 운영 주소(`https://al07team04-bdfcd.web.app`) 배포를 제한하고, 오직 **`leedongwook` 브랜치 전용 테스트 미리보기 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)**로만 배포를 수행하도록 원칙 재정립 및 적용.
+  - 사전 검증 (`npm run validate`: TS typecheck, ESLint, 198개 Vitest 유닛 테스트, Vite 빌드) 100% 통과 확인 완료.
+  - Firebase Hosting `leedongwook` 미리보기 채널 전용 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **검증**: `npm run validate` 통과 및 `npx firebase-tools hosting:channel:deploy leedongwook` 배포 완결.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-19] 기업명 하단 포지션명 정제(`extractCleanPositionTitle`) & `해결 프로젝트` 문구 전면 재정리
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:
