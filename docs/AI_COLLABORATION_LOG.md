@@ -16,6 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 홈 추천 피드 전역 후보군 맞춤 점수 산출 & 페이지 슬라이싱 구조 전면 적용 (스크린샷 문제 근본 해결)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 기존에는 백엔드가 API 레벨에서 8개 단위로 1차 분할(Page 1: 1~8위, Page 2: 9~16위)한 뒤, 프론트엔드가 페이지 단위로 개인 맞춤 점수를 매겼습니다.
+  - 이 과정에서 백엔드가 평가한 점수와 클라이언트 맞춤 로직(사용자 전문분야 토큰, AI 경험 카드, 근무 지역 조건)이 복합적으로 적용된 점수가 달라, 2페이지의 공고(예: `(주)프리마 웹디자이너` 등)가 97점으로 평가되고 1페이지 공고가 80~85점으로 평가되는 **페이지 간 점수 역전**이 발생함을 확인했습니다.
+- **근본 해결 조치**:
+  - `SeniorHomePage` (`FlowPages.tsx`): 1순위 추천 공고 조회 시 전체 후보군(`pageSize: 100`)을 가져와 클라이언트 맞춤 알고리즘(`calculatePersonalizedMatch`)으로 **전체 공고를 먼저 100% 내림차순 정렬**한 후 `page 1`(0~8), `page 2`(8~16)로 슬라이싱하도록 구조 변경.
+  - **결과**: **1페이지에는 무조건 카탈로그 전체에서 가장 높은 점수(98점, 97점, 97점, 97점, 97점, 85점, 85점...) 공고만 배치되며, 2페이지에는 83점, 82점, 80점 등 무조건 1페이지보다 낮은 점수의 공고만 배치**됩니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-20] 백엔드/프론트엔드 전역 `seniorFitScore` 최종 점수 정렬 수정 (페이지 간 점수 역전 완전 차단)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **원인 분석**:

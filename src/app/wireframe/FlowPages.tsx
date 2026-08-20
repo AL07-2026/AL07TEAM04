@@ -462,14 +462,14 @@ export function SeniorHomePage() {
           experienceCardCategory: experienceCard?.category,
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
-          page: homePage,
-          pageSize: homeItemsPerPage,
+          page: 1,
+          pageSize: 100,
           profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
             .filter(Boolean)
             .join(' '),
           sortBy: 'fit-desc',
         });
-        const unifiedItems = result.items
+        const allPersonalizedItems = result.items
           .map((item) => {
             const matchResult = calculatePersonalizedMatch(
               item,
@@ -486,13 +486,19 @@ export function SeniorHomePage() {
           })
           .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
 
-        setRecommendedJobs(unifiedItems);
-        setRecommendedProjectsCount(result.total);
-        setHomeTotalPages(result.totalPages);
-        if (homePage === 1) setHighestFitScore(unifiedItems[0]?.seniorFitScore ?? null);
+        const total = allPersonalizedItems.length;
+        const calculatedTotalPages = Math.max(1, Math.ceil(total / homeItemsPerPage));
+        const currentPage = Math.min(homePage, calculatedTotalPages);
+        const start = (currentPage - 1) * homeItemsPerPage;
+        const pageJobs = allPersonalizedItems.slice(start, start + homeItemsPerPage);
+
+        setRecommendedJobs(pageJobs);
+        setRecommendedProjectsCount(total);
+        setHomeTotalPages(calculatedTotalPages);
+        if (currentPage === 1) setHighestFitScore(allPersonalizedItems[0]?.seniorFitScore ?? null);
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
-          result.total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
+          total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
         );
       } catch (error) {
         console.warn('Full job database recommendation failed, using fallback feed:', error);
