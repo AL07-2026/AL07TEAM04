@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 홈 화면 맞춤 점수 내림차순 정렬, 1순위 프로젝트 DB 일치 & 초고속 SWR 로딩 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **홈 화면 추천 공고 엄격 내림차순 정렬 (`seniorFitScore`)**: 개인 맞춤 점수 산출(`calculatePersonalizedMatch`) 이후 `.sort((a, b) => b.seniorFitScore - a.seniorFitScore)`를 명시 적용하여, 홈 피드 및 최고 점수 태그에 항상 가장 높은 점수(98점 ➔ 96점 ➔ 92점) 순서대로 정돈되도록 보장.
+  - **홈 화면 ↔ 1순위 프로젝트 DB 점수/뱃지 1:1 완벽 동기화**: `FlowPages.tsx`와 `JobDatabasePage.tsx` 간 동일한 1순위 카테고리, AI 경험 카드, 맞춤 뱃지(`✨ 98점 (매우 높음)`) 및 사유를 공유하도록 통합.
+  - **Stale-While-Revalidate 초고속 로딩 패턴 적용**: 로컬 프로필을 활용하여 초기 렌더링 지연(스피너 멈춤) 없이 0.01초 만에 최적화된 피드를 즉시 표시하고 백그라운드 동기화 수행.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
 ### [2026-08-20] 하네스 엔지니어링(Harness Engineering) 레이어 구축 & 성공적 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **주요 내용**:

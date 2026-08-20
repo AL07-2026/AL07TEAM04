@@ -423,9 +423,13 @@ export function SeniorHomePage() {
   const [homeTotalPages, setHomeTotalPages] = useState(1);
   const homeItemsPerPage = 8;
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
     async function loadAndRankProjects() {
-      setIsLoadingRecommendations(true);
+      if (!hasLoadedRef.current) {
+        setIsLoadingRecommendations(true);
+      }
       const [profile, proposals, experienceCard] = await Promise.all([
         resolveSeniorProfile(user?.uid),
         getUserProposals(user?.uid),
@@ -465,19 +469,23 @@ export function SeniorHomePage() {
             .join(' '),
           sortBy: 'fit-desc',
         });
-        const unifiedItems = result.items.map((item) => {
-          const matchResult = calculatePersonalizedMatch(
-            item,
-            profile,
-            primaryCategory,
-            experienceCard,
-          );
-          return {
-            ...item,
-            seniorFitScore: matchResult.personalizedScore,
-            recommendationReasons: matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
-          };
-        });
+        const unifiedItems = result.items
+          .map((item) => {
+            const matchResult = calculatePersonalizedMatch(
+              item,
+              profile,
+              primaryCategory,
+              experienceCard,
+            );
+            return {
+              ...item,
+              seniorFitScore: matchResult.personalizedScore,
+              recommendationReasons:
+                matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
+            };
+          })
+          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+
         setRecommendedJobs(unifiedItems);
         setRecommendedProjectsCount(result.total);
         setHomeTotalPages(result.totalPages);
@@ -499,7 +507,10 @@ export function SeniorHomePage() {
         );
         const total = ranked.length;
         const start = (homePage - 1) * homeItemsPerPage;
-        const pageJobs = ranked.slice(start, start + homeItemsPerPage).map(({ posting }) => posting);
+        const pageJobs = ranked
+          .slice(start, start + homeItemsPerPage)
+          .map(({ posting }) => posting)
+          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
@@ -520,7 +531,10 @@ export function SeniorHomePage() {
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
           );
         })
-        .finally(() => setIsLoadingRecommendations(false));
+        .finally(() => {
+          hasLoadedRef.current = true;
+          setIsLoadingRecommendations(false);
+        });
     };
 
     runRecommendationLoad();
