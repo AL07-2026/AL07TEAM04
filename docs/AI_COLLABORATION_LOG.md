@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-20] 채용공고 자동 수집 주기 비용 최적화
+- **작업자**: Codex
+- **주요 내용**:
+  - Firebase Cloud Scheduler `scheduledJobSync` 실행 주기를 기존 **5분마다**에서 **매일 자정 1회(Asia/Seoul 기준 00:00)**로 변경함.
+  - 고빈도 Open API 호출 및 Cloud Functions 실행 비용을 줄이기 위한 운영 설정 조정.
+  - 스케줄 표현을 `0 0 * * *` 크론으로 명시하여 서울시/공공기관 채용공고 누적 동기화가 하루 1회 실행되도록 정리함.
+- **검증 및 배포**:
+  - `npm run validate` 통과 (typecheck/lint/Vitest 23개 테스트 파일 246개 테스트/build 성공).
+  - Firebase Functions 배포로 운영 스케줄 반영 예정.
+- **변경 파일**:
+  - [MODIFY] `functions/index.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-19] `develop` 브랜치를 `main` 브랜치로 병합 및 원격 푸시 완료
 - **작업자**: Antigravity (Gemini)
 - **주요 내용**:
