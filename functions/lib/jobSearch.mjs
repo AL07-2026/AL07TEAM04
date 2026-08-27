@@ -490,6 +490,10 @@ function sanitizeAndEnhanceProblemStatement(posting) {
   ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
   ps = ps.replace(/(?:에서|으로|의|과|와|을|를|로|가|이|는|은)\s*$/g, '').trim();
 
+  // Public feeds must remain evidence-only. Never invent a category template
+  // when the source posting did not provide a usable problem statement.
+  if (posting?.source !== 'internal') return ps;
+
   const titleLower = `${title} ${industry} ${ps}`.toLowerCase();
 
   // If ps is dry boilerplate, empty, fragment, or lacks real action verbs, mark for regeneration

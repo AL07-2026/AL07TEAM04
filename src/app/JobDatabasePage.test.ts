@@ -1,4 +1,24 @@
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { createElement, type ChangeEvent, useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { waitFor } from '@testing-library/react';
+
+const { mockedSearch, mockedProfile, mockedProjects, mockedExperienceCard } = vi.hoisted(() => ({
+  mockedSearch: vi.fn(),
+  mockedProfile: vi.fn(),
+  mockedProjects: vi.fn(),
+  mockedExperienceCard: vi.fn(),
+}));
+
+vi.mock('react-router', () => ({
+  useNavigate: () => vi.fn(),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+}));
+vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: { uid: 'senior-test-user' } }) }));
+vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
+vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
+vi.mock('@/services/projectService', () => ({ createProject: vi.fn(), fetchProjects: mockedProjects }));
+vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
 
 import type { JobPosting } from '@/data/jobPostings';
 import {
@@ -8,6 +28,15 @@ import {
   mergeSeniorPostings,
   resolveSeniorCategoryFilter,
 } from '@/app/jobDatabaseProjectVisibility';
+import {
+  CategoryPickerDialog,
+  DetailPanel,
+  JobDatabasePage,
+  PostingCard,
+  PostingWorkSummaryContent,
+  type FilterOption,
+} from '@/app/JobDatabasePage';
+import type { PostingWorkSummary } from '@/services/postingWorkSummary';
 
 const companyProject: JobPosting = {
   id: 'company-project-1',
@@ -140,5 +169,330 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
         matchesPublishedCompanyProject(project, filters),
       ),
     ).toEqual([matchingProject, fallbackCategoryProject]);
+  });
+});
+
+const sourceBackedSummary: PostingWorkSummary = {
+  duties: ['업무 흐름을 정리하는 일', '운영 체계 만들기', '협업 일정을 조율하는 일'],
+  evidence: [],
+  evidenceLabel: '공고에 명시된 업무를 바탕으로 정리했어요.',
+  facts: [],
+  hasSourceBackedWork: true,
+  items: [],
+  summary: '업무 흐름을 정리하는 일과 운영 체계 만들기를 함께 맡아요.',
+};
+
+describe('공고 실제 업무의 task stack 표현', () => {
+  it('source-backed 업무를 순서가 보존된 정적 semantic list로 보여주고 일반 provenance 문구는 숨긴다', () => {
+    render(createElement(PostingWorkSummaryContent, { summary: sourceBackedSummary }));
+
+    const stack = screen.getByRole('list', { name: '실제로 하는 일' });
+    const rows = screen.getAllByTestId('posting-task-row');
+    expect(rows).toHaveLength(3);
+    expect(rows.map((row) => row.textContent)).toEqual(sourceBackedSummary.duties);
+    expect(stack).toHaveClass('list-none');
+    expect(stack.innerHTML).not.toContain('rounded-full');
+    const firstRow = rows.at(0);
+    if (!firstRow) throw new Error('첫 번째 task row를 찾지 못했습니다.');
+    expect(firstRow.querySelector('[aria-hidden="true"]')).toHaveClass('rounded-sm');
+    expect(firstRow.querySelector('span:last-child')).toHaveClass('break-words');
+    expect(screen.queryByText('공고에 명시된 업무를 바탕으로 정리했어요.')).toBeNull();
+  });
+
+  it('한 개의 길게 줄바꿈되는 업무도 clip 없이 같은 task row로 유지한다', () => {
+    const longDuty = '여러 이해관계자의 일정과 운영 기준을 함께 정리하고 공유하는 업무를 담당합니다.';
+    render(
+      createElement(PostingWorkSummaryContent, {
+        summary: { ...sourceBackedSummary, duties: [longDuty] },
+      }),
+    );
+
+    expect(screen.getAllByTestId('posting-task-row')).toHaveLength(1);
+    expect(screen.getByText(longDuty)).toHaveClass('break-words');
+  });
+});
+
+describe('선택된 프로젝트 카드의 조용한 강조', () => {
+  it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
+    const { container, rerender } = render(
+      createElement(PostingCard, {
+        onSelect: vi.fn(),
+        posting: companyProject,
+        selected: false,
+      }),
+    );
+    const unselected = container.querySelector('article')!;
+    expect(unselected).not.toHaveAttribute('aria-current');
+    expect(unselected.className).not.toContain('inset_3px');
+
+    rerender(
+      createElement(PostingCard, {
+        onSelect: vi.fn(),
+        posting: companyProject,
+        selected: true,
+      }),
+    );
+    const selected = container.querySelector('article')!;
+    expect(selected).toHaveAttribute('aria-current', 'true');
+    expect(selected.className).toContain('inset_3px');
+    expect(screen.getByRole('button', { name: companyProject.title })).toHaveClass('focus-visible:ring-2');
+  });
+});
+
+describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
+  it('정상 탐색 상태에는 양성 안내를 만들지 않고, desktop title은 하나의 sticky header에만 둔다', () => {
+    render(
+      createElement(DetailPanel, {
+        activePrimaryCategory: 'all_db',
+        posting: companyProject,
+        role: 'senior',
+      }),
+    );
+
+    expect(screen.queryByText('선택 직종 탐색 안내')).toBeNull();
+    expect(screen.queryByText(/채용 공고를 탐색 중입니다/)).toBeNull();
+    expect(screen.getAllByRole('heading', { name: companyProject.title })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: companyProject.title }).parentElement).toHaveClass('sticky', 'top-0');
+  });
+
+  it('기타 직무 예외에서는 compact mismatch 안내를 유지한다', () => {
+    render(
+      createElement(DetailPanel, {
+        activePrimaryCategory: 'unclassified',
+        posting: { ...companyProject, occupationClassificationStatus: 'ambiguous' },
+        role: 'senior',
+      }),
+    );
+
+    expect(screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.')).toBeTruthy();
+  });
+});
+
+describe('검색 결과 generation transition', () => {
+  it('pending 동안 stale count/list/detail을 숨기고 새 snapshot을 함께 commit한다', async () => {
+    const profile = {
+      desiredCategory: 'accounting-tax-finance',
+      desiredCategory2: 'service',
+      email: 'senior@example.com',
+      experience: '재무 운영',
+      field: '재무 운영',
+      period: '12년',
+      phone: '010-0000-0000',
+    };
+    const initialPosting = { ...companyProject, id: 'posting-a', title: '기존 결과 A' };
+    const nextPosting = { ...companyProject, id: 'posting-b', title: '새 결과 B' };
+    const result = (total: number, item: JobPosting) => ({
+      catalogTotal: 13761,
+      closingSoonTotal: 0,
+      items: [item],
+      page: 1,
+      pageSize: 12,
+      partTimeTotal: 0,
+      preferredTotal: total,
+      status: 'success' as const,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 12)),
+    });
+    let resolveNext!: (value: ReturnType<typeof result>) => void;
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch
+      .mockReset()
+      .mockResolvedValueOnce(result(64, initialPosting))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveNext = resolve; }));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: '기존 결과 A' })).toBeTruthy();
+    expect(screen.getAllByText('64').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /회계·세무·재무/ }).at(-1)!);
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(2));
+    expect(screen.queryAllByText('64')).toHaveLength(0);
+    expect(screen.getByText('업데이트 중…')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '기존 결과 A' })).toBeNull();
+
+    resolveNext(result(241, nextPosting));
+    await waitFor(() => expect(screen.getAllByText('241').length).toBeGreaterThan(0));
+    expect(screen.getByRole('button', { name: '새 결과 B' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '기존 결과 A' })).toBeNull();
+  });
+
+  it('빠른 연속 전환에서 늦은 이전 generation 응답이 현재 결과를 덮지 않는다', async () => {
+    const profile = {
+      desiredCategory: 'accounting-tax-finance',
+      email: 'senior@example.com',
+      experience: '재무 운영',
+      field: '재무 운영',
+      period: '12년',
+      phone: '010-0000-0000',
+    };
+    const resolvers: Array<(value: ReturnType<typeof makeSearchResult>) => void> = [];
+    function makeSearchResult(total: number, title: string) {
+      return {
+        catalogTotal: 13761,
+        closingSoonTotal: 0,
+        items: [{ ...companyProject, id: `posting-${total}`, title }],
+        page: 1,
+        pageSize: 12,
+        partTimeTotal: 0,
+        preferredTotal: total,
+        status: 'success' as const,
+        total,
+        totalPages: 1,
+      };
+    }
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch.mockReset().mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    await waitFor(() => expect(resolvers).toHaveLength(1));
+
+    resolveFirst(resolvers.shift(), makeSearchResult(64, '기존'));
+    await waitFor(() => expect(screen.getByRole('button', { name: '기존' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /회계·세무·재무/ }).at(-1)!);
+    await waitFor(() => expect(resolvers).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: '다른 직무 선택' }));
+    fireEvent.click(screen.getByRole('button', { name: /서비스/ }));
+    await waitFor(() => expect(resolvers).toHaveLength(2));
+
+    resolveFirst(resolvers.shift(), makeSearchResult(241, '늦은 회계'));
+    resolveFirst(resolvers.shift(), makeSearchResult(18, '최종 서비스'));
+    await waitFor(() => expect(screen.getByRole('button', { name: '최종 서비스' })).toBeTruthy());
+    expect(screen.queryByRole('button', { name: '늦은 회계' })).toBeNull();
+  });
+});
+
+function resolveFirst<T>(resolver: ((value: T) => void) | undefined, value: T) {
+  if (!resolver) throw new Error('해결할 pending search가 없습니다.');
+  resolver(value);
+}
+
+const pickerChoices: FilterOption[] = [
+  { id: 'all_db', label: '전체' },
+  { id: 'marketing-sales', label: '마케팅·홍보·조사', badge: '1순위' },
+  { id: 'accounting-tax-finance', label: '회계·세무·재무' },
+  { id: 'planning-strategy', label: '기획 전략' },
+  { id: 'product-planning-md', label: '기획 운영' },
+  { id: 'unclassified', label: '기타 직무' },
+];
+
+function renderPicker(onSelect = vi.fn(), onClose = vi.fn()) {
+  const view = render(
+    createElement(CategoryPickerDialog, {
+      choices: pickerChoices,
+      onClose,
+      onSelect,
+      selectedCategory: 'all_db',
+      title: '직무 선택',
+    }),
+  );
+  return { ...view, onClose, onSelect };
+}
+
+describe('직무 선택 picker의 실제 DOM 흐름', () => {
+  it('검색어는 dialog 안에서만 유지하고, 단일 결과 Enter는 선택 후 닫힌다', () => {
+    const { onSelect } = renderPicker();
+    const input = screen.getByPlaceholderText('직무명으로 찾기');
+    fireEvent.change(input, { target: { value: '세무' } });
+    expect(screen.getByRole('button', { name: /회계·세무·재무/ })).toBeTruthy();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance', 'enter');
+  });
+
+  it('여러 결과 또는 결과 없음에서 Enter는 선택이나 닫힘을 만들지 않는다', () => {
+    const { onClose, onSelect } = renderPicker();
+    const input = screen.getByPlaceholderText('직무명으로 찾기');
+    fireEvent.change(input, { target: { value: '기획' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: '없는 직무' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('Escape, 바깥 클릭, 명시적 선택을 기존 close/select contract로 유지한다', () => {
+    const { container, onClose, onSelect } = renderPicker();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent.mouseDown(container.querySelector('#project-category-picker')!);
+    expect(onClose).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: /회계·세무·재무/ }));
+    expect(onSelect).toHaveBeenCalledWith('accounting-tax-finance', 'click');
+  });
+
+  it('희망 직무와 다른 직무를 분리하고, 전체·기타 직무와 선택 표시를 보여준다', () => {
+    renderPicker();
+    expect(screen.getByText('내 희망 직무')).toBeTruthy();
+    expect(screen.getByText('다른 직무')).toBeTruthy();
+    expect(screen.getAllByText('전체')).toHaveLength(1);
+    expect(screen.getByText('기타 직무')).toBeTruthy();
+    expect(screen.getByText('✓')).toBeTruthy();
+  });
+});
+
+function PickerPageHarness() {
+  const [globalQuery, setGlobalQuery] = useState('서울');
+  const [isOpen, setIsOpen] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<FilterOption['id']>('all_db');
+  return createElement(
+    'div',
+    null,
+    createElement('input', {
+      'aria-label': 'global project search',
+      onChange: (event: ChangeEvent<HTMLInputElement>) => setGlobalQuery(event.target.value),
+      value: globalQuery,
+    }),
+    createElement('output', { 'data-testid': 'selected-category' }, selectedCategory),
+    isOpen
+      ? createElement(CategoryPickerDialog, {
+          choices: pickerChoices,
+          onClose: () => setIsOpen(false),
+          onSelect: (category) => {
+            setSelectedCategory(category);
+            setIsOpen(false);
+          },
+          selectedCategory,
+          title: '직무 선택',
+        })
+      : null,
+  );
+}
+
+function getInputByLabel(label: string) {
+  const element = screen.getByLabelText(label);
+  if (!(element instanceof HTMLInputElement)) throw new Error(`${label} input을 찾지 못했습니다.`);
+  return element;
+}
+
+describe('picker와 global search의 전체 DOM lifecycle', () => {
+  it('sentinel global query는 회계 Enter 이후에도 DOM/state 모두 유지되고, picker node와 재사용되지 않는다', () => {
+    render(createElement(PickerPageHarness));
+    const globalInput = getInputByLabel('global project search');
+    const pickerInput = screen.getByPlaceholderText('직무명으로 찾기');
+    expect(pickerInput).not.toBe(globalInput);
+
+    fireEvent.change(pickerInput, { target: { value: '회계' } });
+    fireEvent.keyDown(pickerInput, { key: 'Enter' });
+    fireEvent.keyPress(pickerInput, { key: 'Enter' });
+    fireEvent.keyUp(document.body, { key: 'Enter' });
+
+    expect(screen.queryByPlaceholderText('직무명으로 찾기')).toBeNull();
+    expect(globalInput.value).toBe('서울');
+    expect(screen.getByTestId('selected-category')).toHaveTextContent('accounting-tax-finance');
+  });
+
+  it('global search itself remains controlled and normally editable', () => {
+    render(createElement(PickerPageHarness));
+    const globalInput = getInputByLabel('global project search');
+    fireEvent.change(globalInput, { target: { value: '부산' } });
+    expect(globalInput.value).toBe('부산');
   });
 });

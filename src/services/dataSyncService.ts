@@ -126,6 +126,10 @@ export function sanitizeAndEnhanceProblemStatement(posting: Partial<JobPosting>)
 
   ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
 
+  // External job feeds are evidence-only. Category templates may be used for
+  // an explicitly authored internal project, but never for a public posting.
+  if (posting.source !== 'internal') return ps;
+
   const isDryBoilerplate =
     !ps ||
     ps.length < 10 ||

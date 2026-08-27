@@ -17,6 +17,10 @@ export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type Seniority = 'senior' | 'lead' | 'principal';
 export type EmploymentType = 'full-time' | 'contract' | 'part-time' | 'advisory' | 'project';
 export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing';
+export type PostingDetailProvenance = 'source' | 'synthetic' | 'unknown';
+export type PostingDetailProvenanceMap = Partial<
+  Record<'coreResponsibilities' | 'problemStatement' | 'projectGoal' | 'requiredSkills', PostingDetailProvenance>
+>;
 
 export type ProjectAttachment = {
   name: string;
@@ -61,6 +65,7 @@ export type JobPosting = {
   recommendedTalentType: string;
   matchingScoreCriteria: string[];
   interviewFocus: string[];
+  sourceDetailProvenance?: PostingDetailProvenanceMap;
   seniorFitScore: number;
   recommendationReasons?: string[];
   experienceRecommendationApplied?: boolean;

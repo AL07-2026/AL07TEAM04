@@ -275,14 +275,14 @@ export const api = onRequest(
 
 export const scheduledJobSync = onSchedule(
   {
-    schedule: 'every 5 minutes',
+    schedule: '0 0 * * *',
     timeZone: 'Asia/Seoul',
     region: 'asia-northeast3',
     timeoutSeconds: 180,
     memory: '512MiB',
   },
   async () => {
-    console.log('Starting 24/7 Cloud Scheduled Job Sync (Every 5 minutes)...');
+    console.log('Starting daily Cloud Scheduled Job Sync (00:00 Asia/Seoul)...');
     const result = await runBackendJobSync();
     clearJobCatalogCache();
     console.log('Scheduled Job Sync completed:', result);

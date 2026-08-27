@@ -79,6 +79,28 @@ describe('worknetService', () => {
     expect(posting.companyName).not.toContain('인증');
   });
 
+  it('원문에 없는 AI·자동화·레거시 업무를 상세 진단 데이터로 만들지 않는다', () => {
+    const posting = transformWorknetToSeniorProject(
+      {
+        company: '테스트 기업',
+        indTpNm: '소프트웨어 개발업',
+        title: 'IT 운영 담당자',
+        wantedAuthNo: 'SAFE-DETAIL-1',
+      },
+      0,
+      new Date('2026-08-14T12:00:00'),
+    );
+
+    expect(posting.problemStatement).toBe('');
+    expect(posting.projectGoal).toBe('');
+    expect(posting.coreResponsibilities).toEqual([]);
+    expect(posting.sourceDetailProvenance).toMatchObject({
+      coreResponsibilities: 'synthetic',
+      problemStatement: 'synthetic',
+      projectGoal: 'synthetic',
+    });
+  });
+
   it('API 오류 응답은 공고 목록으로 변환하지 않는다', () => {
     const parsed = parseWorknetJobXml('<GO24><error>사용 권한이 없습니다.</error></GO24>');
 

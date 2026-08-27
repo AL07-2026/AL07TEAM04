@@ -16,6 +16,30 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-27] `origin/develop` → `leedongwook` 병합 충돌 해결 및 회귀 검증
+
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **병합 대상**: `c11afa7` (`origin/develop`)을 `4bcd831` (`leedongwook`)에 병합
+- **충돌 원인 및 해결**:
+  - `dataSyncService.ts`: 실패한 수동 해결 과정에서 중복 `switch` 블록, 깨진 정규식 문자열, 충돌 마커가 남은 문제를 최근 `leedongwook` 정제 로직으로 복구함.
+  - `jobSearch.mjs`·`dataSyncService.ts`: 기존 정제 기능은 유지하되 공공 채용공고에는 원문에 없는 직종별 문제 문구를 합성하지 않도록 병합 의도를 결합함. 명시적으로 작성한 내부 프로젝트에만 템플릿 보강을 허용함.
+  - `FlowPages.tsx`: 최고 적합도 상태가 숫자에서 공고 객체로 변경된 뒤 남아 있던 `setHighestFitScore` 호출을 `setHighestFitProject(getHighestFitProject(...))`로 통일함.
+  - `JobDatabasePage.tsx`·`Ui.tsx`·`FlowPages.tsx`: `develop`의 출처 기반 업무 요약, 탐색 필터, 홈 지표 이동 UX와 `leedongwook`의 전역 맞춤 점수 정렬·모바일 최적화를 함께 보존함.
+  - `LoginPage.tsx`: `matchMedia` 미지원 테스트 환경에서도 배너가 예외 없이 동작하도록 방어 조건을 추가함.
+  - 협업 로그는 양쪽 작업 기록과 2026-08-27 디자인 시스템 작업을 모두 보존함.
+- **검증**:
+  - 충돌 파일 6개 모두 해결, 잔여 충돌 마커 0건
+  - `npm run validate` 통과
+  - TypeScript typecheck, ESLint, Vitest **24개 파일·248개 테스트**, Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/services/dataSyncService.ts`
+
 ### [2026-08-20] 홈 추천 피드 전역 후보군 맞춤 점수 산출 & 페이지 슬라이싱 구조 전면 적용 (스크린샷 문제 근본 해결)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **원인 분석**:
@@ -139,6 +163,18 @@
   - [MODIFY] `functions/lib/jobSearch.mjs`
   - [MODIFY] `src/app/wireframe/FlowPages.tsx`
   - [MODIFY] `src/app/JobDatabasePage.tsx`
+
+### [2026-08-20] 채용공고 자동 수집 주기 비용 최적화
+- **작업자**: Codex
+- **주요 내용**:
+  - Firebase Cloud Scheduler `scheduledJobSync` 실행 주기를 기존 **5분마다**에서 **매일 자정 1회(Asia/Seoul 기준 00:00)**로 변경함.
+  - 고빈도 Open API 호출 및 Cloud Functions 실행 비용을 줄이기 위한 운영 설정 조정.
+  - 스케줄 표현을 `0 0 * * *` 크론으로 명시하여 서울시/공공기관 채용공고 누적 동기화가 하루 1회 실행되도록 정리함.
+- **검증 및 배포**:
+  - `npm run validate` 통과 (typecheck/lint/Vitest 23개 테스트 파일 246개 테스트/build 성공).
+  - Firebase Functions 배포 완료. 운영 `scheduledJobSync` 스케줄 반영 완료.
+- **변경 파일**:
+  - [MODIFY] `functions/index.mjs`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 
 ### [2026-08-19] `develop` 브랜치를 `main` 브랜치로 병합 및 원격 푸시 완료
@@ -2585,6 +2621,34 @@
   - [NEW] [`.agents/AGENTS.md`](file:///c:/AL07TEAM04/.agents/AGENTS.md)
 - **전달 사항 / 다음 할 일**:
   - 파이어베이스 SDK 연동 또는 추가 기능 개발 시 본 로그에 작업 내역을 갱신해주세요.
+
+### [2026-08-27] 디자인 스킬 기반 공통 UI·로그인 접근성 개선
+
+- **작업자**: Codex
+- **적용 기준**:
+  - `awesome-design`: 의미 기반 토큰, 절제된 표면·그림자, 명시적인 컴포넌트 상태
+  - `design-taste`: 기존 웜 아이보리·에버그린 브랜드 보존, 장식보다 위계·가독성 우선
+  - `agent-browser`: 운영본/로컬 수정본 데스크톱·모바일 렌더링 및 키보드 순서 확인
+  - `web-design-guidelines`: WCAG 대비, 44px 터치 타깃, 포커스, 폼 메타데이터, 감속 모드 적용
+- **작업 내용**:
+  - 접근 가능한 코랄(`#B84734`)과 의미 기반 surface/focus/motion 토큰 추가
+  - 전역 `:focus-visible`, `prefers-reduced-motion`, 동적 뷰포트 높이, 텍스트 줄바꿈 기준 추가
+  - 공용 버튼을 44px 이상·단색 Primary·제한된 transition·명확한 disabled 상태로 정리
+  - 로그인 화면의 그라데이션/과한 그림자 제거, 역할 선택 `aria-pressed`, 폼 `name`/`autocomplete`, 비동기 `aria-busy`, 이미지 크기, 배너 일시정지와 감속 모드 적용
+  - [`UI_DESIGN_SYSTEM.md`](file:///c:/AL07TEAM04/docs/UI_DESIGN_SYSTEM.md)에 향후 화면 공통 기준과 QA 체크리스트 문서화
+- **검증**:
+  - 수정 파일 ESLint 통과, `git diff --check` 통과
+  - 에이전트 브라우저 로컬 렌더링/키보드 포커스 순서/콘솔 오류 확인 완료
+  - 로그인 화면 axe WCAG 위반: 운영본 7건 → 로컬 수정본 0건
+  - `npm run validate`는 기존 미해결 병합 충돌인 `src/services/dataSyncService.ts`의 충돌 마커 및 구문 오류로 typecheck 단계에서 중단
+- **변경 파일**:
+  - [NEW] [`.agents/skills/awesome-design`](file:///c:/AL07TEAM04/.agents/skills/awesome-design)
+  - [NEW] [`.agents/skills/design-taste`](file:///c:/AL07TEAM04/.agents/skills/design-taste)
+  - [NEW] [`.agents/skills/web-design-guidelines`](file:///c:/AL07TEAM04/.agents/skills/web-design-guidelines)
+  - [NEW] [`UI_DESIGN_SYSTEM.md`](file:///c:/AL07TEAM04/docs/UI_DESIGN_SYSTEM.md)
+  - [MODIFY] [`globals.css`](file:///c:/AL07TEAM04/src/styles/globals.css)
+  - [MODIFY] [`button.tsx`](file:///c:/AL07TEAM04/src/components/ui/button.tsx)
+  - [MODIFY] [`LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
 
 ---
 

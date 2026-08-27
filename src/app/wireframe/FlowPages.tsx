@@ -4,11 +4,13 @@ import {
   AudioLines,
   Award,
   BarChart2,
+  Check,
   FileText,
   ImagePlus,
   Info,
   Loader2,
   Mic,
+  Pencil,
   RefreshCw,
   Send,
   Settings,
@@ -53,6 +55,14 @@ import {
 } from '@/lib/applicationFlow';
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
+import {
+  getActiveProposalsDestination,
+  getExperienceMetricDestination,
+  getHighestFitDestination,
+  getHighestFitProject,
+  getRecommendedProjectsDestination,
+  isActiveProposalStatus,
+} from '@/services/homeMetricNavigation';
 import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/interviewService';
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import {
@@ -131,6 +141,16 @@ type InterviewQuestion = {
   field: keyof ExperienceInterviewAnswers;
   prompt: string;
 };
+
+type InterviewMessage = {
+  answerField?: keyof ExperienceInterviewAnswers;
+  id: number;
+  sender: 'ai' | 'user';
+  text: string;
+};
+
+const defaultVoiceNotice = '버튼을 누르면 마이크 권한을 요청합니다.';
+const transcribingVoiceNotice = '음성을 글자로 바꾸고 있어요...';
 
 function toProjectCategory(value: string | undefined) {
   if (value && value in categoryLabels) return value as ProjectCategory;
@@ -413,7 +433,7 @@ export function SeniorHomePage() {
   const [activeProposalsCount, setActiveProposalsCount] = useState<number>(0);
   const [recommendedProjectsCount, setRecommendedProjectsCount] = useState(0);
   const [savedExperienceCount, setSavedExperienceCount] = useState<number>(0);
-  const [highestFitScore, setHighestFitScore] = useState<number | null>(null);
+  const [highestFitProject, setHighestFitProject] = useState<JobPosting | null>(null);
   const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
@@ -437,9 +457,7 @@ export function SeniorHomePage() {
       ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
-        proposals.filter(
-          (proposal) => proposal.status === '검토 중' || proposal.status === '연락 받음',
-        ).length,
+        proposals.filter((proposal) => isActiveProposalStatus(proposal.status)).length,
       );
       setSavedExperienceCount(experienceCard ? 1 : 0);
 
@@ -448,7 +466,7 @@ export function SeniorHomePage() {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHomeTotalPages(1);
-        setHighestFitScore(null);
+        setHighestFitProject(null);
         setIsExperienceRecommendationApplied(false);
         setRecommendationFeedMessage('내 정보에서 1순위 희망 직종을 먼저 선택해 주세요.');
         return;
@@ -495,7 +513,9 @@ export function SeniorHomePage() {
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHomeTotalPages(calculatedTotalPages);
-        if (currentPage === 1) setHighestFitScore(allPersonalizedItems[0]?.seniorFitScore ?? null);
+        if (currentPage === 1) {
+          setHighestFitProject(getHighestFitProject(allPersonalizedItems));
+        }
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
           total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
@@ -520,7 +540,7 @@ export function SeniorHomePage() {
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
-        if (homePage === 1) setHighestFitScore(pageJobs[0]?.seniorFitScore ?? null);
+        if (homePage === 1) setHighestFitProject(getHighestFitProject(pageJobs));
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(worknetFeed.message ?? '');
       }
@@ -533,6 +553,7 @@ export function SeniorHomePage() {
           setRecommendedJobs([]);
           setRecommendedProjectsCount(0);
           setHomeTotalPages(1);
+          setHighestFitProject(null);
           setRecommendationFeedMessage(
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
           );
@@ -617,7 +638,7 @@ export function SeniorHomePage() {
 
       {/* AI Experience Interview Banner */}
       <button
-        onClick={() => void navigate('/senior/experience/interview')}
+        onClick={() => void navigate('/senior/experience')}
         type="button"
         className="group w-full rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.99]"
       >
@@ -656,33 +677,51 @@ export function SeniorHomePage() {
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard
-          caption={`1순위 ${recommendationPrimaryLabel} 기준`}
+          actionHint="추천 프로젝트 보기"
+          caption={`1순위 희망 직무 · ${recommendationPrimaryLabel}`}
+          interactiveLabel={`추천 프로젝트 ${recommendedProjectsCount}개 보기`}
           label="추천 프로젝트"
+          onClick={() => void navigate(getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined))}
           role="senior"
           value={`${recommendedProjectsCount}개`}
         />
         <SummaryCard
+          actionHint="진행 중 제안 확인"
           caption="검토 중·연락 받은 제안"
+          interactiveLabel={`진행 중인 제안 ${activeProposalsCount}건 보기`}
           label="진행 중인 제안"
+          onClick={() => void navigate(getActiveProposalsDestination())}
           role="senior"
           value={`${activeProposalsCount}건`}
         />
-        {!isMobile && (
-          <SummaryCard
-            caption="프로필·경험 카드 저장 기준"
-            label="저장된 경험 정보"
-            role="senior"
-            value={`${savedExperienceCount}건`}
-          />
-        )}
-        {!isMobile && (
-          <SummaryCard
-            caption="등록 경험 기준 최고 추천 점수"
-            label="최고 프로젝트 적합도"
-            role="senior"
-            value={highestFitScore === null ? '—' : `${highestFitScore}점`}
-          />
-        )}
+        <SummaryCard
+          actionHint={savedExperienceCount > 0 ? '내 경험카드 보기' : '내 경험 정리하기'}
+          caption={savedExperienceCount > 0 ? '경험카드 준비됨' : '아직 없어요'}
+          interactiveLabel={
+            savedExperienceCount > 0
+              ? `저장된 경험 정보 ${savedExperienceCount}건 확인`
+              : '새 경험 정보 만들기'
+          }
+          label="저장된 경험 정보"
+          onClick={() =>
+            void navigate(getExperienceMetricDestination(savedExperienceCount > 0))
+          }
+          role="senior"
+          value={`${savedExperienceCount}건`}
+        />
+        <SummaryCard
+          actionHint={highestFitProject ? '바로 보기' : '추천 공고 탐색'}
+          caption={highestFitProject?.title ?? '등록 경험 기준 최고 추천 점수'}
+          interactiveLabel={
+            highestFitProject
+              ? `최고 적합도 ${highestFitProject.seniorFitScore}점 프로젝트 보기`
+              : '추천 프로젝트 탐색하기'
+          }
+          label="가장 잘 맞는 프로젝트"
+          onClick={() => void navigate(getHighestFitDestination(highestFitProject?.id))}
+          role="senior"
+          value={highestFitProject === null ? '—' : `${highestFitProject.seniorFitScore}점`}
+        />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -875,7 +914,40 @@ const experienceOptions = [
   '기획/전략',
   '재무/회계',
   '교육/코칭',
-];
+] as const;
+
+const experienceOptionCategoryMap: Record<(typeof experienceOptions)[number], ProjectCategory> = {
+  '개발/엔지니어링': 'dev-engineering',
+  '디자인/브랜딩': 'design-brand',
+  '마케팅/영업': 'marketing-sales',
+  '인사/경영전략': 'hr-strategy',
+  '제조/R&D': 'r-and-d-manufacturing',
+  '운영 효율화': 'operations',
+  '성장/그로스': 'growth',
+  '레거시 개선': 'legacy-modernization',
+  'AI 자동화': 'ai-automation',
+  '데이터 플랫폼': 'data-platform',
+  '보안/리스크': 'security',
+  '기획/전략': 'growth',
+  '재무/회계': 'hr-strategy',
+  '교육/코칭': 'hr-strategy',
+};
+
+function getExperienceOptionCategory(option: string) {
+  return experienceOptionCategoryMap[option as (typeof experienceOptions)[number]];
+}
+
+function buildExperienceInterviewPath(selectedOptions: string[]) {
+  const params = new URLSearchParams();
+  const primaryCategory = selectedOptions.map(getExperienceOptionCategory).find(Boolean);
+  const selectedLabel = selectedOptions.join(' · ');
+
+  if (primaryCategory) params.set('category', primaryCategory);
+  if (selectedLabel) params.set('label', selectedLabel);
+
+  const queryString = params.toString();
+  return `/senior/experience/interview${queryString ? `?${queryString}` : ''}`;
+}
 
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
@@ -900,7 +972,11 @@ export function ExperienceSelectionPage() {
         window.dispatchEvent(new Event('eojob_senior_profile_updated'));
       }
     }
-    void navigate(targetUrl);
+    void navigate(
+      targetUrl === '/senior/experience/interview'
+        ? buildExperienceInterviewPath(selected)
+        : targetUrl,
+    );
   }
 
   return (
@@ -956,32 +1032,41 @@ export function ExperienceSelectionPage() {
 
 export function ExperienceInterviewPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const applicationReturn = getPendingApplicationInterview();
+  const selectedCategory = toProjectCategory(searchParams.get('category') ?? undefined);
+  const selectedCategoryLabel = searchParams.get('label')?.trim();
   const profileCategoryValue = getLocalSeniorProfile(user?.uid)?.desiredCategory;
   const profileOccupationCategory = normalizeOccupationCategory(profileCategoryValue);
   const profileCategory = toProjectCategory(profileCategoryValue);
-  const targetCategory = applicationReturn?.targetCategory ?? profileCategory;
+  const targetCategory = applicationReturn?.targetCategory ?? selectedCategory ?? profileCategory;
   const targetCategoryLabel = applicationReturn?.targetCategory
     ? categoryLabels[applicationReturn.targetCategory]
-    : getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
+    : selectedCategoryLabel || getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
   const interviewQuestions = getInterviewQuestions(targetCategory, targetCategoryLabel);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSecondsRef = useRef(0);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const recordingMimeTypeRef = useRef('audio/webm');
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<InterviewMessage[]>([
     { id: 1, sender: 'ai', text: interviewQuestions[0]!.prompt },
   ]);
   const [answers, setAnswers] = useState<Partial<ExperienceInterviewAnswers>>({});
+  const [editingAnswer, setEditingAnswer] = useState<{
+    field: keyof ExperienceInterviewAnswers;
+    messageId: number;
+    text: string;
+  } | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [voiceNotice, setVoiceNotice] = useState('버튼을 누르면 마이크 권한을 요청합니다.');
+  const [voiceNotice, setVoiceNotice] = useState(defaultVoiceNotice);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [currentAnswer, setCurrentAnswer] = useState<InterviewAnswer | null>(null);
   const currentQuestion = interviewQuestions[questionIndex];
@@ -1032,7 +1117,7 @@ export function ExperienceInterviewPage() {
     }
 
     setIsTranscribing(true);
-    setVoiceNotice('음성을 글자로 바꾸고 있어요...');
+    setVoiceNotice(transcribingVoiceNotice);
 
     try {
       const formData = new FormData();
@@ -1081,6 +1166,15 @@ export function ExperienceInterviewPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const messagesContainer = messagesScrollRef.current;
+    if (!messagesContainer) return;
+
+    requestAnimationFrame(() => {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  }, [messages.length]);
 
   async function handleVoiceInput() {
     if (isTranscribing) return;
@@ -1184,11 +1278,12 @@ export function ExperienceInterviewPage() {
 
     const nextQuestionIndex = questionIndex + 1;
     const nextQuestion = interviewQuestions[nextQuestionIndex];
+    const answerField = currentQuestion.field;
     setAnswers((current) => ({ ...current, [currentQuestion.field]: answer.answerText }));
     setQuestionIndex(nextQuestionIndex);
     setMessages((current) => [
       ...current,
-      { id: Date.now(), sender: 'user', text: answer.answerText },
+      { answerField, id: Date.now(), sender: 'user', text: answer.answerText },
       {
         id: Date.now() + 1,
         sender: 'ai',
@@ -1197,6 +1292,32 @@ export function ExperienceInterviewPage() {
           : '네 가지 답변을 모두 확인했습니다. 실제 입력 내용으로 경험 카드를 만들었어요.',
       },
     ]);
+    if (!nextQuestion) {
+      setVoiceNotice('');
+    }
+  }
+
+  function startEditingAnswer(message: InterviewMessage) {
+    if (!message.answerField) return;
+    setEditingAnswer({
+      field: message.answerField,
+      messageId: message.id,
+      text: message.text,
+    });
+  }
+
+  function saveEditedAnswer() {
+    const nextText = editingAnswer?.text.trim();
+    if (!editingAnswer || !nextText) return;
+
+    setAnswers((current) => ({ ...current, [editingAnswer.field]: nextText }));
+    setMessages((current) =>
+      current.map((message) =>
+        message.id === editingAnswer.messageId ? { ...message, text: nextText } : message,
+      ),
+    );
+    setEditingAnswer(null);
+    setVoiceNotice('수정한 답변을 반영했습니다.');
   }
 
   function handleAnswerTextChange(answerText: string) {
@@ -1273,7 +1394,10 @@ export function ExperienceInterviewPage() {
         </span>
       </div>
 
-      <div className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+      <div
+        ref={messagesScrollRef}
+        className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs"
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -1291,8 +1415,55 @@ export function ExperienceInterviewPage() {
                   : 'rounded-tl-xs border border-[#BBD5CE] bg-[#DDEBE7]/70 text-[#17212B]'
               }`}
             >
-              {msg.text}
+              {editingAnswer?.messageId === msg.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    aria-label="수정할 인터뷰 답변"
+                    className="min-h-20 w-full resize-none rounded-xl border border-white/30 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none focus:border-[#F06B4F]"
+                    value={editingAnswer.text}
+                    onChange={(event) =>
+                      setEditingAnswer((current) =>
+                        current ? { ...current, text: event.target.value } : current,
+                      )
+                    }
+                  />
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      aria-label="답변 수정 취소"
+                      className="flex size-8 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+                      onClick={() => setEditingAnswer(null)}
+                      type="button"
+                    >
+                      <X className="size-4" />
+                    </button>
+                    <button
+                      aria-label="수정한 답변 저장"
+                      className="flex size-8 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!editingAnswer.text.trim()}
+                      onClick={saveEditedAnswer}
+                      type="button"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p>{msg.text}</p>
+                </>
+              )}
             </div>
+            {msg.answerField && editingAnswer?.messageId !== msg.id ? (
+              <button
+                aria-label="답변 수정"
+                className="order-first mt-1 flex h-8 shrink-0 items-center gap-1 rounded-full border border-[#D4CBB8] bg-white px-2.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs transition hover:border-[#173F3A] hover:bg-[#F4FAF8]"
+                onClick={() => startEditingAnswer(msg)}
+                type="button"
+              >
+                <Pencil className="size-3" />
+                <span>수정</span>
+              </button>
+            ) : null}
           </div>
         ))}
       </div>
@@ -1345,14 +1516,17 @@ export function ExperienceInterviewPage() {
         <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-center shadow-xs">
           <span className="text-[11px] font-extrabold text-[#173F3A]">
             {isTranscribing
-              ? '음성을 글자로 바꾸고 있어요...'
+              ? transcribingVoiceNotice
               : isRecording
                 ? `녹음 중 · ${formatRecordingTime(recordingSeconds)}`
                 : interviewComplete
                   ? '답변이 모두 저장되었습니다. 아래에서 경험 카드를 확인해 주세요.'
-                  : '버튼을 누르면 마이크 권한을 요청합니다.'}
+                  : defaultVoiceNotice}
           </span>
-          {voiceNotice ? (
+          {!interviewComplete &&
+          voiceNotice &&
+          voiceNotice !== defaultVoiceNotice &&
+          voiceNotice !== transcribingVoiceNotice ? (
             <span aria-live="polite" className="text-[11px] font-semibold text-[#F06B4F]">
               {voiceNotice}
             </span>
@@ -1364,23 +1538,34 @@ export function ExperienceInterviewPage() {
           ) : null}
         </div>
 
-        <form onSubmit={handleTextSubmit} className="flex w-full items-center gap-2">
-          <input
+        <form
+          onSubmit={handleTextSubmit}
+          className="flex w-full flex-col gap-2 rounded-xl border border-[#E0D9C8] bg-white p-3 shadow-xs"
+        >
+          <label
+            className="text-[12px] font-extrabold text-[#173F3A]"
+            htmlFor="interview-text-answer"
+          >
+            직접 입력하기
+          </label>
+          <div className="flex items-stretch gap-2">
+          <textarea
             aria-label="현재 인터뷰 답변"
             disabled={interviewComplete || isRecording || isTranscribing}
-            type="text"
+            id="interview-text-answer"
             placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
             value={inputText}
             onChange={(e) => handleAnswerTextChange(e.target.value)}
-            className="h-10 flex-1 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium"
+            className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
           />
           <button
             disabled={interviewComplete || isRecording || isTranscribing}
             type="submit"
-            className="flex h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
             입력
           </button>
+          </div>
         </form>
 
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#173F3A]">
@@ -1905,7 +2090,9 @@ export function MyProposalsPage() {
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const [filter, setFilter] = useState('전체');
+  const [searchParams] = useSearchParams();
+  const initialProposalFilter = searchParams.get('filter') === 'active' ? '진행 중' : '전체';
+  const [filter, setFilter] = useState(initialProposalFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
@@ -1917,7 +2104,11 @@ export function MyProposalsPage() {
   }, [user?.uid]);
 
   const visible =
-    filter === '전체' ? proposals : proposals.filter((item) => item.status === filter);
+    filter === '전체'
+      ? proposals
+      : filter === '진행 중'
+        ? proposals.filter((item) => isActiveProposalStatus(item.status))
+        : proposals.filter((item) => item.status === filter);
 
   return (
     <MobilePage
@@ -1931,7 +2122,7 @@ export function MyProposalsPage() {
       title="내 제안"
     >
       <div className="flex gap-2.5">
-        {['전체', '검토 중', '연락 받음'].map((item) => (
+        {['전체', '진행 중', '검토 중', '연락 받음'].map((item) => (
           <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
             {item}
           </Chip>
@@ -1944,7 +2135,7 @@ export function MyProposalsPage() {
           isMobile ? 'text-[16px]' : 'text-xl md:text-2xl',
         )}
       >
-        보낸 제안 {visible.length}건
+        {filter === '진행 중' ? `진행 중인 제안 ${visible.length}건` : `보낸 제안 ${visible.length}건`}
       </h2>
 
       <div className="flex flex-col gap-4">
@@ -1955,11 +2146,12 @@ export function MyProposalsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">
-                아직 제출된 지원/제안 내역이 없습니다
+                {filter === '진행 중' ? '아직 진행 중인 제안이 없어요.' : '아직 제출된 지원/제안 내역이 없습니다'}
               </h3>
               <p className="text-xs md:text-sm font-medium text-slate-500">
-                마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해
-                보세요!
+                {filter === '진행 중'
+                  ? '마음에 드는 프로젝트를 찾아 첫 지원을 시작해 보세요.'
+                  : '마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해 보세요!'}
               </p>
             </div>
             <button
@@ -1967,7 +2159,7 @@ export function MyProposalsPage() {
               onClick={() => void navigate('/senior/projects')}
               className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-xs md:text-sm font-extrabold text-white shadow-xs hover:bg-[#12332F] transition cursor-pointer"
             >
-              프로젝트 탐색하러 가기 →
+              프로젝트 둘러보기 →
             </button>
           </div>
         ) : (
@@ -2376,6 +2568,12 @@ export function ProjectRegisterPage() {
         recommendedTalentType: `${form.experience.trim()} 경험을 보유한 시니어 전문가`,
         matchingScoreCriteria: ['관련 경험', '진행 조건', '근무 위치'],
         interviewFocus: [form.body.trim(), form.experience.trim()],
+        sourceDetailProvenance: {
+          coreResponsibilities: 'source',
+          problemStatement: 'source',
+          projectGoal: 'source',
+          requiredSkills: 'unknown',
+        },
         seniorFitScore: 90,
       });
       let attachmentSync = attachments.length === 0 ? 'none' : 'local';
