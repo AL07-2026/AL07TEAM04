@@ -367,12 +367,18 @@ export function LoginPage() {
               Google 계정으로 로그인
             </button>
 
-            <div className="flex items-center justify-center pt-1.5 pb-1">
+            <div className="flex flex-col items-center gap-2.5 pt-1.5 pb-1">
               <Link
                 className="text-[13px] font-extrabold text-[#B84734] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#9F3828]"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
+              </Link>
+              <Link
+                className="text-[12.5px] font-extrabold text-[#173F3A] bg-[#DDEBE7] px-3.5 py-1.5 rounded-full border border-[#BBD5CE] transition-all hover:bg-[#c9e2dc]"
+                to="/senior/project-database"
+              >
+                🚀 로그인 없이 전체 프로젝트 둘러보기 →
               </Link>
             </div>
           </form>

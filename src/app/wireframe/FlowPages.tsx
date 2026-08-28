@@ -3056,7 +3056,7 @@ export function ReceivedProposalDetailPage() {
 export function SeniorProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const isMobile = mode === 'mobile';
   const [experienceCard, setExperienceCard] = useState<StoredExperienceCard | null>(() =>
     readStoredExperienceCard(user?.uid),
@@ -3192,7 +3192,10 @@ export function SeniorProfilePage() {
           {experienceCard ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
         </ActionButton>
         <ActionButton
-          onClick={() => void navigate('/login')}
+          onClick={() => {
+            void signOut();
+            void navigate('/senior/project-database');
+          }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
         >
@@ -3205,7 +3208,7 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
@@ -3307,7 +3310,10 @@ export function CompanyProfilePage() {
           + 새 프로젝트 등록
         </ActionButton>
         <ActionButton
-          onClick={() => void navigate('/login')}
+          onClick={() => {
+            void signOut();
+            void navigate('/senior/project-database');
+          }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
         >

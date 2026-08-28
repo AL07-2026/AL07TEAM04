@@ -14,6 +14,7 @@ import {
 import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
@@ -99,6 +100,7 @@ export function MobilePage({
   title,
 }: MobilePageProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { mode: viewportMode, setMode: setViewportMode } = useViewportMode();
 
   const isMobileMode = viewportMode === 'mobile';
@@ -197,7 +199,7 @@ export function MobilePage({
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => void navigate('/login')}
+                    onClick={() => void navigate('/senior/project-database')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
@@ -276,7 +278,7 @@ export function MobilePage({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => void navigate(role === 'company' ? '/company' : '/senior')}
+                    onClick={() => void navigate(user ? (role === 'company' ? '/company' : '/senior/project-database') : '/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
