@@ -35,8 +35,9 @@ export function LandingPage() {
             와 잇다
           </h1>
 
-          <p className="mt-6 text-base sm:text-xl font-normal leading-relaxed text-slate-600 max-w-2xl mx-auto text-pretty">
-            풀타임 채용의 부담 없이, 시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 AI로 정밀 매칭하는 플랫폼 <strong className="text-[#173F3A] font-semibold">이어잡</strong>입니다.
+          <p className="mt-6 text-base sm:text-xl font-normal leading-relaxed text-slate-600 max-w-2xl mx-auto break-keep">
+            풀타임 채용의 부담 없이, 시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 <br className="hidden sm:inline" />
+            AI로 정밀 매칭하는 플랫폼 <strong className="text-[#173F3A] font-semibold">이어잡</strong>입니다.
           </p>
 
           {/* SINGLE MAIN CTA BUTTON */}
