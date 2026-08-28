@@ -53,19 +53,23 @@ export function LandingPage() {
       <main>
         <section className="bg-[#fffdf5] px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
           <div className="mx-auto max-w-6xl">
-            <div className="mx-auto max-w-4xl text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#d8d0b9] bg-white px-4 py-2 text-sm font-extrabold text-[#173f3a] shadow-sm">
-                <Sparkles className="size-4 text-[#f47a36]" aria-hidden="true" />
-                <span>실무 과제 중심의 경험 인재 매칭 플랫폼</span>
-              </div>
+            <div className="border-t border-[#e5decc] pt-8 text-left">
+              <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#f47a36] sm:text-[1rem]">
+                이어잡이 만드는 새로운 연결
+              </p>
+              <h2 className="mt-3 text-[2rem] font-black leading-tight tracking-normal text-[#17212b] sm:text-[2.5rem]">
+                Experience Meets Opportunity
+              </h2>
 
-              <h1 className="mt-7 text-4xl font-black leading-[1.2] tracking-normal text-[#17212b] sm:text-5xl lg:text-6xl">
-                기업의 실무 프로젝트와
+              <h1 className="mt-10 text-[2rem] font-black leading-[1.24] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
+                <span className="text-[#173f3a]">기업</span>의{' '}
+                <span className="text-[#173f3a]">실무</span> 프로젝트와
                 <br />
-                <span className="text-[#173f3a]">시니어의 경험을 잇다</span>
+                <span className="text-[#173f3a]">시니어</span>의{' '}
+                <span className="text-[#173f3a]">경험</span>을 잇다
               </h1>
 
-              <p className="mx-auto mt-6 max-w-5xl text-lg font-medium leading-relaxed text-[#53606e] sm:text-xl">
+              <p className="mt-6 max-w-5xl text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
                 <span className="block">
                   시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 AI로 매칭하는 플랫폼,
                   이어잡입니다.
@@ -75,12 +79,11 @@ export function LandingPage() {
                   연결해 드립니다.
                 </span>
               </p>
-            </div>
 
-            <div className="mt-8 flex items-center justify-center gap-4 text-center text-xl font-black text-[#173f3a] sm:text-2xl">
-              <span className="h-1 w-10 shrink-0 bg-[#f47a36]" aria-hidden="true" />
-              <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
-              <span className="h-1 w-10 shrink-0 bg-[#f47a36]" aria-hidden="true" />
+              <div className="mt-8 flex items-center gap-4 text-[1.125rem] font-black text-[#173f3a] sm:text-[1.375rem]">
+                <span className="h-1 w-12 shrink-0 bg-[#f47a36]" aria-hidden="true" />
+                <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
+              </div>
             </div>
 
             <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-lg shadow-[0_14px_36px_rgba(23,63,58,0.14)]">
@@ -103,30 +106,34 @@ export function LandingPage() {
         <section className="border-t border-[#eee5cf] bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
           <div className="mx-auto max-w-6xl">
             <div className="border-t border-[#e5decc] pt-8">
-              <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f47a36]">
+              <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
                 이어잡의 특별한 연결
               </p>
               <h2
                 id="service-features-title"
-                className="mt-3 text-3xl font-black tracking-normal text-[#17212b] sm:text-4xl"
+                className="mt-3 text-[2rem] font-black tracking-normal text-[#17212b] sm:text-[2.5rem]"
               >
                 Service Features
               </h2>
             </div>
 
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
+            <div className="mt-10 grid gap-7 md:grid-cols-3">
               {features.map(
                 ({ number, icon: Icon, title, description }) => (
                   <article
                     key={number}
-                    className="min-h-[290px] rounded-lg border border-[#2d5b54] bg-[#173f3a] p-6 text-white shadow-[0_12px_30px_rgba(23,63,58,0.2)] sm:p-7"
+                    className="min-h-[310px] rounded-lg border border-[#bfd8d0] bg-[#e3f0ec] p-7 text-[#17212b] shadow-[0_12px_30px_rgba(23,63,58,0.12)] sm:p-8"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-black text-[#ff9b5b]">{number}</span>
-                      <Icon className="size-10 text-white" strokeWidth={1.8} aria-hidden="true" />
+                      <span className="text-[0.95rem] font-black text-[#f47a36]">{number}</span>
+                      <Icon
+                        className="size-11 text-[#173f3a]"
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
                     </div>
-                    <h3 className="mt-8 text-2xl font-black text-white">{title}</h3>
-                    <p className="mt-4 text-base font-semibold leading-[1.75] text-white/88">
+                    <h3 className="mt-8 text-[1.6rem] font-black text-[#111820]">{title}</h3>
+                    <p className="mt-4 text-[1.125rem] font-semibold leading-[1.75] text-[#26332f]">
                       {description}
                     </p>
                   </article>
@@ -138,20 +145,22 @@ export function LandingPage() {
 
         <section className="border-y border-[#bad8ce] bg-[#dceee8] px-5 py-11 sm:px-8">
           <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex max-w-3xl gap-4">
-              <span className="grid size-12 shrink-0 place-items-center text-[#f47a36]">
+            <div className="flex max-w-3xl gap-3 sm:gap-4">
+              <span className="grid size-11 shrink-0 place-items-center text-[#f47a36] sm:size-12">
                 <Sparkles
-                  className="size-10 motion-safe:animate-pulse"
+                  className="size-9 motion-safe:animate-pulse sm:size-10"
                   strokeWidth={1.8}
                   aria-hidden="true"
                 />
               </span>
               <div>
-                <p className="text-sm font-black text-[#f47a36]">고용노동부 연계 혜택</p>
-                <h2 className="mt-2 text-2xl font-black leading-snug text-[#17212b] sm:text-3xl">
+                <p className="text-[0.875rem] font-black text-[#f47a36] sm:text-[1rem]">
+                  고용노동부 연계 혜택
+                </p>
+                <h2 className="mt-2 text-[1.375rem] font-black leading-snug text-[#17212b] sm:text-[1.875rem]">
                   검증된 시니어 인재와 함께하고, 인건비 부담도 낮추세요
                 </h2>
-                <p className="mt-3 text-base font-medium leading-relaxed text-[#465a55]">
+                <p className="mt-3 text-[1rem] font-medium leading-[1.7] text-[#465a55] sm:text-[1.0625rem]">
                   국민취업지원제도 요건을 충족한 인재를 채용하면 고용촉진장려금 지원 대상이 될 수
                   있습니다.
                 </p>
@@ -160,7 +169,7 @@ export function LandingPage() {
             <button
               type="button"
               onClick={() => void navigate('/login?role=company')}
-              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d8d0b9] bg-white px-6 text-base font-black text-[#173f3a] shadow-sm transition hover:border-[#173f3a] active:scale-[0.98]"
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d8d0b9] bg-white px-5 text-[1rem] font-black text-[#173f3a] shadow-sm transition hover:border-[#173f3a] active:scale-[0.98] sm:px-6"
             >
               혜택 대상 인재 보기
               <ArrowRight className="size-5" aria-hidden="true" />
@@ -169,28 +178,28 @@ export function LandingPage() {
         </section>
 
         <section className="bg-[#fffbed] px-5 py-14 sm:px-8 sm:py-18">
-          <div className="mx-auto max-w-6xl rounded-lg border border-[#e2dac7] bg-white px-6 py-10 text-center shadow-[0_12px_30px_rgba(23,33,43,0.09)] sm:px-10 sm:py-12">
-            <h2 className="text-2xl font-black leading-snug text-[#17212b] sm:text-3xl">
+          <div className="mx-auto max-w-6xl rounded-lg border border-[#e2dac7] bg-white px-5 py-9 text-center shadow-[0_12px_30px_rgba(23,33,43,0.09)] sm:px-10 sm:py-12">
+            <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212b] sm:text-[1.875rem]">
               지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-[#53606e] sm:text-lg">
+            <p className="mx-auto mt-3 max-w-2xl text-[1rem] font-medium leading-[1.7] text-[#53606e] sm:text-[1.125rem]">
               로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
             </p>
             <button
               type="button"
               onClick={() => void navigate('/senior/project-database')}
-              className="mx-auto mt-7 inline-flex min-h-14 items-center justify-center gap-3 rounded-lg bg-[#173f3a] px-7 text-lg font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#0f332f] active:scale-[0.98]"
+              className="mx-auto mt-7 inline-flex min-h-14 items-center justify-center gap-2.5 whitespace-nowrap rounded-lg bg-[#173f3a] px-5 text-[1rem] font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#0f332f] active:scale-[0.98] sm:px-7 sm:text-[1.125rem]"
             >
-              <BriefcaseBusiness className="size-5" aria-hidden="true" />
+              <BriefcaseBusiness className="size-5 shrink-0" aria-hidden="true" />
               전체 프로젝트 보러가기
-              <ArrowRight className="size-5" aria-hidden="true" />
+              <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
             </button>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-[#e7dfcb] bg-white px-5 py-7 sm:px-8">
-        <p className="mx-auto max-w-6xl text-right text-sm font-semibold text-[#667085]">
+        <p className="mx-auto max-w-6xl text-right text-[0.875rem] font-semibold text-[#667085]">
           © 2026 이어잡 IEO Job. All rights reserved.
         </p>
       </footer>
