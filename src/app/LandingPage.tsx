@@ -108,7 +108,7 @@ export function LandingPage() {
           </div>
           <button
             type="button"
-            onClick={() => void navigate('/senior/project-database')}
+            onClick={() => void navigate('/login?role=company')}
             className="shrink-0 flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
           >
             <span>혜택 대상 인재 보기 ➔</span>

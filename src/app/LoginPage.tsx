@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
@@ -134,9 +134,26 @@ export function RollingBanner({
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
   const { signIn, signInWithGoogle } = useAuth();
-  const [role, setRole] = useState<'senior' | 'company'>('senior');
+  const [userSelectedRole, setUserSelectedRole] = useState<'senior' | 'company' | null>(null);
+  const roleParam = searchParams.get('role');
+  const role: 'senior' | 'company' =
+    userSelectedRole ?? (roleParam === 'company' ? 'company' : 'senior');
+
+  const setRole = (newRole: 'senior' | 'company') => {
+    setUserSelectedRole(newRole);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('role', newRole);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
