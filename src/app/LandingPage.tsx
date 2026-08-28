@@ -238,19 +238,19 @@ export function LandingPage() {
                 </div>
                 <dl className="mt-3 flex flex-col gap-2.5 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 대상 기업</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 대상 기업</dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       우선지원대상기업 (제조업 500인 이하, 건설·운수 300인 이하, 도소매 200인 이하, 기타 100인 이하)
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 근로계약 기간</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 근로계약 기간</dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       정규직 또는 최소 1년 이상의 기간제 근로계약 체결 (1년 미만 단기 계약 제외)
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 근무 조건</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 근무 조건</dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       주 15시간(월 60시간) 이상 근무, 최저임금 이상 지급, 4대 사회보험 가입 필수
                     </dd>
@@ -266,13 +266,13 @@ export function LandingPage() {
                 </div>
                 <dl className="mt-3 flex flex-col gap-2.5 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 이수 프로그램</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 이수 프로그램</dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       국민취업지원제도 1단계(취업활동계획 IAP) 수료 (1년 이내) 또는 3개월 이상 내일배움카드 직업훈련 이수
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 구직 등록</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 구직 등록</dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       고용24(워크넷)에 구직신청이 유효하게 등록된 상태에서 채용 연계 진행
                     </dd>
