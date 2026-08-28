@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 전체 아이콘 2D 라인 아이콘(Lucide SVG) 표준화 및 불필요한 이모지 중복 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **2D 라인 아이콘 단일 표준화**: 메인 랜딩 CTA 버튼, 혜택 안내 뱃지, 로그인 페이지 배너 컨트롤, 공고 관리 현황 및 지원서 제출 버튼 등에 섞여 있던 유니코드 이모지(🚀, 💰, 🏛️, 📊, 📋, ✉️, 💾 등)를 전면 제거하고 일관된 **2D Lucide 라인 아이콘**(`<Briefcase />`, `<Coins />`, `<Landmark />`, `<Play />`, `<Pause />`, `<Compass />`, `<Send />`, `<Building2 />`, `<Mail />`, `<BarChart3 />`, `<ClipboardCheck />`)으로 교체.
+  2. **중복/겹침 아이콘 1개로 단일화**: 메인 CTA 버튼에서 서류가방 2D 아이콘과 로켓 이모지가 동시에 겹쳐 보이던 현상을 해결하여 깔끔하게 1개의 2D 라인 아이콘만 단독 표시되도록 정리.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/services/emailService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 테스트 기업 등록 공고 3건 영구 삭제 및 5개 단위 순차 페이지네이션 로딩 속도 최적화
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
