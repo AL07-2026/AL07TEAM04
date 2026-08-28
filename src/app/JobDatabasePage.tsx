@@ -1476,37 +1476,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   useEffect(() => {
     if (role !== 'senior' || !isSeniorProfileResolved) return undefined;
 
-    const hasUsablePrimaryPreference = Boolean(
-      primaryProfilePreference &&
-        (primaryProfilePreference !== OTHER_OCCUPATION_PREFERENCE ||
-          (seniorProfile?.desiredOccupationText?.trim().length ?? 0) >= 2),
-    );
-    if (selectedCategory === all && !hasUsablePrimaryPreference) {
-      const profileRequiredTimer = window.setTimeout(() => {
-        const visibleCompanyProjects = publishedCompanyProjects.filter((project) =>
-          matchesPublishedCompanyProject(project, {
-            employmentType: selectedEmploymentType,
-            hiringStage: selectedHiringStage,
-            query,
-            selectedCategory,
-            workType: selectedWorkType,
-          }),
-        );
-        setIsLoadingPostings(false);
-        setPostings(visibleCompanyProjects);
-        setSelectedId(visibleCompanyProjects[0]?.id ?? '');
-        setServerSearchMeta(null);
-        setPendingResultGeneration(null);
-        setWorknetFeedStatus('profile-required');
-        setWorknetFeedMessage(
-          visibleCompanyProjects.length > 0
-            ? '기업이 공개한 프로젝트를 먼저 보여드립니다. 내 정보에서 1순위 희망 직종을 선택하면 맞춤 공고도 함께 볼 수 있습니다.'
-            : '내 정보에서 1순위 희망 직종을 선택하면 해당 직종의 맞춤 공고를 볼 수 있습니다.',
-        );
-      }, 0);
-      return () => window.clearTimeout(profileRequiredTimer);
-    }
-
     const abortController = new AbortController();
     let active = true;
     const generation = resultGeneration;
@@ -2401,17 +2370,39 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       </section>
 
       {role === 'senior' ? (
-        <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] font-extrabold text-[#173F3A]">내 정보 기반 추천 조건</p>
-            <button
-              className="inline-flex min-h-11 items-center justify-center self-start rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 py-2 text-[12px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer sm:self-auto"
-              onClick={() => void navigate('/basic-profile')}
-              type="button"
-            >
-              내 정보 확인·수정 →
-            </button>
-          </div>
+        !user ? (
+          <section className="rounded-2xl border border-[#F06B4F]/30 bg-[#FFF9F7] p-3.5 sm:p-4 shadow-xs">
+            <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[13.5px] sm:text-[14.5px] font-extrabold text-[#17212B] flex items-center gap-1.5">
+                  <Sparkles className="size-4 text-[#F06B4F] shrink-0" />
+                  <span>로그인하시면 내 직종·경험 기반 AI 맞춤 프로젝트 추천을 받을 수 있습니다!</span>
+                </p>
+                <p className="mt-1 text-[12px] font-medium text-slate-600">
+                  비로그인 상태에서도 전체 프로젝트를 둘러보실 수 있으며, 로그인 시 1순위 희망 직종 정밀 적합도 점수가 표출됩니다.
+                </p>
+              </div>
+              <button
+                className="inline-flex h-10 items-center justify-center shrink-0 rounded-xl bg-[#F06B4F] px-4 text-[13px] font-extrabold text-white shadow-xs hover:bg-[#d95a3f] active:scale-[0.98] transition-all cursor-pointer self-start sm:self-auto"
+                onClick={() => void navigate('/login')}
+                type="button"
+              >
+                로그인 / 회원가입 ➔
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
+            <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[13px] font-extrabold text-[#173F3A]">내 정보 기반 추천 조건</p>
+              <button
+                className="inline-flex min-h-11 items-center justify-center self-start rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 py-2 text-[12px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer sm:self-auto"
+                onClick={() => void navigate('/basic-profile')}
+                type="button"
+              >
+                내 정보 확인·수정 →
+              </button>
+            </div>
           {preferredProfileCategories.length > 0 ? (
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {preferredProfileCategories.map((category, index) => (
@@ -2449,6 +2440,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </p>
           )}
         </section>
+      )
       ) : (
         <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
