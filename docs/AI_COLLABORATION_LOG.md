@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 이어잡(EOJOB) 서비스 고용촉진제도 적용 및 UX/UI 구현 상세 기획 수립
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **시니어(구직자) 서비스 적용안**: `BasicProfilePage` 내 고용촉진장려금 대상 자격 인증 토글/이수증 등록 폼, `[✓ 연 720만원 지원 대상자]` 프로필 뱃지, 미이수 시 "국민취업지원제도 1단계 이수 가이드" 팝업 수립.
+  2. **기업(채용담당자) 서비스 적용안**: `JobDatabasePage` 내 `[🔥 고용촉진장려금 대상자만]` 필터 칩, 시니어 프로필 카드 뱃지, `ReceivedProposalsPage` 내 `[정부 지원금 혜택 실시간 리포트 (연 720만원 절감)]` 카드 및 서류 미리보기 구현안 세분화.
+  3. **데이터 모델 및 랜드 페이지 통합로드맵**: `SeniorProfileData` 데이터 모델 확장안(`employmentSubsidyTarget`, `employmentSubsidyProgram`, `employmentSubsidyDocUrl`) 및 `LandingPage` B2B 세일즈 섹션 반영안 명세.
+- **생성 파일**:
+  - [NEW] `docs/EOJOB_SUBSIDY_INTEGRATION_PLAN.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 고용촉진제도(고용촉진장려금) 혜택 실체, 기업 확인 방법, 구직자 필수 수료 요건 기획 수립
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
