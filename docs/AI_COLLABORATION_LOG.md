@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 로그인 페이지 주황색 컬러(#F06B4F) 표준화 및 랜딩 페이지 '혜택 세부내용 확인' 모달 팝업 구현
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 페이지 주황색 톤 일치화**: `LoginPage.tsx`에서 다른 페이지의 산뜻한 테라코타 코랄 오렌지(`#F06B4F`) 대신 짙은 적갈색(`#B84734`)이 사용되던 부분을 전면 교체하여 디자인 시스템 표준 색상(`#F06B4F`)으로 완벽히 통일.
+  2. **고용촉진장려금 혜택 세부내용 모달 팝업 구현**: 랜딩 페이지 고용노동부 연계 혜택 카드에 `[혜택 세부내용 확인]` 버튼을 신설하고, 클릭 시 실제 지원 금액(연 최대 720~960만원), 기업 수급 요건, 시니어 국취제 수료 기준, 인위적 감원 금지 주의사항 등을 깔끔하게 열람할 수 있는 반응형 팝업 모달을 구현.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 랜딩 페이지 '혜택 대상 인재 보기' 클릭 시 기업 로그인(`/login?role=company`) 자동 선택 연동
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
