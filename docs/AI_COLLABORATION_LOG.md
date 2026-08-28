@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 랜딩 페이지 '혜택 대상 인재 보기' 클릭 시 기업 로그인(`/login?role=company`) 자동 선택 연동
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **기업 로그인 연동**: 랜딩 페이지의 고용촉진장려금 하이라이트 배너에서 `[혜택 대상 인재 보기 ➔]` 버튼을 클릭했을 때 `/login?role=company`로 이동하도록 연동했습니다.
+  2. **로그인 페이지 역할 파라미터 지원**: `LoginPage.tsx`에서 URL 쿼리 파라미터 `?role=company`를 읽어 **'기업으로 시작'** 탭이 자동으로 선택된 상태로 렌더링되도록 구현했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 비로그인 상태에서 '내 정보' 클릭 시 로그인 화면(`/login`) 정상 이동 조치
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
