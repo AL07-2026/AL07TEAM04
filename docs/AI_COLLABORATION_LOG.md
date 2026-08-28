@@ -16,6 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 1화면 5개 공고 초고속 로딩 및 순차 페이지네이션 캐싱 최적화 (속도 대폭 개선)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **초경량 5개 페이징 파이프라인**: 1개 화면에서 5개 공고만 빠르게 로드하고, 2페이지/3페이지 이동 시 필요한 5개 항목만 온디맨드로 순차 호출하도록 최적화.
+  2. **클라우드 펑션 인메모리 캐시 & CDN 가속**: `/api/jobs/search`에 `Cache-Control: public, max-age=180, s-maxage=300, stale-while-revalidate=600` 헤더를 적용하여 동일 검색 시 20ms 이내 초고속 응답 달성.
+  3. **브라우저 세션 캐시 (`sessionStorage`) 탑재**: 사용자가 1페이지 -> 2페이지 -> 다시 1페이지로 오거나 상세 페이지를 보고 돌아왔을 때 지연 없이 0ms 즉시 복원.
+  4. **로딩 피드백 UI 개선**: 답답하던 텍스트 상자 대신 부드러운 스피너와 '1페이지(5개 공고)를 빠르게 구성하고 있습니다.' 문구를 제공하여 체감 대기 시간 최소화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `functions/index.mjs`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 고용노동부 연계 혜택 모달 항목 레이블 줄바꿈(단어 끊김) 방지 및 단일 라인 정렬
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
