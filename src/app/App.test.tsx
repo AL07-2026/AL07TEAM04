@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { App } from '@/app/App';
 import { saveLocalCompanyProfile } from '@/services/profileService';
@@ -130,8 +130,10 @@ describe('Figma v2 통합 화면 라우팅', () => {
       await screen.findByRole('heading', { name: '이메일 인증을 완료해주세요' }, { timeout: 5000 }),
     ).toBeInTheDocument();
 
+    const nextButton = await screen.findByRole('button', { name: /이메일 인증 완료 및 다음 단계/ });
+    await waitFor(() => expect(nextButton).not.toBeDisabled(), { timeout: 4000 });
     act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /이메일 인증 완료 및 다음 단계/ }));
+      fireEvent.click(nextButton);
     });
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
   });
@@ -152,6 +154,17 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
+    saveLocalCompanyProfile(
+      {
+        companyName: '테스트 회사',
+        companyAddress: '서울 강남구',
+        email: 'manager@example.com',
+        managerName: '담당자',
+        phone: '010-1234-5678',
+        industry: 'IT',
+      },
+      'company-test-uid',
+    );
     window.history.pushState({}, '', '/company/projects/new');
     render(<App />);
     for (const [label, value] of [
