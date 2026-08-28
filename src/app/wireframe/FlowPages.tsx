@@ -5,6 +5,7 @@ import {
   Award,
   BarChart2,
   Check,
+  Coins,
   FileText,
   ImagePlus,
   Info,
@@ -73,6 +74,13 @@ import {
   uploadProjectAttachments,
 } from '@/services/projectService';
 import {
+  extractCleanPositionTitle,
+  formatCleanProblemStatement,
+  formatSimpleLocation,
+  formatSimpleSalary,
+  formatSimpleWorkSchedule,
+} from '@/services/dataSyncService';
+import {
   getLocalCompanyProfile,
   getLocalSeniorProfile,
   resolveCompanyProfile,
@@ -90,9 +98,18 @@ import {
   updateProposalStatus,
 } from '@/services/proposalService';
 import {
+  getPublishedCompanyProjects,
+  matchesPublishedCompanyProject,
+  mergeSeniorPostings,
+} from '@/app/jobDatabaseProjectVisibility';
+import {
+  OTHER_OCCUPATION_PREFERENCE,
+} from '@/data/occupationCategories';
+import {
   calculatePersonalizedMatch,
   getExperienceCardRecommendationText,
   getProfileMatchedRankedProjects,
+  getProfilePreferredPreferences,
   getProfilePrimaryCategory,
   hasProfileRecommendationCriteria,
 } from '@/services/recommendationEngine';
@@ -551,13 +568,18 @@ export function SeniorHomePage() {
   const [homeTotalPages, setHomeTotalPages] = useState(1);
   const homeItemsPerPage = 8;
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
     async function loadAndRankProjects() {
-      setIsLoadingRecommendations(true);
-      const [profile, proposals, experienceCard] = await Promise.all([
+      if (!hasLoadedRef.current) {
+        setIsLoadingRecommendations(true);
+      }
+      const [profile, proposals, experienceCard, rawCompanyProjects] = await Promise.all([
         resolveSeniorProfile(user?.uid),
         getUserProposals(user?.uid),
         getLatestUserExperienceCard(user?.uid),
+        fetchProjects().catch(() => []),
       ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
@@ -566,7 +588,21 @@ export function SeniorHomePage() {
       setSavedExperienceCount(experienceCard ? 1 : 0);
 
       const primaryCategory = getProfilePrimaryCategory(profile);
-      if (!primaryCategory) {
+      const preferredPreferences = getProfilePreferredPreferences(profile);
+      const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
+      const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
+
+      if (!user) {
+        setRecommendedJobs([]);
+        setRecommendedProjectsCount(0);
+        setHomeTotalPages(1);
+        setHighestFitProject(null);
+        setIsExperienceRecommendationApplied(false);
+        setRecommendationFeedMessage('맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.');
+        return;
+      }
+
+      if (!primaryCategory && !shouldUseOtherOccupation) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHomeTotalPages(1);
@@ -577,40 +613,68 @@ export function SeniorHomePage() {
       }
 
       try {
+        const publishedProjects = getPublishedCompanyProjects(rawCompanyProjects);
+        const matchingCompanyProjects = publishedProjects.filter((project) =>
+          matchesPublishedCompanyProject(project, {
+            desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
+            employmentType: 'all',
+            hiringStage: 'open',
+            query: '',
+            selectedCategory: primaryCategory ?? 'all',
+            workType: 'all',
+          }),
+        );
+
         const result = await searchFullJobDatabase({
-          categories: [primaryCategory],
-          desiredCategories: [primaryCategory],
+          categories: primaryCategory ? [primaryCategory] : undefined,
+          desiredCategories: primaryCategory ? [primaryCategory] : [],
           desiredLocation: profile?.desiredLocation,
+          desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
+          desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
           experienceCardCategory: experienceCard?.category,
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
-          page: homePage,
-          pageSize: homeItemsPerPage,
+          page: 1,
+          pageSize: 10,
           profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
             .filter(Boolean)
             .join(' '),
           sortBy: 'fit-desc',
         });
-        const unifiedItems = result.items.map((item) => {
-          const matchResult = calculatePersonalizedMatch(
-            item,
-            profile,
-            primaryCategory,
-            experienceCard,
-          );
-          return {
-            ...item,
-            seniorFitScore: matchResult.personalizedScore,
-            recommendationReasons: matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
-          };
-        });
-        setRecommendedJobs(unifiedItems);
-        setRecommendedProjectsCount(result.total);
-        setHomeTotalPages(result.totalPages);
-        if (homePage === 1) setHighestFitProject(getHighestFitProject(unifiedItems));
+
+        const mergedPostings = mergeSeniorPostings(matchingCompanyProjects, result.items);
+        const allPersonalizedItems = mergedPostings
+          .map((item) => {
+            const matchResult = calculatePersonalizedMatch(
+              item,
+              profile,
+              primaryCategory,
+              experienceCard,
+            );
+            return {
+              ...item,
+              seniorFitScore: matchResult.personalizedScore,
+              recommendationReasons:
+                matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
+            };
+          })
+          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+
+        const total = allPersonalizedItems.length;
+        const calculatedTotalPages = Math.max(1, Math.ceil(total / homeItemsPerPage));
+        const currentPage = Math.min(homePage, calculatedTotalPages);
+        const start = (currentPage - 1) * homeItemsPerPage;
+        const pageJobs = allPersonalizedItems.slice(start, start + homeItemsPerPage);
+
+        setRecommendedJobs(pageJobs);
+        setRecommendedProjectsCount(total);
+        setHomeTotalPages(calculatedTotalPages);
+        if (currentPage === 1) {
+          setHighestFitProject(getHighestFitProject(allPersonalizedItems));
+        }
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
-          result.total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
+          total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
         );
       } catch (error) {
         console.warn('Full job database recommendation failed, using fallback feed:', error);
@@ -625,7 +689,10 @@ export function SeniorHomePage() {
         );
         const total = ranked.length;
         const start = (homePage - 1) * homeItemsPerPage;
-        const pageJobs = ranked.slice(start, start + homeItemsPerPage).map(({ posting }) => posting);
+        const pageJobs = ranked
+          .slice(start, start + homeItemsPerPage)
+          .map(({ posting }) => posting)
+          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
@@ -647,7 +714,10 @@ export function SeniorHomePage() {
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
           );
         })
-        .finally(() => setIsLoadingRecommendations(false));
+        .finally(() => {
+          hasLoadedRef.current = true;
+          setIsLoadingRecommendations(false);
+        });
     };
 
     runRecommendationLoad();
@@ -668,7 +738,7 @@ export function SeniorHomePage() {
       window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
       window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [homePage, recommendationReloadKey, user?.uid]);
+  }, [homePage, recommendationReloadKey, user, user?.uid]);
 
   const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
   const recommendationPrimaryLabel = recommendationPrimaryCategory
@@ -676,11 +746,11 @@ export function SeniorHomePage() {
     : '1순위 직종 미설정';
 
   const userName =
-    user?.name && user.name !== '김인재'
+    user?.name
       ? user.name
       : user?.email === 'sehddnr2@gmail.com'
         ? '이동욱'
-        : user?.name || '이동욱';
+        : '이동욱';
 
   return (
     <MobilePage
@@ -874,19 +944,28 @@ export function SeniorHomePage() {
             </div>
           ) : recommendedJobs.length > 0 ? (
             <>
-              {recommendedJobs.map((job) => (
+              {recommendedJobs.map((job) => {
+                const cleanTitle = extractCleanPositionTitle(job.title, job.companyName);
+                const cleanProblem = formatCleanProblemStatement(job);
+                const simpleLoc = formatSimpleLocation(job.location);
+                const simpleSch = formatSimpleWorkSchedule(job.workSchedule);
+                const simpleSal = formatSimpleSalary(job.salaryRange);
+                const metaStr = `${simpleLoc}${simpleSch ? ` · ${simpleSch}` : ''}`;
+
+                return (
                   <HomeRecommendationRow
                     company={job.companyName}
                     fitScore={job.seniorFitScore}
                     isMobile={isMobile}
                     key={job.id}
-                    meta={`${job.location}${job.workSchedule ? ` · ${job.workSchedule}` : ''}`}
+                    meta={metaStr}
                     onClick={() => void navigate('/senior/projects')}
-                    problem={job.problemStatement}
-                    salary={job.salaryRange}
-                    title={job.title}
+                    problem={cleanProblem}
+                    salary={simpleSal}
+                    title={cleanTitle}
                   />
-                ))}
+                );
+              })}
 
               {/* Home Pagination Controls */}
               {homeTotalPages > 1 && (
@@ -950,23 +1029,29 @@ export function SeniorHomePage() {
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
               <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
-                {recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
+                {!user
+                  ? '맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.'
+                  : recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
               </p>
               <button
                 className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
                 onClick={() =>
-                  hasProfileRecommendationCriteria(recommendationProfile)
-                    ? setRecommendationReloadKey((value) => value + 1)
-                    : void navigate('/basic-profile')
+                  !user
+                    ? void navigate('/login')
+                    : hasProfileRecommendationCriteria(recommendationProfile)
+                      ? setRecommendationReloadKey((value) => value + 1)
+                      : void navigate('/basic-profile')
                 }
                 type="button"
               >
-                {hasProfileRecommendationCriteria(recommendationProfile) ? (
+                {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
                   <RefreshCw className="size-4" />
                 ) : null}
-                {hasProfileRecommendationCriteria(recommendationProfile)
-                  ? '다시 불러오기'
-                  : '내 정보 입력하기'}
+                {!user
+                  ? '로그인 / 회원가입하기 ➔'
+                  : hasProfileRecommendationCriteria(recommendationProfile)
+                    ? '다시 불러오기'
+                    : '내 정보 입력하기'}
               </button>
             </div>
           )}
@@ -3043,6 +3128,20 @@ export function ReceivedProposalDetailPage() {
         </div>
       </div>
 
+      {/* Employment Promotion Subsidy Report Card for Company */}
+      <div className="flex flex-col gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/90 p-3.5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
+            <Coins className="size-3.5 text-emerald-800 shrink-0" />
+            <span>고용촉진장려금 지원 대상</span>
+          </span>
+          <span className="text-xs font-extrabold text-emerald-900">연 최대 720만원 혜택</span>
+        </div>
+        <p className="text-xs font-semibold text-emerald-900 leading-snug">
+          해당 인재 채용 시 분기별 180만원(월 60만원 x 12개월)의 국가 인건비 지원금을 신청할 수 있습니다. (고용보험 및 우선지원대상기업 기준)
+        </p>
+      </div>
+
       {/* Soft Mint Info Box */}
       <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3">
         <Info className="mt-0.5 size-4 shrink-0 text-[#173F3A]" />
@@ -3098,12 +3197,18 @@ export function ReceivedProposalDetailPage() {
 export function SeniorProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const isMobile = mode === 'mobile';
   const [experienceCard, setExperienceCard] = useState<StoredExperienceCard | null>(() =>
     readStoredExperienceCard(user?.uid),
   );
   const seniorProfile = getLocalSeniorProfile(user?.uid);
+
+  useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     let active = true;
@@ -3156,13 +3261,18 @@ export function SeniorProfilePage() {
           {userName[0] || '이'}
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">
               {userName} 님
             </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 본인 인증
             </span>
+            {seniorProfile?.employmentSubsidyTarget ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 border border-emerald-300">
+                ✓ 연 720만원 지원 대상
+              </span>
+            ) : null}
           </div>
           <span className="text-xs font-bold text-slate-500 truncate">{userEmail}</span>
           <span className="text-xs font-extrabold text-[#F06B4F]">시니어 인재 회원</span>
@@ -3234,7 +3344,10 @@ export function SeniorProfilePage() {
           {experienceCard ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
         </ActionButton>
         <ActionButton
-          onClick={() => void navigate('/login')}
+          onClick={async () => {
+            await signOut();
+            void navigate('/senior/project-database', { replace: true });
+          }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
         >
@@ -3247,13 +3360,19 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
     getLocalCompanyProfile(user?.uid),
   );
   const [projectCount, setProjectCount] = useState(0);
+
+  useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     void (async () => {
@@ -3349,7 +3468,10 @@ export function CompanyProfilePage() {
           + 새 프로젝트 등록
         </ActionButton>
         <ActionButton
-          onClick={() => void navigate('/login')}
+          onClick={async () => {
+            await signOut();
+            void navigate('/senior/project-database', { replace: true });
+          }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
         >

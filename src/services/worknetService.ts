@@ -726,13 +726,9 @@ function loadWorknetSeniorProjectFeed(
         .filter((item) => !isExpiredPosting(item, now))
         .map((item, index) => transformWorknetToSeniorProject(item, index, now));
 
-      const fallbackList = fallbackWorknetJobs.map((item, index) =>
-        transformWorknetToSeniorProject(item, index + apiProjects.length, now),
+      const combinedProjects = apiProjects.length > 0 ? apiProjects : fallbackWorknetJobs.map((item, index) =>
+        transformWorknetToSeniorProject(item, index, now),
       );
-
-      const existingIds = new Set(apiProjects.map((p) => p.id));
-      const extraFallback = fallbackList.filter((p) => !existingIds.has(p.id));
-      const combinedProjects = [...apiProjects, ...extraFallback];
 
       return {
         projects: combinedProjects,

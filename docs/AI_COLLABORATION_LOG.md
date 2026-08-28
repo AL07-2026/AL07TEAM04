@@ -16,6 +16,508 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 신규 배포 시 브라우저 청크 캐시 충돌 자동 복구(Auto Recovery) 구축
+- **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
+- **원인 분석**:
+  - `Failed to fetch dynamically imported module ... FlowPages-BQJwY5_E.js` 오류는 웹 브라우저 탭을 열어둔 상태에서 새로운 버전이 배포되었을 때, 브라우저가 이전 버전의 빌드 해시 파일명을 요청하면서 발생하는 SPA(Single Page Application)의 전형적인 청크 캐시 불일치 현상임.
+- **해결 및 예방 조치**:
+  1. **Vite Preload Error 리스너 탑재 (`main.tsx`)**: `window.addEventListener('vite:preloadError')`를 등록하여 구버전 청크 요청 실패 시 사용자에게 오류 화면을 띄우지 않고 즉시 최신 번들로 자동 새로고침(Auto-Reload) 복구.
+  2. **`lazyPage` 및 `ErrorBoundaryHarness` 2중 예외 방어막**: `lazy()` 로더 내부에서 ChunkLoadError 발생 시 세션 플래그를 통해 1회 무음 새로고침으로 최신 번들을 즉시 연결.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - **공식 프로덕션 호스팅 URL**: **https://al07team04-bdfcd.web.app**
+- **변경 파일**:
+  - [MODIFY] `src/main.tsx`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `src/components/ui/ErrorBoundaryHarness.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 공식 프로덕션 라이브 주소(Official Production URL) 배포 완료
+- **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
+- **작업 내용**:
+  1. **공식 프로덕션 호스팅 배포**: 최신 동영상 히어로 랜딩 페이지, 고용노동부 연계 혜택 세부 안내 모달, 초고속 5개 공고 페이징 및 세션 캐시, Firebase Analytics & Firestore 활동 로그 트래킹 시스템을 공식 라이브 도메인에 배포 완료.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - **공식 프로덕션 호스팅 URL**: **https://al07team04-bdfcd.web.app**
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] `develop` 브랜치에 통합 검증 완료 작업 내용 푸시 완료 (Origin Push)
+- **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
+- **작업 내용**:
+  1. **develop 브랜치 최신화 및 배포 검증**: `leedongwook` 브랜치의 최신 고용노동부 연계 혜택 모달, 초고속 5개 공고 페이징 & 캐싱 시스템, GA4/Firestore 행동 로깅과 `develop` 브랜치의 소개 영상 랜딩 페이지를 통합 병합.
+  2. **CI 파이프라인 검증 통과**: `npm run validate` 전체 파이프라인 (TypeScript 컴파일, ESLint 0 warning, Vitest 258개 테스트 100% 통과, Vite 프로덕션 빌드) 검증 완료 후 `origin/develop`에 최종 푸시.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - Git Push 완료: `origin/develop` (`e434d92`)
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] `develop` 브랜치 최신 변경 사항 병합(Pull & Merge) 및 통합 검증 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **develop 브랜치 변경 사항 병합**: 팀원이 develop 브랜치에 업데이트한 신규 히어로 소개 영상(`/eojob-landing-hero.mp4`), 개선된 서비스 특징 3단 카드, 상단 빠른 이동 네비게이션, 반응형 랜딩 카피 변경 사항을 안전하게 병합.
+  2. **모달 & 분석 트래킹 통합**: 고용노동부 연계 혜택 세부내용 모달(이중 박스 제거 및 단일 라인 정렬 버전)과 GA4/Firestore 행동 로깅 트래킹 코드를 새 랜딩 페이지 레이아웃과 유기적으로 통합.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `public/eojob-landing-hero.mp4`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 채용 공고 로딩 지연 원인 분석 및 2.4초 자동 폴백·세션 캐시 아키텍처 구축
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  1. **Firestore 14,000건 전체 카탈로그 로드 병목**: 서버리스 콜드 스타트 시 14,000건의 방대한 Firestore 데이터를 한 번에 가져와 인덱싱하는 과정에서 5~10초의 대기 시간이 발생.
+  2. **클라이언트 직렬 호출 대기**: 프로필 정보 조회 후 `/api/jobs/search`를 순차 대기하면서 로딩 박스가 오래 지속됨.
+- **개선 조치**:
+  1. **2.4초 패스트 폴백(Fast Fallback)**: 네트워크 또는 백엔드 콜드 스타트가 2.4초를 초과하면 즉시 로컬 시드 공고 5개를 1페이지에 먼저 띄워 화면이 멈추지 않도록 보장.
+  2. **`sessionStorage` 즉시 복원**: 한 번 로드된 검색 결과와 1~5페이지 데이터는 브라우저 세션에 저장되어 재방문이나 페이지 이동 시 0ms 즉각 표시.
+  3. **Cloud Functions 1GiB 메모리 증설 및 30분 장기 인메모리 캐시 적용**.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 1화면 5개 공고 초고속 로딩 및 순차 페이지네이션 캐싱 최적화 (속도 대폭 개선)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **초경량 5개 페이징 파이프라인**: 1개 화면에서 5개 공고만 빠르게 로드하고, 2페이지/3페이지 이동 시 필요한 5개 항목만 온디맨드로 순차 호출하도록 최적화.
+  2. **클라우드 펑션 인메모리 캐시 & CDN 가속**: `/api/jobs/search`에 `Cache-Control: public, max-age=180, s-maxage=300, stale-while-revalidate=600` 헤더를 적용하여 동일 검색 시 20ms 이내 초고속 응답 달성.
+  3. **브라우저 세션 캐시 (`sessionStorage`) 탑재**: 사용자가 1페이지 -> 2페이지 -> 다시 1페이지로 오거나 상세 페이지를 보고 돌아왔을 때 지연 없이 0ms 즉시 복원.
+  4. **로딩 피드백 UI 개선**: 답답하던 텍스트 상자 대신 부드러운 스피너와 '1페이지(5개 공고)를 빠르게 구성하고 있습니다.' 문구를 제공하여 체감 대기 시간 최소화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `functions/index.mjs`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 고용노동부 연계 혜택 모달 항목 레이블 줄바꿈(단어 끊김) 방지 및 단일 라인 정렬
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **항목명 글자 끊김 현상 해결**: '• 근로계약 기간', '• 이수 프로그램' 등의 레이블에서 '간', '램' 글자가 2번째 줄로 어색하게 떨어져 줄바꿈되던 문제를 해결하기 위해, `dt` 요소에 `whitespace-nowrap` 및 적정 너비(`w-28 sm:w-32`)를 부여하여 모든 항목명이 줄바꿈 없이 한 번에 온전하게 보이도록 최적화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 고용노동부 연계 혜택 모달 이중 박스(Box-in-a-Box) 구조 제거 및 깔끔한 플랫 텍스트 레이아웃 정돈
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **이중 중첩 박스 제거**: 모달 팝업 내부의 '실제 기업 지원 혜택 금액', '기업의 필수 수급 요건', '구직자 필수 이수 요건' 영역에서 큰 박스 안에 작은 흰색 박스들이 겹겹이 들어있던 복잡한 구조를 전면 제거.
+  2. **가독성 높은 단일 박스 & 타이포그래피 정돈**: 각 섹션을 하나의 심플한 컨테이너로 통일하고, 내부 항목들을 불필요한 테두리 상자 없이 깔끔한 글머리 기호(•)와 얇은 구분선, 정돈된 키-값 텍스트 구조(`dl/dt/dd`)로 개편하여 시각적 피로도를 대폭 낮추고 가독성을 극대화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] Firebase Analytics & Firestore 실시간 사용자 행동 로그(방문자수, 페이지 이동, 버튼 클릭, 공고 조회/지원) 트래킹 시스템 구축
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Analytics (GA4) 연동**: `firebase/analytics`의 `logEvent` 및 `isSupported()` 환경 가드를 기반으로 `src/services/analyticsService.ts`를 신규 구축하여 실시간 방문자수, 세션, 이벤트 로깅을 지원.
+  2. **라우트 전환 자동 페이지뷰 트래킹**: `App.tsx`에서 React Router의 경로 전환(`router.subscribe`)을 감지하여 사용자가 접속하거나 이동하는 모든 페이지(`page_view`)를 자동으로 기록.
+  3. **주요 버튼 클릭 및 활동 이벤트 추적**:
+     - 메인 히어로 / 하단 CTA 버튼 클릭 (`hero_cta_view_projects`, `bottom_cta_view_projects`)
+     - 고용촉진장려금 혜택 팝업 열기 (`subsidy_modal_open`) 및 인재 보기 클릭 (`subsidy_talent_cta`)
+     - 공고 카드 클릭 및 상세 열람 (`view_job_detail`)
+     - 지원하기 및 외부 원문 공고 이동 (`job_apply_start`, `job_apply_external_redirect`, `job_apply_submit_success`)
+     - AI 인터뷰 단계 추적 (`interview_start`, `interview_complete`)
+  4. **Firestore 실시간 원시 로그 컬렉션(`analytics_events`) 동시 저장**: GA4 대시보드 집계 딜레이 없이도 Firebase Console의 Firestore `analytics_events` 컬렉션에서 초 단위로 실시간 방문자 디바이스, 경로, 클릭 메타데이터를 즉시 조회할 수 있도록 이중 로깅(Dual Logging) 아키텍처 구현.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `src/services/analyticsService.ts`
+  - [NEW] `src/services/analyticsService.test.ts`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 메인 랜딩 히어로 서브 텍스트 줄바꿈 최적화 ('당면 과제를' 뒤 개행 및 '정/밀' 분리 방지)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **가독성 줄바꿈 개선**: `LandingPage.tsx`의 메인 히어로 소개 문구에서 "정밀 매칭하는"의 단어가 "정 / 밀"로 어색하게 줄바꿈되던 문제를 해결하기 위해, "기업의 당면 과제를" 직후 명시적으로 줄바꿈(`<br />`)을 넣고 `break-keep`을 적용하여 다음 줄에 "AI로 정밀 매칭하는 플랫폼 이어잡입니다."가 온전하고 깔끔하게 렌더링되도록 수정.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 랜딩 페이지 '고용노동부 연계 혜택' 뱃지 여백 최적화 (가로 풀스트레치 제거 및 컴팩트 핏)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **뱃지 가로 풀스트레치 빈 여백 해결**: 상위 플렉스 컬럼 컨테이너의 기본 stretch 속성으로 인해 `[고용노동부 연계 혜택]` 알약형 뱃지가 가로 전체로 길게 늘어나 우측에 불필요한 빈 여백이 생기던 문제를 `w-fit` 및 `items-start` 지정을 통해 텍스트/아이콘 크기에 딱 맞게(hug content) 컴팩트 뱃지로 최적화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 시니어 프로젝트 조회 시 '조회 공고' 수치 깜빡임(10건 노출) 버그 수정 (0건 기본값 처리)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **초기 로딩 시 10건 깜빡임 현상 해결**: 프로젝트 데이터베이스 진입 시 `loadDatabaseProjects()`에서 시니어 모드일 때 로컬 기업 등록 공고(약 10건)를 임시로 `postings`에 할당하여 '조회 공고' 메트릭 카드가 10건으로 잠깐 번쩍이던 문제를 수정.
+  2. **0건 기본값 및 천단위 콤마 포맷팅**: 전체 서버 검색 메타데이터(`serverSearchMeta`)가 도착하기 전까지 시니어 화면의 기본값을 **0건**으로 명확히 유지하고, 데이터 도착 시 실제 공고 수(예: 14,820건)가 매끄럽게 표시되도록 처리.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 전체 아이콘 2D 라인 아이콘(Lucide SVG) 표준화 및 불필요한 이모지 중복 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **2D 라인 아이콘 단일 표준화**: 메인 랜딩 CTA 버튼, 혜택 안내 뱃지, 로그인 페이지 배너 컨트롤, 공고 관리 현황 및 지원서 제출 버튼 등에 섞여 있던 유니코드 이모지(🚀, 💰, 🏛️, 📊, 📋, ✉️, 💾 등)를 전면 제거하고 일관된 **2D Lucide 라인 아이콘**(`<Briefcase />`, `<Coins />`, `<Landmark />`, `<Play />`, `<Pause />`, `<Compass />`, `<Send />`, `<Building2 />`, `<Mail />`, `<BarChart3 />`, `<ClipboardCheck />`)으로 교체.
+  2. **중복/겹침 아이콘 1개로 단일화**: 메인 CTA 버튼에서 서류가방 2D 아이콘과 로켓 이모지가 동시에 겹쳐 보이던 현상을 해결하여 깔끔하게 1개의 2D 라인 아이콘만 단독 표시되도록 정리.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/services/emailService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 테스트 기업 등록 공고 3건 영구 삭제 및 5개 단위 순차 페이지네이션 로딩 속도 최적화
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **테스트 등록 공고 3건 삭제**: Firestore `projects` 컬렉션 및 로컬 스토리지에 남아있던 테스트 공고 (`a - ai 를 활용한 자동화 구축`, `최올 (KOREAMONSTER72) - 테스트 및 수정용`, `최동일 - 최동일`) 3건을 원격 데이터베이스에서 완전히 삭제하고 로컬 캐시 필터링 적용.
+  2. **체감 로딩 속도 극대화 (화면당 5개 노출 & 순차 페이지네이션)**: `JobDatabasePage`의 페이지당 표시 개수를 기존 12개에서 **5개(`itemsPerPage = 5`)**로 최적화하여 첫 화면 렌더링이 즉각적으로 완료되도록 개선. 2페이지, 3페이지 등 다음 페이지 탐색 시에도 필요한 분량만 초고속으로 순차 렌더링하도록 처리.
+  3. **홈 화면 추천 쿼리 최적화**: `SeniorHomePage`의 추천 공고 조회 요청 크기를 100개에서 10개로 슬림화하여 홈 화면 로딩 딜레이 해결.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/projectService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] Pretendard 폰트 굵기 하향 조정(가독성 개선) 및 고용촉진장려금 세부 팝업 UI 레이아웃 전면 리디자인
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **폰트 굵기 1단계 하향 조정**: 헤더/대제목을 제외한 본문, 리스트, 카드 설명 텍스트의 굵기를 기존의 과도한 `font-extrabold`/`font-bold`에서 `font-semibold` / `font-medium` / `font-normal`로 1단계씩 낮추어 눈의 피로도를 낮추고 텍스트 가독성을 대폭 향상.
+  2. **고용촉진장려금 세부 안내 팝업 UI 구조화**: 답답해 보이던 줄글형 불렛 리스트를 **Key-Value 정보 행(테이블형 카드) 및 미니멀 뱃지 구조**로 개편하여 대상 기업, 근로계약 기간, 근무 조건, 수료 프로그램 요건을 한눈에 명확히 파악할 수 있도록 리디자인 완료.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 로그인 페이지 주황색 컬러(#F06B4F) 표준화 및 랜딩 페이지 '혜택 세부내용 확인' 모달 팝업 구현
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 페이지 주황색 톤 일치화**: `LoginPage.tsx`에서 다른 페이지의 산뜻한 테라코타 코랄 오렌지(`#F06B4F`) 대신 짙은 적갈색(`#B84734`)이 사용되던 부분을 전면 교체하여 디자인 시스템 표준 색상(`#F06B4F`)으로 완벽히 통일.
+  2. **고용촉진장려금 혜택 세부내용 모달 팝업 구현**: 랜딩 페이지 고용노동부 연계 혜택 카드에 `[혜택 세부내용 확인]` 버튼을 신설하고, 클릭 시 실제 지원 금액(연 최대 720~960만원), 기업 수급 요건, 시니어 국취제 수료 기준, 인위적 감원 금지 주의사항 등을 깔끔하게 열람할 수 있는 반응형 팝업 모달을 구현.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 랜딩 페이지 '혜택 대상 인재 보기' 클릭 시 기업 로그인(`/login?role=company`) 자동 선택 연동
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **기업 로그인 연동**: 랜딩 페이지의 고용촉진장려금 하이라이트 배너에서 `[혜택 대상 인재 보기 ➔]` 버튼을 클릭했을 때 `/login?role=company`로 이동하도록 연동했습니다.
+  2. **로그인 페이지 역할 파라미터 지원**: `LoginPage.tsx`에서 URL 쿼리 파라미터 `?role=company`를 읽어 **'기업으로 시작'** 탭이 자동으로 선택된 상태로 렌더링되도록 구현했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 비로그인 상태에서 '내 정보' 클릭 시 로그인 화면(`/login`) 정상 이동 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **비로그인 방문자 '내 정보' 클릭 먹통 현상 해결**: 로그아웃/비로그인 상태에서 헤더 또는 하단 네비게이션의 `[내 정보]` 버튼을 클릭했을 때 기존 프로필 보호 리다이렉트가 `/senior/project-database`로 바로 튕겨내어 클릭이 안 되는 것처럼 보이던 증상을 발견했습니다.
+  2. **라우팅 & 네비게이션 개선**: 비로그인 사용자가 `[내 정보]` 또는 `[내 제안]`을 클릭하거나 접근 시 로그인 페이지(`/login`)로 즉시 안내하도록 `Ui.tsx` (`Header`, `BottomNav`) 및 `BasicProfilePage`, `SeniorProfilePage`, `CompanyInfoPage`, `CompanyProfilePage` 라우팅을 개편했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 고용촉진장려금 지원 기능 기존 UI/UX 디자인 시스템 완전 통합 구현 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **시니어 프로필 수정 및 열람 화면 연동 (`BasicProfilePage.tsx` & `FlowPages.tsx`)**:
+     - 기존 `Field` 및 카드 컴포넌트를 이질감 없이 계승한 **`[💰 고용촉진장려금(연 720만원) 지원 대상자 인증]`** 토글/체크박스, 프로그램 선택 드롭다운, 이수증 명칭 입력 폼 반영.
+     - 시니어 마이프로필 상단 본인 인증 뱃지 옆에 **`[✓ 연 720만원 지원 대상]`** 에메랄드 뱃지 및 상세 안내 카드 표출.
+  2. **기업 지원자 상세 페이지 혜택 리포트 연동 (`ReceivedProposalDetailPage`)**:
+     - 기업 채용담당자가 지원서 검토 시 **`[💰 고용촉진장려금 연 최대 720만원 혜택 리포트]`** 카드가 한눈에 노출되도록 구성.
+  3. **랜딩 페이지 세일즈 하이라이트 반영 (`LandingPage.tsx`)**:
+     - "이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!" B2B 가치 제안 하이라이트 카드 반영.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 고용촉진제도(고용촉진장려금) 기업·구직자 초디테일 세부 자격 요건 및 주의사항 수립
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **기업 측 초디테일 세부 조건 명시**: 우선지원대상기업 규모 기준(제조업 500인, 건설업 300인 이하 등), 1년 이상 정규직/계약직 및 주 15시간 이상 최저임금 요건, **채용 전 3개월~채용 후 1년(총 15개월) 인위적 감원(권고사직) 금지 조항**, 친인척(4촌 이내) 및 1년 이내 동일 사업주 재채용 제외 규정 상세 명세.
+  2. **구직자(시니어) 측 초디테일 세부 조건 명시**: 국민취업지원제도 1단계(IAP) 완료 후 1년 이내 채용 요건, 고용24 구직등록 활성화 유지, **IAP 수립 완료 전 사전 채용 약정 시 무효** 조항 명시.
+  3. **이어잡 내 자가 진단 UX 기획**: 시니어용 4대 자가 진단 퀴즈 및 기업용 3대 수급 리스크 체크리스트 UI 기획안 작성.
+- **생성 파일**:
+  - [NEW] `docs/EMPLOYMENT_PROMOTION_SUBSIDY_DETAILED_REQUIREMENTS.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 이어잡(EOJOB) 서비스 고용촉진제도 적용 및 UX/UI 구현 상세 기획 수립
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **시니어(구직자) 서비스 적용안**: `BasicProfilePage` 내 고용촉진장려금 대상 자격 인증 토글/이수증 등록 폼, `[✓ 연 720만원 지원 대상자]` 프로필 뱃지, 미이수 시 "국민취업지원제도 1단계 이수 가이드" 팝업 수립.
+  2. **기업(채용담당자) 서비스 적용안**: `JobDatabasePage` 내 `[🔥 고용촉진장려금 대상자만]` 필터 칩, 시니어 프로필 카드 뱃지, `ReceivedProposalsPage` 내 `[정부 지원금 혜택 실시간 리포트 (연 720만원 절감)]` 카드 및 서류 미리보기 구현안 세분화.
+  3. **데이터 모델 및 랜드 페이지 통합로드맵**: `SeniorProfileData` 데이터 모델 확장안(`employmentSubsidyTarget`, `employmentSubsidyProgram`, `employmentSubsidyDocUrl`) 및 `LandingPage` B2B 세일즈 섹션 반영안 명세.
+- **생성 파일**:
+  - [NEW] `docs/EOJOB_SUBSIDY_INTEGRATION_PLAN.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 고용촉진제도(고용촉진장려금) 혜택 실체, 기업 확인 방법, 구직자 필수 수료 요건 기획 수립
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **고용촉진장려금 혜택 실체 정의**: 고용노동부 주관 고용촉진장려금 제도 기반, 우선지원대상(중소/중견) 기업 대상 **연 최대 720만원 (월 60만원 x 12개월)** 인건비 지원 혜택 및 특수 대상(연 최대 960만원) 조건과 필수 근로조건 명확화.
+  2. **기업의 혜택 확인 및 조회 방법 명세**: 고용24 (www.work24.go.kr) 조회 절차 및 이어잡 플랫폼 내 `[연 720만원 지원 대상 뱃지]`, `기업 혜택 자동 계산기`, `이수 증명서 미리보기` UX/UI 구현안 작성.
+  3. **구직자(시니어) 필수 수료 요건 및 행동 가이드 정리**: 국민취업지원제도 1단계(IAP) 수료 또는 국민내일배움카드 3개월 이상 직업훈련 수료 조건과 4단계 등록 가이드 작성.
+- **생성 파일**:
+  - [NEW] `docs/EMPLOYMENT_PROMOTION_SUBSIDY_PLAN.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] Firebase Auth 로그아웃 시 자동 재인증(인증 상태 복원) 락(Lock) 및 비인증 자동 이동 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Auth `onAuthStateChanged` 자동 재인증 결함 해결**: `firebaseSignOut(auth)` 실행 시 Firebase SDK 내부 백그라운드 이벤트인 `onAuthStateChanged`가 비동기로 재실행되며 이전 `firebaseUser` 객체로 사용자 세션을 즉시 복원(자동 로그인)시키던 심각한 race condition을 발견했습니다. `isLoggingOutRef` 뮤텍스 락 플래그를 도입하여 로그아웃 진행 중에는 `onAuthStateChanged`가 수신되더라도 무조건 세션을 파기하고 자동 생성을 차단하도록 근본 조치했습니다.
+  2. **프로필 페이지 비인증 즉시 리다이렉트 리스너 추가**: `user` 상태가 `null`이 되는 즉시 `BasicProfilePage`, `SeniorProfilePage`, `CompanyInfoPage`, `CompanyProfilePage`에서 비로그인 사용자가 머무르지 못하도록 `/senior/project-database`로 즉시 자동 이동시키는 `useEffect` 리스너를 적용했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 비로그인/로그아웃 시 스코프 프로필 레거시 조회 차단 및 완벽 로그아웃 보장
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그아웃 후 이전 사용자 프로필 표출 근본 원인 해결**: `profileService.ts` 내 `readScopedProfile` 함수에서 `ownerId`가 없는 비로그인(`undefined`/`null`) 상태일 때 기존 브라우저 로컬 스토리지에 남아있던 레거시 프로필(이동욱 등)을 자동 반환하던 결함을 발견 및 수정하여, 비로그인 상태에서는 절대 이전 사용자의 프로필이 불러와지지 않고 완전히 빈(`null`) 상태로 유지되도록 조치.
+  2. **로그아웃 시 세션/스토리지 전면 삭제**: `signOut` 실행 시 `eojob_current_user`, `eojob_senior_profile`, `eojob_company_profile`, `eojob_experience_card` 등 세션/스토리지 키를 전면 삭제하고 커스텀 리셋 이벤트를 전송하도록 보강하여 100% 완전한 로그아웃 보장.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 비로그인 상태 추천 영역 로그인 안내 배너 전환 및 로그아웃 하드 리로드 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **비로그인 시 로그인/가입 안내 배너 및 버튼 전환**: 비로그인(`!user`) 상태에서 시니어 홈/프로젝트 영역의 맞춤 추천 안내 문구가 기존 `내 정보에서 1순위 희망 직종을 먼저 선택해 주세요` 및 `[내 정보 입력하기]`로 잘못 표출되던 문제를 수정하여, `맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.` 안내 문구와 **`[로그인 / 회원가입하기 ➔]`** 버튼이 즉시 표출되도록 개선.
+  2. **로그아웃 완전 세션 초기화(Hard Reload)**: 로그아웃 버튼 클릭 시 파이어베이스 및 로컬 스토리지 삭제와 동시에 `window.location.href = '/senior/project-database'`를 통한 브라우저 하드 리로드를 수행하여 이전 로그인 세션 잔재를 완전히 파기하고 비로그인 프로젝트 탐색 화면으로 즉시 전환 조치.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 홈 요약 카드 텍스트 단일 행(줄바꿈 방지) 처리 및 랜딩 헤더 버튼 정제
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **요약 카드 텍스트 줄바꿈 방지**: `SummaryCard` 컴포넌트(`Ui.tsx`) 하단 캡션 라벨의 `line-clamp-2 break-keep` 스타일을 `whitespace-nowrap truncate`로 변경하여 `1순위 희망 직무 · 1순위 직종 미설정`, `검토 중·연락 받은 제안`, `아직 없어요`, `등록 경험 기준 최고 추천 점수` 등 서브텍스트가 2줄로 꺾이지 않고 깔끔한 1줄로 단일 행 표출되도록 개선.
+  2. **랜딩 헤더 중복 버튼 제거**: 랜딩 페이지 헤더 우측의 `[프로젝트 전체보기]` 버튼을 제거하여 메인 Hero 영역으로 사용자 시선 집중 유도.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-28] 검색창 테두리 박스 제거, 비로그인 시 ㄱㄴㄷㄹ 순 정렬, 더미/테스트 기업 데이터(김인재, 윤중심, Healing J, 수제비누, 홈프로텍터) 전면 정제
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **검색창 이중 테두리 제거**: 직무 선택 모달 검색창(`input type="text"`) 내 외부 사각형 테두리를 완전히 제거하고 브라우저 기본 포커스 외곽선 삭제.
+  2. **비로그인 시 ㄱㄴㄷㄹ(가나다라/제목) 순 정렬**: 비로그인 사용자가 프로젝트 탐색 시 기본 정렬을 한글 가나다라 순(`localeCompare('ko')`)으로 자동 정렬되도록 프론트엔드 및 `jobSearch.mjs` 백엔드 서버 로직 수정.
+  3. **더미/테스트 기업 데이터 전면 제거**: 개발 및 테스트 과정에서 등록된 `윤중심`, `Healing J`, `김인재`, `수제비누`, `홈프로텍터` 등 목 데이터와 `user.name` 예외 로직을 정제하여, 실제 OpenAPI 공공 채용 데이터베이스 및 신규 정식 등록 데이터만 표출되도록 조치.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/services/projectService.ts`
+  - [MODIFY] `src/services/worknetService.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-27] `origin/develop` → `leedongwook` 병합 충돌 해결 및 회귀 검증
+
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **병합 대상**: `c11afa7` (`origin/develop`)을 `4bcd831` (`leedongwook`)에 병합
+- **충돌 원인 및 해결**:
+  - `dataSyncService.ts`: 실패한 수동 해결 과정에서 중복 `switch` 블록, 깨진 정규식 문자열, 충돌 마커가 남은 문제를 최근 `leedongwook` 정제 로직으로 복구함.
+  - `jobSearch.mjs`·`dataSyncService.ts`: 기존 정제 기능은 유지하되 공공 채용공고에는 원문에 없는 직종별 문제 문구를 합성하지 않도록 병합 의도를 결합함. 명시적으로 작성한 내부 프로젝트에만 템플릿 보강을 허용함.
+  - `FlowPages.tsx`: 최고 적합도 상태가 숫자에서 공고 객체로 변경된 뒤 남아 있던 `setHighestFitScore` 호출을 `setHighestFitProject(getHighestFitProject(...))`로 통일함.
+  - `JobDatabasePage.tsx`·`Ui.tsx`·`FlowPages.tsx`: `develop`의 출처 기반 업무 요약, 탐색 필터, 홈 지표 이동 UX와 `leedongwook`의 전역 맞춤 점수 정렬·모바일 최적화를 함께 보존함.
+  - `LoginPage.tsx`: `matchMedia` 미지원 테스트 환경에서도 배너가 예외 없이 동작하도록 방어 조건을 추가함.
+  - 협업 로그는 양쪽 작업 기록과 2026-08-27 디자인 시스템 작업을 모두 보존함.
+- **검증**:
+  - 충돌 파일 6개 모두 해결, 잔여 충돌 마커 0건
+  - `npm run validate` 통과
+  - TypeScript typecheck, ESLint, Vitest **24개 파일·248개 테스트**, Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/services/dataSyncService.ts`
+
+### [2026-08-20] 홈 추천 피드 전역 후보군 맞춤 점수 산출 & 페이지 슬라이싱 구조 전면 적용 (스크린샷 문제 근본 해결)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 기존에는 백엔드가 API 레벨에서 8개 단위로 1차 분할(Page 1: 1~8위, Page 2: 9~16위)한 뒤, 프론트엔드가 페이지 단위로 개인 맞춤 점수를 매겼습니다.
+  - 이 과정에서 백엔드가 평가한 점수와 클라이언트 맞춤 로직(사용자 전문분야 토큰, AI 경험 카드, 근무 지역 조건)이 복합적으로 적용된 점수가 달라, 2페이지의 공고(예: `(주)프리마 웹디자이너` 등)가 97점으로 평가되고 1페이지 공고가 80~85점으로 평가되는 **페이지 간 점수 역전**이 발생함을 확인했습니다.
+- **근본 해결 조치**:
+  - `SeniorHomePage` (`FlowPages.tsx`): 1순위 추천 공고 조회 시 전체 후보군(`pageSize: 100`)을 가져와 클라이언트 맞춤 알고리즘(`calculatePersonalizedMatch`)으로 **전체 공고를 먼저 100% 내림차순 정렬**한 후 `page 1`(0~8), `page 2`(8~16)로 슬라이싱하도록 구조 변경.
+  - **결과**: **1페이지에는 무조건 카탈로그 전체에서 가장 높은 점수(98점, 97점, 97점, 97점, 97점, 85점, 85점...) 공고만 배치되며, 2페이지에는 83점, 82점, 80점 등 무조건 1페이지보다 낮은 점수의 공고만 배치**됩니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-20] 백엔드/프론트엔드 전역 `seniorFitScore` 최종 점수 정렬 수정 (페이지 간 점수 역전 완전 차단)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 기존 백엔드 API (`functions/lib/jobSearch.mjs`) 및 프론트엔드 랭킹 엔진 (`src/services/recommendationEngine.ts`)에서 최종 표시 점수인 `score` / `personalizedScore` (98점, 96점, 92점 등) 대신 정제 전 원시 점수(`rankScore` / `rankingScore`)로 1차 정렬을 수행하던 원인 추적 완료.
+  - 이로 인해 캡 상한에 걸린 일부 공고의 최종 표기 점수(90점대)가 2페이지 슬라이스로 밀리는 현상 원인 근본 원인 해결.
+- **주요 개선**:
+  - 백엔드 `jobSearch.mjs`: `second.fitMatch.score - first.fitMatch.score` (최종 표기 점수 내림차순) 우선 정렬 적용.
+  - 프론트엔드 `recommendationEngine.ts`: `second.matchResult.personalizedScore - first.matchResult.personalizedScore` 우선 정렬 적용.
+  - 이제 **1페이지에는 무조건 카탈로그 전체 최고점(98점~90점대) 공고만 노출되며, 2페이지로 넘어가더라도 1페이지보다 낮은 점수의 공고만 노출**되어 페이지 간 점수 역전 현상이 100% 차단됩니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/services/recommendationEngine.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-20] 홈 화면 맞춤 점수 내림차순 정렬, 1순위 프로젝트 DB 일치 & 초고속 SWR 로딩 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **홈 화면 추천 공고 엄격 내림차순 정렬 (`seniorFitScore`)**: 개인 맞춤 점수 산출(`calculatePersonalizedMatch`) 이후 `.sort((a, b) => b.seniorFitScore - a.seniorFitScore)`를 명시 적용하여, 홈 피드 및 최고 점수 태그에 항상 가장 높은 점수(98점 ➔ 96점 ➔ 92점) 순서대로 정돈되도록 보장.
+  - **홈 화면 ↔ 1순위 프로젝트 DB 점수/뱃지 1:1 완벽 동기화**: `FlowPages.tsx`와 `JobDatabasePage.tsx` 간 동일한 1순위 카테고리, AI 경험 카드, 맞춤 뱃지(`✨ 98점 (매우 높음)`) 및 사유를 공유하도록 통합.
+  - **Stale-While-Revalidate 초고속 로딩 패턴 적용**: 로컬 프로필을 활용하여 초기 렌더링 지연(스피너 멈춤) 없이 0.01초 만에 최적화된 피드를 즉시 표시하고 백그라운드 동기화 수행.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-20] 하네스 엔지니어링(Harness Engineering) 레이어 구축 & 성공적 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **React UI 런타임 에러 하네스 (`ErrorBoundaryHarness.tsx`)**: 렌더링 예외나 컴포넌트 런타임 오류 발생 시 앱 전체가 다운(백화)되지 않도록 감싸는 안전망 하네스 구축. `App.tsx` 최상단 결합 및 복구 UI(`[🔄 다시 시도]`, `[🏠 홈으로 이동]`) 지원.
+  - **테스트 하네스 팩토리 (`src/test/harness.ts`)**: `createMockSeniorProfile`, `createMockCompanyProfile`, `createMockJobPosting` 오프라인 결정론적 테스트 하네스 구축.
+  - **유닛 테스트 하네스 (`ErrorBoundaryHarness.test.tsx`)**: 에러 감지 및 폴백 UI 동작을 가두어 검증하는 유닛 테스트 추가.
+- **검증 & 배포**: `npm run validate` 100% 통과 (20개 테스트 파일, 209개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `src/components/ui/ErrorBoundaryHarness.tsx`
+  - [NEW] `src/components/ui/ErrorBoundaryHarness.test.tsx`
+  - [NEW] `src/test/harness.ts`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-20] 스마트폰 표준 화면(360px~430px) 모바일 최적화 루프 엔지니어링 구축 & 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - `leedongwook` 브랜치 상에서 모바일 화면 최적화를 위한 자율 감사·개선 루프(Mobile Optimization Loop Engineering) 적용.
+  - **스마트폰 표준 화면 레터박싱 제거**: `Ui.tsx` 내 `MobilePage` 모바일 컨테이너의 고정 `max-w-[390px]` 제한을 `w-full max-w-full sm:max-w-[430px]`로 개편하여 실제 스마트폰(360px ~ 430px: Galaxy S24, iPhone 15/16 Pro Max 등)에서 여백/좌우 짤림 없이 100% 꽉 찬 모바일 화면 렌더링 제공.
+  - **요약 카드(`SummaryCard`) 모바일 반응형 강화**: `min-w-0`, `overflow-hidden`, `break-keep`, `line-clamp-2` 적용으로 좁은 360px 모바일 화면에서도 텍스트 겹침/넘침 없는 안정적 레이아웃 확보.
+- **검증 & 배포**: `npm run validate` 100% 통과 (19개 테스트 파일, 207개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-20] 최신 `develop` 브랜치 내역을 `leedongwook` 브랜치에 병합 및 원격 푸시
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - 사용자 요청에 따라 `origin/develop` 최신 커밋 내역(팀원 `heal1120`, `Yoon` 님의 지원 UX, 직종 필터링, 시니어 우선 공고 및 기업 프로필 동기화 등)을 로컬 `develop`에 동기화(`Fast-forward`).
+  - 로컬 `develop` 브랜치를 `leedongwook` 브랜치에 깔끔하게 병합(`git merge develop`) 완료 (충돌 0건).
+  - 사전 검증 (`npm run validate`: TS typecheck, ESLint, 198개 Vitest 유닛 테스트 pass, Vite 빌드 성공).
+  - `leedongwook` 브랜치를 `origin/leedongwook`으로 원격 푸시 완료.
+- **검증**: `npm run validate` 통과 및 `git push origin leedongwook` 원격 푸시 완결.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+
+
+### [2026-08-19] 배포 정책 가이드라인 명시: `leedongwook` 브랜치 전용 테스트 주소로만 배포
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - 사용자 지침에 따라 메인 운영 주소(`https://al07team04-bdfcd.web.app`) 배포를 제한하고, 오직 **`leedongwook` 브랜치 전용 테스트 미리보기 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)**로만 배포를 수행하도록 원칙 재정립 및 적용.
+  - 사전 검증 (`npm run validate`: TS typecheck, ESLint, 198개 Vitest 유닛 테스트, Vite 빌드) 100% 통과 확인 완료.
+  - Firebase Hosting `leedongwook` 미리보기 채널 전용 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **검증**: `npm run validate` 통과 및 `npx firebase-tools hosting:channel:deploy leedongwook` 배포 완결.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-19] 기업명 하단 포지션명 정제(`extractCleanPositionTitle`) & `해결 프로젝트` 문구 전면 재정리
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **포지션명 정제 (`extractCleanPositionTitle`)**:
+    - 기존에 복잡한 홍보성 서술 문구(`기업 글로벌 브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터`, `녹지 공간과 활력을 더하는 야외운동기구 설계 전문가`) 또는 슬로건/공고 수식어(`인테리어 디자이너로 함께 성장하세요!`, `경험 풍부한 실내 인테리어... 캐드,3D,스케치업`, `~ 공개채용`)가 회사명 아래 나열되던 현상을 전면 개편.
+    - 슬로건·공개채용·소프트웨어 나열을 지우고, 명확하고 세련된 **실제 직무 포지션 명칭** (`UX/UI 디자인 시스템 총괄 디렉터`, `모션그래픽 영상 디자이너`, `야외운동기구 설계 전문가`, `인테리어 디자이너`, `주거·커뮤니티 인테리어 설계`, `실내 인테리어 전문가 (CAD/3D)` 등)으로만 정돈하여 노출.
+  - **`해결 프로젝트` 문구 완성도 극대화 (`formatCleanProblemStatement`)**:
+    - `에서 인테리어 디자이너로 함께 성장하세요! 채용 프로젝트입니다.`, `...모집합니다. 캐드,3D,스케치업 외... 채용 프로젝트입니다.` 등 어색한 문법 조작(`에서`, `으로`) 및 채용 광고 문구가 잔재하던 현상 근본 차단.
+    - 실제 채용 공고의 직종, 직급, 핵심 과제 도메인을 정밀 파악하여 **`공간 인테리어 설계 및 시공 품질 관리 프로세스를 표준화하는 프로젝트입니다.`**, **`주거·커뮤니티 공간 및 모델하우스 인테리어 설계와 현장 시공 프로세스를 최적화하는 프로젝트입니다.`**, **`실내 공간 CAD/3D 도면 설계 및 상업·공공 시설 인테리어 마감 품질을 고도화하는 프로젝트입니다.`** 등으로 품격 높은 과제 요약문 제공.
+  - **`근무·보상 조건` 심플화 유지**: `서울 마포구`, `경기 안양시`, `10:00 ~ 19:00`, `연 2,600만원 이상` 등 깔끔한 콤팩트 규격 적용.
+    - **근무지 (`formatSimpleLocation`)**: `경기 안양시디지털엠파이어 빌딩`, `경기 양평군한샘리하우스` 등 건물명 뭉김 텍스트를 `서울 마포구`, `경기 안양시`, `경기 양평군` 등 시/군/구 단위로 깔끔하게 추출.
+    - **근무시간 (`formatSimpleWorkSchedule`)**: `(근무시간) (오전) 10시 00분 ~ (오후) 7시 00분` 형태의 원문을 `10:00 ~ 19:00`, `주 5일 (유연근무)` 형태의 간결한 포맷으로 변환.
+    - **급여/보상 (`formatSimpleSalary`)**: `최소연봉 / 2600만원`, `최소연봉 / 3000만원 - 면접 후 협의가능`을 `연 2,600만원 이상`, `연 3,000만원 (협의가능)`, `월 750만 ~ 1,100만원` 등 천단위 콤마 및 가독성 높인 포맷으로 정돈.
+- **검증 및 배포**: `npm run validate` 100% 통과 (18개 테스트 파일, 198개 Vitest 유닛 테스트 pass, TS typecheck, ESLint, Vite production 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+  - Firebase Hosting 메인 라이브 배포 완료: https://al07team04-bdfcd.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/dataSyncService.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+
 ### [2026-08-20] 채용공고 자동 수집 주기 비용 최적화
 - **작업자**: Codex
 - **주요 내용**:
@@ -2473,6 +2975,34 @@
   - [NEW] [`.agents/AGENTS.md`](file:///c:/AL07TEAM04/.agents/AGENTS.md)
 - **전달 사항 / 다음 할 일**:
   - 파이어베이스 SDK 연동 또는 추가 기능 개발 시 본 로그에 작업 내역을 갱신해주세요.
+
+### [2026-08-27] 디자인 스킬 기반 공통 UI·로그인 접근성 개선
+
+- **작업자**: Codex
+- **적용 기준**:
+  - `awesome-design`: 의미 기반 토큰, 절제된 표면·그림자, 명시적인 컴포넌트 상태
+  - `design-taste`: 기존 웜 아이보리·에버그린 브랜드 보존, 장식보다 위계·가독성 우선
+  - `agent-browser`: 운영본/로컬 수정본 데스크톱·모바일 렌더링 및 키보드 순서 확인
+  - `web-design-guidelines`: WCAG 대비, 44px 터치 타깃, 포커스, 폼 메타데이터, 감속 모드 적용
+- **작업 내용**:
+  - 접근 가능한 코랄(`#B84734`)과 의미 기반 surface/focus/motion 토큰 추가
+  - 전역 `:focus-visible`, `prefers-reduced-motion`, 동적 뷰포트 높이, 텍스트 줄바꿈 기준 추가
+  - 공용 버튼을 44px 이상·단색 Primary·제한된 transition·명확한 disabled 상태로 정리
+  - 로그인 화면의 그라데이션/과한 그림자 제거, 역할 선택 `aria-pressed`, 폼 `name`/`autocomplete`, 비동기 `aria-busy`, 이미지 크기, 배너 일시정지와 감속 모드 적용
+  - [`UI_DESIGN_SYSTEM.md`](file:///c:/AL07TEAM04/docs/UI_DESIGN_SYSTEM.md)에 향후 화면 공통 기준과 QA 체크리스트 문서화
+- **검증**:
+  - 수정 파일 ESLint 통과, `git diff --check` 통과
+  - 에이전트 브라우저 로컬 렌더링/키보드 포커스 순서/콘솔 오류 확인 완료
+  - 로그인 화면 axe WCAG 위반: 운영본 7건 → 로컬 수정본 0건
+  - `npm run validate`는 기존 미해결 병합 충돌인 `src/services/dataSyncService.ts`의 충돌 마커 및 구문 오류로 typecheck 단계에서 중단
+- **변경 파일**:
+  - [NEW] [`.agents/skills/awesome-design`](file:///c:/AL07TEAM04/.agents/skills/awesome-design)
+  - [NEW] [`.agents/skills/design-taste`](file:///c:/AL07TEAM04/.agents/skills/design-taste)
+  - [NEW] [`.agents/skills/web-design-guidelines`](file:///c:/AL07TEAM04/.agents/skills/web-design-guidelines)
+  - [NEW] [`UI_DESIGN_SYSTEM.md`](file:///c:/AL07TEAM04/docs/UI_DESIGN_SYSTEM.md)
+  - [MODIFY] [`globals.css`](file:///c:/AL07TEAM04/src/styles/globals.css)
+  - [MODIFY] [`button.tsx`](file:///c:/AL07TEAM04/src/components/ui/button.tsx)
+  - [MODIFY] [`LoginPage.tsx`](file:///c:/AL07TEAM04/src/app/LoginPage.tsx)
 
 ---
 

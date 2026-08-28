@@ -72,10 +72,10 @@ ${applicant.interviewSummary || '해당 직무 10년+ 노하우 보유, 현장 �
     : posting.sourceProvider || '공식 채용 접수처';
 
   const message = hasCustomContactEmail
-    ? `✉️ 기업 채용 담당자(${managerEmail})에게 지원서가 전달되었습니다!`
+    ? `기업 채용 담당자(${managerEmail})에게 지원서가 전달되었습니다!`
     : isPublicJob
-      ? `🏛️ 공식 채용 포털 지원 연동 및 이어잡 지원서 저장이 완료되었습니다!`
-      : `✉️ 매칭 담당자(${managerEmail})에게 지원 안내가 전달되었습니다!`;
+      ? `공식 채용 포털 지원 연동 및 이어잡 지원서 저장이 완료되었습니다!`
+      : `매칭 담당자(${managerEmail})에게 지원 안내가 전달되었습니다!`;
 
   return {
     success: true,

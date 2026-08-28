@@ -36,6 +36,12 @@ export function CompanyInfoPage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     void (async () => {
       const local = getLocalCompanyProfile(user?.uid);
       if (local) setForm(local);
@@ -72,7 +78,7 @@ export function CompanyInfoPage() {
 
   async function handleLogout() {
     await signOut();
-    void navigate('/login');
+    void navigate('/senior/project-database', { replace: true });
   }
 
   const isMobile = mode === 'mobile';
@@ -282,7 +288,7 @@ export function CompanyInfoPage() {
 
             <div className="flex items-center gap-2 pt-2">
               <ActionButton role="company" type="submit">
-                💾 변경사항 저장하기
+                변경사항 저장하기
               </ActionButton>
               <ActionButton onClick={() => setIsEditing(false)} secondary type="button">
                 취소

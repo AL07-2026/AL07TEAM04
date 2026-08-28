@@ -14,6 +14,7 @@ import {
 import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
@@ -99,6 +100,7 @@ export function MobilePage({
   title,
 }: MobilePageProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { mode: viewportMode, setMode: setViewportMode } = useViewportMode();
 
   const isMobileMode = viewportMode === 'mobile';
@@ -107,7 +109,7 @@ export function MobilePage({
     <>
       {isMobileMode ? (
         <main className="h-dvh max-h-dvh overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
-          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-[390px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
+          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
             {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
             <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
@@ -197,7 +199,7 @@ export function MobilePage({
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => void navigate('/login')}
+                    onClick={() => void navigate('/senior/project-database')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
@@ -276,7 +278,7 @@ export function MobilePage({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => void navigate(role === 'company' ? '/company' : '/senior')}
+                    onClick={() => void navigate(user ? (role === 'company' ? '/company' : '/senior/project-database') : '/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
@@ -304,7 +306,13 @@ export function MobilePage({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => void navigate(item.path)}
+                        onClick={() => {
+                          if (!user && (item.id === 'profile' || item.id === 'proposals')) {
+                            void navigate('/login');
+                          } else {
+                            void navigate(item.path);
+                          }
+                        }}
                         className={cn(
                           'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
@@ -368,14 +376,14 @@ export function MobilePage({
 
 const navItems = {
   senior: [
-    { id: 'home', label: '홈', path: '/senior', Icon: Home },
     { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
+    { id: 'home', label: '홈', path: '/senior', Icon: Home },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
     { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
   company: [
-    { id: 'home', label: '홈', path: '/company', Icon: Home },
     { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
+    { id: 'home', label: '홈', path: '/company', Icon: Home },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
     { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },
   ],
@@ -391,6 +399,7 @@ function BottomNav({
   role: Role;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <nav
@@ -411,7 +420,13 @@ function BottomNav({
               selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
             )}
             key={item.id}
-            onClick={() => void navigate(item.path)}
+            onClick={() => {
+              if (!user && (item.id === 'profile' || item.id === 'proposals')) {
+                void navigate('/login');
+              } else {
+                void navigate(item.path);
+              }
+            }}
             type="button"
           >
             <IconComponent
@@ -655,30 +670,30 @@ export function SummaryCard({
   const isMobile = mode === 'mobile';
 
   const classes = cn(
-    'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs text-left',
+    'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs text-left min-w-0 overflow-hidden',
     onClick &&
       'cursor-pointer transition hover:-translate-y-px hover:border-[#BBD5CE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
     isMobile
       ? caption
-        ? 'min-h-[128px] p-4'
-        : 'h-[110px] p-4'
+        ? 'min-h-[128px] p-3.5 sm:p-4'
+        : 'h-[110px] p-3.5 sm:p-4'
       : caption
         ? 'min-h-[152px] p-6'
         : 'h-[136px] p-6',
   );
   const content = (
     <>
-      <span className="flex items-start justify-between gap-2">
-        <span className={cn('font-bold text-[#4B5768]', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
+      <span className="flex items-start justify-between gap-2 min-w-0">
+        <span className={cn('font-bold text-[#4B5768] min-w-0 truncate', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
           {label}
         </span>
         {onClick ? <span aria-hidden="true" className="text-[#173F3A]">→</span> : null}
       </span>
-      <div className="mt-auto">
+      <div className="mt-auto min-w-0">
         <strong
           className={cn(
-            'block font-extrabold tracking-tight text-[#173F3A]',
-            isMobile ? 'text-[27px]' : 'text-[38px]',
+            'block font-extrabold tracking-tight text-[#173F3A] truncate',
+            isMobile ? 'text-[25px] sm:text-[27px]' : 'text-[38px]',
           )}
         >
           {value}
@@ -686,9 +701,10 @@ export function SummaryCard({
         {caption ? (
           <span
             className={cn(
-              'mt-1 block font-semibold leading-5 text-slate-400',
-              isMobile ? 'text-[11.5px]' : 'text-[13px]',
+              'mt-1 block font-semibold leading-4 text-slate-400 whitespace-nowrap truncate min-w-0',
+              isMobile ? 'text-[11px] sm:text-[11.5px]' : 'text-[12.5px]',
             )}
+            title={caption}
           >
             {caption}
           </span>

@@ -4,6 +4,14 @@ import { createRoot } from 'react-dom/client';
 import { App } from '@/app/App';
 import '@/styles/globals.css';
 
+// Automatically recover when a new deployment invalidates cached chunk hashes
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    window.location.reload();
+  });
+}
+
 const root = document.getElementById('root');
 
 if (!root) {
@@ -15,3 +23,4 @@ createRoot(root).render(
     <App />
   </StrictMode>,
 );
+

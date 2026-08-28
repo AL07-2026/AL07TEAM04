@@ -28,6 +28,9 @@ export type SeniorProfileData = {
   phone: string;
   certifications?: string;
   solvedExperiences?: string;
+  employmentSubsidyTarget?: boolean;
+  employmentSubsidyProgram?: string;
+  employmentSubsidyDocName?: string;
   updatedAt?: string;
 };
 
@@ -82,6 +85,9 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     keySkills: stringValue(value.keySkills) || undefined,
     certifications: stringValue(value.certifications) || undefined,
     solvedExperiences: stringValue(value.solvedExperiences) || undefined,
+    employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
+    employmentSubsidyProgram: stringValue(value.employmentSubsidyProgram) || undefined,
+    employmentSubsidyDocName: stringValue(value.employmentSubsidyDocName) || undefined,
     phone: stringValue(value.phone),
     email,
     updatedAt: stringValue(value.updatedAt) || undefined,
@@ -112,20 +118,9 @@ function readScopedProfile<T>(
   ownerId: string | undefined,
   normalize: (source: unknown) => T | null,
 ) {
+  if (!ownerId) return null;
   const scopedKey = getScopedStorageKey(baseKey, ownerId);
-  const scoped = normalize(readVersionedStorage<unknown>(scopedKey));
-  if (scoped) return scoped;
-
-  // Legacy keys were shared by every account in a browser. Never reuse them
-  // for a signed-in account: they may belong to a different company.
-  if (ownerId) return null;
-
-  const legacy = normalize(readVersionedStorage<unknown>(baseKey));
-  if (legacy) {
-    writeVersionedStorage(scopedKey, legacy);
-    localStorage.removeItem(baseKey);
-  }
-  return legacy;
+  return normalize(readVersionedStorage<unknown>(scopedKey));
 }
 
 export function getLocalSeniorProfile(ownerId?: string) {

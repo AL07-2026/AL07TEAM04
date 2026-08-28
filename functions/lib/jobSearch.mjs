@@ -6,9 +6,9 @@ import { containsUtf8Replacement } from './httpEncoding.mjs';
 import { deduplicateJobCatalog } from './jobDeduplication.mjs';
 
 const GLOBAL_COLLECTION = 'global_job_postings';
-const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
-const SEARCH_RESULT_CACHE_TTL_MS = 60 * 1000;
-const MAX_SEARCH_RESULT_CACHE_ENTRIES = 100;
+const CATALOG_CACHE_TTL_MS = 30 * 60 * 1000;
+const SEARCH_RESULT_CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_SEARCH_RESULT_CACHE_ENTRIES = 500;
 const MAX_PAGE_SIZE = 24;
 const UNCLASSIFIED_OCCUPATION_FILTER = 'unclassified';
 const OTHER_OCCUPATION_PREFERENCE = 'other';
@@ -448,9 +448,140 @@ function sanitizeAndEnhanceProblemStatement(posting) {
   let ps = typeof posting?.problemStatement === 'string' ? posting.problemStatement.trim() : '';
 
   ps = ps.replace(/^\[(?:서울시 일자리(?: 분석)?|공공기관 채용(?: 분석)?|시니어 맞춤 채용|시니어 맞춤)\]\s*/g, '').trim();
-  ps = ps.replace(/\s*채용\s*채용$/g, ' 채용').trim();
+  ps = ps.replace(/^\[[^\]]+\]\s*/g, '').trim();
+  ps = ps.replace(/\s*공개채용(?:\s*프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*경력직(?:\s*프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*채용\s*채용$/gi, '').trim();
+  ps = ps.replace(/\s*채용입니다\.?$/gi, '').trim();
+  ps = ps.replace(/\s*모집합니다\.?\s*(?:채용)?\s*(?:프로젝트입니다\.?)?$/gi, '').trim();
+  ps = ps.replace(/\s*채용\s*프로젝트입니다\.?$/gi, '').trim();
 
-  return ps;
+  // Clean leading grammar fragments
+  ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
+
+  const title = typeof posting?.title === 'string' ? posting.title.trim() : '';
+  const companyName = typeof posting?.companyName === 'string' ? posting.companyName.trim() : '';
+  const industry = typeof posting?.industry === 'string' ? posting.industry.trim() : '';
+  const category = posting?.category || legacyProjectCategoryMap[posting?.occupationCategory] || 'operations';
+
+  // Strip company name prefix if present
+  if (companyName) {
+    const safeComp = companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    ps = ps.replace(new RegExp(`^(?:\\(주\\)\\s*)?${safeComp}(?:의|에서|\\s+)+`, 'i'), '').trim();
+    ps = ps.replace(new RegExp(`^${safeComp}\\s*`, 'i'), '').trim();
+  }
+
+  // Strip title prefix or quote prefix if present
+  if (title) {
+    const safeTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    ps = ps.replace(new RegExp(`^['"‘“]?${safeTitle}['"’”]?\\s*(?:주요\\s*과제|과제|프로젝트)?[:\\s]*`, 'i'), '').trim();
+    ps = ps.replace(/^주요\s*과제[:\\s]*/i, '').trim();
+    ps = ps.replace(/\s*과제\s*해결입니다\.?$/i, '').trim();
+    ps = ps.replace(/\s*프로젝트입니다\.?$/i, '').trim();
+  }
+
+  // Clean remaining slogan fragments or recruitment junk
+  ps = ps
+    .replace(/함께\s*성장하세요!?/gi, '')
+    .replace(/캐드\s*,\s*3D\s*,\s*스케치업\s*외\s*\(.*?\)/gi, '')
+    .replace(/HC\s*공개/gi, '')
+    .trim();
+
+  ps = ps.replace(/^(?:에서|으로|의|과|와|을|를)\s+/g, '').trim();
+  ps = ps.replace(/(?:에서|으로|의|과|와|을|를|로|가|이|는|은)\s*$/g, '').trim();
+
+  // Public feeds must remain evidence-only. Never invent a category template
+  // when the source posting did not provide a usable problem statement.
+  if (posting?.source !== 'internal') return ps;
+
+  const titleLower = `${title} ${industry} ${ps}`.toLowerCase();
+
+  // If ps is dry boilerplate, empty, fragment, or lacks real action verbs, mark for regeneration
+  const hasActionVerb = /개선|구축|설계|정립|개발|운영|제작|고도화|최적화|분석|관리|수립|검수/.test(ps);
+  const isDryBoilerplate =
+    !ps ||
+    ps.length < 12 ||
+    !hasActionVerb ||
+    ps === title ||
+    ps === `${companyName}의 ${title}` ||
+    (companyName && title && ps.includes(companyName) && ps.includes(title));
+
+  if (!isDryBoilerplate) {
+    if (!ps.endsWith('.') && !ps.endsWith('다')) {
+      ps += ' 프로젝트입니다.';
+    } else if (ps.endsWith('다')) {
+      if (!ps.endsWith('.')) ps += '.';
+    }
+    return ps;
+  }
+
+  // Handle specific high-priority domain keyword matches first
+  if (/야외\s*운동기구|운동기구/.test(titleLower)) {
+    return '야외 운동기구 메커니즘 설계 고도화 및 도면 표준화를 통해 구조 안정성과 생산성을 높이는 프로젝트입니다.';
+  }
+  if (/수원광교|한샘디자인|매장|쇼룸|디스플레이|hc\b/.test(titleLower)) {
+    return '한샘디자인파크 쇼룸 방문 고객을 대상으로 공간 인테리어 상담, 스타일링 제안 및 견적 프로세스를 총괄하는 프로젝트입니다.';
+  }
+  if (/주거|커뮤니티|모델하우스|주택전시관/.test(titleLower)) {
+    return '주거·커뮤니티 공간 및 모델하우스 인테리어 설계와 현장 시공 프로세스를 최적화하는 프로젝트입니다.';
+  }
+  if (/실내\s*인테리어|스케치업|3d|cad|캐드/.test(titleLower)) {
+    return '실내 공간 CAD/3D 도면 설계 및 상업·공공 시설 인테리어 마감 품질을 고도화하는 프로젝트입니다.';
+  }
+  if (/인테리어\s*디자인\s*설계|설계팀/.test(titleLower)) {
+    return '인테리어 디자인 도면 설계, 3D 랜더링 검수 및 현장 시공 기술 지원을 총괄하는 프로젝트입니다.';
+  }
+
+  switch (category) {
+    case 'dev-engineering':
+    case 'legacy-modernization':
+      return '기존 시스템 고도화, 레거시 개선 및 개발 환경 표준화를 통해 시스템 안정성 및 생산성을 극대화하는 엔지니어링 프로젝트입니다.';
+
+    case 'design-brand':
+      if (/모션그래픽|모션|영상|광고\s*영상|미디어|애니메이션|pd|비디오|youtube|유튜브|방송/.test(titleLower)) {
+        return '영화·드라마·광고 영상의 모션그래픽 연출 및 시각적 완성도가 높은 비주얼 미디어 콘텐츠를 제작하는 프로젝트입니다.';
+      }
+      if (/인테리어|공간|건축|시공|전시|무대|리하우스|가구\s*설계/.test(titleLower)) {
+        return '주거 및 공간 인테리어 설계, 3D 도면 작성 및 시공 품질 관리 프로세스를 표준화하는 프로젝트입니다.';
+      }
+      if (/ux|ui|웹|앱|인터랙티브|프로덕트|디자인\s*시스템|플랫폼/.test(titleLower)) {
+        return '디지털 UX/UI 디자인 시스템 구축 및 사용자 경험 모델을 설계하여 제품 완성도를 높이는 프로젝트입니다.';
+      }
+      if (/편집|인쇄|출판|패키지|시각|그래픽|디지털인쇄|디지털 인쇄/.test(titleLower)) {
+        return '시각 및 인쇄 디자인 표준 가이드라인 정립과 가공·제작 결과물의 품질을 고도화하는 프로젝트입니다.';
+      }
+      return '기업 브랜드 아이덴티티 수립 및 실무 디자인 시스템의 완성도를 강화하는 브랜드 리디자인 프로젝트입니다.';
+
+    case 'marketing-sales':
+    case 'growth':
+      return '신규 타깃 마케팅 전략 수립 및 세일즈 파이프라인 개척을 통해 지속 가능한 매출 성장을 달성하는 마케팅 프로젝트입니다.';
+
+    case 'hr-strategy':
+      return '전사 조직 체계 정비, 평가·보상 시스템 고도화 및 시니어 경험 기반의 조직 문화를 정립하는 경영지원 프로젝트입니다.';
+
+    case 'r-and-d-manufacturing':
+      if (/기구|설계|기계|cad|3d|도면/.test(titleLower)) {
+        return '제품 메커니즘 설계 고도화 및 도면 표준화를 통해 구조 안정성과 생산 효율성을 높이는 설계 프로젝트입니다.';
+      }
+      return '스마트 팩토리 공정 자동화, 생산 수율 향상 및 기술 인프라 표준화를 정립하는 생산 공정 최적화 프로젝트입니다.';
+
+    case 'ai-automation':
+    case 'data-platform':
+      return '사내 반복 업무의 AI/RPA 자동화 도입 및 데이터 분석 파이프라인 수립을 통한 데이터 기반 의사결정 체계 구축 프로젝트입니다.';
+
+    case 'security':
+      return '정보보호 컴플라이언스 준수, 보안 위험 진단 및 사내 인프라 보안 관리 체계를 고도화하는 보안 프로젝트입니다.';
+
+    case 'operations':
+    default:
+      if (/총무|자산|시설/.test(titleLower)) {
+        return '전사 총무·시설 관리 프로세스 표준화 및 자산 운영 효율성을 극대화하는 프로젝트입니다.';
+      }
+      if (/인테리어|설계|시공|가구/.test(titleLower)) {
+        return '공간 인테리어 설계 및 시공 운영 품질 프로세스를 표준화하는 프로젝트입니다.';
+      }
+      return '전사 운영 프로세스 리드타임 단축 및 병목 구간 개선을 통한 고효율 운영 체계 최적화 프로젝트입니다.';
+  }
 }
 
 export function prepareJobCatalog(postings, now = new Date()) {
@@ -527,6 +658,12 @@ function hasPersonalizedFitRanking(options) {
 }
 
 function comparePreparedEntries(first, second, sortBy) {
+  if (sortBy === 'title-asc' || sortBy === 'alphabetical-asc') {
+    return (
+      first.posting.title.localeCompare(second.posting.title, 'ko') ||
+      first.posting.id.localeCompare(second.posting.id)
+    );
+  }
   if (sortBy === 'deadline-asc') {
     return (
       first.deadlineTime - second.deadlineTime ||
@@ -590,6 +727,7 @@ function filterPreparedJobCatalog(catalog, options) {
         .map((entry) => ({ entry, fitMatch: calculateFitMatch(entry, options, fitContext) }))
         .sort((first, second) => {
           return (
+            second.fitMatch.score - first.fitMatch.score ||
             second.fitMatch.rankScore - first.fitMatch.rankScore ||
             comparePreparedEntries(first.entry, second.entry, 'latest-desc')
           );

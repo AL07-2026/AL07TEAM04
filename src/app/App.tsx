@@ -1,25 +1,48 @@
-import { lazy, Suspense, useState, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
+import { ErrorBoundaryHarness } from '@/components/ui/ErrorBoundaryHarness';
 import { AuthProvider } from '@/lib/authContext';
+import { trackPageView } from '@/services/analyticsService';
 
 function lazyPage<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
   exportName: TKey,
 ) {
-  return lazy(async () => ({
-    default: (await loader())[exportName] as unknown as ComponentType,
-  }));
+  return lazy(async () => {
+    try {
+      const module = await loader();
+      return {
+        default: module[exportName] as unknown as ComponentType<{ role?: string }>,
+      };
+    } catch (error) {
+      if (
+        typeof window !== 'undefined' &&
+        error instanceof Error &&
+        (error.message.includes('dynamically imported module') ||
+          error.message.includes('Failed to fetch') ||
+          error.name === 'ChunkLoadError')
+      ) {
+        const key = 'eojob_chunk_lazy_retry';
+        if (!window.sessionStorage.getItem(key)) {
+          window.sessionStorage.setItem(key, 'true');
+          window.location.reload();
+          return new Promise<{ default: ComponentType<{ role?: string }> }>(() => {});
+        }
+        window.sessionStorage.removeItem(key);
+      }
+      throw error;
+    }
+  });
 }
 
 const loadFlowPages = () => import('@/app/wireframe/FlowPages');
+const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
-const JobDatabasePage = lazy(() =>
-  import('@/app/JobDatabasePage').then((module) => ({ default: module.JobDatabasePage })),
-);
+const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
 const LoginPage = lazyPage(() => import('@/app/LoginPage'), 'LoginPage');
 const RoleSelectionPage = lazyPage(() => import('@/app/RoleSelectionPage'), 'RoleSelectionPage');
 const SignupPage = lazyPage(() => import('@/app/SignupPage'), 'SignupPage');
@@ -54,7 +77,7 @@ function RouteLoadingFallback() {
 
 function createAppRouter() {
   return createBrowserRouter([
-    { path: '/', element: <Navigate replace to="/login" /> },
+    { path: '/', Component: LandingPage },
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
     { path: '/role', Component: RoleSelectionPage },
@@ -82,20 +105,30 @@ function createAppRouter() {
     { path: '/company/project-database', element: <JobDatabasePage role="company" /> },
     { path: '/company/job-database', element: <JobDatabasePage role="company" /> },
     { path: '/company/profile', Component: CompanyProfilePage },
-    { path: '*', element: <Navigate replace to="/login" /> },
+    { path: '*', element: <Navigate replace to="/" /> },
   ]);
 }
 
 export function App() {
   const [router] = useState(createAppRouter);
 
+  useEffect(() => {
+    trackPageView(window.location.pathname);
+    const unsubscribe = router.subscribe((state) => {
+      trackPageView(state.location.pathname);
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   return (
     <div className="eojob-readable">
       <AuthProvider>
         <ViewportProvider>
-          <Suspense fallback={<RouteLoadingFallback />}>
-            <RouterProvider router={router} />
-          </Suspense>
+          <ErrorBoundaryHarness>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </ErrorBoundaryHarness>
         </ViewportProvider>
       </AuthProvider>
     </div>
