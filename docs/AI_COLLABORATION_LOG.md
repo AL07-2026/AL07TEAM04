@@ -16,6 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 고용노동부 연계 혜택 모달 이중 박스(Box-in-a-Box) 구조 제거 및 깔끔한 플랫 텍스트 레이아웃 정돈
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **이중 중첩 박스 제거**: 모달 팝업 내부의 '실제 기업 지원 혜택 금액', '기업의 필수 수급 요건', '구직자 필수 이수 요건' 영역에서 큰 박스 안에 작은 흰색 박스들이 겹겹이 들어있던 복잡한 구조를 전면 제거.
+  2. **가독성 높은 단일 박스 & 타이포그래피 정돈**: 각 섹션을 하나의 심플한 컨테이너로 통일하고, 내부 항목들을 불필요한 테두리 상자 없이 깔끔한 글머리 기호(•)와 얇은 구분선, 정돈된 키-값 텍스트 구조(`dl/dt/dd`)로 개편하여 시각적 피로도를 대폭 낮추고 가독성을 극대화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Firebase Analytics & Firestore 실시간 사용자 행동 로그(방문자수, 페이지 이동, 버튼 클릭, 공고 조회/지원) 트래킹 시스템 구축
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
