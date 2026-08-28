@@ -1,8 +1,10 @@
-import { ArrowRight, Briefcase, Sparkles } from 'lucide-react';
+import { ArrowRight, Briefcase, CheckCircle2, FileText, Info, ShieldAlert, Sparkles, X } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [showSubsidyModal, setShowSubsidyModal] = useState(false);
 
   return (
     <div className="min-h-dvh bg-[#FAF7F2] text-[#17212B] font-sans antialiased selection:bg-[#DDEBE7] selection:text-[#173F3A]">
@@ -94,7 +96,7 @@ export function LandingPage() {
         </div>
 
         {/* Employment Promotion Subsidy Highlight Card for Companies */}
-        <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex flex-col gap-2 max-w-2xl">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-extrabold text-emerald-300 border border-emerald-400/30">
               💰 고용노동부 연계 혜택
@@ -106,13 +108,23 @@ export function LandingPage() {
               국민취업지원제도 1단계를 완료한 시니어 인재 채용 시, 국가로부터 분기별 180만원(월 60만원 x 12개월)의 고용촉진장려금을 지급받을 수 있습니다.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void navigate('/login?role=company')}
-            className="shrink-0 flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
-          >
-            <span>혜택 대상 인재 보기 ➔</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowSubsidyModal(true)}
+              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/60 bg-emerald-950/60 px-5 text-sm font-extrabold text-emerald-100 hover:bg-emerald-800/80 hover:text-white active:scale-[0.98] transition cursor-pointer"
+            >
+              <Info className="size-4" />
+              <span>혜택 세부내용 확인</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate('/login?role=company')}
+              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
+            >
+              <span>혜택 대상 인재 보기 ➔</span>
+            </button>
+          </div>
         </div>
 
         {/* Bottom CTA Card */}
@@ -135,6 +147,132 @@ export function LandingPage() {
           </div>
         </div>
       </main>
+
+      {/* Subsidy Detail Modal */}
+      {showSubsidyModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="subsidy-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6"
+          onClick={() => setShowSubsidyModal(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-2xl text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/60 pb-4">
+              <div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 border border-emerald-300">
+                  🏛️ 고용노동부 주관
+                </span>
+                <h2
+                  id="subsidy-modal-title"
+                  className="mt-1.5 text-xl sm:text-2xl font-extrabold text-[#17212B]"
+                >
+                  고용촉진장려금 지원 제도 세부 안내
+                </h2>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500">
+                  취업지원프로그램을 이수한 시니어를 채용한 중소·중견기업 인건비 지원 제도
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSubsidyModal(false)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Modal Body Content */}
+            <div className="mt-5 flex flex-col gap-5 text-sm text-[#17212B]">
+              {/* Box 1: 지원 금액 */}
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                <h3 className="flex items-center gap-1.5 font-extrabold text-emerald-950 text-base">
+                  <CheckCircle2 className="size-5 text-emerald-600" />
+                  <span>실제 기업 지원 혜택 금액</span>
+                </h3>
+                <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-xl bg-white p-3 border border-emerald-200/80 shadow-2xs">
+                    <span className="font-bold text-slate-500">우선지원대상기업 (중소·중견)</span>
+                    <p className="mt-1 text-base font-black text-emerald-800">
+                      월 60만원 <span className="text-xs font-bold text-slate-600">(연 720만원)</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">3개월 단위 180만원씩 분기별 지급</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 border border-emerald-200/80 shadow-2xs">
+                    <span className="font-bold text-slate-500">특수 대상 (중증장애인·여성가장)</span>
+                    <p className="mt-1 text-base font-black text-emerald-800">
+                      월 80만원 <span className="text-xs font-bold text-slate-600">(연 960만원)</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">최대 2년까지 지원 가능</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 2: 기업 자격 & 근로 조건 */}
+              <div className="flex flex-col gap-2 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] p-4">
+                <h3 className="font-extrabold text-[#173F3A] flex items-center gap-1.5">
+                  <FileText className="size-4 text-[#173F3A]" />
+                  <span>기업의 필수 수급 요건</span>
+                </h3>
+                <ul className="space-y-1 text-xs font-semibold text-slate-700 list-disc pl-4 leading-relaxed">
+                  <li><strong>우선지원대상기업</strong>: 제조업 500인 이하, 건설·운수 300인 이하, 도소매 200인 이하, 기타 100인 이하</li>
+                  <li><strong>근로계약 기간</strong>: 정규직 또는 <strong>최소 1년 이상의 기간제 근로계약</strong> 필수 (1년 미만 단기 제외)</li>
+                  <li><strong>근무 조건</strong>: 주 15시간 이상(월 60시간 이상) 및 <strong>최저임금 이상</strong> 지급 & 4대 사회보험 가입</li>
+                </ul>
+              </div>
+
+              {/* Box 3: 구직자 수료 요건 */}
+              <div className="flex flex-col gap-2 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
+                <h3 className="font-extrabold text-[#173F3A] flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4 text-[#173F3A]" />
+                  <span>구직자(시니어) 필수 이수 요건</span>
+                </h3>
+                <ul className="space-y-1 text-xs font-semibold text-slate-700 list-disc pl-4 leading-relaxed">
+                  <li><strong>국민취업지원제도(1·2유형)</strong>: 1단계(취업활동계획 IAP 수립) 완료자 (수료일로부터 1년 이내 유효)</li>
+                  <li><strong>직업능력개발훈련(내일배움카드)</strong>: 3개월 이상 훈련과정 수료자</li>
+                  <li><strong>고용24(워크넷)</strong>: 구직등록이 유효한 상태에서 채용 절차 진행 필수</li>
+                </ul>
+              </div>
+
+              {/* Box 4: 핵심 주의사항 (인위적 감원 금지) */}
+              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
+                <ShieldAlert className="size-5 shrink-0 text-rose-600 mt-0.5" />
+                <div className="flex flex-col gap-0.5 text-xs text-rose-950">
+                  <strong className="font-extrabold text-rose-900">🚨 기업 필수 주의: 인위적 감원(권고사직) 금지</strong>
+                  <p className="font-medium leading-relaxed">
+                    <strong>채용 전 3개월부터 채용 후 1년까지(총 15개월)</strong> 사업주에 의한 권고사직이나 인위적 감원이 발생하면 지원금이 전액 환수 또는 지급 중지됩니다. (근로자 자발적 퇴사는 제외)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer CTA */}
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-[#E0D9C8]/60 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowSubsidyModal(false)}
+                className="w-full sm:w-auto h-11 px-5 rounded-xl border border-[#E0D9C8] bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSubsidyModal(false);
+                  void navigate('/login?role=company');
+                }}
+                className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 text-white text-xs font-extrabold hover:bg-emerald-700 active:scale-[0.98] transition shadow-xs"
+              >
+                혜택 대상 인재 보러가기 (기업 로그인) ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-[#E0D9C8] bg-white py-6 text-center text-xs font-semibold text-slate-500">

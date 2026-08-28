@@ -106,7 +106,7 @@ export function RollingBanner({
         <div className="flex flex-col gap-1.5 px-1 pt-2 md:pt-2.5 pb-1">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 overflow-hidden pt-2.5">
-              <span className="shrink-0 whitespace-nowrap text-sm md:text-base font-extrabold text-[#B84734] leading-tight">
+              <span className="shrink-0 whitespace-nowrap text-sm md:text-base font-extrabold text-[#F06B4F] leading-tight">
                 {slide.tag}
               </span>
               <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-slate-300 mx-0.5" />
@@ -226,7 +226,7 @@ export function LoginPage() {
               className={cn(
                 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 sm:text-sm',
                 role === 'senior'
-                  ? 'bg-[#B84734] text-white shadow-xs'
+                  ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-[#FAF7F2] hover:text-[#17212B]',
               )}
             >
@@ -242,7 +242,7 @@ export function LoginPage() {
               className={cn(
                 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 sm:text-sm',
                 role === 'company'
-                  ? 'bg-[#B84734] text-white shadow-xs'
+                  ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-[#FAF7F2] hover:text-[#17212B]',
               )}
             >
@@ -255,11 +255,11 @@ export function LoginPage() {
             <h2 className="text-[16px] font-extrabold tracking-tight text-[#17212B] leading-snug">
               {role === 'senior' ? (
                 <>
-                  당신의 오랜 경험이 <span className="text-[#B84734]">기업의 가치</span>가 됩니다.
+                  당신의 오랜 경험이 <span className="text-[#F06B4F]">기업의 가치</span>가 됩니다.
                 </>
               ) : (
                 <>
-                  검증된 시니어와 <span className="text-[#B84734]">핵심 프로젝트 연결</span>
+                  검증된 시니어와 <span className="text-[#F06B4F]">핵심 프로젝트 연결</span>
                 </>
               )}
             </h2>
@@ -386,7 +386,7 @@ export function LoginPage() {
 
             <div className="flex flex-col items-center gap-2.5 pt-1.5 pb-1">
               <Link
-                className="text-[13px] font-extrabold text-[#B84734] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#9F3828]"
+                className="text-[13px] font-extrabold text-[#F06B4F] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#D85A3F]"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
@@ -418,12 +418,12 @@ export function LoginPage() {
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <br className="hidden md:inline" />
-                  <span className="text-[#B84734]">기업의 가치</span>가 됩니다.
+                  <span className="text-[#F06B4F]">기업의 가치</span>가 됩니다.
                 </>
               ) : (
                 <>
                   검증된 시니어 실무자와 <br className="hidden md:inline" />
-                  <span className="text-[#B84734]">핵심 프로젝트를 연결</span>해보세요.
+                  <span className="text-[#F06B4F]">핵심 프로젝트를 연결</span>해보세요.
                 </>
               )}
             </h2>
@@ -453,7 +453,7 @@ export function LoginPage() {
               className={cn(
                 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 md:text-sm',
                 role === 'senior'
-                  ? 'bg-[#B84734] text-white shadow-xs'
+                  ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-white hover:text-[#17212B]',
               )}
             >
@@ -466,7 +466,7 @@ export function LoginPage() {
               className={cn(
                 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 md:text-sm',
                 role === 'company'
-                  ? 'bg-[#B84734] text-white shadow-xs'
+                  ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-white hover:text-[#17212B]',
               )}
             >
@@ -566,7 +566,7 @@ export function LoginPage() {
             </button>
             <div className="flex items-center justify-center pt-2 border-t border-[#E0D9C8]/60 mt-1">
               <Link
-                className="text-xs font-extrabold text-[#B84734] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#9F3828] md:text-sm"
+                className="text-xs font-extrabold text-[#F06B4F] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#D85A3F] md:text-sm"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
