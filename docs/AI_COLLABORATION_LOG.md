@@ -16,6 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Pretendard 폰트 굵기 하향 조정(가독성 개선) 및 고용촉진장려금 세부 팝업 UI 레이아웃 전면 리디자인
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **폰트 굵기 1단계 하향 조정**: 헤더/대제목을 제외한 본문, 리스트, 카드 설명 텍스트의 굵기를 기존의 과도한 `font-extrabold`/`font-bold`에서 `font-semibold` / `font-medium` / `font-normal`로 1단계씩 낮추어 눈의 피로도를 낮추고 텍스트 가독성을 대폭 향상.
+  2. **고용촉진장려금 세부 안내 팝업 UI 구조화**: 답답해 보이던 줄글형 불렛 리스트를 **Key-Value 정보 행(테이블형 카드) 및 미니멀 뱃지 구조**로 개편하여 대상 기업, 근로계약 기간, 근무 조건, 수료 프로그램 요건을 한눈에 명확히 파악할 수 있도록 리디자인 완료.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 로그인 페이지 주황색 컬러(#F06B4F) 표준화 및 랜딩 페이지 '혜택 세부내용 확인' 모달 팝업 구현
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
