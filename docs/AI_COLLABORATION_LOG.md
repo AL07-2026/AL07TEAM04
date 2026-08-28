@@ -16,6 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Google Analytics 4 (GA4) 측정 ID 연동 및 실시간 웹 트래픽 추적 활성화
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **원인 분석**:
+  1. **측정 ID(measurementId) 누락**: Firebase Web SDK 설정(`src/lib/firebase.ts`)에 프로젝트 고유 GA4 측정 ID(`G-X8DB6JPJPY`)가 누락되어 있어 이벤트가 Google Analytics 데이터 스트림으로 전송되지 못함.
+  2. **모바일 앱 필터 기본값**: Firebase Console의 기본 카드 뷰가 `android OR ios` 모바일 플랫폼으로 필터링되어 있어 웹 앱 트래픽이 보이지 않는 현상 존재.
+- **작업 내용**:
+  1. **Firebase Config 측정 ID 추가**: `src/lib/firebase.ts`에 `measurementId: 'G-X8DB6JPJPY'` 등록 완료.
+  2. **Google Tag (gtag.js) 스크립트 추가**: `index.html`에 GA4 공식 글로벌 사이트 태그 삽입 완료.
+  3. **이중 추적(GA4 SDK + gtag) 파이프라인 구축**: `src/services/analyticsService.ts`에서 Firebase Analytics `logEvent`와 `gtag('event')`를 동시 디스패치하여 트래픽 누락 방지.
+- **검증 & 결과**: 262/262 단위 테스트 통과, 프로덕션 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/lib/firebase.ts`
+  - [MODIFY] `index.html`
+  - [MODIFY] `src/services/analyticsService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Firebase Authentication senior-* 테스트 계정 134건 일괄 삭제 및 테스트 모드 방지 완료
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
