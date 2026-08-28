@@ -1386,23 +1386,25 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           ? getCompanyOwnedProjects(registeredProjects, user?.uid)
           : registeredProjects;
       const publicProjects = getPublishedCompanyProjects(registeredProjects);
-      if (role === 'senior') setPublishedCompanyProjects(publicProjects);
-      const sourceProjects = role === 'senior' ? publicProjects : visibleUserProjects;
+      if (role === 'senior') {
+        setPublishedCompanyProjects(publicProjects);
+      } else {
+        setPostings(visibleUserProjects);
+        setSelectedId((current) =>
+          visibleUserProjects.some((posting) => posting.id === current)
+            ? current
+            : (visibleUserProjects[0]?.id ?? ''),
+        );
+      }
       setWorknetFeedMessage(
-        role === 'senior' && worknetFeed.status === 'success' && sourceProjects.length === 0
+        role === 'senior' && worknetFeed.status === 'success' && publicProjects.length === 0
           ? '내 정보의 희망 직종과 일치하는 고용24 공고를 찾지 못했습니다.'
           : (worknetFeed.message ?? ''),
-      );
-      setPostings(sourceProjects);
-      setSelectedId((current) =>
-        sourceProjects.some((posting) => posting.id === current)
-          ? current
-          : (sourceProjects[0]?.id ?? ''),
       );
 
       const resumeState = consumeApplicationResume() ?? getPendingApplicationInterview();
       if (resumeState) {
-        const resumedPosting = sourceProjects.find(
+        const resumedPosting = (role === 'senior' ? publicProjects : visibleUserProjects).find(
           (posting) => posting.id === resumeState.projectId,
         );
         if (resumedPosting) {
@@ -2254,10 +2256,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const closingSoonPostingsCount = isServerSearchActive
     ? (serverSearchMeta?.closingSoonTotal ?? 0)
     : postings.filter((posting) => posting.hiringStage === 'closing').length;
-  const overviewCatalogTotal = stableOverviewMetrics?.catalogTotal ?? (serverSearchMeta?.catalogTotal ?? postings.length);
-  const overviewPreferredTotal = stableOverviewMetrics?.preferredTotal ?? preferredPostingsCount;
-  const overviewPartTimeTotal = stableOverviewMetrics?.partTimeTotal ?? partTimePostingsCount;
-  const overviewClosingSoonTotal = stableOverviewMetrics?.closingSoonTotal ?? closingSoonPostingsCount;
+  const overviewCatalogTotal =
+    stableOverviewMetrics?.catalogTotal ??
+    (serverSearchMeta?.catalogTotal ?? (role === 'senior' ? 0 : postings.length));
+  const overviewPreferredTotal =
+    stableOverviewMetrics?.preferredTotal ??
+    (serverSearchMeta?.preferredTotal ?? (role === 'senior' ? 0 : preferredPostingsCount));
+  const overviewPartTimeTotal =
+    stableOverviewMetrics?.partTimeTotal ??
+    (serverSearchMeta?.partTimeTotal ?? (role === 'senior' ? 0 : partTimePostingsCount));
+  const overviewClosingSoonTotal =
+    stableOverviewMetrics?.closingSoonTotal ??
+    (serverSearchMeta?.closingSoonTotal ?? (role === 'senior' ? 0 : closingSoonPostingsCount));
 
   function changeQuery(value: string) {
     beginResultTransition();
@@ -3105,7 +3115,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         <DatabaseMetric
           caption={role === 'senior' ? '실시간 기준' : '회사 직접 등록 기준'}
           label={role === 'senior' ? '조회 공고' : '등록 프로젝트'}
-          value={`${role === 'senior' ? overviewCatalogTotal : postings.length}건`}
+          value={
+            role === 'senior'
+              ? `${overviewCatalogTotal.toLocaleString()}건`
+              : `${postings.length}건`
+          }
         />
         <DatabaseMetric
           caption={
@@ -3115,18 +3129,20 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           }
           label="추천 건수"
           value={
-            role === 'senior' ? `${overviewPreferredTotal}건` : `${postings.length}건`
+            role === 'senior'
+              ? `${overviewPreferredTotal.toLocaleString()}건`
+              : `${postings.length}건`
           }
         />
         <DatabaseMetric
           caption={role === 'senior' ? '시간제·파트타임·유연근무 기준' : '현재 지원 접수 가능'}
           label="시간제 채용"
-          value={`${overviewPartTimeTotal}건`}
+          value={`${overviewPartTimeTotal.toLocaleString()}건`}
         />
         <DatabaseMetric
           caption={role === 'senior' ? '마감일까지 7일 이내' : '등록 마감일 기준'}
           label="마감 임박"
-          value={`${overviewClosingSoonTotal}건`}
+          value={`${overviewClosingSoonTotal.toLocaleString()}건`}
         />
       </div>
 
