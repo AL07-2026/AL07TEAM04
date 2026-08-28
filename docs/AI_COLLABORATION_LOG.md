@@ -16,6 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 전역 버튼 클릭 자동 캡처 및 단계별 이탈률(Drop-Off/Funnel) 추적 시스템 구축 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **전역 자동 클릭 캡처(Global Event Delegation)**:
+     - [src/main.tsx](file:///c:/AL07TEAM04/src/main.tsx) 및 [src/services/analyticsService.ts](file:///c:/AL07TEAM04/src/services/analyticsService.ts)에 `setupGlobalClickTracker()`를 마운트.
+     - 서비스 내의 모든 `<button>`, `<a>`, `<input type="button">`, 네비게이션 탭, 모달 트리거 클릭을 100% 자동 감지하여 `button_name`, `page_path`, `funnel_step`, `element_type`, `section` 메타데이터와 함께 GA4 및 Firestore로 동시 전송.
+  2. **11단계 전체 퍼널(Funnel) 및 사용자 이탈 지점 추적**:
+     - `01_랜딩_방문` -> `02_회원_유형_선택` -> `03_회원가입/로그인` -> `04_기본정보_입력` -> `05_AI_경험등록_안내` -> `06_AI_심층인터뷰_진행` -> `07_경험카드_생성완료` -> `08_실시간_공고_탐색` -> `09_공고_상세_조회` -> `10_프로젝트_제안서_작성` -> `11_제안서_제출_완료`로 퍼널 단계 표준화.
+     - 페이지 전환 시 이전 페이지 체류 시간(`time_on_previous_page_sec`), 이탈 시점(`user_drop_off`, `beforeunload`, `pagehide`)을 자동 기록하여 사용자가 어느 버튼/단계에서 이탈하는지 정확한 퍼널 분석 가능.
+- **검증 & 결과**: 262/262 단위 테스트 통과, 프로덕션 배포 완료.
+- **변경 파일**:
+  - [MODIFY] `src/main.tsx`
+  - [MODIFY] `src/services/analyticsService.ts`
+  - [MODIFY] `src/services/analyticsService.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Google Analytics 4 (GA4) 측정 ID 연동 및 실시간 웹 트래픽 추적 활성화
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **원인 분석**:
