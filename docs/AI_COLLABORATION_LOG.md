@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 테스트 기업 등록 공고 3건 영구 삭제 및 5개 단위 순차 페이지네이션 로딩 속도 최적화
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **테스트 등록 공고 3건 삭제**: Firestore `projects` 컬렉션 및 로컬 스토리지에 남아있던 테스트 공고 (`a - ai 를 활용한 자동화 구축`, `최올 (KOREAMONSTER72) - 테스트 및 수정용`, `최동일 - 최동일`) 3건을 원격 데이터베이스에서 완전히 삭제하고 로컬 캐시 필터링 적용.
+  2. **체감 로딩 속도 극대화 (화면당 5개 노출 & 순차 페이지네이션)**: `JobDatabasePage`의 페이지당 표시 개수를 기존 12개에서 **5개(`itemsPerPage = 5`)**로 최적화하여 첫 화면 렌더링이 즉각적으로 완료되도록 개선. 2페이지, 3페이지 등 다음 페이지 탐색 시에도 필요한 분량만 초고속으로 순차 렌더링하도록 처리.
+  3. **홈 화면 추천 쿼리 최적화**: `SeniorHomePage`의 추천 공고 조회 요청 크기를 100개에서 10개로 슬림화하여 홈 화면 로딩 딜레이 해결.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/projectService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Pretendard 폰트 굵기 하향 조정(가독성 개선) 및 고용촉진장려금 세부 팝업 UI 레이아웃 전면 리디자인
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
