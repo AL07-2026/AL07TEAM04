@@ -16,6 +16,25 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 고용촉진장려금 지원 기능 기존 UI/UX 디자인 시스템 완전 통합 구현 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **시니어 프로필 수정 및 열람 화면 연동 (`BasicProfilePage.tsx` & `FlowPages.tsx`)**:
+     - 기존 `Field` 및 카드 컴포넌트를 이질감 없이 계승한 **`[💰 고용촉진장려금(연 720만원) 지원 대상자 인증]`** 토글/체크박스, 프로그램 선택 드롭다운, 이수증 명칭 입력 폼 반영.
+     - 시니어 마이프로필 상단 본인 인증 뱃지 옆에 **`[✓ 연 720만원 지원 대상]`** 에메랄드 뱃지 및 상세 안내 카드 표출.
+  2. **기업 지원자 상세 페이지 혜택 리포트 연동 (`ReceivedProposalDetailPage`)**:
+     - 기업 채용담당자가 지원서 검토 시 **`[💰 고용촉진장려금 연 최대 720만원 혜택 리포트]`** 카드가 한눈에 노출되도록 구성.
+  3. **랜딩 페이지 세일즈 하이라이트 반영 (`LandingPage.tsx`)**:
+     - "이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!" B2B 가치 제안 하이라이트 카드 반영.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 고용촉진제도(고용촉진장려금) 기업·구직자 초디테일 세부 자격 요건 및 주의사항 수립
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
