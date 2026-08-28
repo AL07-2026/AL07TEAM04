@@ -207,84 +207,84 @@ export function LandingPage() {
             {/* Modal Body Content */}
             <div className="mt-5 flex flex-col gap-4 text-sm text-[#17212B]">
               {/* Box 1: 지원 금액 */}
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-                <div className="flex items-center gap-1.5 font-semibold text-emerald-950 text-sm sm:text-base">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 sm:p-5">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-sm sm:text-base">
                   <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
                   <span>실제 기업 지원 혜택 금액</span>
                 </div>
-                <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-xl bg-white p-3.5 border border-emerald-100 shadow-2xs">
-                    <span className="font-medium text-slate-500">우선지원대상기업 (중소·중견)</span>
-                    <p className="mt-1 text-lg font-bold text-emerald-700">
-                      월 60만원 <span className="text-xs font-medium text-slate-600">(연 720만원)</span>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="font-semibold text-emerald-900">우선지원대상기업 (중소·중견)</span>
+                    <p className="mt-1 text-lg font-extrabold text-emerald-700">
+                      월 60만원 <span className="text-xs font-semibold text-emerald-800">(연 720만원)</span>
                     </p>
-                    <p className="text-[11.5px] text-slate-400 mt-0.5">3개월 단위 180만원씩 분기별 지급</p>
+                    <p className="text-[11.5px] text-slate-500 mt-0.5">3개월 단위 180만원씩 분기별 지급</p>
                   </div>
-                  <div className="rounded-xl bg-white p-3.5 border border-emerald-100 shadow-2xs">
-                    <span className="font-medium text-slate-500">특수 대상 (중증장애인·여성가장)</span>
-                    <p className="mt-1 text-lg font-bold text-emerald-700">
-                      월 80만원 <span className="text-xs font-medium text-slate-600">(연 960만원)</span>
+                  <div>
+                    <span className="font-semibold text-emerald-900">특수 대상 (중증장애인·여성가장)</span>
+                    <p className="mt-1 text-lg font-extrabold text-emerald-700">
+                      월 80만원 <span className="text-xs font-semibold text-emerald-800">(연 960만원)</span>
                     </p>
-                    <p className="text-[11.5px] text-slate-400 mt-0.5">최대 2년까지 지속 지원 가능</p>
+                    <p className="text-[11.5px] text-slate-500 mt-0.5">최대 2년까지 지속 지원 가능</p>
                   </div>
                 </div>
               </div>
 
-              {/* Box 2: 기업 자격 & 근로 조건 (Clean Key-Value Table/Rows) */}
-              <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2]/70 p-4">
-                <div className="font-semibold text-[#173F3A] flex items-center gap-1.5 text-sm">
-                  <FileText className="size-4 text-[#173F3A] shrink-0" />
+              {/* Box 2: 기업 자격 & 근로 조건 (Clean Key-Value Text List) */}
+              <div className="rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2]/70 p-4 sm:p-5">
+                <div className="font-bold text-[#173F3A] flex items-center gap-1.5 text-sm sm:text-base">
+                  <FileText className="size-4.5 text-[#173F3A] shrink-0" />
                   <span>기업의 필수 수급 요건</span>
                 </div>
-                <div className="grid grid-cols-1 gap-1.5 text-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 rounded-lg bg-white px-3 py-2 border border-[#E0D9C8]/60">
-                    <span className="font-semibold text-slate-700 w-24 shrink-0">대상 기업</span>
-                    <span className="font-normal text-slate-600 leading-relaxed">
+                <dl className="mt-3 flex flex-col gap-2.5 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
+                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 대상 기업</dt>
+                    <dd className="font-normal text-slate-600 leading-relaxed">
                       우선지원대상기업 (제조업 500인 이하, 건설·운수 300인 이하, 도소매 200인 이하, 기타 100인 이하)
-                    </span>
+                    </dd>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 rounded-lg bg-white px-3 py-2 border border-[#E0D9C8]/60">
-                    <span className="font-semibold text-slate-700 w-24 shrink-0">근로계약 기간</span>
-                    <span className="font-normal text-slate-600 leading-relaxed">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
+                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 근로계약 기간</dt>
+                    <dd className="font-normal text-slate-600 leading-relaxed">
                       정규직 또는 최소 1년 이상의 기간제 근로계약 체결 (1년 미만 단기 계약 제외)
-                    </span>
+                    </dd>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 rounded-lg bg-white px-3 py-2 border border-[#E0D9C8]/60">
-                    <span className="font-semibold text-slate-700 w-24 shrink-0">근무 조건</span>
-                    <span className="font-normal text-slate-600 leading-relaxed">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 근무 조건</dt>
+                    <dd className="font-normal text-slate-600 leading-relaxed">
                       주 15시간(월 60시간) 이상 근무, 최저임금 이상 지급, 4대 사회보험 가입 필수
-                    </span>
+                    </dd>
                   </div>
-                </div>
+                </dl>
               </div>
 
-              {/* Box 3: 구직자 수료 요건 (Clean Key-Value Table/Rows) */}
-              <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xs">
-                <div className="font-semibold text-[#173F3A] flex items-center gap-1.5 text-sm">
-                  <CheckCircle2 className="size-4 text-[#173F3A] shrink-0" />
+              {/* Box 3: 구직자 수료 요건 (Clean Key-Value Text List) */}
+              <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 sm:p-5 shadow-2xs">
+                <div className="font-bold text-[#173F3A] flex items-center gap-1.5 text-sm sm:text-base">
+                  <CheckCircle2 className="size-4.5 text-[#173F3A] shrink-0" />
                   <span>구직자(시니어) 필수 이수 요건</span>
                 </div>
-                <div className="grid grid-cols-1 gap-1.5 text-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 rounded-lg bg-[#FAF7F2]/50 px-3 py-2 border border-[#E0D9C8]/60">
-                    <span className="font-semibold text-slate-700 w-24 shrink-0">이수 프로그램</span>
-                    <span className="font-normal text-slate-600 leading-relaxed">
+                <dl className="mt-3 flex flex-col gap-2.5 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
+                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 이수 프로그램</dt>
+                    <dd className="font-normal text-slate-600 leading-relaxed">
                       국민취업지원제도 1단계(취업활동계획 IAP) 수료 (1년 이내) 또는 3개월 이상 내일배움카드 직업훈련 이수
-                    </span>
+                    </dd>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 rounded-lg bg-[#FAF7F2]/50 px-3 py-2 border border-[#E0D9C8]/60">
-                    <span className="font-semibold text-slate-700 w-24 shrink-0">구직 등록</span>
-                    <span className="font-normal text-slate-600 leading-relaxed">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                    <dt className="font-bold text-[#17212B] w-24 shrink-0">• 구직 등록</dt>
+                    <dd className="font-normal text-slate-600 leading-relaxed">
                       고용24(워크넷)에 구직신청이 유효하게 등록된 상태에서 채용 연계 진행
-                    </span>
+                    </dd>
                   </div>
-                </div>
+                </dl>
               </div>
 
               {/* Box 4: 핵심 주의사항 (인위적 감원 금지) */}
-              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 p-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 p-4 sm:p-5">
                 <ShieldAlert className="size-4.5 shrink-0 text-rose-600 mt-0.5" />
-                <div className="flex flex-col gap-0.5 text-xs text-rose-950">
-                  <span className="font-semibold text-rose-900">기업 필수 유의: 인위적 감원(권고사직) 금지 의무</span>
+                <div className="flex flex-col gap-1 text-xs text-rose-950">
+                  <span className="font-bold text-rose-900">기업 필수 유의: 인위적 감원(권고사직) 금지 의무</span>
                   <p className="font-normal leading-relaxed text-rose-900/90">
                     채용 전 3개월부터 채용 후 1년까지(총 15개월 동안) 사업주 권고사직 등 인위적 감원이 발생하지 않아야 합니다. (근로자의 자발적 퇴사는 제외)
                   </p>
