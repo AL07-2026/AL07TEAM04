@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Firebase Auth 로그아웃 시 자동 재인증(인증 상태 복원) 락(Lock) 및 비인증 자동 이동 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Auth `onAuthStateChanged` 자동 재인증 결함 해결**: `firebaseSignOut(auth)` 실행 시 Firebase SDK 내부 백그라운드 이벤트인 `onAuthStateChanged`가 비동기로 재실행되며 이전 `firebaseUser` 객체로 사용자 세션을 즉시 복원(자동 로그인)시키던 심각한 race condition을 발견했습니다. `isLoggingOutRef` 뮤텍스 락 플래그를 도입하여 로그아웃 진행 중에는 `onAuthStateChanged`가 수신되더라도 무조건 세션을 파기하고 자동 생성을 차단하도록 근본 조치했습니다.
+  2. **프로필 페이지 비인증 즉시 리다이렉트 리스너 추가**: `user` 상태가 `null`이 되는 즉시 `BasicProfilePage`, `SeniorProfilePage`, `CompanyInfoPage`, `CompanyProfilePage`에서 비로그인 사용자가 머무르지 못하도록 `/senior/project-database`로 즉시 자동 이동시키는 `useEffect` 리스너를 적용했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 비로그인/로그아웃 시 스코프 프로필 레거시 조회 차단 및 완벽 로그아웃 보장
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
