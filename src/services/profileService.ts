@@ -118,9 +118,14 @@ function readScopedProfile<T>(
   ownerId: string | undefined,
   normalize: (source: unknown) => T | null,
 ) {
-  if (!ownerId) return null;
   const scopedKey = getScopedStorageKey(baseKey, ownerId);
-  return normalize(readVersionedStorage<unknown>(scopedKey));
+  const scopedData = normalize(readVersionedStorage<unknown>(scopedKey));
+  if (scopedData) return scopedData;
+  if (ownerId) {
+    const fallbackKey = getScopedStorageKey(baseKey, undefined);
+    return normalize(readVersionedStorage<unknown>(fallbackKey));
+  }
+  return null;
 }
 
 export function getLocalSeniorProfile(ownerId?: string) {
@@ -195,11 +200,13 @@ export async function getCompanyProfile(uid: string): Promise<CompanyProfileData
 }
 
 export async function resolveCompanyProfile(uid?: string): Promise<CompanyProfileData | null> {
+  const localProfile = getLocalCompanyProfile(uid);
+  if (localProfile) return localProfile;
   if (!uid) return null;
 
   const remoteProfile = await getCompanyProfile(uid);
   if (remoteProfile) saveLocalCompanyProfile(remoteProfile, uid);
-  return remoteProfile || getLocalCompanyProfile(uid);
+  return remoteProfile;
 }
 
 export async function saveCompanyProfile(uid: string, profile: CompanyProfileData): Promise<void> {

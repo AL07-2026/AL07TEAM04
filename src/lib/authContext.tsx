@@ -132,6 +132,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<UserProfile> => {
     setError(null);
     setLoading(true);
+
+    if (canUseDemoAuth(email)) {
+      const demoProfile: UserProfile = {
+        uid: 'demo-user-' + Math.random().toString(36).slice(2, 9),
+        email,
+        name,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+      saveUserLocal(demoProfile);
+      setLoading(false);
+      return demoProfile;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;

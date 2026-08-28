@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Firebase Authentication senior-* 테스트 계정 134건 일괄 삭제 및 테스트 모드 방지 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **Firebase Authentication 계정 일괄 삭제**:
+     - Firebase Console의 Authentication에 누적되어 있던 `senior-*` 패턴의 테스트 생성 계정 총 134건 일괄 영구 삭제 완료 (`accounts:batchDelete`).
+     - 실제 팀원들의 정규 구글 로그인 계정(11건) 및 네이버/다음 계정(2건) 총 13건 정상 보존 확인.
+  2. **테스트/데모 계정 생성 방지 가드 구축**:
+     - `src/lib/authContext.tsx`에서 `@example.com`, `test` 또는 테스트 모드 시 실제 Firebase Auth 네트워크 요청 없이 로컬 인메모리 세션으로 처리하도록 방어하여, 향후 테스트 시 Firebase Auth에 더미 계정이 생성되지 않도록 조치.
+- **변경 파일**:
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Firestore 테스트 생성 계정 및 더미 경험 카드 데이터 정리 완료
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

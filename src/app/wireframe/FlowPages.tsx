@@ -3363,8 +3363,8 @@ export function CompanyProfilePage() {
   const { user, signOut } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
-    getLocalCompanyProfile(user?.uid),
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(
+    () => getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile(),
   );
   const [projectCount, setProjectCount] = useState(0);
 
