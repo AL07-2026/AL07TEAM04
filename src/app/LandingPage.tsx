@@ -118,8 +118,11 @@ export function LandingPage() {
 
               <p className="mt-6 max-w-5xl text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
                 <span className="block">
-                  시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 AI로 매칭하는 플랫폼,
-                  이어잡입니다.
+                  경험을 잇고, 일을 잇고, 세대를 잇다. 이어잡입니다.
+                </span>
+                <span className="mt-1 block">
+                  이어잡은 시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 AI로 매칭하는
+                  플랫폼으로
                 </span>
                 <span className="mt-1 block">
                   개인의 경험 및 경력과 기업의 해결 과제를 정밀하게 분석하여, 필요한 프로젝트를
@@ -142,11 +145,6 @@ export function LandingPage() {
                 controlsList="nodownload noremoteplayback"
                 preload="metadata"
               />
-            </div>
-            <div className="mt-3 flex max-w-5xl items-center justify-end gap-3 text-right text-[0.9375rem] font-black text-[#173f3a] sm:text-[1.875rem]">
-              <span className="shrink-0 font-medium tracking-[0.08em] text-[#173f3a]">IEO Job</span>
-              <span className="h-1 w-8 shrink-0 bg-[#f47a36]" aria-hidden="true" />
-              <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
             </div>
           </div>
         </section>
