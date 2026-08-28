@@ -2,10 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from '@/app/App';
+import { setupGlobalClickTracker } from '@/services/analyticsService';
 import '@/styles/globals.css';
 
 // Automatically recover when a new deployment invalidates cached chunk hashes
 if (typeof window !== 'undefined') {
+  setupGlobalClickTracker();
   window.addEventListener('vite:preloadError', (event) => {
     event.preventDefault();
     window.location.reload();
