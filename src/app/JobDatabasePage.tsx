@@ -1819,11 +1819,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       );
       const emailResult = sendApplicationEmailToManager(applyingPosting, {
         applicantName:
-          user?.name && user.name !== '김인재'
+          user?.name
             ? user.name
             : user?.email === 'sehddnr2@gmail.com'
               ? '이동욱'
-              : user?.name || '이동욱',
+              : '이동욱',
         applicantEmail: user?.email || 'sehddnr2@gmail.com',
         attachedResumeName: attachedFileNames,
         interviewSummary,

@@ -620,11 +620,11 @@ export function SeniorHomePage() {
     : '1순위 직종 미설정';
 
   const userName =
-    user?.name && user.name !== '김인재'
+    user?.name
       ? user.name
       : user?.email === 'sehddnr2@gmail.com'
         ? '이동욱'
-        : user?.name || '이동욱';
+        : '이동욱';
 
   return (
     <MobilePage

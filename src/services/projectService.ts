@@ -110,6 +110,7 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   if (
     lowerCn === '윤중심' ||
     lowerCn === 'healing j' ||
+    lowerCn === '김인재' ||
     lowerTitle.includes('홈프로텍터') ||
     lowerTitle.includes('수제비누') ||
     (lowerCn === '(주) 기업명' && lowerTitle === '가나다라')
