@@ -1,203 +1,314 @@
-import { ArrowRight, Briefcase, CheckCircle2, Coins, FileText, Info, Landmark, ShieldAlert, Sparkles, X } from 'lucide-react';
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  FileText,
+  Handshake,
+  Info,
+  Landmark,
+  ShieldAlert,
+  Sparkles,
+  UserRound,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
+
+const features = [
+  {
+    number: '01',
+    icon: CreditCard,
+    title: '경험 카드',
+    description:
+      '개인의 경험 및 경력을 음성 인터뷰 및 직접 입력 후 AI가 적절하게 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
+  },
+  {
+    number: '02',
+    icon: Handshake,
+    title: 'AI 맞춤 매칭',
+    description:
+      '인재가 선택한 1·2·3순위 희망 분야로 필터링하고, 경험 및 경력 내용을 함께 반영해 AI가 인재와 기업의 프로젝트를 맞춤 연결합니다.',
+  },
+  {
+    number: '03',
+    icon: Clock3,
+    title: '유연 근무',
+    description:
+      '전일제·반일제·시간 근무제부터 직장·재택·하이브리드까지, 원하는 시간과 장소에서 자유롭게 프로젝트를 수행합니다.',
+  },
+] as const;
 
 export function LandingPage() {
   const navigate = useNavigate();
   const [showSubsidyModal, setShowSubsidyModal] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-[#FAF7F2] text-[#17212B] font-sans antialiased selection:bg-[#DDEBE7] selection:text-[#173F3A]">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-50 border-b border-[#E0D9C8] bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => void navigate('/')}>
-            <img src="/logo_text.png" alt="이어잡" className="h-6 w-auto object-contain hidden sm:block" />
-            <img src="/logo_icon.png" alt="이어잡" className="h-7 w-auto object-contain sm:hidden" />
-          </div>
+    <div className="min-h-dvh bg-white text-[#17212b]">
+      <header className="sticky top-0 z-50 border-b border-[#e7dfcb] bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
+          <button
+            type="button"
+            onClick={() => void navigate('/')}
+            className="inline-flex items-center border-0 bg-transparent p-0 cursor-pointer"
+            aria-label="이어잡 첫 화면"
+          >
+            <img src="/logo_text.png" alt="이어잡" className="h-7 w-auto object-contain" />
+          </button>
 
+          <nav className="ml-auto flex items-center gap-1" aria-label="빠른 이동">
+            <button
+              type="button"
+              onClick={() => {
+                trackButtonClick('nav_login_senior');
+                void navigate('/login?role=senior');
+              }}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+              aria-label="인재로 로그인"
+              title="인재로 로그인"
+            >
+              <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                인재로 로그인
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                trackButtonClick('nav_login_company');
+                void navigate('/login?role=company');
+              }}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+              aria-label="기업으로 로그인"
+              title="기업으로 로그인"
+            >
+              <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                기업으로 로그인
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                trackButtonClick('nav_view_projects');
+                void navigate('/senior/project-database');
+              }}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+              aria-label="프로젝트 보러가기"
+              title="프로젝트 보러가기"
+            >
+              <BriefcaseBusiness className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                프로젝트 보러가기
+              </span>
+            </button>
+          </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-4 py-1.5 text-[13px] font-semibold text-[#173F3A]">
-            <Sparkles className="size-4 text-[#F06B4F]" />
-            <span>시니어 실무 경험 & 기업 프로젝트 맞춤 연결</span>
-          </div>
+      <main>
+        <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
+          <div className="mx-auto max-w-6xl">
+            <div className="pt-2 text-left">
+              <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#f47a36] sm:text-[1rem]">
+                이어잡이 만드는 새로운 연결
+              </p>
+              <h2
+                className="mt-2 text-[1.5rem] font-medium leading-tight tracking-normal text-[#17212b] sm:text-[1.875rem]"
+                style={{
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                }}
+              >
+                Experience Meets Opportunity
+              </h2>
 
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-[#17212B] sm:text-5xl lg:text-6xl leading-[1.2] text-balance">
-            10년~30년 시니어의 실무 노하우를 <br className="hidden sm:inline" />
-            <span className="text-[#173F3A] underline decoration-[#F06B4F] decoration-4 underline-offset-8">
-              기업의 핵심 프로젝트
-            </span>
-            와 잇다
-          </h1>
+              <h1 className="mt-10 text-[2rem] font-black leading-[1.24] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
+                <span className="text-[#173f3a]">기업</span>의{' '}
+                <span className="text-[#173f3a]">실무</span> 프로젝트와
+                <br />
+                <span className="text-[#173f3a]">시니어</span>의{' '}
+                <span className="text-[#173f3a]">경험</span>을 잇다
+              </h1>
 
-          <p className="mt-6 text-base sm:text-xl font-normal leading-relaxed text-slate-600 max-w-2xl mx-auto break-keep">
-            풀타임 채용의 부담 없이, 시니어 전문가의 깊은 실무 노하우와 기업의 당면 과제를 <br className="hidden sm:inline" />
-            AI로 정밀 매칭하는 플랫폼 <strong className="text-[#173F3A] font-semibold">이어잡</strong>입니다.
-          </p>
-
-          {/* SINGLE MAIN CTA BUTTON */}
-          <div className="mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                trackButtonClick('hero_cta_view_projects');
-                void navigate('/senior/project-database');
-              }}
-              className="flex h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-8 text-lg font-bold text-white border border-[#173F3A] shadow-[0_6px_20px_rgba(23,63,58,0.35)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(23,63,58,0.45)] active:translate-y-0 active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <Briefcase className="size-5" />
-              <span>전체 프로젝트 보러가기</span>
-              <ArrowRight className="size-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Hero Visual Image */}
-        <div className="mt-12 overflow-hidden rounded-3xl border border-[#E0D9C8] bg-white p-3 shadow-2xl">
-          <img
-            src="/eojob_hero_illustration.jpg"
-            alt="이어잡 시니어 전문가와 기업 협업 시스템"
-            className="w-full h-auto max-h-[520px] object-cover rounded-2xl"
-          />
-        </div>
-
-        {/* 3 Simple Feature Cards */}
-        <div className="mt-16 grid gap-6 sm:grid-cols-3">
-          <div className="rounded-2xl border border-[#E0D9C8] bg-white p-6 text-left shadow-xs transition hover:border-[#BBD5CE]">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A] text-xl font-bold">
-              01
+              <p className="mt-6 max-w-5xl text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
+                <span className="block">
+                  경험을 잇고, 일을 잇고, 세대를 잇다.&nbsp;이어잡입니다.
+                </span>
+                <span className="mt-1 inline sm:block">
+                  이어잡은 시니어 전문가의 실무 노하우와 기업의 당면 과제를 AI로 매칭하는
+                  플랫폼으로{' '}
+                </span>
+                <span className="inline sm:mt-1 sm:block">
+                  개인의 경험 및 경력과 기업의 해결 과제를 분석하여, 필요한 프로젝트를
+                  연결해 드립니다.
+                </span>
+              </p>
             </div>
-            <h3 className="mt-4 text-lg font-bold text-[#17212B]">AI 경험 과제화</h3>
-            <p className="mt-2 text-sm font-normal leading-relaxed text-slate-600">
-              수십 년 경력을 AI 대화 인터뷰로 과제화하여 내가 잘하는 문제 해결 역량을 명확하게 추출합니다.
-            </p>
-          </div>
 
-          <div className="rounded-2xl border border-[#E0D9C8] bg-white p-6 text-left shadow-xs transition hover:border-[#BBD5CE]">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-[#FDF0ED] text-[#F06B4F] text-xl font-bold">
-              02
+            <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-lg shadow-[0_14px_36px_rgba(23,63,58,0.14)]">
+              <video
+                className="aspect-video w-full object-cover"
+                src="/eojob-landing-hero.mp4"
+                title="시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                controlsList="nodownload noremoteplayback"
+                preload="metadata"
+              />
             </div>
-            <h3 className="mt-4 text-lg font-bold text-[#17212B]">1순위 정밀 매칭</h3>
-            <p className="mt-2 text-sm font-normal leading-relaxed text-slate-600">
-              1순위 희망 직종, 지역, 경력을 다각도로 분석하여 100점 만점의 정확한 적합도 점수를 제공합니다.
-            </p>
           </div>
+        </section>
 
-          <div className="rounded-2xl border border-[#E0D9C8] bg-white p-6 text-left shadow-xs transition hover:border-[#BBD5CE]">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A] text-xl font-bold">
-              03
+        <section className="bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
+          <div className="mx-auto max-w-6xl">
+            <div>
+              <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
+                이어잡의 서비스 특징
+              </p>
+              <h2
+                id="service-features-title"
+                className="mt-2 text-[1.5rem] font-medium tracking-normal text-[#17212b] sm:text-[1.875rem]"
+                style={{
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                }}
+              >
+                Service Features
+              </h2>
             </div>
-            <h3 className="mt-4 text-lg font-bold text-[#17212B]">주 1~3회 유연 근무</h3>
-            <p className="mt-2 text-sm font-normal leading-relaxed text-slate-600">
-              풀타임 직장 대신 주 1~3회, 원격/하이브리드 근무로 자유롭게 프로젝트를 수행할 수 있습니다.
-            </p>
-          </div>
-        </div>
 
-        {/* Employment Promotion Subsidy Highlight Card for Companies */}
-        <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex flex-col items-start gap-2.5 max-w-2xl">
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-400/30">
-              <Coins className="size-3.5 text-emerald-300" />
-              <span>고용노동부 연계 혜택</span>
-            </span>
-            <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-              이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!
-            </h3>
-            <p className="text-sm font-normal text-emerald-100/90 leading-relaxed">
-              국민취업지원제도 1단계를 완료한 시니어 인재 채용 시, 국가로부터 분기별 180만원(월 60만원 x 12개월)의 고용촉진장려금을 지급받을 수 있습니다.
-            </p>
+            <div className="mt-10 grid gap-7 md:grid-cols-3">
+              {features.map(
+                ({ number, icon: Icon, title, description }) => (
+                  <article
+                    key={number}
+                    className="min-h-[320px] rounded-lg border border-[#bfd8d0] bg-[#e3f0ec] p-7 text-[#17212b] shadow-[0_12px_30px_rgba(23,63,58,0.12)] sm:p-8"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[0.95rem] font-black text-[#f47a36]">{number}</span>
+                      <Icon
+                        className="size-[3.25rem] text-[#173f3a]"
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#111820]">
+                      {title}
+                    </h3>
+                    <p className="mt-4 text-[1.125rem] font-semibold leading-[1.75] text-[#26332f]">
+                      {description}
+                    </p>
+                  </article>
+                ),
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                trackSubsidyModalOpen('landing_banner');
-                setShowSubsidyModal(true);
-              }}
-              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/60 bg-emerald-950/60 px-5 text-sm font-semibold text-emerald-100 hover:bg-emerald-800/80 hover:text-white active:scale-[0.98] transition cursor-pointer"
-            >
-              <Info className="size-4" />
-              <span>혜택 세부내용 확인</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                trackButtonClick('subsidy_talent_cta');
-                void navigate('/login?role=company');
-              }}
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-bold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
-            >
-              <span>혜택 대상 인재 보기 ➔</span>
-            </button>
-          </div>
-        </div>
+        </section>
 
-        {/* Bottom CTA Card */}
-        <div className="mt-12 rounded-3xl border border-[#E0D9C8] bg-white p-8 text-center shadow-md">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#17212B]">
-            지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
-          </h2>
-          <p className="mt-2 text-sm font-normal text-slate-600">
-            로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
-          </p>
-          <div className="mt-6 flex justify-center">
+        <section className="border-y border-[#efe5be] bg-[#fffbed] px-5 py-11 sm:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex max-w-3xl gap-3 sm:gap-4">
+              <span className="grid size-11 shrink-0 place-items-center text-[#f47a36] sm:size-12">
+                <Sparkles
+                  className="size-9 motion-safe:animate-pulse sm:size-10"
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
+              </span>
+              <div>
+                <p className="text-[0.875rem] font-black text-[#f47a36] sm:text-[1rem]">
+                  고용노동부 연계 혜택
+                </p>
+                <h2 className="mt-2 text-[1.375rem] font-black leading-snug text-[#17212b] sm:text-[1.875rem]">
+                  검증된 시니어 인재와 함께하고, 인건비 부담도 낮추세요
+                </h2>
+                <p className="mt-3 text-[1rem] font-medium leading-[1.7] text-[#465a55] sm:text-[1.0625rem]">
+                  국민취업지원제도 요건을 충족한 인재를 채용하면 고용촉진장려금 지원 대상이 될 수
+                  있습니다.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  trackSubsidyModalOpen('landing_banner');
+                  setShowSubsidyModal(true);
+                }}
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d8d0b9] bg-white px-5 text-[1rem] font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
+              >
+                <Info className="size-4.5 text-[#173F3A]" />
+                혜택 세부내용 확인
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  trackButtonClick('subsidy_talent_cta');
+                  void navigate('/login?role=company');
+                }}
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#173f3a] px-5 text-[1rem] font-black text-white shadow-xs transition hover:bg-[#0f332f] active:scale-[0.98] cursor-pointer sm:px-6"
+              >
+                혜택 대상 인재 보기
+                <ArrowRight className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white px-5 py-14 sm:px-8 sm:py-18">
+          <div className="mx-auto max-w-6xl px-5 py-9 text-center sm:px-10 sm:py-12">
+            <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212b] sm:text-[1.875rem]">
+              지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-[1rem] font-medium leading-[1.7] text-[#53606e] sm:text-[1.125rem]">
+              로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
+            </p>
             <button
               type="button"
               onClick={() => {
                 trackButtonClick('bottom_cta_view_projects');
                 void navigate('/senior/project-database');
               }}
-              className="flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-[#173F3A] px-7 text-base font-bold text-white hover:bg-[#12332F] active:scale-[0.98] transition-all cursor-pointer"
+              className="mx-auto mt-7 inline-flex min-h-14 items-center justify-center gap-2.5 whitespace-nowrap rounded-lg bg-[#173f3a] px-5 text-[1rem] font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#0f332f] active:scale-[0.98] cursor-pointer sm:px-7 sm:text-[1.125rem]"
             >
-              <Briefcase className="size-5" />
-              <span>전체 프로젝트 보러가기</span>
+              <BriefcaseBusiness className="size-5 shrink-0" aria-hidden="true" />
+              전체 프로젝트 보러가기
+              <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
             </button>
           </div>
-        </div>
+        </section>
       </main>
 
       {/* Subsidy Detail Modal */}
       {showSubsidyModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="subsidy-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6"
-          onClick={() => setShowSubsidyModal(false)}
-        >
-          <div
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-2xl text-left"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-2xl overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/60 pb-4">
-              <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                  <Landmark className="size-3.5 text-emerald-700" />
-                  <span>고용노동부 주관</span>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
+                  <Landmark className="size-3.5" />
+                  고용노동부 주관
                 </span>
-                <h2
-                  id="subsidy-modal-title"
-                  className="mt-1.5 text-xl sm:text-2xl font-bold tracking-tight text-[#17212B]"
-                >
+                <h2 className="text-xl sm:text-2xl font-bold text-[#17212B] tracking-tight">
                   고용촉진장려금 지원 제도 세부 안내
                 </h2>
-                <p className="mt-1 text-xs sm:text-sm font-normal text-slate-500">
+                <p className="text-xs sm:text-sm font-normal text-slate-500">
                   취업지원프로그램을 이수한 시니어를 채용한 중소·중견기업 인건비 지원 제도
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSubsidyModal(false)}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
                 aria-label="닫기"
               >
                 <X className="size-5" />
@@ -293,7 +404,7 @@ export function LandingPage() {
             </div>
 
             {/* Modal Footer CTA */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-[#E0D9C8]/60 pt-4">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 border-t border-[#E0D9C8] pt-4">
               <button
                 type="button"
                 onClick={() => setShowSubsidyModal(false)}
@@ -304,6 +415,7 @@ export function LandingPage() {
               <button
                 type="button"
                 onClick={() => {
+                  trackButtonClick('subsidy_modal_company_login_cta');
                   setShowSubsidyModal(false);
                   void navigate('/login?role=company');
                 }}
@@ -316,9 +428,10 @@ export function LandingPage() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-[#E0D9C8] bg-white py-6 text-center text-xs font-semibold text-slate-500">
-        <p>© 2026 이어잡 (Eojob). All rights reserved.</p>
+      <footer className="bg-white px-5 py-7 sm:px-8 border-t border-[#e7dfcb]">
+        <p className="mx-auto max-w-6xl text-right text-[0.875rem] font-semibold text-[#667085]">
+          © 2026 이어잡 IEO Job. All rights reserved.
+        </p>
       </footer>
     </div>
   );
