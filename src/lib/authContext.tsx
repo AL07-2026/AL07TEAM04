@@ -308,6 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn('Firebase signout error:', err);
     }
     saveUserLocal(null);
+    setUser(null);
   };
 
   const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
