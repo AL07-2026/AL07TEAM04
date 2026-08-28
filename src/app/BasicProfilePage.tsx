@@ -133,6 +133,12 @@ export function BasicProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/senior/project-database', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     if (!user?.uid) return;
     void (async () => {
       const data = await getSeniorProfile(user.uid);

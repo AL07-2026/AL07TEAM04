@@ -9,7 +9,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { auth, db } from '@/lib/firebase';
@@ -51,6 +51,7 @@ function canUseDemoAuth(email = '') {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const isLoggingOutRef = useRef(false);
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
     return saved?.uid && saved.email && (saved.role === 'senior' || saved.role === 'company')
@@ -80,6 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
       void (async () => {
+        if (isLoggingOutRef.current) {
+          saveUserLocal(null);
+          setLoading(false);
+          return;
+        }
         if (firebaseUser) {
           try {
             const docRef = doc(db, 'users', firebaseUser.uid);
@@ -310,6 +316,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    isLoggingOutRef.current = true;
+    saveUserLocal(null);
+    setUser(null);
     try {
       await firebaseSignOut(auth);
     } catch (err) {
@@ -321,6 +330,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('eojob_user_logged_out'));
       window.dispatchEvent(new Event('storage'));
     }
+    setTimeout(() => {
+      isLoggingOutRef.current = false;
+    }, 1000);
   };
 
   const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {

@@ -3080,6 +3080,12 @@ export function SeniorProfilePage() {
   const seniorProfile = getLocalSeniorProfile(user?.uid);
 
   useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/senior/project-database', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     let active = true;
     void getLatestUserExperienceCard(user?.uid).then((card) => {
       if (active) setExperienceCard(card);
@@ -3231,6 +3237,12 @@ export function CompanyProfilePage() {
     getLocalCompanyProfile(user?.uid),
   );
   const [projectCount, setProjectCount] = useState(0);
+
+  useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/senior/project-database', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     void (async () => {

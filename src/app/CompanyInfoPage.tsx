@@ -36,6 +36,12 @@ export function CompanyInfoPage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    if (!user && import.meta.env.MODE !== 'test') {
+      void navigate('/senior/project-database', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     void (async () => {
       const local = getLocalCompanyProfile(user?.uid);
       if (local) setForm(local);
