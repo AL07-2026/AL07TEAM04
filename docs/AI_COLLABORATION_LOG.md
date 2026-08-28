@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 고용노동부 연계 혜택 모달 항목 레이블 줄바꿈(단어 끊김) 방지 및 단일 라인 정렬
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **항목명 글자 끊김 현상 해결**: '• 근로계약 기간', '• 이수 프로그램' 등의 레이블에서 '간', '램' 글자가 2번째 줄로 어색하게 떨어져 줄바꿈되던 문제를 해결하기 위해, `dt` 요소에 `whitespace-nowrap` 및 적정 너비(`w-28 sm:w-32`)를 부여하여 모든 항목명이 줄바꿈 없이 한 번에 온전하게 보이도록 최적화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 고용노동부 연계 혜택 모달 이중 박스(Box-in-a-Box) 구조 제거 및 깔끔한 플랫 텍스트 레이아웃 정돈
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
