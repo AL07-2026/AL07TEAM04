@@ -150,7 +150,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-[#eee5cf] bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
+        <section className="bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
           <div className="mx-auto max-w-6xl">
             <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
@@ -251,7 +251,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-[#e7dfcb] bg-white px-5 py-7 sm:px-8">
+      <footer className="bg-white px-5 py-7 sm:px-8">
         <p className="mx-auto max-w-6xl text-right text-[0.875rem] font-semibold text-[#667085]">
           © 2026 이어잡 IEO Job. All rights reserved.
         </p>
