@@ -306,7 +306,13 @@ export function MobilePage({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => void navigate(item.path)}
+                        onClick={() => {
+                          if (!user && (item.id === 'profile' || item.id === 'proposals')) {
+                            void navigate('/login');
+                          } else {
+                            void navigate(item.path);
+                          }
+                        }}
                         className={cn(
                           'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
@@ -393,6 +399,7 @@ function BottomNav({
   role: Role;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <nav
@@ -413,7 +420,13 @@ function BottomNav({
               selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
             )}
             key={item.id}
-            onClick={() => void navigate(item.path)}
+            onClick={() => {
+              if (!user && (item.id === 'profile' || item.id === 'proposals')) {
+                void navigate('/login');
+              } else {
+                void navigate(item.path);
+              }
+            }}
             type="button"
           >
             <IconComponent

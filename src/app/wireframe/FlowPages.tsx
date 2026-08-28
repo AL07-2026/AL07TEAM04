@@ -3094,7 +3094,7 @@ export function SeniorProfilePage() {
 
   useEffect(() => {
     if (!user && import.meta.env.MODE !== 'test') {
-      void navigate('/senior/project-database', { replace: true });
+      void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
 
@@ -3258,7 +3258,7 @@ export function CompanyProfilePage() {
 
   useEffect(() => {
     if (!user && import.meta.env.MODE !== 'test') {
-      void navigate('/senior/project-database', { replace: true });
+      void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
 
