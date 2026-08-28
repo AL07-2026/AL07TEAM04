@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 신규 배포 시 브라우저 청크 캐시 충돌 자동 복구(Auto Recovery) 구축
+- **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
+- **원인 분석**:
+  - `Failed to fetch dynamically imported module ... FlowPages-BQJwY5_E.js` 오류는 웹 브라우저 탭을 열어둔 상태에서 새로운 버전이 배포되었을 때, 브라우저가 이전 버전의 빌드 해시 파일명을 요청하면서 발생하는 SPA(Single Page Application)의 전형적인 청크 캐시 불일치 현상임.
+- **해결 및 예방 조치**:
+  1. **Vite Preload Error 리스너 탑재 (`main.tsx`)**: `window.addEventListener('vite:preloadError')`를 등록하여 구버전 청크 요청 실패 시 사용자에게 오류 화면을 띄우지 않고 즉시 최신 번들로 자동 새로고침(Auto-Reload) 복구.
+  2. **`lazyPage` 및 `ErrorBoundaryHarness` 2중 예외 방어막**: `lazy()` 로더 내부에서 ChunkLoadError 발생 시 세션 플래그를 통해 1회 무음 새로고침으로 최신 번들을 즉시 연결.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - **공식 프로덕션 호스팅 URL**: **https://al07team04-bdfcd.web.app**
+- **변경 파일**:
+  - [MODIFY] `src/main.tsx`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `src/components/ui/ErrorBoundaryHarness.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 공식 프로덕션 라이브 주소(Official Production URL) 배포 완료
 - **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
 - **작업 내용**:
