@@ -16,6 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 시니어 프로젝트 조회 시 '조회 공고' 수치 깜빡임(10건 노출) 버그 수정 (0건 기본값 처리)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **초기 로딩 시 10건 깜빡임 현상 해결**: 프로젝트 데이터베이스 진입 시 `loadDatabaseProjects()`에서 시니어 모드일 때 로컬 기업 등록 공고(약 10건)를 임시로 `postings`에 할당하여 '조회 공고' 메트릭 카드가 10건으로 잠깐 번쩍이던 문제를 수정.
+  2. **0건 기본값 및 천단위 콤마 포맷팅**: 전체 서버 검색 메타데이터(`serverSearchMeta`)가 도착하기 전까지 시니어 화면의 기본값을 **0건**으로 명확히 유지하고, 데이터 도착 시 실제 공고 수(예: 14,820건)가 매끄럽게 표시되도록 처리.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 전체 아이콘 2D 라인 아이콘(Lucide SVG) 표준화 및 불필요한 이모지 중복 제거
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
