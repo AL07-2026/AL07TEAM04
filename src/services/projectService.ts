@@ -40,10 +40,6 @@ const workTypes = new Set<WorkType>(['remote', 'hybrid', 'onsite']);
 const seniorities = new Set<Seniority>(['senior', 'lead', 'principal']);
 const employmentTypes = new Set<EmploymentType>(['full-time', 'contract', 'advisory', 'project']);
 const hiringStages = new Set<HiringStage>(['open', 'screening', 'interviewing', 'closing']);
-const RETIRED_TEST_PROJECT = {
-  companyName: '(주) 기업명',
-  title: '가나다라',
-} as const;
 
 function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -109,9 +105,14 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   const category = value.category as ProjectCategory;
 
   if (!id || !title || !companyName || !categories.has(category)) return null;
+  const lowerCn = companyName.toLowerCase();
+  const lowerTitle = title.toLowerCase();
   if (
-    companyName === RETIRED_TEST_PROJECT.companyName &&
-    title === RETIRED_TEST_PROJECT.title
+    lowerCn === '윤중심' ||
+    lowerCn === 'healing j' ||
+    lowerTitle.includes('홈프로텍터') ||
+    lowerTitle.includes('수제비누') ||
+    (lowerCn === '(주) 기업명' && lowerTitle === '가나다라')
   ) {
     return null;
   }

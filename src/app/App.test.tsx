@@ -253,14 +253,14 @@ describe('Figma v2 통합 화면 라우팅', () => {
       companyName: '엘레오스',
       email: 'contact@eleos.co.kr',
       industry: '생활용품 제조',
-      managerName: 'Healing J',
+      managerName: '이동욱',
       phone: '010-5271-3612',
     });
     window.history.pushState({}, '', '/company/profile');
     render(<App />);
 
     expect(await screen.findByText('엘레오스')).toBeInTheDocument();
-    expect(screen.getByText('Healing J', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('이동욱', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('서울특별시 동대문구 고산자로 515')).toBeInTheDocument();
     expect(screen.getByText('010-5271-3612')).toBeInTheDocument();
     expect(screen.getByText('생활용품 제조')).toBeInTheDocument();

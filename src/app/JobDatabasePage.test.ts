@@ -145,7 +145,7 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       ...companyProject,
       coreResponsibilities: ['고객 집청소와 식사를 지원합니다.'],
       id: 'home-helper-project',
-      title: '홈프로텍터',
+      title: '생활케어 가이드',
     };
     const fallbackCategoryProject = {
       ...companyProject,
