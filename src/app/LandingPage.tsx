@@ -97,12 +97,12 @@ export function LandingPage() {
 
         {/* Employment Promotion Subsidy Highlight Card for Companies */}
         <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex flex-col gap-2 max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-400/30">
+          <div className="flex flex-col items-start gap-2.5 max-w-2xl">
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-400/30">
               <Coins className="size-3.5 text-emerald-300" />
               <span>고용노동부 연계 혜택</span>
             </span>
-            <h3 className="text-xl sm:text-2xl font-bold text-white">
+            <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
               이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!
             </h3>
             <p className="text-sm font-normal text-emerald-100/90 leading-relaxed">
