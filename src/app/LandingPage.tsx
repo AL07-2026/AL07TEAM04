@@ -12,9 +12,6 @@ export function LandingPage() {
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => void navigate('/')}>
             <img src="/logo_text.png" alt="이어잡" className="h-6 w-auto object-contain hidden sm:block" />
             <img src="/logo_icon.png" alt="이어잡" className="h-7 w-auto object-contain sm:hidden" />
-            <span className="rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              MVP
-            </span>
           </div>
 
           {/* Single Main Action in Header */}
