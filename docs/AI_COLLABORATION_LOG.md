@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 비로그인/로그아웃 시 스코프 프로필 레거시 조회 차단 및 완벽 로그아웃 보장
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그아웃 후 이전 사용자 프로필 표출 근본 원인 해결**: `profileService.ts` 내 `readScopedProfile` 함수에서 `ownerId`가 없는 비로그인(`undefined`/`null`) 상태일 때 기존 브라우저 로컬 스토리지에 남아있던 레거시 프로필(이동욱 등)을 자동 반환하던 결함을 발견 및 수정하여, 비로그인 상태에서는 절대 이전 사용자의 프로필이 불러와지지 않고 완전히 빈(`null`) 상태로 유지되도록 조치.
+  2. **로그아웃 시 세션/스토리지 전면 삭제**: `signOut` 실행 시 `eojob_current_user`, `eojob_senior_profile`, `eojob_company_profile`, `eojob_experience_card` 등 세션/스토리지 키를 전면 삭제하고 커스텀 리셋 이벤트를 전송하도록 보강하여 100% 완전한 로그아웃 보장.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 비로그인 상태 추천 영역 로그인 안내 배너 전환 및 로그아웃 하드 리로드 조치
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
