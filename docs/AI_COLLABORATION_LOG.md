@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 비로그인 상태에서 '내 정보' 클릭 시 로그인 화면(`/login`) 정상 이동 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **비로그인 방문자 '내 정보' 클릭 먹통 현상 해결**: 로그아웃/비로그인 상태에서 헤더 또는 하단 네비게이션의 `[내 정보]` 버튼을 클릭했을 때 기존 프로필 보호 리다이렉트가 `/senior/project-database`로 바로 튕겨내어 클릭이 안 되는 것처럼 보이던 증상을 발견했습니다.
+  2. **라우팅 & 네비게이션 개선**: 비로그인 사용자가 `[내 정보]` 또는 `[내 제안]`을 클릭하거나 접근 시 로그인 페이지(`/login`)로 즉시 안내하도록 `Ui.tsx` (`Header`, `BottomNav`) 및 `BasicProfilePage`, `SeniorProfilePage`, `CompanyInfoPage`, `CompanyProfilePage` 라우팅을 개편했습니다.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 고용촉진장려금 지원 기능 기존 UI/UX 디자인 시스템 완전 통합 구현 완료
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
