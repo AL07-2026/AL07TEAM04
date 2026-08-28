@@ -16,6 +16,14 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Firestore 테스트 등록 프로젝트(`ai` - 자동화 업무 활용) 삭제 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  - 사용자가 기업 프로젝트 등록 기능 테스트 중 등록한 테스트 공고(`ID: PROJECT-49ff657c`, 기업명: `ai`, 직무: `ai 자동화 업무 활용`)를 Firestore `projects` 컬렉션에서 안전하게 영구 삭제 처리 완료.
+- **검증 & 결과**: Firestore `projects/PROJECT-49ff657c` 단일 타깃 문서 삭제 확인 완료.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 신규 배포 시 브라우저 청크 캐시 충돌 자동 복구(Auto Recovery) 구축
 - **작업자**: Antigravity (Gemini) - (`develop` & `leedongwook` 브랜치)
 - **원인 분석**:
