@@ -51,7 +51,7 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section className="bg-[#fffdf5] px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
+        <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
           <div className="mx-auto max-w-6xl">
             <div className="border-t border-[#e5decc] pt-8 text-left">
               <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#f47a36] sm:text-[1rem]">
@@ -177,8 +177,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-[#fffbed] px-5 py-14 sm:px-8 sm:py-18">
-          <div className="mx-auto max-w-6xl rounded-lg border border-[#e2dac7] bg-white px-5 py-9 text-center shadow-[0_12px_30px_rgba(23,33,43,0.09)] sm:px-10 sm:py-12">
+        <section className="bg-white px-5 py-14 sm:px-8 sm:py-18">
+          <div className="mx-auto max-w-6xl px-5 py-9 text-center sm:px-10 sm:py-12">
             <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212b] sm:text-[1.875rem]">
               지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
