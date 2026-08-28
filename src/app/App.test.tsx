@@ -5,6 +5,7 @@ import { saveLocalCompanyProfile } from '@/services/profileService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
+    ['/', '기업의 실무 문제와 시니어의 경험을 잇다'],
     ['/login', '경험매칭'],
     ['/signup', '회원가입'],
     ['/role', '역할 선택'],
@@ -31,6 +32,24 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', path);
     render(<App />);
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+  });
+
+  it('랜딩 페이지는 소개 영상과 하단 프로젝트 CTA 하나만 제공한다', async () => {
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    expect(
+      await screen.findByTitle('시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상'),
+    ).toHaveAttribute('src', '/eojob-landing-hero.mp4');
+    expect(screen.getByText('경험을 잇고, 일을 잇고, 세대를 잇다')).toBeInTheDocument();
+
+    const projectButtons = screen.getAllByRole('button', { name: /전체 프로젝트 보러가기/ });
+    expect(projectButtons).toHaveLength(1);
+    fireEvent.click(projectButtons[0]!);
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/senior/project-database');
+    });
   });
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
