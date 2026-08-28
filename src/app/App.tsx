@@ -1,10 +1,11 @@
-import { lazy, Suspense, useState, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
 import { ErrorBoundaryHarness } from '@/components/ui/ErrorBoundaryHarness';
 import { AuthProvider } from '@/lib/authContext';
+import { trackPageView } from '@/services/analyticsService';
 
 function lazyPage<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
@@ -90,6 +91,14 @@ function createAppRouter() {
 
 export function App() {
   const [router] = useState(createAppRouter);
+
+  useEffect(() => {
+    trackPageView(window.location.pathname);
+    const unsubscribe = router.subscribe((state) => {
+      trackPageView(state.location.pathname);
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   return (
     <div className="eojob-readable">

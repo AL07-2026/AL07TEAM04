@@ -2,6 +2,8 @@ import { ArrowRight, Briefcase, CheckCircle2, Coins, FileText, Info, Landmark, S
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
+
 export function LandingPage() {
   const navigate = useNavigate();
   const [showSubsidyModal, setShowSubsidyModal] = useState(false);
@@ -44,7 +46,10 @@ export function LandingPage() {
           <div className="mt-8 flex justify-center">
             <button
               type="button"
-              onClick={() => void navigate('/senior/project-database')}
+              onClick={() => {
+                trackButtonClick('hero_cta_view_projects');
+                void navigate('/senior/project-database');
+              }}
               className="flex h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-8 text-lg font-bold text-white border border-[#173F3A] shadow-[0_6px_20px_rgba(23,63,58,0.35)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(23,63,58,0.45)] active:translate-y-0 active:scale-[0.98] transition-all cursor-pointer"
             >
               <Briefcase className="size-5" />
@@ -113,7 +118,10 @@ export function LandingPage() {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               type="button"
-              onClick={() => setShowSubsidyModal(true)}
+              onClick={() => {
+                trackSubsidyModalOpen('landing_banner');
+                setShowSubsidyModal(true);
+              }}
               className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/60 bg-emerald-950/60 px-5 text-sm font-semibold text-emerald-100 hover:bg-emerald-800/80 hover:text-white active:scale-[0.98] transition cursor-pointer"
             >
               <Info className="size-4" />
@@ -121,7 +129,10 @@ export function LandingPage() {
             </button>
             <button
               type="button"
-              onClick={() => void navigate('/login?role=company')}
+              onClick={() => {
+                trackButtonClick('subsidy_talent_cta');
+                void navigate('/login?role=company');
+              }}
               className="flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-bold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
             >
               <span>혜택 대상 인재 보기 ➔</span>
@@ -140,7 +151,10 @@ export function LandingPage() {
           <div className="mt-6 flex justify-center">
             <button
               type="button"
-              onClick={() => void navigate('/senior/project-database')}
+              onClick={() => {
+                trackButtonClick('bottom_cta_view_projects');
+                void navigate('/senior/project-database');
+              }}
               className="flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-[#173F3A] px-7 text-base font-bold text-white hover:bg-[#12332F] active:scale-[0.98] transition-all cursor-pointer"
             >
               <Briefcase className="size-5" />

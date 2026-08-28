@@ -77,6 +77,7 @@ import {
 } from '@/lib/applicationFlow';
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
+import { trackButtonClick, trackJobApply, trackJobView } from '@/services/analyticsService';
 import { sendApplicationEmailToManager } from '@/services/emailService';
 import {
   extractCleanPositionTitle,
@@ -996,6 +997,7 @@ export function DetailPanel({
             <a
               className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#173F3A] bg-white text-[14px] font-extrabold text-[#173F3A] transition hover:bg-[#F8FCFB]"
               href={posting.sourceUrl}
+              onClick={() => trackJobApply(posting.id, posting.companyName, posting.title, 'external_redirect')}
               rel="noreferrer"
               target="_blank"
             >
@@ -1721,6 +1723,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function handleApply(posting: JobPosting) {
     if (role === 'senior') {
+      trackJobApply(posting.id, posting.companyName, posting.title, 'start');
       setApplyingPosting(posting);
       setApplicationFiles([]);
       setApplicantNote('');
@@ -1728,6 +1731,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       setInterviewCard(readStoredExperienceCard(user?.uid));
       void getLatestUserExperienceCard(user?.uid).then(setInterviewCard);
     } else {
+      trackButtonClick('company_propose_project', { projectId: posting.id, companyName: posting.companyName });
       const text = `✓ [${posting.companyName}] 시니어 인재에게 프로젝트 제안이 성공적으로 전달되었습니다.`;
       setActionNotice(text);
       setTimeout(() => setActionNotice(''), 4000);
@@ -3473,6 +3477,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   key={posting.id}
                   onApply={() => handleApply(posting)}
                   onSelect={() => {
+                    trackJobView(posting.id, posting.companyName, posting.title);
                     setSelectedId(posting.id);
                     if (isMobile) {
                       setIsMobileDetailOpen(true);
