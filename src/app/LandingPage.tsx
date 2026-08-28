@@ -14,15 +14,6 @@ export function LandingPage() {
             <img src="/logo_icon.png" alt="이어잡" className="h-7 w-auto object-contain sm:hidden" />
           </div>
 
-          {/* Single Main Action in Header */}
-          <button
-            type="button"
-            onClick={() => void navigate('/senior/project-database')}
-            className="flex h-10 items-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white shadow-xs hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <Briefcase className="size-4" />
-            <span>프로젝트 전체보기</span>
-          </button>
         </div>
       </header>
 
