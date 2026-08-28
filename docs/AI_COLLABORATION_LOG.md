@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] `develop` 브랜치 최신 변경 사항 병합(Pull & Merge) 및 통합 검증 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **develop 브랜치 변경 사항 병합**: 팀원이 develop 브랜치에 업데이트한 신규 히어로 소개 영상(`/eojob-landing-hero.mp4`), 개선된 서비스 특징 3단 카드, 상단 빠른 이동 네비게이션, 반응형 랜딩 카피 변경 사항을 안전하게 병합.
+  2. **모달 & 분석 트래킹 통합**: 고용노동부 연계 혜택 세부내용 모달(이중 박스 제거 및 단일 라인 정렬 버전)과 GA4/Firestore 행동 로깅 트래킹 코드를 새 랜딩 페이지 레이아웃과 유기적으로 통합.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 258개 전체 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `public/eojob-landing-hero.mp4`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 채용 공고 로딩 지연 원인 분석 및 2.4초 자동 폴백·세션 캐시 아키텍처 구축
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **원인 분석**:
