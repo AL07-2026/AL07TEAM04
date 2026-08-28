@@ -688,9 +688,10 @@ export function SummaryCard({
         {caption ? (
           <span
             className={cn(
-              'mt-1 block font-semibold leading-4 sm:leading-5 text-slate-400 break-keep min-w-0 line-clamp-2',
-              isMobile ? 'text-[11px] sm:text-[11.5px]' : 'text-[13px]',
+              'mt-1 block font-semibold leading-4 text-slate-400 whitespace-nowrap truncate min-w-0',
+              isMobile ? 'text-[11px] sm:text-[11.5px]' : 'text-[12.5px]',
             )}
+            title={caption}
           >
             {caption}
           </span>
