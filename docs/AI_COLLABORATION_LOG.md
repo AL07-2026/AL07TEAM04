@@ -16,6 +16,28 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Firebase Analytics & Firestore 실시간 사용자 행동 로그(방문자수, 페이지 이동, 버튼 클릭, 공고 조회/지원) 트래킹 시스템 구축
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Analytics (GA4) 연동**: `firebase/analytics`의 `logEvent` 및 `isSupported()` 환경 가드를 기반으로 `src/services/analyticsService.ts`를 신규 구축하여 실시간 방문자수, 세션, 이벤트 로깅을 지원.
+  2. **라우트 전환 자동 페이지뷰 트래킹**: `App.tsx`에서 React Router의 경로 전환(`router.subscribe`)을 감지하여 사용자가 접속하거나 이동하는 모든 페이지(`page_view`)를 자동으로 기록.
+  3. **주요 버튼 클릭 및 활동 이벤트 추적**:
+     - 메인 히어로 / 하단 CTA 버튼 클릭 (`hero_cta_view_projects`, `bottom_cta_view_projects`)
+     - 고용촉진장려금 혜택 팝업 열기 (`subsidy_modal_open`) 및 인재 보기 클릭 (`subsidy_talent_cta`)
+     - 공고 카드 클릭 및 상세 열람 (`view_job_detail`)
+     - 지원하기 및 외부 원문 공고 이동 (`job_apply_start`, `job_apply_external_redirect`, `job_apply_submit_success`)
+     - AI 인터뷰 단계 추적 (`interview_start`, `interview_complete`)
+  4. **Firestore 실시간 원시 로그 컬렉션(`analytics_events`) 동시 저장**: GA4 대시보드 집계 딜레이 없이도 Firebase Console의 Firestore `analytics_events` 컬렉션에서 초 단위로 실시간 방문자 디바이스, 경로, 클릭 메타데이터를 즉시 조회할 수 있도록 이중 로깅(Dual Logging) 아키텍처 구현.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [NEW] `src/services/analyticsService.ts`
+  - [NEW] `src/services/analyticsService.test.ts`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 메인 랜딩 히어로 서브 텍스트 줄바꿈 최적화 ('당면 과제를' 뒤 개행 및 '정/밀' 분리 방지)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
