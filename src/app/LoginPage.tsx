@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Compass, Pause, Play } from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
@@ -118,9 +119,9 @@ export function RollingBanner({
               type="button"
               onClick={() => setIsPaused((paused) => !paused)}
               aria-label={isPaused ? '배너 자동 전환 재생' : '배너 자동 전환 일시정지'}
-              className="grid size-11 shrink-0 place-items-center rounded-xl border border-[#D4CBB8] bg-white font-extrabold text-[#173F3A] transition-[background-color,border-color,color] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7]"
+              className="grid size-11 shrink-0 place-items-center rounded-xl border border-[#D4CBB8] bg-white font-extrabold text-[#173F3A] transition-[background-color,border-color,color] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] cursor-pointer"
             >
-              <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
+              {isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4 fill-current" />}
             </button>
           </div>
           <p className="line-clamp-1 pl-0.5 text-xs font-medium text-[#45556C] md:text-sm">
@@ -392,10 +393,11 @@ export function LoginPage() {
                 계정이 없나요? 회원가입
               </Link>
               <Link
-                className="text-[12.5px] font-extrabold text-[#173F3A] bg-[#DDEBE7] px-3.5 py-1.5 rounded-full border border-[#BBD5CE] transition-all hover:bg-[#c9e2dc]"
+                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#173F3A] bg-[#DDEBE7] px-3.5 py-1.5 rounded-full border border-[#BBD5CE] transition-all hover:bg-[#c9e2dc]"
                 to="/senior/project-database"
               >
-                🚀 로그인 없이 전체 프로젝트 둘러보기 →
+                <Compass className="size-3.5 text-[#173F3A]" />
+                <span>로그인 없이 전체 프로젝트 둘러보기 →</span>
               </Link>
             </div>
           </form>

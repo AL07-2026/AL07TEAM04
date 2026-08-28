@@ -1,4 +1,4 @@
-import { FileText, LogOut, Pencil } from 'lucide-react';
+import { Coins, FileText, LogOut, Pencil } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -618,7 +618,7 @@ export function BasicProfilePage() {
               <div className="pt-2 border-t border-[#E0D9C8]">
                 <div className="flex flex-col gap-1.5 min-w-0">
                   <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
-                    📍 희망 근무 지역 (선택 / 기본값: 전국)
+                    희망 근무 지역 (선택 / 기본값: 전국)
                   </span>
                   <select
                     value={form.desiredLocation || '전국'}
@@ -671,7 +671,7 @@ export function BasicProfilePage() {
 
             {/* Section 4: 경력 분야 세부 핵심 강점 */}
             <TextAreaField
-              label="💪 경력 분야 세부 핵심 강점 및 주력 역량"
+              label="경력 분야 세부 핵심 강점 및 주력 역량"
               onChange={(e) => update('keySkills')(e.target.value)}
               placeholder="예: 0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀원 리더십 등 본인의 핵심 강점을 입력해주세요."
               rows={4}
@@ -682,7 +682,8 @@ export function BasicProfilePage() {
             <div className="flex flex-col gap-3 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
               <div className="flex flex-col gap-0.5">
                 <label className="text-sm md:text-base font-extrabold text-[#173F3A] flex items-center gap-2">
-                  <span>💰 고용촉진장려금(연 720만원) 지원 대상자 인증</span>
+                  <Coins className="size-4 text-[#173F3A] shrink-0" />
+                  <span>고용촉진장려금(연 720만원) 지원 대상자 인증</span>
                   <span className="rounded-full bg-[#173F3A]/10 px-2 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
                     선택
                   </span>
@@ -758,7 +759,7 @@ export function BasicProfilePage() {
               ) : (
                 <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white border border-[#E0D9C8]">
                   <p className="text-xs font-semibold text-slate-600">
-                    💡 아직 수료하지 않으셨나요? 국민취업지원제도 1단계를 완료하면 기업 지원 대상이 됩니다.
+                    아직 수료하지 않으셨나요? 국민취업지원제도 1단계를 완료하면 기업 지원 대상이 됩니다.
                   </p>
                   <a
                     href="https://www.kua.go.kr"
@@ -774,7 +775,7 @@ export function BasicProfilePage() {
 
             {/* Section 5: 해결했던 핵심 문제 및 성과 사례 */}
             <TextAreaField
-              label="💡 해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
+              label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
               placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해주세요."
               value={form.solvedExperiences || ''}
@@ -783,7 +784,7 @@ export function BasicProfilePage() {
             {/* Section 6: 원하는 근무 형태 (시간제/계약직/정규직 선택) */}
             <div className="flex flex-col gap-2">
               <label className="text-xs md:text-sm font-extrabold text-[#173F3A]" htmlFor="desired-work-type-select">
-                ⏰ 원하는 근무 형태 (시간제/계약직/정규직 선택)
+                원하는 근무 형태 (시간제/계약직/정규직 선택)
               </label>
               <select
                 id="desired-work-type-select"
@@ -795,13 +796,13 @@ export function BasicProfilePage() {
                 }}
                 value={form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
               >
-                <option value="시간제·파트타임 (오전/오후)">⏰ 시간제·파트타임 (오전/오후 선택)</option>
-                <option value="오전 시간제 (오전 파트타임: 09:00~13:00)">☀️ 오전 시간제 (오전 파트타임: 09:00~13:00)</option>
-                <option value="오후 시간제 (오후 파트타임: 13:00~17:00)">🌙 오후 시간제 (오후 파트타임: 13:00~17:00)</option>
-                <option value="계약직·기간제 (1년 등)">📄 계약직·기간제 (1년 등)</option>
-                <option value="전체 무관 (시간제/계약직/정규직)">✨ 전체 무관 (시간제/계약직/정규직 모두 가능)</option>
-                <option value="정규직">💼 정규직</option>
-                <option value="자문·프로젝트">🤝 자문·프로젝트</option>
+                <option value="시간제·파트타임 (오전/오후)">시간제·파트타임 (오전/오후 선택)</option>
+                <option value="오전 시간제 (오전 파트타임: 09:00~13:00)">오전 시간제 (오전 파트타임: 09:00~13:00)</option>
+                <option value="오후 시간제 (오후 파트타임: 13:00~17:00)">오후 시간제 (오후 파트타임: 13:00~17:00)</option>
+                <option value="계약직·기간제 (1년 등)">계약직·기간제 (1년 등)</option>
+                <option value="전체 무관 (시간제/계약직/정규직)">전체 무관 (시간제/계약직/정규직 모두 가능)</option>
+                <option value="정규직">정규직</option>
+                <option value="자문·프로젝트">자문·프로젝트</option>
               </select>
             </div>
 
@@ -851,7 +852,7 @@ export function BasicProfilePage() {
               </p>
             ) : null}
             <div className="flex items-center gap-2 pt-2">
-              <ActionButton type="submit">💾 변경사항 저장하기</ActionButton>
+              <ActionButton type="submit">변경사항 저장하기</ActionButton>
               <ActionButton onClick={() => setIsEditing(false)} secondary type="button">
                 취소
               </ActionButton>

@@ -288,7 +288,7 @@ export function CompanyInfoPage() {
 
             <div className="flex items-center gap-2 pt-2">
               <ActionButton role="company" type="submit">
-                💾 변경사항 저장하기
+                변경사항 저장하기
               </ActionButton>
               <ActionButton onClick={() => setIsEditing(false)} secondary type="button">
                 취소

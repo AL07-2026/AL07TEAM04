@@ -5,6 +5,7 @@ import {
   Award,
   BarChart2,
   Check,
+  Coins,
   FileText,
   ImagePlus,
   Info,
@@ -3015,8 +3016,9 @@ export function ReceivedProposalDetailPage() {
       {/* Employment Promotion Subsidy Report Card for Company */}
       <div className="flex flex-col gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/90 p-3.5 shadow-2xs">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
-            💰 고용촉진장려금 지원 대상
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
+            <Coins className="size-3.5 text-emerald-800 shrink-0" />
+            <span>고용촉진장려금 지원 대상</span>
           </span>
           <span className="text-xs font-extrabold text-emerald-900">연 최대 720만원 혜택</span>
         </div>

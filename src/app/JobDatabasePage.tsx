@@ -1,11 +1,13 @@
 import {
   ArrowRight,
+  BarChart3,
   Building2,
   CalendarClock,
   CheckCircle,
   CheckCircle2,
   ChevronDown,
   CircleAlert,
+  ClipboardCheck,
   Copy,
   ExternalLink,
   FileText,
@@ -16,6 +18,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Send,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -643,9 +646,9 @@ export function PostingCard({
   // Pick max 3 essential badges so top never clutters into multiple rows
   const essentialBadges: { isMint?: boolean; label: string }[] = [];
   if (posting.workType === 'remote' || posting.title.includes('재택')) {
-    essentialBadges.push({ isMint: true, label: '💻 재택·원격' });
+    essentialBadges.push({ isMint: true, label: '재택·원격' });
   } else if (posting.workType === 'hybrid' || posting.title.includes('하이브리드')) {
-    essentialBadges.push({ isMint: true, label: '🏢 하이브리드' });
+    essentialBadges.push({ isMint: true, label: '하이브리드' });
   }
 
   if (posting.employmentType === 'contract' || posting.title.includes('계약직')) {
@@ -2426,20 +2429,26 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   경력 {seniorProfile.period}
                 </span>
               ) : null}
-              <span className="inline-flex items-center rounded-lg border border-[#BBD5CE]/70 bg-white/95 px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-none cursor-default select-none">
-                📍 희망지역: {seniorProfile?.desiredLocation || '전국'}
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[#BBD5CE]/70 bg-white/95 px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-none cursor-default select-none">
+                <MapPin className="size-3.5 shrink-0 text-[#173F3A]" />
+                <span>희망지역: {seniorProfile?.desiredLocation || '전국'}</span>
               </span>
               <span
                 className={cn(
-                  'inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold shadow-none cursor-default select-none',
+                  'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold shadow-none cursor-default select-none',
                   interviewCard
                     ? 'border-[#F06B4F]/30 bg-[#FDF0ED] text-[#D85A3F]'
                     : 'border-[#E0D9C8] bg-white text-slate-500',
                 )}
               >
-                {interviewCard
-                  ? '✨ AI 경험 인터뷰의 역할·행동·성과 반영됨'
-                  : 'AI 경험 인터뷰 미등록 · 내 정보만 반영 중'}
+                {interviewCard ? (
+                  <>
+                    <Sparkles className="size-3.5 shrink-0 text-[#F06B4F]" />
+                    <span>AI 경험 인터뷰의 역할·행동·성과 반영됨</span>
+                  </>
+                ) : (
+                  'AI 경험 인터뷰 미등록 · 내 정보만 반영 중'
+                )}
               </span>
             </div>
           ) : (
@@ -2452,8 +2461,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       ) : (
         <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
-            <p className="text-[13px] sm:text-[14px] font-extrabold text-[#173F3A]">
-              📊 기업 채용 & 프로젝트 관리 현황
+            <p className="flex items-center gap-1.5 text-[13px] sm:text-[14px] font-extrabold text-[#173F3A]">
+              <BarChart3 className="size-4 shrink-0 text-[#173F3A]" />
+              <span>기업 채용 & 프로젝트 관리 현황</span>
             </p>
             <button
               className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 text-[11px] sm:text-[12px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer whitespace-nowrap self-start sm:self-auto"
@@ -2467,11 +2477,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             <span className="inline-flex items-center rounded-lg border border-[#BBD5CE]/80 bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A]">
               등록 프로젝트 {postings.length}개
             </span>
-            <span className="inline-flex items-center rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-700">
-              🟢 모집 진행 중 {postings.filter((p) => p.hiringStage === 'open').length}개
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-700">
+              <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+              <span>모집 진행 중 {postings.filter((p) => p.hiringStage === 'open').length}개</span>
             </span>
-            <span className="inline-flex items-center rounded-lg border border-[#BBD5CE]/80 bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A]">
-              📋 시니어 지원서 실시간 검토 가능
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A]">
+              <ClipboardCheck className="size-3.5 text-[#173F3A]" />
+              <span>시니어 지원서 실시간 검토 가능</span>
             </span>
           </div>
         </section>
@@ -2876,11 +2888,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   disabled={isApplying}
                   onClick={() => void handleConfirmSubmitApplication()}
                   className={cn(
-                    'h-12 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#12332F] active:scale-[0.99] disabled:cursor-wait disabled:bg-slate-400 disabled:shadow-none',
+                    'inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#12332F] active:scale-[0.99] disabled:cursor-wait disabled:bg-slate-400 disabled:shadow-none',
                     isMobile && 'w-full',
                   )}
                 >
-                  {isApplying ? '지원서 제출 중...' : '🚀 최종 지원서 제출하기'}
+                  <Send className="size-4" />
+                  <span>{isApplying ? '지원서 제출 중...' : '최종 지원서 제출하기'}</span>
                 </button>
               </div>
               {!isInterviewReady || applicationFiles.length === 0 ? (
@@ -3008,7 +3021,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] p-4">
                   <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
-                    <span>🏛️</span>
+                    <Building2 className="size-4 text-[#173F3A]" />
                     <span>공식 채용 포털 지원 연동</span>
                   </div>
                   <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-600">
@@ -3028,7 +3041,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     type="button"
                   >
                     <Copy className="size-4 shrink-0" />
-                    <span>📋 AI 경험 검증 요약 원클릭 복사하기</span>
+                    <span>AI 경험 검증 요약 원클릭 복사하기</span>
                   </button>
 
                   {copiedSummaryToast && (
@@ -3046,7 +3059,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       type="button"
                     >
                       <ExternalLink className="size-4 shrink-0" />
-                      <span>👉 공식 채용 원문 접수처로 이동</span>
+                      <span>공식 채용 원문 접수처로 이동</span>
                     </button>
                   ) : null}
                 </div>
@@ -3055,7 +3068,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] p-4">
                   <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
-                    <span>✉️</span>
+                    <Mail className="size-4 text-[#173F3A]" />
                     <span>기업 담당자 직통 전달 완료</span>
                   </div>
                   <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-600">

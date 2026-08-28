@@ -1,4 +1,4 @@
-import { ArrowRight, Briefcase, CheckCircle2, FileText, Info, ShieldAlert, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Briefcase, CheckCircle2, Coins, FileText, Info, Landmark, ShieldAlert, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -47,7 +47,7 @@ export function LandingPage() {
               className="flex h-14 items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-8 text-lg font-bold text-white border border-[#173F3A] shadow-[0_6px_20px_rgba(23,63,58,0.35)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(23,63,58,0.45)] active:translate-y-0 active:scale-[0.98] transition-all cursor-pointer"
             >
               <Briefcase className="size-5" />
-              <span>🚀 전체 프로젝트 보러가기</span>
+              <span>전체 프로젝트 보러가기</span>
               <ArrowRight className="size-5" />
             </button>
           </div>
@@ -99,7 +99,8 @@ export function LandingPage() {
         <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex flex-col gap-2 max-w-2xl">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-300 border border-emerald-400/30">
-              💰 고용노동부 연계 혜택
+              <Coins className="size-3.5 text-emerald-300" />
+              <span>고용노동부 연계 혜택</span>
             </span>
             <h3 className="text-xl sm:text-2xl font-bold text-white">
               이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!
@@ -142,7 +143,7 @@ export function LandingPage() {
               className="flex h-13 items-center justify-center gap-2.5 rounded-2xl bg-[#173F3A] px-7 text-base font-bold text-white hover:bg-[#12332F] active:scale-[0.98] transition-all cursor-pointer"
             >
               <Briefcase className="size-5" />
-              <span>🚀 전체 프로젝트 보러가기</span>
+              <span>전체 프로젝트 보러가기</span>
             </button>
           </div>
         </div>
@@ -164,8 +165,9 @@ export function LandingPage() {
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/60 pb-4">
               <div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                  🏛️ 고용노동부 주관
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+                  <Landmark className="size-3.5 text-emerald-700" />
+                  <span>고용노동부 주관</span>
                 </span>
                 <h2
                   id="subsidy-modal-title"
