@@ -143,7 +143,8 @@ export function LandingPage() {
                 preload="metadata"
               />
             </div>
-            <div className="mt-3 flex max-w-5xl items-center justify-end gap-3 text-right text-[0.9375rem] font-black text-[#173f3a] sm:text-[1.125rem]">
+            <div className="mt-3 flex max-w-5xl items-center justify-end gap-3 text-right text-[0.9375rem] font-black text-[#173f3a] sm:text-[1.875rem]">
+              <span className="shrink-0 font-medium tracking-[0.08em] text-[#173f3a]">IEO Job</span>
               <span className="h-1 w-8 shrink-0 bg-[#f47a36]" aria-hidden="true" />
               <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
             </div>
