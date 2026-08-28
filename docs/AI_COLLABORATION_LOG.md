@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 비로그인 상태 추천 영역 로그인 안내 배너 전환 및 로그아웃 하드 리로드 조치
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **비로그인 시 로그인/가입 안내 배너 및 버튼 전환**: 비로그인(`!user`) 상태에서 시니어 홈/프로젝트 영역의 맞춤 추천 안내 문구가 기존 `내 정보에서 1순위 희망 직종을 먼저 선택해 주세요` 및 `[내 정보 입력하기]`로 잘못 표출되던 문제를 수정하여, `맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.` 안내 문구와 **`[로그인 / 회원가입하기 ➔]`** 버튼이 즉시 표출되도록 개선.
+  2. **로그아웃 완전 세션 초기화(Hard Reload)**: 로그아웃 버튼 클릭 시 파이어베이스 및 로컬 스토리지 삭제와 동시에 `window.location.href = '/senior/project-database'`를 통한 브라우저 하드 리로드를 수행하여 이전 로그인 세션 잔재를 완전히 파기하고 비로그인 프로젝트 탐색 화면으로 즉시 전환 조치.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/CompanyInfoPage.tsx`
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 홈 요약 카드 텍스트 단일 행(줄바꿈 방지) 처리 및 랜딩 헤더 버튼 정제
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
