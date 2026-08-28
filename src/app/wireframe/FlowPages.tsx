@@ -97,9 +97,14 @@ import {
   updateProposalStatus,
 } from '@/services/proposalService';
 import {
+  OTHER_OCCUPATION_PREFERENCE,
+} from '@/data/occupationCategories';
+import {
   calculatePersonalizedMatch,
   getExperienceCardRecommendationText,
   getProfileMatchedRankedProjects,
+  getProfilePreferredCategories,
+  getProfilePreferredPreferences,
   getProfilePrimaryCategory,
   hasProfileRecommendationCriteria,
 } from '@/services/recommendationEngine';
@@ -462,7 +467,12 @@ export function SeniorHomePage() {
       setSavedExperienceCount(experienceCard ? 1 : 0);
 
       const primaryCategory = getProfilePrimaryCategory(profile);
-      if (!primaryCategory) {
+      const desiredCategories = getProfilePreferredCategories(profile);
+      const preferredPreferences = getProfilePreferredPreferences(profile);
+      const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
+      const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
+
+      if (!primaryCategory && desiredCategories.length === 0 && !shouldUseOtherOccupation) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHomeTotalPages(1);
@@ -474,9 +484,11 @@ export function SeniorHomePage() {
 
       try {
         const result = await searchFullJobDatabase({
-          categories: [primaryCategory],
-          desiredCategories: [primaryCategory],
+          categories: desiredCategories.length > 0 ? desiredCategories : (primaryCategory ? [primaryCategory] : undefined),
+          desiredCategories,
           desiredLocation: profile?.desiredLocation,
+          desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
+          desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
           experienceCardCategory: experienceCard?.category,
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
