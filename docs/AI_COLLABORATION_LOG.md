@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 랜딩 페이지 '고용노동부 연계 혜택' 뱃지 여백 최적화 (가로 풀스트레치 제거 및 컴팩트 핏)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **뱃지 가로 풀스트레치 빈 여백 해결**: 상위 플렉스 컬럼 컨테이너의 기본 stretch 속성으로 인해 `[고용노동부 연계 혜택]` 알약형 뱃지가 가로 전체로 길게 늘어나 우측에 불필요한 빈 여백이 생기던 문제를 `w-fit` 및 `items-start` 지정을 통해 텍스트/아이콘 크기에 딱 맞게(hug content) 컴팩트 뱃지로 최적화.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 시니어 프로젝트 조회 시 '조회 공고' 수치 깜빡임(10건 노출) 버그 수정 (0건 기본값 처리)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
