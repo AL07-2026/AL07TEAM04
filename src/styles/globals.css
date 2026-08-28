@@ -60,14 +60,12 @@ html {
   border-color: var(--border);
 }
 
-body {
-  min-width: 320px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  overflow-x: clip;
-  background: var(--background);
-  color: var(--foreground);
+html,
+body,
+button,
+input,
+select,
+textarea {
   font-family:
     'Pretendard',
     -apple-system,
@@ -79,6 +77,16 @@ body {
     'Apple SD Gothic Neo',
     'Noto Sans KR',
     sans-serif;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: clip;
+  background: var(--background);
+  color: var(--foreground);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
