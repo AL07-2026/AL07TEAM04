@@ -72,11 +72,7 @@ export function CompanyInfoPage() {
 
   async function handleLogout() {
     await signOut();
-    if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
-      window.location.href = '/senior/project-database';
-    } else {
-      void navigate('/senior/project-database');
-    }
+    void navigate('/senior/project-database', { replace: true });
   }
 
   const isMobile = mode === 'mobile';

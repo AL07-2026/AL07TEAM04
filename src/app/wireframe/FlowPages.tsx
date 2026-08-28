@@ -3210,11 +3210,7 @@ export function SeniorProfilePage() {
         <ActionButton
           onClick={async () => {
             await signOut();
-            if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
-              window.location.href = '/senior/project-database';
-            } else {
-              void navigate('/senior/project-database');
-            }
+            void navigate('/senior/project-database', { replace: true });
           }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
@@ -3332,11 +3328,7 @@ export function CompanyProfilePage() {
         <ActionButton
           onClick={async () => {
             await signOut();
-            if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
-              window.location.href = '/senior/project-database';
-            } else {
-              void navigate('/senior/project-database');
-            }
+            void navigate('/senior/project-database', { replace: true });
           }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"

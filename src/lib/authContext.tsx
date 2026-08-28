@@ -67,6 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
       } else {
         localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+        localStorage.removeItem('eojob_current_user');
+        localStorage.removeItem('v1_eojob_current_user');
+        localStorage.removeItem('eojob_senior_profile');
+        localStorage.removeItem('eojob_company_profile');
+        localStorage.removeItem('eojob_experience_card');
+        sessionStorage.clear();
       }
     }
   };
@@ -311,6 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     saveUserLocal(null);
     setUser(null);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('eojob_user_logged_out'));
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
