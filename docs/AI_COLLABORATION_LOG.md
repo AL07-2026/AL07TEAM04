@@ -16,6 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] Firestore 테스트 생성 계정 및 더미 경험 카드 데이터 정리 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **테스트 계정 정리**: UI 테스트 및 감사용으로 생성되었던 테스트 계정(`designaudit@example.com`, ID: `6HpbJWGO6pUuEBzc4WJOxvV4Eem2`)을 `users` 및 `senior_profiles` 컬렉션에서 영구 삭제.
+  2. **더미 경험 카드 정리**: `ㅂㅈㄷㅂㅈㄷ` 및 `1` 더미 텍스트로 생성되었던 테스트 경험 카드(`EXPERIENCE-31af2513`, `EXPERIENCE-8e718906`) 삭제 완료.
+  3. **팀원 정규 계정 보존**: 실제 팀원들의 등록 계정은 안전하게 보존.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] Firestore 테스트 등록 프로젝트(`ai` - 자동화 업무 활용) 삭제 완료
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
