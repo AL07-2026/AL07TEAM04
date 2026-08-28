@@ -97,13 +97,17 @@ import {
   updateProposalStatus,
 } from '@/services/proposalService';
 import {
+  getPublishedCompanyProjects,
+  matchesPublishedCompanyProject,
+  mergeSeniorPostings,
+} from '@/app/jobDatabaseProjectVisibility';
+import {
   OTHER_OCCUPATION_PREFERENCE,
 } from '@/data/occupationCategories';
 import {
   calculatePersonalizedMatch,
   getExperienceCardRecommendationText,
   getProfileMatchedRankedProjects,
-  getProfilePreferredCategories,
   getProfilePreferredPreferences,
   getProfilePrimaryCategory,
   hasProfileRecommendationCriteria,
@@ -455,10 +459,11 @@ export function SeniorHomePage() {
       if (!hasLoadedRef.current) {
         setIsLoadingRecommendations(true);
       }
-      const [profile, proposals, experienceCard] = await Promise.all([
+      const [profile, proposals, experienceCard, rawCompanyProjects] = await Promise.all([
         resolveSeniorProfile(user?.uid),
         getUserProposals(user?.uid),
         getLatestUserExperienceCard(user?.uid),
+        fetchProjects().catch(() => []),
       ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
@@ -467,12 +472,11 @@ export function SeniorHomePage() {
       setSavedExperienceCount(experienceCard ? 1 : 0);
 
       const primaryCategory = getProfilePrimaryCategory(profile);
-      const desiredCategories = getProfilePreferredCategories(profile);
       const preferredPreferences = getProfilePreferredPreferences(profile);
       const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
       const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
 
-      if (!primaryCategory && desiredCategories.length === 0 && !shouldUseOtherOccupation) {
+      if (!primaryCategory && !shouldUseOtherOccupation) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHomeTotalPages(1);
@@ -483,9 +487,21 @@ export function SeniorHomePage() {
       }
 
       try {
+        const publishedProjects = getPublishedCompanyProjects(rawCompanyProjects);
+        const matchingCompanyProjects = publishedProjects.filter((project) =>
+          matchesPublishedCompanyProject(project, {
+            desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
+            employmentType: 'all',
+            hiringStage: 'open',
+            query: '',
+            selectedCategory: primaryCategory ?? 'all',
+            workType: 'all',
+          }),
+        );
+
         const result = await searchFullJobDatabase({
-          categories: desiredCategories.length > 0 ? desiredCategories : (primaryCategory ? [primaryCategory] : undefined),
-          desiredCategories,
+          categories: primaryCategory ? [primaryCategory] : undefined,
+          desiredCategories: primaryCategory ? [primaryCategory] : [],
           desiredLocation: profile?.desiredLocation,
           desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
           desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
@@ -499,7 +515,9 @@ export function SeniorHomePage() {
             .join(' '),
           sortBy: 'fit-desc',
         });
-        const allPersonalizedItems = result.items
+
+        const mergedPostings = mergeSeniorPostings(matchingCompanyProjects, result.items);
+        const allPersonalizedItems = mergedPostings
           .map((item) => {
             const matchResult = calculatePersonalizedMatch(
               item,
