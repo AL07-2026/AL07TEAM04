@@ -16,6 +16,24 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 검색창 테두리 박스 제거, 비로그인 시 ㄱㄴㄷㄹ 순 정렬, 더미/테스트 기업 데이터(김인재, 윤중심, Healing J, 수제비누, 홈프로텍터) 전면 정제
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **검색창 이중 테두리 제거**: 직무 선택 모달 검색창(`input type="text"`) 내 외부 사각형 테두리를 완전히 제거하고 브라우저 기본 포커스 외곽선 삭제.
+  2. **비로그인 시 ㄱㄴㄷㄹ(가나다라/제목) 순 정렬**: 비로그인 사용자가 프로젝트 탐색 시 기본 정렬을 한글 가나다라 순(`localeCompare('ko')`)으로 자동 정렬되도록 프론트엔드 및 `jobSearch.mjs` 백엔드 서버 로직 수정.
+  3. **더미/테스트 기업 데이터 전면 제거**: 개발 및 테스트 과정에서 등록된 `윤중심`, `Healing J`, `김인재`, `수제비누`, `홈프로텍터` 등 목 데이터와 `user.name` 예외 로직을 정제하여, 실제 OpenAPI 공공 채용 데이터베이스 및 신규 정식 등록 데이터만 표출되도록 조치.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/services/projectService.ts`
+  - [MODIFY] `src/services/worknetService.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-27] `origin/develop` → `leedongwook` 병합 충돌 해결 및 회귀 검증
 
 - **작업자**: Codex (`leedongwook` 브랜치)
