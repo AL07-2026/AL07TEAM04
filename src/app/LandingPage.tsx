@@ -16,14 +16,14 @@ const features = [
     icon: CreditCard,
     title: '경험 카드',
     description:
-      '개인의 경험과 경력을 AI 인터뷰와 직접 입력으로 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
+      '개인의 경험 및 경력을 음성 인터뷰 및 직접 입력 후 AI가 적절하게 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
   },
   {
     number: '02',
     icon: Handshake,
     title: 'AI 맞춤 매칭',
     description:
-      '개인의 경력과 경험, 1·2·3순위 희망 내용을 함께 반영해 AI가 인재와 기업의 프로젝트를 맞춤 연결합니다.',
+      '인재가 선택한 1·2·3순위 희망 분야로 필터링하고, 경험 및 경력 내용을 함께 반영해 AI가 인재와 기업의 프로젝트를 맞춤 연결합니다.',
   },
   {
     number: '03',
@@ -127,10 +127,6 @@ export function LandingPage() {
                 </span>
               </p>
 
-              <div className="mt-8 flex items-center gap-4 text-[1.125rem] font-black text-[#173f3a] sm:text-[1.375rem]">
-                <span className="h-1 w-12 shrink-0 bg-[#f47a36]" aria-hidden="true" />
-                <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
-              </div>
             </div>
 
             <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-lg shadow-[0_14px_36px_rgba(23,63,58,0.14)]">
@@ -147,6 +143,10 @@ export function LandingPage() {
                 preload="metadata"
               />
             </div>
+            <div className="mt-3 flex max-w-5xl items-center justify-end gap-3 text-right text-[0.9375rem] font-black text-[#173f3a] sm:text-[1.125rem]">
+              <span className="h-1 w-8 shrink-0 bg-[#f47a36]" aria-hidden="true" />
+              <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
+            </div>
           </div>
         </section>
 
@@ -154,7 +154,7 @@ export function LandingPage() {
           <div className="mx-auto max-w-6xl">
             <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
-                이어잡의 특별한 연결
+                이어잡의 서비스 특징
               </p>
               <h2
                 id="service-features-title"
