@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 홈 요약 카드 텍스트 단일 행(줄바꿈 방지) 처리 및 랜딩 헤더 버튼 정제
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **요약 카드 텍스트 줄바꿈 방지**: `SummaryCard` 컴포넌트(`Ui.tsx`) 하단 캡션 라벨의 `line-clamp-2 break-keep` 스타일을 `whitespace-nowrap truncate`로 변경하여 `1순위 희망 직무 · 1순위 직종 미설정`, `검토 중·연락 받은 제안`, `아직 없어요`, `등록 경험 기준 최고 추천 점수` 등 서브텍스트가 2줄로 꺾이지 않고 깔끔한 1줄로 단일 행 표출되도록 개선.
+  2. **랜딩 헤더 중복 버튼 제거**: 랜딩 페이지 헤더 우측의 `[프로젝트 전체보기]` 버튼을 제거하여 메인 Hero 영역으로 사용자 시선 집중 유도.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 검색창 테두리 박스 제거, 비로그인 시 ㄱㄴㄷㄹ 순 정렬, 더미/테스트 기업 데이터(김인재, 윤중심, Healing J, 수제비누, 홈프로텍터) 전면 정제
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
