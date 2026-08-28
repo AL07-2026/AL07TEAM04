@@ -16,6 +16,21 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 채용 공고 로딩 지연 원인 분석 및 2.4초 자동 폴백·세션 캐시 아키텍처 구축
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **원인 분석**:
+  1. **Firestore 14,000건 전체 카탈로그 로드 병목**: 서버리스 콜드 스타트 시 14,000건의 방대한 Firestore 데이터를 한 번에 가져와 인덱싱하는 과정에서 5~10초의 대기 시간이 발생.
+  2. **클라이언트 직렬 호출 대기**: 프로필 정보 조회 후 `/api/jobs/search`를 순차 대기하면서 로딩 박스가 오래 지속됨.
+- **개선 조치**:
+  1. **2.4초 패스트 폴백(Fast Fallback)**: 네트워크 또는 백엔드 콜드 스타트가 2.4초를 초과하면 즉시 로컬 시드 공고 5개를 1페이지에 먼저 띄워 화면이 멈추지 않도록 보장.
+  2. **`sessionStorage` 즉시 복원**: 한 번 로드된 검색 결과와 1~5페이지 데이터는 브라우저 세션에 저장되어 재방문이나 페이지 이동 시 0ms 즉각 표시.
+  3. **Cloud Functions 1GiB 메모리 증설 및 30분 장기 인메모리 캐시 적용**.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 25개 파일 254개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 1화면 5개 공고 초고속 로딩 및 순차 페이지네이션 캐싱 최적화 (속도 대폭 개선)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
