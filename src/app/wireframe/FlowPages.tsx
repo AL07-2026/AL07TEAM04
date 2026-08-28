@@ -123,6 +123,121 @@ const projects: Project[] = [
   { company: '에듀브릿지', title: '파트너 운영 프로세스 개선', meta: '주 2회 · 혼합 · 3개월' },
 ];
 
+type ParsedExperienceSummary = {
+  action?: string;
+  occupation?: string;
+  problem?: string;
+  result?: string;
+  role?: string;
+};
+
+function parseExperienceSummary(summary?: string): ParsedExperienceSummary {
+  if (!summary) return {};
+
+  return summary.split(/\s*·\s*/).reduce<ParsedExperienceSummary>((parsed, segment) => {
+    const match = segment.match(/^(직종|문제|역할|실행|행동|결과)\s*:\s*(.+)$/);
+    if (!match) return parsed;
+
+    const label = match[1];
+    const value = match[2];
+    if (!label || !value) return parsed;
+    const trimmedValue = value.trim();
+    if (label === '직종') parsed.occupation = trimmedValue;
+    if (label === '문제') parsed.problem = trimmedValue;
+    if (label === '역할') parsed.role = trimmedValue;
+    if (label === '실행' || label === '행동') parsed.action = trimmedValue;
+    if (label === '결과') parsed.result = trimmedValue;
+    return parsed;
+  }, {});
+}
+
+export function ExperienceSummaryCard({
+  coverNote,
+  summary,
+}: {
+  coverNote?: string;
+  summary?: string;
+}) {
+  const parsed = parseExperienceSummary(summary);
+  const rows = [
+    {
+      icon: AlertTriangle,
+      label: '문제 (Problem)',
+      value: parsed.problem,
+    },
+    {
+      icon: User,
+      label: '역할 (Role)',
+      value: parsed.role,
+    },
+    {
+      icon: Settings,
+      label: '행동 (Action)',
+      value: parsed.action,
+    },
+    {
+      icon: BarChart2,
+      label: '결과 (Result)',
+      value: parsed.result,
+    },
+  ];
+  const hasStructuredSummary = rows.some((row) => Boolean(row.value));
+
+  return (
+    <div className="rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+          AI 경험 인터뷰 완료
+        </span>
+        {parsed.occupation ? (
+          <span className="text-[11px] font-extrabold text-slate-500">
+            직종 · {parsed.occupation}
+          </span>
+        ) : null}
+      </div>
+      <strong className="mt-3 block text-[15px] font-extrabold leading-6 text-[#17212B]">
+        인재 대표 경험 카드
+      </strong>
+
+      <div className="mt-3 grid gap-2">
+        {hasStructuredSummary ? (
+          rows.map(({ icon: Icon, label, value }) =>
+            value ? (
+              <section
+                className="rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3"
+                key={label}
+              >
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-extrabold text-[#173F3A]">{label}</p>
+                    <p className="mt-1 text-[13px] font-medium leading-6 text-[#17212B]">
+                      {value}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            ) : null,
+          )
+        ) : (
+          <p className="rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-[13px] font-medium leading-6 text-[#17212B]">
+            {summary || '저장된 AI 경험 인터뷰 요약이 없습니다.'}
+          </p>
+        )}
+      </div>
+
+      {coverNote ? (
+        <p className="mt-3 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-3 text-[12px] font-medium leading-5 text-[#17212B]">
+          <strong className="font-extrabold text-[#173F3A]">전달 메시지</strong>
+          <span className="mt-1 block">{coverNote}</span>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 type InterviewAnswer = {
   questionId: string;
   answerText: string;
@@ -2938,15 +3053,10 @@ export function ReceivedProposalDetailPage() {
       </div>
 
       {showDetailCard && (
-        <div className="flex flex-col gap-1.5 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 text-xs">
-          <strong className="font-extrabold text-[#17212B]">인재 대표 경험 카드 Summary</strong>
-          <p className="text-[#17212B]/80 font-medium">
-            {proposal?.interviewSummary || '저장된 AI 경험 인터뷰 요약이 없습니다.'}
-          </p>
-          {proposal?.coverNote ? (
-            <p className="text-[#17212B]/80 font-medium">• 전달 메시지: {proposal.coverNote}</p>
-          ) : null}
-        </div>
+        <ExperienceSummaryCard
+          coverNote={proposal?.coverNote}
+          summary={proposal?.interviewSummary}
+        />
       )}
 
       <p className="text-xs font-extrabold text-[#173F3A]">✓ 프로필·이력서 공유 동의 완료</p>
