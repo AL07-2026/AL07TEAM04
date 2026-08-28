@@ -66,6 +66,18 @@ export async function trackEvent(
     }
   }
 
+  // 1-2. Direct Google Tag (gtag) dispatch
+  if (
+    typeof window !== 'undefined' &&
+    typeof (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag === 'function'
+  ) {
+    try {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag('event', eventName, params);
+    } catch {
+      // ignore
+    }
+  }
+
   // 2. Firestore Real-time Event Collection
   void logToFirestore(eventType, eventName, params);
 }

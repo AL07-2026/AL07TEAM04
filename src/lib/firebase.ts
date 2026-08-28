@@ -12,6 +12,7 @@ const firebaseConfig = {
   storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'al07team04-bdfcd.firebasestorage.app',
   messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1079118700560',
   appId: env.VITE_FIREBASE_APP_ID || '1:1079118700560:web:44f649f95d7e3f22f2aa95',
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || 'G-X8DB6JPJPY',
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

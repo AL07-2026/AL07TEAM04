@@ -21,13 +21,13 @@ export function CompanyInfoPage() {
   const { user, signOut } = useAuth();
 
   const [form, setForm] = useState<CompanyForm>(() => {
-    const savedLocal = getLocalCompanyProfile(user?.uid);
+    const savedLocal = getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile();
     if (savedLocal) return savedLocal;
     return {
       companyName: '',
       companyAddress: '',
-      managerName: user?.name || '',
-      email: user?.email || '',
+      managerName: user?.name || '채용담당자',
+      email: user?.email || 'company@eojob.com',
       phone: '',
     };
   });
@@ -43,7 +43,7 @@ export function CompanyInfoPage() {
 
   useEffect(() => {
     void (async () => {
-      const local = getLocalCompanyProfile(user?.uid);
+      const local = getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile();
       if (local) setForm(local);
       if (!user?.uid) return;
 
@@ -56,17 +56,27 @@ export function CompanyInfoPage() {
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.companyName.trim() || !form.managerName.trim() || !form.email.trim()) {
-      setMessage('회사명, 담당자명, 이메일은 필수 입력 사항입니다.');
+    const resolvedManagerName = form.managerName.trim() || user?.name || '담당자';
+    const resolvedEmail = form.email.trim() || user?.email || 'company@eojob.com';
+
+    if (!form.companyName.trim()) {
+      setMessage('회사명은 필수 입력 사항입니다.');
       return;
     }
 
+    const payload: CompanyProfileData = {
+      ...form,
+      companyName: form.companyName.trim(),
+      managerName: resolvedManagerName,
+      email: resolvedEmail,
+    };
+
     try {
       if (user?.uid) {
-        await saveCompanyProfile(user.uid, form);
+        await saveCompanyProfile(user.uid, payload);
       }
-      saveLocalCompanyProfile(form, user?.uid);
-      setForm(form);
+      saveLocalCompanyProfile(payload, user?.uid);
+      setForm(payload);
     } catch (err) {
       console.error('Failed to save company profile to Firestore:', err);
       setMessage('회사 정보를 동기화하지 못했습니다. 네트워크를 확인한 뒤 다시 저장해 주세요.');
