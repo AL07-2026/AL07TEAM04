@@ -138,7 +138,7 @@ export type CategoryFilter =
 type WorkTypeFilter = WorkType | typeof all;
 type EmploymentTypeFilter = EmploymentType | typeof all;
 type HiringStageFilter = HiringStage | typeof all;
-type SortOption = 'fit-desc' | 'deadline-asc' | 'latest-desc';
+type SortOption = 'fit-desc' | 'deadline-asc' | 'latest-desc' | 'title-asc';
 
 export type FilterOption = {
   badge?: string;
@@ -386,11 +386,11 @@ export function CategoryPickerDialog({
           <Search aria-hidden="true" className="size-5 text-[#173F3A]" />
           <input
             autoFocus
-            className="h-full min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
+            className="h-full min-w-0 flex-1 border-0 border-none bg-transparent text-[15px] font-semibold text-[#17212B] outline-none ring-0 shadow-none focus:border-0 focus:outline-none focus:ring-0 placeholder:text-slate-400 [appearance:none] [-webkit-appearance:none]"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder="직무명으로 찾기"
-            type="search"
+            type="text"
             value={query}
           />
         </label>
@@ -1559,7 +1559,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         requireDesiredOccupationMatch:
           isCustomMatchSelected && customFallbackCategories.length === 0,
         signal: abortController.signal,
-        sortBy,
+        sortBy: !user && sortBy === 'fit-desc' ? 'title-asc' : sortBy,
         workType: selectedWorkType,
       })
         .then((result) => {
@@ -1711,6 +1711,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     resultGeneration,
     worknetReloadKey,
     isHomeRecommendationContext,
+    user,
   ]);
 
   function handleApply(posting: JobPosting) {
@@ -2069,11 +2070,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         );
       })
       .sort((first, second) => {
+        if (sortBy === 'title-asc') {
+          return first.title.localeCompare(second.title, 'ko');
+        }
         if (sortBy === 'deadline-asc') {
           return new Date(first.deadline).getTime() - new Date(second.deadline).getTime();
         }
         if (sortBy === 'latest-desc') {
           return new Date(second.postedAt).getTime() - new Date(first.postedAt).getTime();
+        }
+        if (!user) {
+          return first.title.localeCompare(second.title, 'ko');
         }
         const scoreFirst =
           role === 'senior'
@@ -2110,6 +2117,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     effectiveSelectedCategory,
     primaryProfileCategory,
     primaryProfilePreference,
+    user,
   ]);
 
   const displayedResultCount = isServerSearchActive

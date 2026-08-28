@@ -658,6 +658,12 @@ function hasPersonalizedFitRanking(options) {
 }
 
 function comparePreparedEntries(first, second, sortBy) {
+  if (sortBy === 'title-asc' || sortBy === 'alphabetical-asc') {
+    return (
+      first.posting.title.localeCompare(second.posting.title, 'ko') ||
+      first.posting.id.localeCompare(second.posting.id)
+    );
+  }
   if (sortBy === 'deadline-asc') {
     return (
       first.deadlineTime - second.deadlineTime ||

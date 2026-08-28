@@ -11,7 +11,7 @@ import type {
 } from '@/data/occupationCategories';
 import { normalizeJobPostingDetailFields } from '@/services/dataSyncService';
 
-export type JobDatabaseSort = 'fit-desc' | 'deadline-asc' | 'latest-desc';
+export type JobDatabaseSort = 'fit-desc' | 'deadline-asc' | 'latest-desc' | 'title-asc';
 export type JobOccupationFilter = OccupationCategory | 'unclassified';
 
 export type FullJobSearchOptions = {
