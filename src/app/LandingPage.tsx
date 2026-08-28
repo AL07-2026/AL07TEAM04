@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Clock3,
+  CreditCard,
   Handshake,
   Sparkles,
   TrendingUp,
@@ -11,24 +12,30 @@ import { useNavigate } from 'react-router';
 const features = [
   {
     number: '01',
-    icon: Sparkles,
-    title: 'AI 경험 과제화',
+    icon: CreditCard,
+    title: '경험 카드',
     description:
-      '오랜 경력을 AI 대화로 정리해, 내가 잘하는 문제 해결 역량을 기업이 이해하기 쉽게 보여줍니다.',
+      '개인의 경험과 경력을 AI 인터뷰와 직접 입력으로 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
+    background: 'bg-[#fffbed]',
+    iconBackground: 'bg-[#fff1b8]',
   },
   {
     number: '02',
     icon: Handshake,
-    title: '1순위 정밀 매칭',
+    title: 'AI 맞춤 매칭',
     description:
-      '희망 직무와 지역, 경력을 함께 살펴 시니어의 경험이 꼭 필요한 기업 프로젝트를 연결합니다.',
+      '개인의 경력과 경험, 1·2·3순위 희망 내용을 함께 반영해 AI가 인재와 기업의 프로젝트를 맞춤 연결합니다.',
+    background: 'bg-[#f3f8f6]',
+    iconBackground: 'bg-[#dcebe6]',
   },
   {
     number: '03',
     icon: Clock3,
-    title: '주 1~3회 유연 근무',
+    title: '유연 근무',
     description:
-      '풀타임이 아니어도 괜찮습니다. 원격과 하이브리드 방식으로 부담 없이 다시 일할 수 있습니다.',
+      '전일제·반일제·시간 근무제부터 직장·재택·하이브리드까지, 원하는 시간과 장소에서 자유롭게 프로젝트를 수행합니다.',
+    background: 'bg-[#fff6f1]',
+    iconBackground: 'bg-[#ffe0d6]',
   },
 ] as const;
 
@@ -36,8 +43,8 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-dvh bg-[#f7f3ea] text-[#17212b]">
-      <header className="sticky top-0 z-50 border-b border-[#e0d9c8] bg-white/95 backdrop-blur-sm">
+    <div className="min-h-dvh bg-white text-[#17212b]">
+      <header className="sticky top-0 z-50 border-b border-[#e7dfcb] bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
           <button
             type="button"
@@ -51,99 +58,101 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section className="relative isolate min-h-[680px] overflow-hidden bg-[#0d3430] sm:min-h-[720px]">
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            src="/eojob-landing-hero.mp4"
-            title="시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상"
-            autoPlay
-            muted
-            loop
-            playsInline
-            controls
-            controlsList="nodownload noremoteplayback"
-            preload="metadata"
-          />
-          <div className="absolute inset-0 bg-[#0b302c]/55" aria-hidden="true" />
-          <div
-            className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,35,32,0.96)_0%,rgba(8,35,32,0.83)_42%,rgba(8,35,32,0.22)_78%,rgba(8,35,32,0.38)_100%)]"
-            aria-hidden="true"
-          />
-
-          <div className="relative mx-auto flex min-h-[680px] max-w-6xl items-center px-5 py-16 sm:min-h-[720px] sm:px-8">
-            <div className="max-w-3xl text-white">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/12 px-4 py-2 text-sm font-bold text-[#d9eee8] backdrop-blur-sm">
-                <Sparkles className="size-4 text-[#ff8a70]" aria-hidden="true" />
+        <section className="bg-[#fffdf5] px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
+          <div className="mx-auto max-w-6xl">
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#d8d0b9] bg-white px-4 py-2 text-sm font-extrabold text-[#173f3a] shadow-sm">
+                <Sparkles className="size-4 text-[#f06b4f]" aria-hidden="true" />
                 <span>실무 과제 중심의 경험인재 매칭 플랫폼</span>
               </div>
 
-              <h1 className="mt-7 text-4xl font-black leading-[1.18] tracking-normal sm:text-5xl lg:text-6xl">
-                기업의 실무 문제와
+              <h1 className="mt-7 text-4xl font-black leading-[1.2] tracking-normal text-[#17212b] sm:text-5xl lg:text-6xl">
+                기업의 실무 프로젝트와
                 <br />
-                시니어의 경험을 잇다
+                <span className="text-[#173f3a]">시니어의 경험을 잇다</span>
               </h1>
 
-              <p className="mt-7 max-w-2xl text-lg font-medium leading-relaxed text-white/88 sm:text-xl">
+              <p className="mx-auto mt-6 max-w-3xl text-lg font-medium leading-relaxed text-[#53606e] sm:text-xl">
                 기업에는 지금 필요한 실무 경험을, 시니어에게는 다시 빛날 수 있는 일을 연결합니다.
                 이어잡이 경력과 과제를 이해하고 알맞은 프로젝트를 찾아드립니다.
               </p>
+            </div>
 
-              <div className="mt-9 flex items-center gap-4 text-lg font-bold text-[#ffd5ca] sm:text-xl">
-                <span className="h-1 w-12 bg-[#f06b4f]" aria-hidden="true" />
-                <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
-              </div>
+            <div className="mx-auto mt-12 max-w-5xl overflow-hidden rounded-lg border border-[#e1d7bd] bg-[#17212b] p-2 shadow-[0_14px_36px_rgba(23,63,58,0.14)] sm:p-3">
+              <video
+                className="aspect-video w-full rounded-md bg-black object-contain"
+                src="/eojob-landing-hero.mp4"
+                title="시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                controlsList="nodownload noremoteplayback"
+                preload="metadata"
+              />
+            </div>
+
+            <div className="mt-8 flex items-center justify-center gap-4 text-center text-xl font-black text-[#173f3a] sm:text-2xl">
+              <span className="h-1 w-10 shrink-0 bg-[#f06b4f]" aria-hidden="true" />
+              <p>경험을 잇고, 일을 잇고, 세대를 잇다</p>
+              <span className="h-1 w-10 shrink-0 bg-[#f06b4f]" aria-hidden="true" />
             </div>
           </div>
         </section>
 
-        <section className="bg-white py-16 sm:py-20" aria-labelledby="landing-features-title">
-          <div className="mx-auto max-w-6xl px-5 sm:px-8">
-            <div className="max-w-2xl">
-              <p className="text-base font-extrabold text-[#b84734]">이어잡이 연결하는 방법</p>
+        <section className="border-t border-[#eee5cf] bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
+          <div className="mx-auto max-w-6xl">
+            <div className="border-t border-[#e5decc] pt-8">
+              <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f06b4f]">
+                이어잡의 특별한 연결
+              </p>
               <h2
-                id="landing-features-title"
-                className="mt-3 text-3xl font-black leading-tight text-[#17212b] sm:text-4xl"
+                id="service-features-title"
+                className="mt-3 text-3xl font-black tracking-normal text-[#17212b] sm:text-4xl"
               >
-                경험이 다시 일이 되는
-                <br />
-                쉽고 분명한 연결
+                Service Features
               </h2>
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {features.map(({ number, icon: Icon, title, description }) => (
-                <article
-                  key={number}
-                  className="rounded-lg border border-[#e0d9c8] bg-[#faf8f3] p-6 shadow-[0_8px_24px_rgba(23,33,43,0.06)]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-black text-[#b84734]">{number}</span>
-                    <span className="grid size-11 place-items-center rounded-lg bg-[#ddebe7] text-[#173f3a]">
-                      <Icon className="size-6" aria-hidden="true" />
-                    </span>
-                  </div>
-                  <h3 className="mt-6 text-xl font-black text-[#173f3a]">{title}</h3>
-                  <p className="mt-3 text-base font-medium leading-relaxed text-[#4b5768]">
-                    {description}
-                  </p>
-                </article>
-              ))}
+              {features.map(
+                ({ number, icon: Icon, title, description, background, iconBackground }) => (
+                  <article
+                    key={number}
+                    className={`${background} min-h-[290px] rounded-lg border border-[#e2dac7] p-6 shadow-[0_10px_28px_rgba(23,33,43,0.08)] sm:p-7`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-black text-[#f06b4f]">{number}</span>
+                      <span
+                        className={`${iconBackground} grid size-12 place-items-center rounded-lg text-[#173f3a]`}
+                      >
+                        <Icon className="size-6" aria-hidden="true" />
+                      </span>
+                    </div>
+                    <h3 className="mt-8 text-2xl font-black text-[#151b21]">{title}</h3>
+                    <p className="mt-4 text-base font-semibold leading-[1.75] text-[#303943]">
+                      {description}
+                    </p>
+                  </article>
+                ),
+              )}
             </div>
           </div>
         </section>
 
-        <section className="border-y border-[#c9ddd7] bg-[#ddebe7] py-12 sm:py-14">
-          <div className="mx-auto flex max-w-6xl flex-col gap-7 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+        <section className="border-y border-[#d8e4df] bg-[#edf6f2] px-5 py-11 sm:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-[#173f3a] text-white">
                 <TrendingUp className="size-6" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-sm font-extrabold text-[#b84734]">고용노동부 연계 혜택</p>
-                <h2 className="mt-2 text-2xl font-black leading-snug text-[#173f3a] sm:text-3xl">
+                <p className="text-sm font-black text-[#f06b4f]">고용노동부 연계 혜택</p>
+                <h2 className="mt-2 text-2xl font-black leading-snug text-[#17212b] sm:text-3xl">
                   검증된 시니어 인재와 함께하고, 인건비 부담도 낮추세요
                 </h2>
-                <p className="mt-3 text-base font-medium leading-relaxed text-[#405a56]">
+                <p className="mt-3 text-base font-medium leading-relaxed text-[#465a55]">
                   국민취업지원제도 요건을 충족한 인재를 채용하면 고용촉진장려금 지원 대상이 될 수
                   있습니다.
                 </p>
@@ -152,7 +161,7 @@ export function LandingPage() {
             <button
               type="button"
               onClick={() => void navigate('/login?role=company')}
-              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#173f3a] bg-white px-6 text-base font-extrabold text-[#173f3a] transition hover:bg-[#f7f3ea] active:scale-[0.98]"
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d8d0b9] bg-white px-6 text-base font-black text-[#173f3a] shadow-sm transition hover:border-[#173f3a] active:scale-[0.98]"
             >
               혜택 대상 인재 보기
               <ArrowRight className="size-5" aria-hidden="true" />
@@ -160,20 +169,20 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-[#173f3a] py-16 text-center text-white sm:py-20">
-          <div className="mx-auto max-w-3xl px-5 sm:px-8">
-            <BriefcaseBusiness className="mx-auto size-10 text-[#ff8a70]" aria-hidden="true" />
-            <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
-              당신의 경험이 필요한 일을 만나보세요
+        <section className="bg-[#fffbed] px-5 py-14 sm:px-8 sm:py-18">
+          <div className="mx-auto max-w-6xl rounded-lg border border-[#e2dac7] bg-white px-6 py-10 text-center shadow-[0_12px_30px_rgba(23,33,43,0.09)] sm:px-10 sm:py-12">
+            <h2 className="text-2xl font-black leading-snug text-[#17212b] sm:text-3xl">
+              지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-relaxed text-white/78 sm:text-lg">
-              로그인하지 않아도 이어잡의 전체 프로젝트를 먼저 살펴볼 수 있습니다.
+            <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-[#53606e] sm:text-lg">
+              로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
             </p>
             <button
               type="button"
               onClick={() => void navigate('/senior/project-database')}
-              className="mx-auto mt-8 inline-flex min-h-14 items-center justify-center gap-3 rounded-lg bg-[#f06b4f] px-7 text-lg font-black text-white shadow-[0_8px_24px_rgba(0,0,0,0.2)] transition hover:bg-[#d9573d] active:scale-[0.98]"
+              className="mx-auto mt-7 inline-flex min-h-14 items-center justify-center gap-3 rounded-lg bg-[#173f3a] px-7 text-lg font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#0f332f] active:scale-[0.98]"
             >
+              <BriefcaseBusiness className="size-5" aria-hidden="true" />
               전체 프로젝트 보러가기
               <ArrowRight className="size-5" aria-hidden="true" />
             </button>
@@ -181,8 +190,10 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-[#e0d9c8] bg-white py-7 text-center text-sm font-semibold text-[#667085]">
-        <p>© 2026 이어잡 (Eojob). All rights reserved.</p>
+      <footer className="border-t border-[#e7dfcb] bg-white px-5 py-7 sm:px-8">
+        <p className="mx-auto max-w-6xl text-right text-sm font-semibold text-[#667085]">
+          © 2026 이어잡 IEO Job. All rights reserved.
+        </p>
       </footer>
     </div>
   );

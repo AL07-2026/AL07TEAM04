@@ -5,7 +5,7 @@ import { saveLocalCompanyProfile } from '@/services/profileService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
-    ['/', '기업의 실무 문제와 시니어의 경험을 잇다'],
+    ['/', '기업의 실무 프로젝트와 시니어의 경험을 잇다'],
     ['/login', '경험매칭'],
     ['/signup', '회원가입'],
     ['/role', '역할 선택'],
