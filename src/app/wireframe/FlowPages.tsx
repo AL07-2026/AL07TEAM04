@@ -476,6 +476,16 @@ export function SeniorHomePage() {
       const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
       const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
 
+      if (!user) {
+        setRecommendedJobs([]);
+        setRecommendedProjectsCount(0);
+        setHomeTotalPages(1);
+        setHighestFitProject(null);
+        setIsExperienceRecommendationApplied(false);
+        setRecommendationFeedMessage('맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.');
+        return;
+      }
+
       if (!primaryCategory && !shouldUseOtherOccupation) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
@@ -612,7 +622,7 @@ export function SeniorHomePage() {
       window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
       window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [homePage, recommendationReloadKey, user?.uid]);
+  }, [homePage, recommendationReloadKey, user, user?.uid]);
 
   const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
   const recommendationPrimaryLabel = recommendationPrimaryCategory
@@ -903,23 +913,29 @@ export function SeniorHomePage() {
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
               <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
-                {recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
+                {!user
+                  ? '맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.'
+                  : recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
               </p>
               <button
                 className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
                 onClick={() =>
-                  hasProfileRecommendationCriteria(recommendationProfile)
-                    ? setRecommendationReloadKey((value) => value + 1)
-                    : void navigate('/basic-profile')
+                  !user
+                    ? void navigate('/login')
+                    : hasProfileRecommendationCriteria(recommendationProfile)
+                      ? setRecommendationReloadKey((value) => value + 1)
+                      : void navigate('/basic-profile')
                 }
                 type="button"
               >
-                {hasProfileRecommendationCriteria(recommendationProfile) ? (
+                {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
                   <RefreshCw className="size-4" />
                 ) : null}
-                {hasProfileRecommendationCriteria(recommendationProfile)
-                  ? '다시 불러오기'
-                  : '내 정보 입력하기'}
+                {!user
+                  ? '로그인 / 회원가입하기 ➔'
+                  : hasProfileRecommendationCriteria(recommendationProfile)
+                    ? '다시 불러오기'
+                    : '내 정보 입력하기'}
               </button>
             </div>
           )}
