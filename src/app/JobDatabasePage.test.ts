@@ -3,7 +3,8 @@ import { createElement, type ChangeEvent, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 
-const { mockedSearch, mockedProfile, mockedProjects, mockedExperienceCard } = vi.hoisted(() => ({
+const { mockedCreateProject, mockedSearch, mockedProfile, mockedProjects, mockedExperienceCard } = vi.hoisted(() => ({
+  mockedCreateProject: vi.fn(),
   mockedSearch: vi.fn(),
   mockedProfile: vi.fn(),
   mockedProjects: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock('react-router', () => ({
 vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: { uid: 'senior-test-user' } }) }));
 vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
 vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
-vi.mock('@/services/projectService', () => ({ createProject: vi.fn(), fetchProjects: mockedProjects }));
+vi.mock('@/services/projectService', () => ({ createProject: mockedCreateProject, fetchProjects: mockedProjects }));
 vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
 
 import type { JobPosting } from '@/data/jobPostings';
@@ -73,6 +74,82 @@ const companyProject: JobPosting = {
 };
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
+  it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {
+    mockedProjects.mockResolvedValueOnce([]);
+    mockedCreateProject.mockResolvedValueOnce({
+      project: { ...companyProject, ownerId: 'senior-test-user', title: 'AI 자동화 프로젝트' },
+      savedToFirestore: true,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'company' }));
+    fireEvent.click(screen.getByRole('button', { name: '새 프로젝트 등록' }));
+
+    fireEvent.change(screen.getByLabelText('회사명 *'), { target: { value: '테스트 기업' } });
+    fireEvent.change(screen.getByLabelText('회사 규모'), { target: { value: '100-300명' } });
+    fireEvent.change(screen.getByLabelText('프로젝트 제목 *'), { target: { value: 'AI 자동화 프로젝트' } });
+    fireEvent.change(screen.getByLabelText('산업/직무 분야'), { target: { value: 'IT / SW' } });
+    fireEvent.change(screen.getByLabelText('근무 지역'), { target: { value: '서울 강남' } });
+    fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '4개월' } });
+    fireEvent.change(screen.getByLabelText('보수/예산'), { target: { value: '월 800만-1000만' } });
+    fireEvent.change(screen.getByLabelText('필요 경력'), { target: { value: '12년 이상' } });
+    fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
+      target: { value: '업무 자동화 체계가 필요합니다.' },
+    });
+    fireEvent.change(screen.getByLabelText('실제로 하는 일'), {
+      target: { value: '업무 흐름 진단\n자동화 설계' },
+    });
+    fireEvent.change(screen.getByLabelText('자격 요건'), {
+      target: { value: 'AI 프로젝트 경험\n프로젝트 주도 경험' },
+    });
+    fireEvent.change(screen.getByLabelText('추천 인재 유형'), {
+      target: { value: 'AI 자동화 리드' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Firestore DB에 등록' }));
+
+    await waitFor(() => expect(mockedCreateProject).toHaveBeenCalledTimes(1));
+    expect(mockedCreateProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companySize: '100-300명',
+        coreResponsibilities: ['업무 흐름 진단', '자동화 설계'],
+        experienceYears: '12년 이상',
+        location: '서울 강남',
+        projectDuration: '4개월',
+        qualifications: ['AI 프로젝트 경험', '프로젝트 주도 경험'],
+        recommendedTalentType: 'AI 자동화 리드',
+        salaryRange: '월 800만-1000만',
+      }),
+    );
+  });
+
+  it('기업 프로젝트 관리 화면의 추천 결과를 인재 카드로 보여준다', async () => {
+    mockedProjects.mockResolvedValueOnce([{ ...companyProject, ownerId: 'senior-test-user' }]);
+
+    render(createElement(JobDatabasePage, { role: 'company' }));
+
+    await waitFor(() => expect(screen.getByText('추천 인재 3명')).toBeTruthy());
+    expect(screen.getByText('김도현')).toBeTruthy();
+    expect(screen.getByText('박서연')).toBeTruthy();
+    expect(screen.getByText('이준호')).toBeTruthy();
+    expect(screen.getAllByText(/매칭 프로젝트 · 기업 운영 프로젝트/)).toHaveLength(3);
+  });
+
+  it('등록 프로젝트 상세는 추천 결과에서 숨기고 등록 프로젝트 카드 클릭 시 팝업으로 연다', async () => {
+    mockedProjects.mockResolvedValueOnce([{ ...companyProject, ownerId: 'senior-test-user' }]);
+
+    render(createElement(JobDatabasePage, { role: 'company' }));
+
+    await waitFor(() => expect(screen.getByText('김도현')).toBeTruthy());
+    expect(screen.queryByRole('heading', { name: companyProject.title })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
+    expect(screen.getByRole('dialog', { name: /등록 프로젝트 1건/ })).toBeTruthy();
+    expect(screen.getAllByRole('heading', { name: companyProject.title }).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: '등록 프로젝트 팝업 닫기' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /등록 프로젝트 1건/ })).toBeNull());
+  });
+
   it('공개 중인 기업 프로젝트만 인재 목록에 포함한다', () => {
     const closedProject = { ...companyProject, id: 'company-project-2', hiringStage: 'closing' as const };
 
