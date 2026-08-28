@@ -93,8 +93,30 @@ export function LandingPage() {
           </div>
         </div>
 
+        {/* Employment Promotion Subsidy Highlight Card for Companies */}
+        <div className="mt-12 rounded-3xl border border-emerald-300 bg-gradient-to-r from-emerald-900 via-[#173F3A] to-emerald-950 p-6 sm:p-8 text-left text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex flex-col gap-2 max-w-2xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-extrabold text-emerald-300 border border-emerald-400/30">
+              💰 고용노동부 연계 혜택
+            </span>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+              이어잡에서 검증된 시니어 채용하고, 인건비 연 720만원 절감하세요!
+            </h3>
+            <p className="text-sm font-medium text-emerald-100/90 leading-relaxed">
+              국민취업지원제도 1단계를 완료한 시니어 인재 채용 시, 국가로부터 분기별 180만원(월 60만원 x 12개월)의 고용촉진장려금을 지급받을 수 있습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void navigate('/senior/project-database')}
+            className="shrink-0 flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-slate-950 hover:bg-emerald-300 active:scale-[0.98] transition cursor-pointer"
+          >
+            <span>혜택 대상 인재 보기 ➔</span>
+          </button>
+        </div>
+
         {/* Bottom CTA Card */}
-        <div className="mt-16 rounded-3xl border border-[#E0D9C8] bg-white p-8 text-center shadow-md">
+        <div className="mt-12 rounded-3xl border border-[#E0D9C8] bg-white p-8 text-center shadow-md">
           <h2 className="text-xl sm:text-2xl font-extrabold text-[#17212B]">
             지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
           </h2>

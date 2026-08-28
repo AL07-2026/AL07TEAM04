@@ -497,6 +497,22 @@ export function BasicProfilePage() {
                   </p>
                 </div>
 
+                {form.employmentSubsidyTarget ? (
+                  <div className="flex flex-col gap-1.5 p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/80">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="shrink-0 whitespace-nowrap rounded-full border border-emerald-600/30 bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900">
+                        ✓ 연 720만원 정부 지원금 대상 인증됨
+                      </span>
+                      <span className="text-xs font-bold text-emerald-900">
+                        {form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료 완료'}
+                      </span>
+                    </div>
+                    <p className="text-[12px] font-semibold text-emerald-800 leading-snug">
+                      기업에서 해당 인재 채용 시 고용촉진장려금(월 60만원 x 12개월)을 지원받아 채용 서류 및 면접 우대를 받습니다.
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
@@ -658,8 +674,103 @@ export function BasicProfilePage() {
               label="💪 경력 분야 세부 핵심 강점 및 주력 역량"
               onChange={(e) => update('keySkills')(e.target.value)}
               placeholder="예: 0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀원 리더십 등 본인의 핵심 강점을 입력해주세요."
+              rows={4}
               value={form.keySkills || ''}
             />
+
+            {/* Section 5: 고용촉진장려금 지원 대상 자격 인증 (선택) */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-sm md:text-base font-extrabold text-[#173F3A] flex items-center gap-2">
+                  <span>💰 고용촉진장려금(연 720만원) 지원 대상자 인증</span>
+                  <span className="rounded-full bg-[#173F3A]/10 px-2 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
+                    선택
+                  </span>
+                </label>
+                <p className="text-xs md:text-[13px] font-medium text-slate-500 leading-relaxed">
+                  국민취업지원제도(1단계 수료) 또는 내일배움카드 훈련(3개월 이상)을 이수하셨다면
+                  인증해 주세요. 기업의 채용 우선순위가 크게 상승합니다.
+                </p>
+              </div>
+
+              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-white border border-[#E0D9C8] cursor-pointer hover:bg-slate-50 transition">
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.employmentSubsidyTarget)}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      employmentSubsidyTarget: e.target.checked,
+                    }))
+                  }
+                  className="size-4 rounded accent-[#173F3A]"
+                />
+                <span className="text-xs md:text-sm font-extrabold text-[#17212B]">
+                  고용노동부 고용촉진장려금 지원 대상 구직자입니다 (연 최대 720만원 지원)
+                </span>
+              </label>
+
+              {form.employmentSubsidyTarget ? (
+                <div className="flex flex-col gap-3 pt-2 border-t border-[#E0D9C8]">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
+                      이수한 취업지원프로그램
+                    </span>
+                    <select
+                      value={
+                        form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료'
+                      }
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          employmentSubsidyProgram: e.target.value,
+                        }))
+                      }
+                      className="h-11 md:h-12 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                    >
+                      <option value="국민취업지원제도 1단계(IAP) 수료">
+                        국민취업지원제도 1단계(IAP) 수료 (유효기간 1년)
+                      </option>
+                      <option value="국민내일배움카드 3개월 이상 직업훈련 수료">
+                        국민내일배움카드 3개월 이상 직업훈련 수료
+                      </option>
+                      <option value="지자체 및 고용센터 취업지원프로그램 이수">
+                        지자체 및 고용센터 취업지원프로그램 이수
+                      </option>
+                      <option value="기타 고용촉진장려금 지원 대상자 (장애인, 여성가장 등)">
+                        기타 고용촉진장려금 지원 대상자 (장애인, 여성가장 등)
+                      </option>
+                    </select>
+                  </div>
+
+                  <Field
+                    label="확인서 / 증명서 파일명 또는 발급번호 (선택)"
+                    value={form.employmentSubsidyDocName || ''}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        employmentSubsidyDocName: e.target.value,
+                      }))
+                    }
+                    placeholder="예: 국민취업지원제도 IAP 이수 확인서 (2026-08호)"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white border border-[#E0D9C8]">
+                  <p className="text-xs font-semibold text-slate-600">
+                    💡 아직 수료하지 않으셨나요? 국민취업지원제도 1단계를 완료하면 기업 지원 대상이 됩니다.
+                  </p>
+                  <a
+                    href="https://www.kua.go.kr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-xs font-extrabold text-[#173F3A] hover:underline"
+                  >
+                    국취제 안내 ➔
+                  </a>
+                </div>
+              )}
+            </div>
 
             {/* Section 5: 해결했던 핵심 문제 및 성과 사례 */}
             <TextAreaField

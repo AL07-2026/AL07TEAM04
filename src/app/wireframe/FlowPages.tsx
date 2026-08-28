@@ -3012,6 +3012,19 @@ export function ReceivedProposalDetailPage() {
         </div>
       </div>
 
+      {/* Employment Promotion Subsidy Report Card for Company */}
+      <div className="flex flex-col gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/90 p-3.5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
+            💰 고용촉진장려금 지원 대상
+          </span>
+          <span className="text-xs font-extrabold text-emerald-900">연 최대 720만원 혜택</span>
+        </div>
+        <p className="text-xs font-semibold text-emerald-900 leading-snug">
+          해당 인재 채용 시 분기별 180만원(월 60만원 x 12개월)의 국가 인건비 지원금을 신청할 수 있습니다. (고용보험 및 우선지원대상기업 기준)
+        </p>
+      </div>
+
       {/* Soft Mint Info Box */}
       <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3">
         <Info className="mt-0.5 size-4 shrink-0 text-[#173F3A]" />
@@ -3136,13 +3149,18 @@ export function SeniorProfilePage() {
           {userName[0] || '이'}
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <strong className="text-base sm:text-lg font-extrabold text-[#17212B]">
               {userName} 님
             </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
               ✓ 본인 인증
             </span>
+            {seniorProfile?.employmentSubsidyTarget ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 border border-emerald-300">
+                ✓ 연 720만원 지원 대상
+              </span>
+            ) : null}
           </div>
           <span className="text-xs font-bold text-slate-500 truncate">{userEmail}</span>
           <span className="text-xs font-extrabold text-[#F06B4F]">시니어 인재 회원</span>
