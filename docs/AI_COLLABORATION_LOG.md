@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-28] 메인 랜딩 히어로 서브 텍스트 줄바꿈 최적화 ('당면 과제를' 뒤 개행 및 '정/밀' 분리 방지)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **가독성 줄바꿈 개선**: `LandingPage.tsx`의 메인 히어로 소개 문구에서 "정밀 매칭하는"의 단어가 "정 / 밀"로 어색하게 줄바꿈되던 문제를 해결하기 위해, "기업의 당면 과제를" 직후 명시적으로 줄바꿈(`<br />`)을 넣고 `break-keep`을 적용하여 다음 줄에 "AI로 정밀 매칭하는 플랫폼 이어잡입니다."가 온전하고 깔끔하게 렌더링되도록 수정.
+- **검증 & 배포**: `npm run validate` 100% 통과 (TypeScript 0 error, ESLint 0 warning, Vitest 24개 파일 249개 유닛 테스트 통과, Vite 빌드 성공).
+  - Firebase Hosting `leedongwook` 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 랜딩 페이지 '고용노동부 연계 혜택' 뱃지 여백 최적화 (가로 풀스트레치 제거 및 컴팩트 핏)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` 브랜치)
 - **작업 내용**:
