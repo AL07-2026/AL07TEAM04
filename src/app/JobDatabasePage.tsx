@@ -1261,7 +1261,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     closingSoonTotal: number;
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 5;
   const detailContainerRef = useRef<HTMLDivElement>(null);
   const focusedViewportIdRef = useRef<string | null>(null);
   const preferredProfileCategories = useMemo(

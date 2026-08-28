@@ -519,7 +519,7 @@ export function SeniorHomePage() {
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
           page: 1,
-          pageSize: 100,
+          pageSize: 10,
           profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
             .filter(Boolean)
             .join(' '),

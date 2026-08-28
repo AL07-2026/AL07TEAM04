@@ -178,6 +178,8 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   };
 }
 
+const DELETED_TEST_PROJECT_IDS = new Set(['PROJECT-4716ed6d', 'PROJECT-8fe2dfaa', 'PROJECT-faffec6f']);
+
 function getLocalProjects() {
   const stored = readVersionedStorage<unknown[]>(LOCAL_PROJECTS_KEY);
   if (!Array.isArray(stored)) return [];
@@ -186,7 +188,15 @@ function getLocalProjects() {
       const value = project as { id?: unknown };
       return normalizeProject(stringValue(value.id), project);
     })
-    .filter((project): project is JobPosting => Boolean(project));
+    .filter((project): project is JobPosting => Boolean(project))
+    .filter(
+      (project) =>
+        !DELETED_TEST_PROJECT_IDS.has(project.id) &&
+        project.title !== '테스트 및 수정용' &&
+        project.title !== '최동일' &&
+        project.companyName !== 'a' &&
+        !project.companyName.includes('KOREAMONSTER'),
+    );
 }
 
 function saveLocalProjects(projects: JobPosting[]) {
