@@ -1,10 +1,12 @@
 import {
   ArrowRight,
+  Building2,
   BriefcaseBusiness,
   Clock3,
   CreditCard,
   Handshake,
   Sparkles,
+  UserRound,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -47,17 +49,62 @@ export function LandingPage() {
           >
             <img src="/logo_text.png" alt="이어잡" className="h-7 w-auto object-contain" />
           </button>
+
+          <nav className="ml-auto flex items-center gap-1" aria-label="빠른 이동">
+            <button
+              type="button"
+              onClick={() => void navigate('/login?role=senior')}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a]"
+              aria-label="인재로 로그인"
+              title="인재로 로그인"
+            >
+              <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                인재로 로그인
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate('/login?role=company')}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a]"
+              aria-label="기업으로 로그인"
+              title="기업으로 로그인"
+            >
+              <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                기업으로 로그인
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate('/senior/project-database')}
+              className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a]"
+              aria-label="프로젝트 보러가기"
+              title="프로젝트 보러가기"
+            >
+              <BriefcaseBusiness className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                프로젝트 보러가기
+              </span>
+            </button>
+          </nav>
         </div>
       </header>
 
       <main>
         <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
           <div className="mx-auto max-w-6xl">
-            <div className="border-t border-[#e5decc] pt-8 text-left">
+            <div className="pt-2 text-left">
               <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#f47a36] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
               </p>
-              <h2 className="mt-3 text-[2rem] font-black leading-tight tracking-normal text-[#17212b] sm:text-[2.5rem]">
+              <h2
+                className="mt-2 text-[1.5rem] font-medium leading-tight tracking-normal text-[#17212b] sm:text-[1.875rem]"
+                style={{
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                }}
+              >
                 Experience Meets Opportunity
               </h2>
 
@@ -105,13 +152,17 @@ export function LandingPage() {
 
         <section className="border-t border-[#eee5cf] bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
           <div className="mx-auto max-w-6xl">
-            <div className="border-t border-[#e5decc] pt-8">
+            <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
                 이어잡의 특별한 연결
               </p>
               <h2
                 id="service-features-title"
-                className="mt-3 text-[2rem] font-black tracking-normal text-[#17212b] sm:text-[2.5rem]"
+                className="mt-2 text-[1.5rem] font-medium tracking-normal text-[#17212b] sm:text-[1.875rem]"
+                style={{
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                }}
               >
                 Service Features
               </h2>
@@ -122,17 +173,19 @@ export function LandingPage() {
                 ({ number, icon: Icon, title, description }) => (
                   <article
                     key={number}
-                    className="min-h-[310px] rounded-lg border border-[#bfd8d0] bg-[#e3f0ec] p-7 text-[#17212b] shadow-[0_12px_30px_rgba(23,63,58,0.12)] sm:p-8"
+                    className="min-h-[320px] rounded-lg border border-[#bfd8d0] bg-[#e3f0ec] p-7 text-[#17212b] shadow-[0_12px_30px_rgba(23,63,58,0.12)] sm:p-8"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[0.95rem] font-black text-[#f47a36]">{number}</span>
                       <Icon
-                        className="size-11 text-[#173f3a]"
+                        className="size-[3.25rem] text-[#173f3a]"
                         strokeWidth={1.8}
                         aria-hidden="true"
                       />
                     </div>
-                    <h3 className="mt-8 text-[1.6rem] font-black text-[#111820]">{title}</h3>
+                    <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#111820]">
+                      {title}
+                    </h3>
                     <p className="mt-4 text-[1.125rem] font-semibold leading-[1.75] text-[#26332f]">
                       {description}
                     </p>
@@ -143,7 +196,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-[#bad8ce] bg-[#dceee8] px-5 py-11 sm:px-8">
+        <section className="border-y border-[#efe5be] bg-[#fffbed] px-5 py-11 sm:px-8">
           <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-3 sm:gap-4">
               <span className="grid size-11 shrink-0 place-items-center text-[#f47a36] sm:size-12">

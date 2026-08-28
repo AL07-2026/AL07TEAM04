@@ -52,6 +52,21 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
   });
 
+  it.each([
+    ['인재로 로그인', '/login?role=senior'],
+    ['기업으로 로그인', '/login?role=company'],
+    ['프로젝트 보러가기', '/senior/project-database'],
+  ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: label }));
+
+    await waitFor(() => {
+      expect(`${window.location.pathname}${window.location.search}`).toBe(destination);
+    });
+  });
+
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
     sessionStorage.clear();
     window.history.pushState({}, '', '/senior/experience/interview');
