@@ -49,11 +49,47 @@ export type FullJobSearchResult = {
   totalPages: number;
 };
 
-const SEARCH_CLIENT_CACHE_TTL_MS = 60 * 1000;
+const SEARCH_CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
 const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSearchResult }>();
+
+function readSessionStorageCache(key: string): FullJobSearchResult | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(`eojob_search_${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { expiresAt: number; result: FullJobSearchResult };
+    if (parsed && parsed.expiresAt > Date.now()) {
+      return parsed.result;
+    }
+  } catch {
+    // Ignore storage parse errors
+  }
+  return null;
+}
+
+function writeSessionStorageCache(key: string, result: FullJobSearchResult) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(
+      `eojob_search_${key}`,
+      JSON.stringify({ expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS, result }),
+    );
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 export function clearClientSearchCache() {
   clientSearchCache.clear();
+  if (typeof window !== 'undefined') {
+    try {
+      Object.keys(window.sessionStorage)
+        .filter((k) => k.startsWith('eojob_search_'))
+        .forEach((k) => window.sessionStorage.removeItem(k));
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 function setListParam(params: URLSearchParams, key: string, values?: string[]) {
@@ -96,6 +132,14 @@ export async function searchFullJobDatabase(
   if (cached && cached.expiresAt > now && !options.signal?.aborted) {
     return cached.result;
   }
+  const sessionCached = readSessionStorageCache(cacheKey);
+  if (sessionCached && !options.signal?.aborted) {
+    clientSearchCache.set(cacheKey, {
+      expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS,
+      result: sessionCached,
+    });
+    return sessionCached;
+  }
 
   const response = await fetch(`/api/jobs/search?${cacheKey}`, {
     headers: { Accept: 'application/json' },
@@ -132,6 +176,7 @@ export async function searchFullJobDatabase(
     expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS,
     result: searchResult,
   });
+  writeSessionStorageCache(cacheKey, searchResult);
 
   return searchResult;
 }

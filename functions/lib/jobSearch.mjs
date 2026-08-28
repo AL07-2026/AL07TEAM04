@@ -6,9 +6,9 @@ import { containsUtf8Replacement } from './httpEncoding.mjs';
 import { deduplicateJobCatalog } from './jobDeduplication.mjs';
 
 const GLOBAL_COLLECTION = 'global_job_postings';
-const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
-const SEARCH_RESULT_CACHE_TTL_MS = 60 * 1000;
-const MAX_SEARCH_RESULT_CACHE_ENTRIES = 100;
+const CATALOG_CACHE_TTL_MS = 30 * 60 * 1000;
+const SEARCH_RESULT_CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_SEARCH_RESULT_CACHE_ENTRIES = 500;
 const MAX_PAGE_SIZE = 24;
 const UNCLASSIFIED_OCCUPATION_FILTER = 'unclassified';
 const OTHER_OCCUPATION_PREFERENCE = 'other';

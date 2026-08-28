@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileText,
   Filter,
+  Loader2,
   Mail,
   MapPin,
   Mic,
@@ -1212,7 +1213,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       if (raw) {
         const parsed = JSON.parse(raw) as { feed?: WorknetProjectFeed };
         const cached = parsed?.feed?.projects || [];
-        if (cached.length >= 25) return cached;
+        if (cached.length >= 5) return cached;
       }
     } catch {
       // Ignore
@@ -1237,7 +1238,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
-  const [isLoadingPostings, setIsLoadingPostings] = useState<boolean>(() => postings.length === 0);
+  const [isLoadingPostings, setIsLoadingPostings] = useState<boolean>(() => role === 'senior');
   const [worknetFeedMessage, setWorknetFeedMessage] = useState('');
   const [worknetFeedStatus, setWorknetFeedStatus] = useState<WorknetProjectFeedStatus>('success');
   const [worknetReloadKey, setWorknetReloadKey] = useState(0);
@@ -3417,10 +3418,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         )}
       >
         {isLoadingPostings && !isFilterTransition ? (
-          <div className="col-span-full rounded-2xl border border-[#E0D9C8] bg-white p-8 text-center text-sm font-bold text-slate-500 shadow-xs">
-            {role === 'senior'
-              ? '맞춤 채용 공고를 불러오는 중입니다...'
-              : '프로젝트를 불러오는 중입니다...'}
+          <div className="col-span-full rounded-2xl border border-[#E0D9C8] bg-white p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center gap-3">
+            <Loader2 className="size-7 animate-spin text-[#173F3A]" />
+            <p className="text-sm font-extrabold text-[#17212B]">
+              {role === 'senior'
+                ? '맞춤 채용 공고를 불러오는 중입니다...'
+                : '프로젝트를 불러오는 중입니다...'}
+            </p>
+            <p className="text-xs font-medium text-slate-500">
+              {role === 'senior' ? '1페이지(5개 공고)를 빠르게 구성하고 있습니다.' : '데이터베이스와 동기화 중입니다.'}
+            </p>
           </div>
         ) : isFilterTransition ? (
           <div

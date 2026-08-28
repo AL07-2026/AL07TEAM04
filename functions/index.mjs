@@ -120,7 +120,7 @@ app.get('/api/jobs/stats', async (_req, res) => {
 
 app.get('/api/jobs/search', async (req, res) => {
   try {
-    res.set('Cache-Control', 'private, no-store, max-age=0');
+    res.set('Cache-Control', 'public, max-age=180, s-maxage=300, stale-while-revalidate=600');
     const result = await searchAccumulatedJobPostings(req.query);
     return res.json({ status: 'success', ...result });
   } catch (error) {
@@ -267,7 +267,7 @@ export const api = onRequest(
   {
     region: 'asia-northeast3',
     timeoutSeconds: 120,
-    memory: '512MiB',
+    memory: '1GiB',
     secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY'],
   },
   app,
