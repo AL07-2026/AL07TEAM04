@@ -5,7 +5,7 @@ import { saveLocalCompanyProfile } from '@/services/profileService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
-    ['/', /10년~30년 베테랑/],
+    ['/', /10년~30년 시니어의/],
     ['/login', '경험매칭'],
     ['/signup', '회원가입'],
     ['/role', '역할 선택'],
