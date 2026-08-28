@@ -23,6 +23,18 @@ export class ErrorBoundaryHarness extends Component<Props, State> {
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundaryHarness] Unhandled Exception Caught:', error, errorInfo);
+    if (
+      typeof window !== 'undefined' &&
+      (error.message?.includes('dynamically imported module') ||
+        error.message?.includes('Failed to fetch') ||
+        error.name === 'ChunkLoadError')
+    ) {
+      const key = 'eojob_chunk_reload_attempt';
+      if (!window.sessionStorage.getItem(key)) {
+        window.sessionStorage.setItem(key, 'true');
+        window.location.reload();
+      }
+    }
   }
 
   private handleReset = () => {

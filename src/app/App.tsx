@@ -11,18 +11,38 @@ function lazyPage<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
   exportName: TKey,
 ) {
-  return lazy(async () => ({
-    default: (await loader())[exportName] as unknown as ComponentType,
-  }));
+  return lazy(async () => {
+    try {
+      const module = await loader();
+      return {
+        default: module[exportName] as unknown as ComponentType<{ role?: string }>,
+      };
+    } catch (error) {
+      if (
+        typeof window !== 'undefined' &&
+        error instanceof Error &&
+        (error.message.includes('dynamically imported module') ||
+          error.message.includes('Failed to fetch') ||
+          error.name === 'ChunkLoadError')
+      ) {
+        const key = 'eojob_chunk_lazy_retry';
+        if (!window.sessionStorage.getItem(key)) {
+          window.sessionStorage.setItem(key, 'true');
+          window.location.reload();
+          return new Promise<{ default: ComponentType<{ role?: string }> }>(() => {});
+        }
+        window.sessionStorage.removeItem(key);
+      }
+      throw error;
+    }
+  });
 }
 
 const loadFlowPages = () => import('@/app/wireframe/FlowPages');
 const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
-const JobDatabasePage = lazy(() =>
-  import('@/app/JobDatabasePage').then((module) => ({ default: module.JobDatabasePage })),
-);
+const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
 const LoginPage = lazyPage(() => import('@/app/LoginPage'), 'LoginPage');
 const RoleSelectionPage = lazyPage(() => import('@/app/RoleSelectionPage'), 'RoleSelectionPage');
 const SignupPage = lazyPage(() => import('@/app/SignupPage'), 'SignupPage');
