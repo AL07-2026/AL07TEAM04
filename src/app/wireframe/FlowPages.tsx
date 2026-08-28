@@ -3192,9 +3192,13 @@ export function SeniorProfilePage() {
           {experienceCard ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
         </ActionButton>
         <ActionButton
-          onClick={() => {
-            void signOut();
-            void navigate('/senior/project-database');
+          onClick={async () => {
+            await signOut();
+            if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
+              window.location.href = '/senior/project-database';
+            } else {
+              void navigate('/senior/project-database');
+            }
           }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"
@@ -3310,9 +3314,13 @@ export function CompanyProfilePage() {
           + 새 프로젝트 등록
         </ActionButton>
         <ActionButton
-          onClick={() => {
-            void signOut();
-            void navigate('/senior/project-database');
+          onClick={async () => {
+            await signOut();
+            if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
+              window.location.href = '/senior/project-database';
+            } else {
+              void navigate('/senior/project-database');
+            }
           }}
           secondary
           className="text-rose-500 border-rose-200 hover:bg-rose-50"

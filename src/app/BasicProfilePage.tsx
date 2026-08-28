@@ -121,6 +121,7 @@ export function BasicProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
   const { user, signOut } = useAuth();
+
   const [form, setForm] = useState<ProfileForm>(() => {
     const savedLocal = getLocalSeniorProfile(user?.uid);
     if (savedLocal) return savedLocal;
@@ -225,7 +226,11 @@ export function BasicProfilePage() {
 
   async function handleLogout() {
     await signOut();
-    void navigate('/senior/project-database');
+    if (typeof window !== 'undefined' && import.meta.env.MODE !== 'test') {
+      window.location.href = '/senior/project-database';
+    } else {
+      void navigate('/senior/project-database');
+    }
   }
 
   const isMobile = mode === 'mobile';

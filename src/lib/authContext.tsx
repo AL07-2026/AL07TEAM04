@@ -102,6 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (err) {
             console.warn('Firestore user fetch failed, using fallback:', err);
           }
+        } else {
+          saveUserLocal(null);
         }
         setLoading(false);
       })();
