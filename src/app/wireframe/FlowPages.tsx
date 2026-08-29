@@ -487,7 +487,14 @@ function HomeRecommendationRow({
               fitTone.scoreClassName,
             )}
           >
-            <Sparkles className="size-3 text-[#F06B4F]" />
+            <Sparkles
+              className={cn(
+                'size-3 shrink-0',
+                fitScore >= 90
+                  ? 'text-white fill-white'
+                  : 'text-[#F06B4F] fill-[#F06B4F]',
+              )}
+            />
             <span>{fitScore}점</span>
           </span>
         ) : null}
