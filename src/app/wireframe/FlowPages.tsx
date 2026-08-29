@@ -491,7 +491,7 @@ function HomeRecommendationRow({
               className={cn(
                 'size-3 shrink-0',
                 fitScore >= 90
-                  ? 'text-white fill-white'
+                  ? 'text-[#FEEA00] fill-[#FEEA00]'
                   : 'text-[#F06B4F] fill-[#F06B4F]',
               )}
             />

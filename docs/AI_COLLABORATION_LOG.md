@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 프로젝트 탐색 전면 보더리스(Borderless) 현대화 & 90점 이상 골든 옐로우 별(Sparkles) 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **고점수(90점대 이상) 별표 아이콘 색상 변경**:
+     - 주황색 배경 배지 위의 별표(`Sparkles`) 아이콘을 선명하고 고급스러운 **골든 옐로우(`text-[#FEEA00] fill-[#FEEA00]`)**로 교체하여 시인성과 프리미엄 감성 강화 (홈 및 프로젝트 상세/목록 전체 적용).
+  2. **프로젝트 페이지 중첩 테두리 전면 제거 및 보더리스 소프트 서피스 개편**:
+     - **상단 추천 조건 & 현황 바**: 답답한 외곽선 제거, 부드러운 배경색(`bg-[#F8FCFB]`)과 깔끔한 화이트 칩(`bg-white shadow-2xs`) 적용.
+     - **통계 메트릭 카드 (`DatabaseMetric`)**: 회색 테두리 박스를 제거하고 은은한 카드 부유 효과(`bg-white shadow-xs hover:shadow-md`) 부여.
+     - **검색 및 직무 필터 컨테이너**: 테두리 선을 없애고 소프트 인풋과 자연스러운 필터 칩(`bg-[#FAF7F2]`)으로 미니멀리즘 극대화.
+     - **좌측 공고 카드 (`JobCard`) & 인재 카드 (`TalentCard`)**: 개별 사각 박스 테두리를 전면 제거하고, 선택 시 좌측 이너 액센트(`inset_3px`)와 틴트 배경(`bg-[#F2FAF7]`)으로 직관적 포커스 제공.
+     - **우측 AI 심층 분석 패널 (`JobDetailView`)**: 다중 박스 선을 제거하고 소프트 그라디언트 및 톤온톤 배경 블록으로 시각적 위계 확립.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 프로젝트 상세 화면 데스크톱 스크롤 시 상단 헤더 텍스트 겹침/깨짐 현상 수정
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

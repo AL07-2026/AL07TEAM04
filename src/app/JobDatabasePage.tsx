@@ -326,9 +326,9 @@ function DatabaseMetric({
   value: string;
 }) {
   const className = cn(
-    'rounded-2xl border border-[#E0D9C8] bg-white p-4 text-left shadow-xs transition',
+    'rounded-2xl bg-white p-4 text-left shadow-xs transition duration-200',
     onClick &&
-      'cursor-pointer hover:border-[#BBD5CE] hover:bg-[#F8FCFB] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]',
+      'cursor-pointer hover:bg-[#FAFDFB] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]',
   );
   const content = (
     <>
@@ -371,7 +371,7 @@ function SelectField<T extends string>({
       <span>{label}</span>
       <select
         className={cn(
-          'w-full rounded-xl border border-[#E0D9C8] px-3 font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10',
+          'w-full rounded-xl border border-[#E0D9C8]/80 px-3 font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10',
           mobile ? 'h-12 bg-[#FAF7F2] text-[14px]' : 'h-11 bg-white text-[13px]',
         )}
         onChange={(event) => onChange(event.target.value as T)}
@@ -402,10 +402,10 @@ function CategoryFilterButton({
     <button
       aria-pressed={selected}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+        'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
         selected
-          ? 'border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
-          : 'border-[#E0D9C8] bg-white text-[#17212B] shadow-2xs hover:border-[#173F3A]/40 hover:bg-[#FAF7F2]',
+          ? 'bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
+          : 'bg-[#FAF7F2] text-[#17212B] shadow-2xs hover:bg-[#F0ECE1]',
       )}
       onClick={onClick}
       type="button"
@@ -682,10 +682,10 @@ export function PostingCard({
     <article
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'group relative w-full max-w-full cursor-pointer rounded-2xl border p-4 text-left transition-all duration-200 min-w-0',
+        'group relative w-full max-w-full cursor-pointer rounded-2xl p-4 text-left transition-all duration-200 min-w-0',
         selected
-          ? 'border-[#173F3A] bg-[#F4FAF8] shadow-[inset_3px_0_0_#173F3A,0_4px_12px_rgba(23,63,58,0.08)]'
-          : 'border-[#E0D9C8] bg-white hover:border-[#173F3A]/50 hover:bg-[#FAF7F2]/40 hover:shadow-xs',
+          ? 'bg-[#F2FAF7] shadow-[inset_3px_0_0_#173F3A,0_4px_12px_rgba(23,63,58,0.08)]'
+          : 'bg-white shadow-xs hover:bg-[#FAFDFB] hover:shadow-md',
       )}
       onClick={onSelect}
     >
@@ -709,7 +709,7 @@ export function PostingCard({
           {showScore ? (
             <span
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black border',
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
                 fitTone.containerClassName,
                 fitTone.scoreClassName,
               )}
@@ -718,14 +718,14 @@ export function PostingCard({
                 className={cn(
                   'size-3 shrink-0',
                   displayScore >= 90
-                    ? 'text-white fill-white'
+                    ? 'text-[#FEEA00] fill-[#FEEA00]'
                     : 'text-[#F06B4F] fill-[#F06B4F]',
                 )}
               />
               <span>{displayScore}점</span>
             </span>
           ) : (
-            <span className="rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
+            <span className="rounded-full bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A] shadow-2xs">
               검증 공고
             </span>
           )}
@@ -751,10 +751,10 @@ export function PostingCard({
         {badges.map((badge, idx) => (
           <span
             className={cn(
-              'rounded-md px-2 py-0.5 text-[11px] font-bold border truncate',
+              'rounded-md px-2 py-0.5 text-[11px] font-bold truncate',
               badge.isMint
-                ? 'border-[#BBD5CE] bg-[#DDEBE7]/60 text-[#173F3A]'
-                : 'border-[#E0D9C8] bg-[#FAF7F2] text-slate-600',
+                ? 'bg-[#DDEBE7] text-[#173F3A]'
+                : 'bg-[#FAF7F2] text-slate-600',
             )}
             key={`${badge.label}-${idx}`}
           >
@@ -798,16 +798,14 @@ function RecommendedTalentCard({
     <article
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'w-full max-w-full cursor-pointer overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-xs transition hover:shadow-md',
-        selected
-          ? 'border-[#BBD5CE] bg-[#F4F9F8] shadow-[inset_3px_0_0_#173F3A,0_1px_2px_rgba(23,63,58,0.08)]'
-          : 'border-[#E0D9C8]',
+        'w-full max-w-full cursor-pointer overflow-hidden rounded-2xl bg-white p-4 text-left shadow-xs transition duration-200 hover:shadow-md hover:bg-[#FAFDFB]',
+        selected && 'bg-[#F2FAF7] shadow-sm ring-2 ring-[#173F3A]',
       )}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] text-[#173F3A]">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A]">
             <UserRound className="size-5" />
           </div>
           <div className="min-w-0">
@@ -820,7 +818,7 @@ function RecommendedTalentCard({
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
           className={cn(
-            'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-black',
+            'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
             fitTone.containerClassName,
             fitTone.scoreClassName,
           )}
@@ -829,7 +827,7 @@ function RecommendedTalentCard({
             className={cn(
               'size-3 shrink-0',
               talent.matchScore >= 90
-                ? 'text-white fill-white'
+                ? 'text-[#FEEA00] fill-[#FEEA00]'
                 : 'text-[#F06B4F] fill-[#F06B4F]',
             )}
           />
@@ -847,7 +845,7 @@ function RecommendedTalentCard({
       <div className="mt-3 flex flex-wrap gap-1.5">
         {talent.skills.map((skill) => (
           <span
-            className="rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]"
+            className="rounded-full bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A] shadow-2xs"
             key={skill}
           >
             {skill}
@@ -916,14 +914,14 @@ export function DetailPanel({
   return (
     <article
       className={cn(
-        'rounded-2xl border border-[#E0D9C8] bg-white shadow-xs',
+        'rounded-2xl bg-white shadow-xs',
         isMobile ? 'p-3.5 space-y-4' : 'p-5 space-y-5',
       )}
     >
       {/* Header */}
       <header
         className={cn(
-          'border-b border-[#E0D9C8] bg-white',
+          'border-b border-[#E0D9C8]/70 bg-white',
           !isMobile
             ? 'sticky top-0 z-20 -mx-5 -mt-5 mb-5 rounded-t-2xl px-5 py-4 shadow-2xs'
             : 'pb-4',
@@ -931,7 +929,7 @@ export function DetailPanel({
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
+            <span className="rounded-md bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
               {hiringStageLabels[posting.hiringStage] || '모집 중'}
             </span>
             <span className="text-[12px] font-bold text-slate-500">
@@ -947,7 +945,7 @@ export function DetailPanel({
             <span
               aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-black',
                 fitTone.containerClassName,
                 fitTone.scoreClassName,
               )}
@@ -956,14 +954,14 @@ export function DetailPanel({
                 className={cn(
                   'size-3.5 shrink-0',
                   displayScore >= 90
-                    ? 'text-white fill-white'
+                    ? 'text-[#FEEA00] fill-[#FEEA00]'
                     : 'text-[#F06B4F] fill-[#F06B4F]',
                 )}
               />
               <span>{displayScore}점</span>
             </span>
           ) : (
-            <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A] shadow-2xs">
               직종 탐색
             </span>
           )}
@@ -985,19 +983,19 @@ export function DetailPanel({
 
         {/* Key Quick Badges */}
         <div className="mt-3 flex flex-wrap gap-2 text-[12px] font-semibold text-slate-600">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 border border-[#E0D9C8]/80 text-[#17212B]">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[#17212B] shadow-2xs">
             <MapPin className="size-3.5 text-[#173F3A]" />
             {analyzed.keyJobFacts.locationLabel}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 border border-[#E0D9C8]/80 text-[#17212B]">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[#17212B] shadow-2xs">
             <Briefcase className="size-3.5 text-[#173F3A]" />
             {analyzed.keyJobFacts.experienceRequired}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 border border-[#E0D9C8]/80 text-[#F06B4F] font-extrabold">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-[#F06B4F] font-extrabold shadow-2xs">
             <Coins className="size-3.5 text-[#F06B4F]" />
             {analyzed.keyJobFacts.salaryLabel}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 border border-[#E0D9C8]/80 text-slate-600">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#FAF7F2] px-2.5 py-1 text-slate-600 shadow-2xs">
             <CalendarClock className="size-3.5 text-slate-500" />
             마감 {getDeadlineText(posting)}
           </span>
@@ -1005,7 +1003,7 @@ export function DetailPanel({
       </header>
 
       {/* 1. AI 3줄 핵심 요약 & 채용 배경 */}
-      <section className="rounded-2xl border border-[#BBD5CE] bg-gradient-to-br from-[#F4FAF8] via-[#EBF5F2] to-[#E2EFEA] p-4 sm:p-5 shadow-2xs">
+      <section className="rounded-2xl bg-gradient-to-br from-[#F4FAF8] via-[#EBF5F2] to-[#E2EFEA] p-4 sm:p-5 shadow-2xs">
         <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#173F3A]">
           <Sparkles className="size-4 text-[#173F3A]" />
           <span>AI 핵심 요약 & 채용 배경</span>
@@ -1037,19 +1035,19 @@ export function DetailPanel({
       </section>
 
       {/* 2. AI 인재 분석: 기업이 원하는 핵심 경험 유형 */}
-      <section className="rounded-2xl border border-[#173F3A]/25 bg-white p-4 sm:p-5 shadow-xs">
+      <section className="rounded-2xl bg-[#FAFDFB] p-4 sm:p-5 shadow-2xs">
         <div className="flex items-center justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
           <div className="flex items-center gap-2 text-[13.5px] font-extrabold text-[#173F3A]">
             <UserRound className="size-4 text-[#173F3A]" />
             <span>기업 문제 해결에 필요한 실무 경험 (AI 인재상 분석)</span>
           </div>
-          <span className="text-[11px] font-bold text-slate-500 bg-[#FAF7F2] px-2 py-0.5 rounded border border-[#E0D9C8]">
+          <span className="text-[11px] font-bold text-slate-500 bg-[#FAF7F2] px-2 py-0.5 rounded shadow-2xs">
             AI 경험 매칭 모델
           </span>
         </div>
 
         {/* Persona Headline */}
-        <div className="mt-3.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/40 p-3.5">
+        <div className="mt-3.5 rounded-xl bg-[#DDEBE7]/60 p-3.5">
           <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 문제 해결 최적 시니어 페르소나</p>
           <p className="mt-1 text-[14.5px] font-black leading-snug text-[#17212B]">
             {analyzed.talentPersona.headline}
@@ -1076,7 +1074,7 @@ export function DetailPanel({
             {analyzed.talentPersona.competencyTags.map((comp) => (
               <span
                 key={comp}
-                className="rounded-lg border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A]"
+                className="rounded-lg bg-white px-2.5 py-1 text-[11.5px] font-extrabold text-[#173F3A] shadow-2xs"
               >
                 #{comp}
               </span>
@@ -1085,7 +1083,7 @@ export function DetailPanel({
         </div>
 
         {/* AI Interview & Proposal Prep Points */}
-        <div className="mt-4 rounded-xl border border-[#F06B4F]/30 bg-[#FFF9F7] p-3.5">
+        <div className="mt-4 rounded-xl bg-[#FFF9F7] p-3.5 shadow-3xs">
           <p className="text-[12px] font-extrabold text-[#F06B4F] flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-[#F06B4F]" />
             <span>AI 인터뷰 & 제안서 작성 시 '문제 해결 경험' 피칭 포인트</span>
@@ -1104,7 +1102,7 @@ export function DetailPanel({
       {/* 3. 구직자 핵심 직무 조건 (Job Facts & Requirements) */}
       <section className="grid gap-3 sm:grid-cols-2">
         {/* Box A: 주요 실무 업무 */}
-        <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-3xs">
+        <div className="rounded-2xl bg-[#FAF7F2]/60 p-4 shadow-2xs">
           <p className="text-[12.5px] font-extrabold text-[#173F3A] flex items-center gap-1.5">
             <ClipboardCheck className="size-4 text-[#173F3A]" />
             <span>주요 업무 내용</span>
@@ -1120,7 +1118,7 @@ export function DetailPanel({
         </div>
 
         {/* Box B: 자격 요건 */}
-        <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-3xs">
+        <div className="rounded-2xl bg-[#FAF7F2]/60 p-4 shadow-2xs">
           <p className="text-[12.5px] font-extrabold text-[#173F3A] flex items-center gap-1.5">
             <CheckCircle className="size-4 text-[#173F3A]" />
             <span>자격 및 지원 요건</span>
@@ -1136,7 +1134,7 @@ export function DetailPanel({
         </div>
 
         {/* Box C: 근무 조건 및 혜택 */}
-        <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-3xs">
+        <div className="rounded-2xl bg-[#FAF7F2]/60 p-4 shadow-2xs">
           <p className="text-[12.5px] font-extrabold text-[#173F3A] flex items-center gap-1.5">
             <Building2 className="size-4 text-[#173F3A]" />
             <span>근무 환경 및 혜택</span>
@@ -1152,7 +1150,7 @@ export function DetailPanel({
         </div>
 
         {/* Box D: 채용 및 접수 정보 */}
-        <div className="rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2]/60 p-4 shadow-3xs flex flex-col justify-between">
+        <div className="rounded-2xl bg-[#FAF7F2]/80 p-4 shadow-2xs flex flex-col justify-between">
           <div>
             <p className="text-[12.5px] font-extrabold text-[#173F3A] flex items-center gap-1.5">
               <CalendarClock className="size-4 text-[#173F3A]" />
@@ -1194,7 +1192,7 @@ export function DetailPanel({
       </section>
 
       {/* Action Buttons */}
-      <div className="mt-4 flex flex-col gap-2.5 border-t border-[#E0D9C8] pt-4">
+      <div className="mt-4 flex flex-col gap-2.5 border-t border-[#E0D9C8]/70 pt-4">
         {role === 'senior' ? (
           <button
             type="button"
@@ -2532,7 +2530,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {role === 'senior' ? (
         !user ? (
-          <section className="rounded-2xl border border-[#F06B4F]/30 bg-[#FFF9F7] p-3.5 sm:p-4 shadow-xs">
+          <section className="rounded-2xl bg-[#FFF9F7] p-3.5 sm:p-4 shadow-xs">
             <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[13.5px] sm:text-[14.5px] font-extrabold text-[#17212B] flex items-center gap-1.5">
@@ -2553,7 +2551,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </section>
         ) : (
-          <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
+          <section className="rounded-2xl bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
             <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[13px] font-extrabold text-[#173F3A]">내 정보 기반 추천 조건</p>
               <button
@@ -2568,27 +2566,27 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               {preferredProfileCategories.map((category, index) => (
                 <span
-                  className="inline-flex items-center rounded-lg border border-[#BBD5CE]/70 bg-white/95 px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-none cursor-default select-none"
+                  className="inline-flex items-center rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-2xs cursor-default select-none"
                   key={category}
                 >
                   {index + 1}순위 · {occupationCategoryLabels[category]}
                 </span>
               ))}
               {seniorProfile?.period ? (
-                <span className="inline-flex items-center rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-600 shadow-none cursor-default select-none">
+                <span className="inline-flex items-center rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-600 shadow-2xs cursor-default select-none">
                   경력 {seniorProfile.period}
                 </span>
               ) : null}
-              <span className="inline-flex items-center gap-1 rounded-lg border border-[#BBD5CE]/70 bg-white/95 px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-none cursor-default select-none">
+              <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-[#173F3A] shadow-2xs cursor-default select-none">
                 <MapPin className="size-3.5 shrink-0 text-[#173F3A]" />
                 <span>희망지역: {seniorProfile?.desiredLocation || '전국'}</span>
               </span>
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold shadow-none cursor-default select-none',
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold shadow-2xs cursor-default select-none',
                   interviewCard
-                    ? 'border-[#F06B4F]/30 bg-[#FDF0ED] text-[#D85A3F]'
-                    : 'border-[#E0D9C8] bg-white text-slate-500',
+                    ? 'bg-[#FDF0ED] text-[#D85A3F]'
+                    : 'bg-white text-slate-500',
                 )}
               >
                 {interviewCard ? (
@@ -2609,7 +2607,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </section>
         )
       ) : (
-        <section className="rounded-2xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
+        <section className="rounded-2xl bg-[#F8FCFB] p-3.5 sm:p-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
             <p className="flex items-center gap-1.5 text-[13px] sm:text-[14px] font-extrabold text-[#173F3A]">
               <BarChart3 className="size-4 shrink-0 text-[#173F3A]" />
@@ -2624,14 +2622,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </button>
           </div>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center rounded-lg border border-[#BBD5CE]/80 bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A]">
+            <span className="inline-flex items-center rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A] shadow-2xs">
               등록 프로젝트 {filteredPostings.length}개
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-700">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-700 shadow-2xs">
               <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
               <span>추천 인재 {companyRecommendedTalents.length}명</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#BBD5CE]/80 bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A]">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A] shadow-2xs">
               <ClipboardCheck className="size-3.5 text-[#173F3A]" />
               <span>제안 전 프로젝트 요구조건 확인 가능</span>
             </span>
@@ -3563,7 +3561,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       </div>
 
       {isMobile ? (
-        <section className="rounded-[20px] border border-[#E0D9C8] bg-white p-4 shadow-xs">
+        <section className="rounded-[20px] bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[15px] font-extrabold text-[#17212B]">
               <Filter className="size-[18px] text-[#173F3A]" />
@@ -3587,7 +3585,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             >
               프로젝트 검색
             </label>
-            <div className="mt-2 flex h-14 min-h-14 items-center gap-3 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] px-4 transition focus-within:border-[#173F3A] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/10">
+            <div className="mt-2 flex h-14 min-h-14 items-center gap-3 rounded-2xl bg-[#FAF7F2] px-4 transition focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/20">
               <Search aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
               <input
                 className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[16px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
@@ -3614,7 +3612,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </div>
 
-          <div className="mt-5 border-t border-[#E0D9C8] pt-4">
+          <div className="mt-5 border-t border-[#F0ECE1] pt-4">
             <p className="text-[13px] font-extrabold text-[#17212B]">
               {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
             </p>
@@ -3632,7 +3630,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <button
                   aria-controls="project-category-picker"
                   aria-haspopup="dialog"
-                  className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                  className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                   onClick={openCategoryPicker}
                   ref={categoryPickerTriggerRef}
                   type="button"
@@ -3643,7 +3641,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </div>
 
-          <div className="mt-5 border-t border-[#E0D9C8] pt-4">
+          <div className="mt-5 border-t border-[#F0ECE1] pt-4">
             <button
               aria-controls="mobile-project-detail-filters"
               aria-expanded={isDetailFiltersExpanded}
@@ -3683,8 +3681,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </section>
       ) : (
         <>
-          <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-            <label className="flex h-12 items-center gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 focus-within:border-[#173F3A] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/10">
+          <section className="rounded-2xl bg-white p-4 shadow-xs">
+            <label className="flex h-12 items-center gap-3 rounded-xl bg-[#FAF7F2] px-4 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/20 transition">
               <Search className="size-5 text-slate-400" />
               <input
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
@@ -3695,7 +3693,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               />
             </label>
 
-            <div className="mt-4 border-t border-[#E0D9C8] pt-4">
+            <div className="mt-4 border-t border-[#F0ECE1] pt-4">
               <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
                 <Filter className="size-4 text-[#173F3A]" />
                 {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
@@ -3714,7 +3712,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <button
                     aria-controls="project-category-picker"
                     aria-haspopup="dialog"
-                    className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-[#173F3A]/50 bg-[#F8FCFB] px-3.5 text-[13px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                    className="inline-flex min-h-10 items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                     onClick={openCategoryPicker}
                     ref={categoryPickerTriggerRef}
                     type="button"
@@ -3725,7 +3723,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </div>
             </div>
 
-            <div className="mt-4 border-t border-[#E0D9C8] pt-4">
+            <div className="mt-4 border-t border-[#F0ECE1] pt-4">
               <button
                 aria-controls="desktop-project-detail-filters"
                 aria-expanded={isDetailFiltersExpanded}
