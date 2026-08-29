@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 정렬 드롭다운 메뉴 텍스트 줄바꿈 현상 수정 (whitespace-nowrap & min-w 확장)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **정렬 팝업 레이아웃 보완 (`src/app/JobDatabasePage.tsx`)**:
+     - 드롭다운 팝오버 및 옵션 아이템에 `whitespace-nowrap`, `w-max min-w-[145px]`, `gap-3`을 적용하여 "적합도 높은순" 텍스트와 체크 아이콘 간의 줄바꿈 현상을 완벽 해결.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 프로젝트 검색/추천 화면 정렬 드롭다운을 세련된 커스텀 버튼 형태로 개편
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

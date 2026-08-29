@@ -3849,7 +3849,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
           {isSortDropdownOpen && (
             <div
-              className="absolute right-0 z-30 mt-1.5 min-w-[130px] rounded-2xl border border-[#E0D9C8]/80 bg-white p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-100"
+              className="absolute right-0 z-30 mt-1.5 w-max min-w-[145px] rounded-2xl border border-[#E0D9C8]/80 bg-white p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-100 whitespace-nowrap"
               role="listbox"
             >
               {sortOptions.map((option) => {
@@ -3863,7 +3863,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       setIsSortDropdownOpen(false);
                     }}
                     className={cn(
-                      'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-extrabold transition-all',
+                      'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-xs font-extrabold transition-all whitespace-nowrap',
                       isSelected
                         ? 'bg-[#173F3A] text-white shadow-2xs'
                         : 'text-[#17212B] hover:bg-[#FAF7F2]',
@@ -3871,8 +3871,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     role="option"
                     aria-selected={isSelected}
                   >
-                    <span>{option.label}</span>
-                    {isSelected ? <Check className="size-3.5 shrink-0 ml-1.5" /> : null}
+                    <span className="whitespace-nowrap">{option.label}</span>
+                    {isSelected ? <Check className="size-3.5 shrink-0" /> : null}
                   </button>
                 );
               })}
