@@ -437,7 +437,7 @@ function HomeRecommendationRow({
     return (
       <article
         onClick={onClick}
-        className="group relative flex flex-col gap-2.5 px-4 py-3.5 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0 w-full min-w-0"
+        className="group relative flex flex-col gap-2.5 rounded-2xl p-4 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer w-full min-w-0"
       >
         {/* Top: Rank + Company Name + Badges + Score */}
         <div className="flex items-center justify-between gap-2 w-full min-w-0">
@@ -503,7 +503,7 @@ function HomeRecommendationRow({
   return (
     <article
       onClick={onClick}
-      className="group relative flex items-center justify-between gap-4 px-5 py-4 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0 w-full min-w-0"
+      className="group relative flex items-center justify-between gap-4 rounded-2xl px-5 py-4 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer w-full min-w-0"
     >
       {/* Left: Rank + Company + Title + AI 1-line Challenge */}
       <div className="flex items-start gap-3.5 min-w-0 flex-1">
@@ -913,10 +913,10 @@ export function SeniorHomePage() {
         </div>
 
         {isLoadingRecommendations ? (
-          <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white p-2 divide-y divide-[#F0ECE1] shadow-xs">
+          <div className="flex flex-col gap-3">
             {[1, 2, 3, 4, 5].map((idx) => (
               <div
-                className="flex items-center justify-between gap-4 p-4 animate-pulse"
+                className="flex items-center justify-between gap-4 rounded-2xl bg-white p-4 md:px-5 md:py-4 shadow-xs animate-pulse"
                 key={idx}
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -935,7 +935,7 @@ export function SeniorHomePage() {
             ))}
           </div>
         ) : recommendedJobs.length > 0 ? (
-          <div className="rounded-2xl bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
+          <div className="flex flex-col gap-3">
             {recommendedJobs.slice(0, 5).map((job, idx) => (
               <HomeRecommendationRow
                 isMobile={isMobile}
@@ -949,7 +949,7 @@ export function SeniorHomePage() {
             ))}
           </div>
         ) : (
-            <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
+            <div className="rounded-2xl bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
               <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
                 {!user

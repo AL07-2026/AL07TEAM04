@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 인재 홈 맞춤 추천 TOP 5 공고 5개 독립 카드 분리(간격 분리) 및 아웃라인 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **맞춤 추천 공고 5개 독립 개별 카드로 전환 (`gap-3`)**:
+     - 기존 단일 묶음 박스(`divide-y`) 형태에서, 5개의 공고가 각각 독립된 부드러운 카드(`rounded-2xl bg-white shadow-xs hover:shadow-md`)로 분리되고 일정한 간격(`gap-3`)을 두고 배치되도록 개선.
+     - 카드 박스 외곽의 둔탁한 테두리선(border outline) 및 가로 실선을 완전히 제거하여 시각적 개방감과 호흡을 확보.
+  2. **로딩 스켈레톤 및 빈 상태 뷰 일관성 유지**:
+     - 스켈레톤 로딩 시에도 5개의 개별 카드가 일정한 간격으로 표시되도록 통일.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 인재 홈 상단 이어잡 로고/하단 구분선 제거 및 AI 경험 인터뷰 카드 아웃라인 제거
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
