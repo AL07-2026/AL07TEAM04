@@ -28,6 +28,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
 import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
+import { analyzeJobPostingForDetail } from '@/services/aiJobDetailAnalyzer';
 import {
   categoryLabels,
   type JobPosting,
@@ -73,13 +74,6 @@ import {
   updateProject,
   uploadProjectAttachments,
 } from '@/services/projectService';
-import {
-  extractCleanPositionTitle,
-  formatCleanProblemStatement,
-  formatSimpleLocation,
-  formatSimpleSalary,
-  formatSimpleWorkSchedule,
-} from '@/services/dataSyncService';
 import {
   getLocalCompanyProfile,
   getLocalSeniorProfile,
@@ -424,125 +418,90 @@ export function ProcessOverviewGraphicCard() {
   );
 }
 
-function HomeRecommendationRow({
-  company,
-  fitScore,
-  isMobile,
-  meta,
+function HomeRecommendationCard({
+  job,
   onClick,
-  problem,
-  salary,
-  title,
 }: {
-  company: string;
-  fitScore?: number;
-  isMobile: boolean;
-  meta: string;
+  job: JobPosting;
   onClick: () => void;
-  problem: string;
-  salary?: string;
-  title: string;
 }) {
+  const analyzed = useMemo(() => analyzeJobPostingForDetail(job), [job]);
+  const fitScore = job.seniorFitScore;
   const fitTone = fitScore === undefined ? null : getFitScoreTone(fitScore);
 
   return (
-    <button
-      className={cn(
-        'w-full rounded-2xl border border-[#E0D9C8] bg-white text-left shadow-xs transition hover:border-[#BBD5CE] hover:shadow-md active:scale-[0.995]',
-        isMobile
-          ? 'flex flex-col gap-3 p-4'
-          : 'grid grid-cols-[minmax(200px,1.2fr)_minmax(220px,1.3fr)_minmax(160px,0.9fr)_auto] items-center gap-4 md:gap-5 px-5 py-4',
-      )}
+    <article
       onClick={onClick}
-      type="button"
+      className="group relative flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-5 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#173F3A] hover:shadow-md cursor-pointer"
     >
-      {isMobile ? (
-        <div className="flex flex-col gap-3">
-          {/* Top Header Row on Mobile: Company Tag + Fit Score Box */}
-          <div className="flex items-start justify-between gap-3">
-            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[12px] font-bold text-[#173F3A]">
-              {company}
+      <div className="flex flex-col gap-3">
+        {/* Top: Company & Tags + Fit Score */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-0.5 text-[12px] font-extrabold text-[#173F3A]">
+              {job.companyName}
             </span>
-            {fitScore !== undefined && fitTone ? (
-              <span
-                aria-label={`적합도 ${fitScore}점, ${fitTone.label}`}
-                className={cn(
-                  'inline-flex shrink-0 whitespace-nowrap flex-col items-center justify-center rounded-xl border px-3 py-1.5 min-w-[72px]',
-                  fitTone.containerClassName,
-                )}
-              >
-                <span className={cn('text-[10px] font-extrabold whitespace-nowrap leading-none', fitTone.labelClassName)}>
-                  {fitTone.label}
-                </span>
-                <strong className={cn('mt-0.5 text-[15px] font-black whitespace-nowrap leading-tight', fitTone.scoreClassName)}>
-                  {fitScore}점
-                </strong>
-              </span>
-            ) : null}
+            <span className="inline-flex rounded-md border border-[#E0D9C8]/60 bg-slate-50 px-2 py-0.5 text-[11.5px] font-bold text-slate-600">
+              {analyzed.keyJobFacts.workTypeLabel}
+            </span>
+            <span className="inline-flex rounded-md border border-[#E0D9C8]/60 bg-slate-50 px-2 py-0.5 text-[11.5px] font-bold text-slate-600">
+              {analyzed.keyJobFacts.employmentTypeLabel}
+            </span>
           </div>
 
-          <h4 className="-mt-1 text-[17px] font-extrabold leading-[1.45] text-[#17212B]">
-            {title}
-          </h4>
+          {fitScore !== undefined && fitTone ? (
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11.5px] font-black',
+                fitTone.containerClassName,
+                fitTone.scoreClassName,
+              )}
+            >
+              <Sparkles className="size-3 text-[#F06B4F]" />
+              <span>적합도 {fitScore}점</span>
+            </span>
+          ) : null}
+        </div>
 
-          <div className="border-t border-[#E0D9C8]/70 pt-2.5">
-            <p className="text-[12px] font-extrabold text-[#173F3A]">해결 프로젝트</p>
-            <p className="mt-1 text-[13px] font-medium leading-relaxed text-slate-700">{problem}</p>
+        {/* Title */}
+        <h4 className="line-clamp-2 text-[16.5px] md:text-[17.5px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A]">
+          {analyzed.keyJobFacts.roleTitle}
+        </h4>
+
+        {/* AI Problem Diagnosis & Required Experience Briefing */}
+        <div className="rounded-xl border border-[#BBD5CE]/70 bg-[#F4FAF8] p-3 text-[12.5px] leading-relaxed flex flex-col gap-1.5">
+          <div className="flex items-start gap-1.5">
+            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 과제</span>
+            <p className="line-clamp-1 font-semibold text-[#17212B]">
+              {analyzed.aiExecutiveSummary.keyChallenge}
+            </p>
           </div>
-
-          <div className="flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 text-[13px] font-bold text-slate-600">
-            <div className="min-w-0">
-              <p>{meta}</p>
-              {salary ? <p className="mt-0.5 text-[#F06B4F]">{salary}</p> : null}
-            </div>
-            <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
+          <div className="flex items-start gap-1.5">
+            <span className="shrink-0 font-extrabold text-[#173F3A]">🎯 인재</span>
+            <p className="line-clamp-1 font-semibold text-[#17212B]">
+              {analyzed.talentPersona.headline}
+            </p>
           </div>
         </div>
-      ) : (
-        <>
-          <div className="min-w-0">
-            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[13px] font-bold text-[#173F3A]">
-              {company}
-            </span>
-            <h4 className="mt-2 line-clamp-2 text-[18px] font-extrabold leading-[1.45] text-[#17212B]">
-              {title}
-            </h4>
-          </div>
+      </div>
 
-          <div className="min-w-0">
-            <p className="text-[13px] font-extrabold text-[#173F3A]">해결 프로젝트</p>
-            <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-700">{problem}</p>
-          </div>
-
-          <div className="min-w-0 text-[14px] font-bold leading-6 text-slate-600">
-            <p>{meta}</p>
-            {salary ? <p className="mt-0.5 text-[#F06B4F]">{salary}</p> : null}
-          </div>
-
-          <div className="flex items-center justify-end gap-3 shrink-0 whitespace-nowrap">
-            {fitScore !== undefined && fitTone ? (
-              <span
-                aria-label={`적합도 ${fitScore}점, ${fitTone.label}`}
-                className={cn(
-                  'inline-flex shrink-0 whitespace-nowrap flex-col items-center justify-center rounded-xl border px-3.5 py-2 min-w-[76px]',
-                  fitTone.containerClassName,
-                )}
-              >
-                <span className={cn('text-[11px] font-extrabold whitespace-nowrap leading-none', fitTone.labelClassName)}>
-                  {fitTone.label}
-                </span>
-                <strong className={cn('mt-1 text-[17px] font-black whitespace-nowrap leading-tight', fitTone.scoreClassName)}>
-                  {fitScore}점
-                </strong>
-              </span>
-            ) : (
-              <span className="text-[14px] font-extrabold text-[#173F3A]">추천 프로젝트</span>
-            )}
-            <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
-          </div>
-        </>
-      )}
-    </button>
+      {/* Bottom: Meta conditions + Salary */}
+      <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E0D9C8]/70 pt-3 text-[12px]">
+        <div className="flex items-center gap-1.5 text-slate-500 font-bold">
+          <span>{analyzed.keyJobFacts.locationLabel}</span>
+          <span>·</span>
+          <span>{analyzed.keyJobFacts.experienceRequired}</span>
+          <span>·</span>
+          <span>{analyzed.keyJobFacts.deadlineLabel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-[#F06B4F] text-[13px]">
+            {analyzed.keyJobFacts.salaryLabel}
+          </span>
+          <ArrowRight className="size-4 text-slate-400 group-hover:text-[#173F3A] group-hover:translate-x-0.5 transition-all" />
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -913,119 +872,96 @@ export function SeniorHomePage() {
           </span>
         </div>
 
-        {!isMobile ? (
-          <div className="grid grid-cols-[minmax(240px,1.25fr)_minmax(260px,1.35fr)_minmax(190px,0.9fr)_112px] gap-5 px-5 text-[13px] font-extrabold text-slate-500">
-            <span>프로젝트</span>
-            <span>해결 프로젝트</span>
-            <span>근무·보상 조건</span>
-            <span className="text-right">추천</span>
-          </div>
-        ) : null}
-
-        <div className="flex flex-col gap-3">
-          {isLoadingRecommendations ? (
-            <div className="flex flex-col gap-3">
-              {[1, 2, 3].map((idx) => (
-                <div
-                  className="flex items-center justify-between rounded-2xl border border-[#E0D9C8]/80 bg-white p-4 shadow-3xs animate-pulse"
-                  key={idx}
-                >
-                  <div className="flex flex-col gap-2 min-w-0 flex-1">
-                    <div className="h-4 w-24 rounded bg-slate-200" />
-                    <div className="h-5 w-3/4 rounded bg-slate-200" />
-                    <div className="h-4 w-1/2 rounded bg-slate-100" />
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0 ml-4">
-                    <div className="h-7 w-20 rounded-xl bg-[#DDEBE7]" />
-                    <div className="h-4 w-14 rounded bg-slate-200 mt-1" />
-                  </div>
+        {isLoadingRecommendations ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {[1, 2, 3, 4].map((idx) => (
+              <div
+                className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8]/80 bg-white p-5 shadow-xs animate-pulse"
+                key={idx}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 rounded bg-slate-200" />
+                  <div className="h-6 w-20 rounded-full bg-slate-200" />
                 </div>
+                <div className="h-5 w-3/4 rounded bg-slate-200" />
+                <div className="h-16 w-full rounded-xl bg-slate-100" />
+                <div className="h-4 w-1/2 rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        ) : recommendedJobs.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {recommendedJobs.map((job) => (
+                <HomeRecommendationCard
+                  job={job}
+                  key={job.id}
+                  onClick={() =>
+                    void navigate(`/senior/projects?jobId=${job.id}&focusProject=${job.id}`)
+                  }
+                />
               ))}
             </div>
-          ) : recommendedJobs.length > 0 ? (
-            <>
-              {recommendedJobs.map((job) => {
-                const cleanTitle = extractCleanPositionTitle(job.title, job.companyName);
-                const cleanProblem = formatCleanProblemStatement(job);
-                const simpleLoc = formatSimpleLocation(job.location);
-                const simpleSch = formatSimpleWorkSchedule(job.workSchedule);
-                const simpleSal = formatSimpleSalary(job.salaryRange);
-                const metaStr = `${simpleLoc}${simpleSch ? ` · ${simpleSch}` : ''}`;
 
-                return (
-                  <HomeRecommendationRow
-                    company={job.companyName}
-                    fitScore={job.seniorFitScore}
-                    isMobile={isMobile}
-                    key={job.id}
-                    meta={metaStr}
-                    onClick={() => void navigate('/senior/projects')}
-                    problem={cleanProblem}
-                    salary={simpleSal}
-                    title={cleanTitle}
-                  />
-                );
-              })}
-
-              {/* Home Pagination Controls */}
-              {homeTotalPages > 1 && (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
-                  <div className="text-xs font-bold text-slate-600">
-                    전체 <span className="font-extrabold text-[#173F3A]">{recommendedProjectsCount}</span>건 중{' '}
-                    <span className="font-extrabold text-[#17212B]">
-                      {(homePage - 1) * homeItemsPerPage + 1}~{Math.min(homePage * homeItemsPerPage, recommendedProjectsCount)}
-                    </span>건 표시
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      onClick={() => setHomePage((p) => Math.max(1, p - 1))}
-                      disabled={homePage === 1}
-                      type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-                    >
-                      이전
-                    </button>
-
-                    {Array.from({ length: Math.min(5, homeTotalPages) }, (_, idx) => {
-                      const totalP = homeTotalPages;
-                      let pageNum = idx + 1;
-                      if (totalP > 5) {
-                        if (homePage > 3 && homePage < totalP - 2) {
-                          pageNum = homePage - 2 + idx;
-                        } else if (homePage >= totalP - 2) {
-                          pageNum = totalP - 4 + idx;
-                        }
-                      }
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setHomePage(pageNum)}
-                          type="button"
-                          className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
-                            homePage === pageNum
-                              ? 'bg-[#173F3A] text-white shadow-xs'
-                              : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      onClick={() => setHomePage((p) => Math.min(homeTotalPages, p + 1))}
-                      disabled={homePage === homeTotalPages}
-                      type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-                    >
-                      다음
-                    </button>
-                  </div>
+            {/* Home Pagination Controls */}
+            {homeTotalPages > 1 && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
+                <div className="text-xs font-bold text-slate-600">
+                  전체 <span className="font-extrabold text-[#173F3A]">{recommendedProjectsCount}</span>건 중{' '}
+                  <span className="font-extrabold text-[#17212B]">
+                    {(homePage - 1) * homeItemsPerPage + 1}~{Math.min(homePage * homeItemsPerPage, recommendedProjectsCount)}
+                  </span>건 표시
                 </div>
-              )}
-            </>
-          ) : (
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setHomePage((p) => Math.max(1, p - 1))}
+                    disabled={homePage === 1}
+                    type="button"
+                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                  >
+                    이전
+                  </button>
+
+                  {Array.from({ length: Math.min(5, homeTotalPages) }, (_, idx) => {
+                    const totalP = homeTotalPages;
+                    let pageNum = idx + 1;
+                    if (totalP > 5) {
+                      if (homePage > 3 && homePage < totalP - 2) {
+                        pageNum = homePage - 2 + idx;
+                      } else if (homePage >= totalP - 2) {
+                        pageNum = totalP - 4 + idx;
+                      }
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setHomePage(pageNum)}
+                        type="button"
+                        className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
+                          homePage === pageNum
+                            ? 'bg-[#173F3A] text-white shadow-xs'
+                            : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setHomePage((p) => Math.min(homeTotalPages, p + 1))}
+                    disabled={homePage === homeTotalPages}
+                    type="button"
+                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                  >
+                    다음
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
               <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
@@ -1056,8 +992,7 @@ export function SeniorHomePage() {
             </div>
           )}
         </div>
-      </div>
-    </MobilePage>
+      </MobilePage>
   );
 }
 
