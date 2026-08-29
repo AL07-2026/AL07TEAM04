@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 랜딩페이지 히어로 헤딩 ("기업의 실무 프로젝트와 / 시니어의 경험을 잇다") 줄간격 3% 축소
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **타이포그래피 미세 조정 (`src/app/LandingPage.tsx`)**:
+     - 메인 헤딩 `h1`의 `line-height`를 `leading-[1.24]`에서 `leading-[1.20]`으로 3% 축소 조정하여 더욱 응집도 높고 정갈한 타이틀 레이아웃 완성.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 정렬 드롭다운 메뉴 텍스트 줄바꿈 현상 수정 (whitespace-nowrap & min-w 확장)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

@@ -186,7 +186,7 @@ export function LandingPage() {
                 Experience Meets Opportunity
               </h2>
 
-              <h1 className="mt-10 text-[2rem] font-black leading-[1.24] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
+              <h1 className="mt-10 text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
                 <span className="text-[#173f3a]">기업</span>의{' '}
                 <span className="text-[#173f3a]">실무</span> 프로젝트와
                 <br />
