@@ -127,12 +127,16 @@ export function MobilePage({
                   </button>
                 ) : null}
 
-                <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void navigate('/')}
+                  className="flex items-center gap-1.5 rounded-xl hover:opacity-85 transition"
+                >
                   <img src="/logo_icon.png" alt="이어잡" className="size-5 object-contain" />
                   <h1 className="text-[17px] font-extrabold tracking-tight text-[#17212B]">
                     {title}
                   </h1>
-                </div>
+                </button>
               </div>
 
               {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
@@ -199,7 +203,7 @@ export function MobilePage({
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
-                    onClick={() => void navigate('/senior/project-database')}
+                    onClick={() => void navigate('/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
@@ -278,7 +282,7 @@ export function MobilePage({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => void navigate(user ? (role === 'company' ? '/company' : '/senior/project-database') : '/')}
+                    onClick={() => void navigate('/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
                     <img
