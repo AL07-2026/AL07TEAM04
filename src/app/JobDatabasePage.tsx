@@ -3565,7 +3565,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       </div>
 
       {isMobile ? (
-        <section className="rounded-[20px] bg-white p-4 shadow-xs">
+        <section className="rounded-[20px] bg-white p-4 shadow-xs flex flex-col gap-3.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[15px] font-extrabold text-[#17212B]">
               <Filter className="size-[18px] text-[#173F3A]" />
@@ -3582,17 +3582,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             ) : null}
           </div>
 
-          <div className="mt-3">
-            <label
-              className="block text-[12px] font-extrabold text-[#17212B]"
-              htmlFor="mobile-project-search"
-            >
-              프로젝트 검색
-            </label>
-            <div className="mt-2 flex h-14 min-h-14 items-center gap-3 rounded-2xl bg-[#FAF7F2] px-4 transition focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/20">
+          <div>
+            <div className="flex h-12 min-h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm focus-within:ring-1 focus-within:ring-[#173F3A]/20">
               <Search aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
               <input
-                className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[16px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
+                className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[15px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
                 id="mobile-project-search"
                 onChange={(event) => changeQuery(event.target.value)}
                 placeholder={
@@ -3606,7 +3600,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               {query ? (
                 <button
                   aria-label="검색어 지우기"
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-[#F7F3EA] hover:text-[#17212B]"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-[#F7F3EA] hover:text-[#17212B]"
                   onClick={() => changeQuery('')}
                   type="button"
                 >
@@ -3616,11 +3610,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </div>
 
-          <div className="mt-5 border-t border-[#F0ECE1] pt-4">
+          <div className="flex flex-col gap-2">
             <p className="text-[13px] font-extrabold text-[#17212B]">
               {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
             </p>
-            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1.5 scrollbar-none" role="group">
+            <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none" role="group">
               {quickCategoryFilters.map((category) => (
                 <CategoryFilterButton
                   badge={category.badge}
@@ -3645,7 +3639,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </div>
           </div>
 
-          <div className="mt-5 border-t border-[#F0ECE1] pt-4">
+          <div>
             <button
               aria-controls="mobile-project-detail-filters"
               aria-expanded={isDetailFiltersExpanded}
@@ -3685,11 +3679,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </section>
       ) : (
         <>
-          <section className="rounded-2xl bg-white p-4 shadow-xs">
-            <label className="flex h-12 items-center gap-3 rounded-xl bg-[#FAF7F2] px-4 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#173F3A]/20 transition">
-              <Search className="size-5 text-slate-400" />
+          <section className="rounded-2xl bg-white p-5 shadow-xs flex flex-col gap-4">
+            <label className="flex h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm focus-within:ring-1 focus-within:ring-[#173F3A]/20">
+              <Search className="size-5 text-slate-400 shrink-0" />
               <input
-                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400"
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 border-none ring-0 focus:outline-none focus:ring-0"
                 onChange={(event) => changeQuery(event.target.value)}
                 placeholder={role === 'senior' ? '회사명, 직무, 업종 또는 지역 검색' : '회사명, 기술스택, 해결 프로젝트 검색'}
                 type="search"
