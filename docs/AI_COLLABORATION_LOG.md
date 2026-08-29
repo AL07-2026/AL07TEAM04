@@ -16,6 +16,25 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 로그인 후 1순위 희망 직종(디자인 등) 공고 조회 시 타 직종(마케팅 등) 혼입 및 캐시/폴백 버그 완벽 해결
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **클라이언트 타임아웃 및 시드 폴백 필터링 정확도 개선 (`src/services/jobSearchService.ts`)**:
+     - `searchFullJobDatabase`의 네트워크 타임아웃을 기존 2.4초에서 8초로 증설하여 Cloud Functions 콜드 스타트 시 불필요하게 Fallback 더미 데이터로 빠지는 현상 방지.
+     - `createFallbackSearchResult`에서 카테고리 필터링이 누락되어 상위 5개 더미 공고(IT, 마케팅, 디자인 등이 섞인 공고)가 반환되고 이것이 `sessionStorage`에 캐시되던 문제를 해결. 요청된 직종(`categories` 또는 `desiredCategories`)에 해당하는 공고만 엄격히 필터링하여 반환하도록 개선.
+  2. **회사 등록 공고 머지 시 직종 필터링 가드 강화 (`src/app/jobDatabaseProjectVisibility.ts`)**:
+     - `matchesPublishedCompanyProject`에서 `filters.selectedCategory === 'all'`일 때 모든 회사 공고가 무조건 통과되던 로직을 개선하여, 시니어 사용자에게 1순위 희망 직종이 설정된 경우 해당 직종에 부합하는 회사 공고만 매칭되도록 정비.
+     - `all-database` 및 `all_db` 상수 지원 일치화 및 레거시-신규 직종 카테고리 양방향 정규화 매핑 보장.
+  3. **CDN 레벨 Edge Cache 헤더 최적화 (`functions/index.mjs`)**:
+     - `/api/jobs/search`의 `Cache-Control` 헤더를 `public, s-maxage=300`에서 `private, no-cache, no-store, must-revalidate`로 변경하여 브라우저/CDN 간 쿼리 불일치 캐시 혼선 원천 차단.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase 배포.
+- **변경 파일**:
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/app/jobDatabaseProjectVisibility.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `functions/index.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 내 제안 상단 필터 줄바꿈 방지, 혜택 대상 인재 보기 버튼 오렌지 전환 및 모바일 하단 내비게이션 여백 오류 해결
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

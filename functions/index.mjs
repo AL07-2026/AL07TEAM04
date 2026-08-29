@@ -120,7 +120,7 @@ app.get('/api/jobs/stats', async (_req, res) => {
 
 app.get('/api/jobs/search', async (req, res) => {
   try {
-    res.set('Cache-Control', 'public, max-age=180, s-maxage=300, stale-while-revalidate=600');
+    res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     const result = await searchAccumulatedJobPostings(req.query);
     return res.json({ status: 'success', ...result });
   } catch (error) {

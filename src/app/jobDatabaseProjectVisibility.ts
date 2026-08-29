@@ -5,7 +5,7 @@ import type {
   ProjectCategory,
   WorkType,
 } from '@/data/jobPostings';
-import type { OccupationCategory } from '@/data/occupationCategories';
+import { normalizeOccupationCategory, type OccupationCategory } from '@/data/occupationCategories';
 import {
   doesPostingMatchDesiredOccupationText,
   getPostingOccupationCategory,
@@ -16,6 +16,7 @@ export type CategoryFilter =
   | OccupationCategory
   | 'all'
   | 'all_db'
+  | 'all-database'
   | 'custom-match'
   | 'unclassified';
 
@@ -53,16 +54,41 @@ export function matchesPublishedCompanyProject(
   filters: ProjectVisibilityFilters,
 ) {
   const projectOccupationCategory = getPostingOccupationCategory(project);
-  const matchesExplicitCategory =
-    filters.selectedCategory === 'all' ||
-    filters.selectedCategory === 'all_db' ||
-    (filters.selectedCategory === 'custom-match' &&
-      (doesPostingMatchDesiredOccupationText(project, filters.desiredOccupationText) ||
-        filters.fallbackOccupationCategories?.includes(projectOccupationCategory) === true)) ||
-    (filters.selectedCategory === 'unclassified' &&
-      project.occupationClassificationStatus === 'ambiguous') ||
-    project.category === filters.selectedCategory ||
-    projectOccupationCategory === filters.selectedCategory;
+  const normalizedFilterCategory = normalizeOccupationCategory(filters.selectedCategory);
+  const normalizedProjectCategory = normalizeOccupationCategory(project.category);
+
+  const matchesExplicitCategory = (() => {
+    if (filters.selectedCategory === 'all-database' || filters.selectedCategory === 'all_db') {
+      return true;
+    }
+    if (filters.selectedCategory === 'all') {
+      if (filters.fallbackOccupationCategories && filters.fallbackOccupationCategories.length > 0) {
+        return (
+          filters.fallbackOccupationCategories.includes(projectOccupationCategory) ||
+          (normalizedProjectCategory
+            ? filters.fallbackOccupationCategories.includes(normalizedProjectCategory)
+            : false)
+        );
+      }
+      return true;
+    }
+    if (filters.selectedCategory === 'custom-match') {
+      return (
+        doesPostingMatchDesiredOccupationText(project, filters.desiredOccupationText) ||
+        filters.fallbackOccupationCategories?.includes(projectOccupationCategory) === true
+      );
+    }
+    if (filters.selectedCategory === 'unclassified') {
+      return project.occupationClassificationStatus === 'ambiguous';
+    }
+    return (
+      project.category === filters.selectedCategory ||
+      projectOccupationCategory === filters.selectedCategory ||
+      (normalizedFilterCategory !== null &&
+        (projectOccupationCategory === normalizedFilterCategory ||
+          normalizedProjectCategory === normalizedFilterCategory))
+    );
+  })();
   const matchesWorkType = filters.workType === 'all' || project.workType === filters.workType;
   const matchesEmploymentType =
     filters.employmentType === 'all' || project.employmentType === filters.employmentType;

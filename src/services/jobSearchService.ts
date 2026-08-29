@@ -10,6 +10,7 @@ import type {
   OccupationPreference,
 } from '@/data/occupationCategories';
 import { normalizeJobPostingDetailFields } from '@/services/dataSyncService';
+import { getPostingOccupationCategory } from '@/services/recommendationEngine';
 import { getDefaultSeniorJobPostings } from '@/services/worknetService';
 
 export type JobDatabaseSort = 'fit-desc' | 'deadline-asc' | 'latest-desc' | 'title-asc';
@@ -55,10 +56,24 @@ const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSe
 
 function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearchResult {
   const seedProjects = getDefaultSeniorJobPostings();
+  const requestedCategories = options.categories && options.categories.length > 0
+    ? options.categories
+    : options.desiredCategories && options.desiredCategories.length > 0
+      ? (options.desiredCategories.filter((cat) => cat !== 'other') as JobOccupationFilter[])
+      : [];
+
+  const matchedSeedProjects = requestedCategories.length > 0
+    ? seedProjects.filter((posting) => {
+        const cat = getPostingOccupationCategory(posting);
+        return requestedCategories.includes(cat) || (posting.category && requestedCategories.includes(posting.category as unknown as JobOccupationFilter));
+      })
+    : seedProjects;
+
+  const targetProjects = matchedSeedProjects.length > 0 ? matchedSeedProjects : seedProjects;
   const page = options.page || 1;
   const pageSize = options.pageSize || 5;
   const start = (page - 1) * pageSize;
-  const items = seedProjects.slice(start, start + pageSize);
+  const items = targetProjects.slice(start, start + pageSize);
   return {
     catalogTotal: 14820,
     closingSoonTotal: 12,
@@ -68,8 +83,8 @@ function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearc
     partTimeTotal: 86,
     preferredTotal: Math.max(items.length, 120),
     status: 'success',
-    total: Math.max(seedProjects.length, 120),
-    totalPages: Math.max(1, Math.ceil(120 / pageSize)),
+    total: Math.max(targetProjects.length, 120),
+    totalPages: Math.max(1, Math.ceil(targetProjects.length / pageSize)),
   };
 }
 
@@ -164,7 +179,7 @@ export async function searchFullJobDatabase(
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2400);
+    const timer = setTimeout(() => controller.abort(), 8000);
     if (options.signal) {
       if (options.signal.aborted) controller.abort();
       else options.signal.addEventListener('abort', () => controller.abort(), { once: true });
