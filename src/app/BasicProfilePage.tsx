@@ -498,16 +498,16 @@ export function BasicProfilePage() {
                 </div>
 
                 {form.employmentSubsidyTarget ? (
-                  <div className="flex flex-col gap-1.5 p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/80">
+                  <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-[#DDEBE7]/60 shadow-2xs">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="shrink-0 whitespace-nowrap rounded-full border border-emerald-600/30 bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900">
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
                         ✓ 연 720만원 정부 지원금 대상 인증됨
                       </span>
-                      <span className="text-xs font-bold text-emerald-900">
+                      <span className="text-xs font-bold text-[#173F3A]">
                         {form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료 완료'}
                       </span>
                     </div>
-                    <p className="text-[12px] font-semibold text-emerald-800 leading-snug">
+                    <p className="text-[12px] font-semibold text-[#17212B] leading-snug">
                       기업에서 해당 인재 채용 시 고용촉진장려금(월 60만원 x 12개월)을 지원받아 채용 서류 및 면접 우대를 받습니다.
                     </p>
                   </div>

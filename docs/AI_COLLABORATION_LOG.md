@@ -16,6 +16,29 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 프로젝트 상세 헤더 스크롤링 구조화 & 브랜드 컬러 위계 체계 재정립
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **프로젝트 상세 뷰(`DetailPanel` / `JobDetailView`) 헤더 고정 제거**:
+     - 기존 `sticky top-0 z-20` 설정으로 인해 스크롤 시 상단 여백에서 본문 텍스트가 겹쳐 보이거나 잘리던 현상을 완전히 해소.
+     - 헤더가 본문과 함께 자연스럽게 위로 스크롤되는 순수 문서 구조(`border-b border-[#E0D9C8]/60 pb-4`)로 전환하여 쾌적하고 깔끔한 스크롤 환경 제공.
+  2. **그린·오렌지 브랜드 색체계 정보 중요도 기반 재정립**:
+     - **다크 포레스트 그린 (`#173F3A`)**: 메인 타이포그래피, 구조적 헤더, 탭 배경, 주요 버튼 등 핵심 뼈대 역할.
+     - **민트 (`#8DD4C3`) [극히 희소/최고 중요 활성 포인트]**: 다크 배경 위 활성 필터 라벨 텍스트 등 최고 중요 핀포인트 라이트로만 극도로 절제하여 사용.
+     - **오렌지 (`#F06B4F`) [주요 강조 포인트]**: 주요 CTA 버튼, 90+ 고득점 매칭 뱃지 배경, 핵심 피칭 포인트 강조.
+     - **옐로우 (`#FEEA00`) [극히 희소/최고 중요 하이라이트]**: 90점 이상 최고 정합도 뱃지의 Sparkles 별표 아이콘으로만 유일하게 국한하여 시각적 품격 유지.
+  3. **전체 페이지 컬러 일관성 정비**:
+     - `JobDatabasePage.tsx`, `FlowPages.tsx`, `BasicProfilePage.tsx`, `LandingPage.tsx`, `SignupPage.tsx` 전반의 불필요한 generic emerald/teal/border 박스들을 브랜드 톤앤매너(`bg-[#DDEBE7]`, `bg-[#FAF7F2]`, `bg-[#F8FCFB]`)로 통일.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/SignupPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 2순위·3순위 희망 직종 분류 기준 채용공고 필터링 & 정합도 점수 평가 정확도 개선
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

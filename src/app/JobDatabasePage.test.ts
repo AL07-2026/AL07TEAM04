@@ -317,7 +317,7 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
 });
 
 describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
-  it('정상 탐색 상태에는 양성 안내를 만들지 않고, desktop title은 하나의 sticky header에만 둔다', () => {
+  it('정상 탐색 상태에는 양성 안내를 만들지 않고, desktop title은 자연스럽게 스크롤되는 헤더에 둔다', () => {
     render(
       createElement(DetailPanel, {
         activePrimaryCategory: 'all_db',
@@ -329,7 +329,7 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
     expect(screen.queryByText('선택 직종 탐색 안내')).toBeNull();
     expect(screen.queryByText(/채용 공고를 탐색 중입니다/)).toBeNull();
     expect(screen.getAllByRole('heading', { name: companyProject.title })).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: companyProject.title }).parentElement).toHaveClass('sticky', 'top-0');
+    expect(screen.getByRole('heading', { name: companyProject.title }).closest('header')).toBeTruthy();
   });
 
   it('기타 직무 예외에서는 compact mismatch 안내를 유지한다', () => {

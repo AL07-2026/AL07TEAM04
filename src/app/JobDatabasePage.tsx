@@ -919,14 +919,7 @@ export function DetailPanel({
       )}
     >
       {/* Header */}
-      <header
-        className={cn(
-          'border-b border-[#E0D9C8]/70 bg-white',
-          !isMobile
-            ? 'sticky top-0 z-20 -mx-5 -mt-5 mb-5 rounded-t-2xl px-5 py-4 shadow-2xs'
-            : 'pb-4',
-        )}
-      >
+      <header className="border-b border-[#E0D9C8]/60 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A]">

@@ -294,7 +294,7 @@ export function LandingPage() {
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-col gap-1.5">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#DDEBE7] text-[#173F3A] w-fit">
                   <Landmark className="size-3.5" />
                   고용노동부 주관
                 </span>
@@ -318,23 +318,23 @@ export function LandingPage() {
             {/* Modal Body Content */}
             <div className="mt-5 flex flex-col gap-4 text-sm text-[#17212B]">
               {/* Box 1: 지원 금액 */}
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 sm:p-5">
-                <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-sm sm:text-base">
-                  <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
+              <div className="rounded-2xl bg-[#DDEBE7]/60 p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center gap-1.5 font-bold text-[#173F3A] text-sm sm:text-base">
+                  <CheckCircle2 className="size-4.5 text-[#173F3A] shrink-0" />
                   <span>실제 기업 지원 혜택 금액</span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="font-semibold text-emerald-900">우선지원대상기업 (중소·중견)</span>
-                    <p className="mt-1 text-lg font-extrabold text-emerald-700">
-                      월 60만원 <span className="text-xs font-semibold text-emerald-800">(연 720만원)</span>
+                    <span className="font-semibold text-[#173F3A]">우선지원대상기업 (중소·중견)</span>
+                    <p className="mt-1 text-lg font-extrabold text-[#173F3A]">
+                      월 60만원 <span className="text-xs font-semibold text-[#173F3A]/80">(연 720만원)</span>
                     </p>
                     <p className="text-[11.5px] text-slate-500 mt-0.5">3개월 단위 180만원씩 분기별 지급</p>
                   </div>
                   <div>
-                    <span className="font-semibold text-emerald-900">특수 대상 (중증장애인·여성가장)</span>
-                    <p className="mt-1 text-lg font-extrabold text-emerald-700">
-                      월 80만원 <span className="text-xs font-semibold text-emerald-800">(연 960만원)</span>
+                    <span className="font-semibold text-[#173F3A]">특수 대상 (중증장애인·여성가장)</span>
+                    <p className="mt-1 text-lg font-extrabold text-[#173F3A]">
+                      월 80만원 <span className="text-xs font-semibold text-[#173F3A]/80">(연 960만원)</span>
                     </p>
                     <p className="text-[11.5px] text-slate-500 mt-0.5">최대 2년까지 지속 지원 가능</p>
                   </div>
@@ -419,7 +419,7 @@ export function LandingPage() {
                   setShowSubsidyModal(false);
                   void navigate('/login?role=company');
                 }}
-                className="w-full sm:w-auto h-11 px-6 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 active:scale-[0.98] transition shadow-xs cursor-pointer"
+                className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#173F3A] text-white text-xs font-semibold hover:bg-[#1E4E47] active:scale-[0.98] transition shadow-xs cursor-pointer"
               >
                 혜택 대상 인재 보러가기 (기업 로그인) ➔
               </button>

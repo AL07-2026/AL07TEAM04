@@ -319,7 +319,7 @@ export function ProcessOverviewGraphicCard() {
   const isMobile = mode === 'mobile';
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-5 shadow-xs">
+    <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 md:p-5 shadow-xs">
       <div className="flex items-center justify-between">
         <span
           className={cn(
@@ -339,7 +339,7 @@ export function ProcessOverviewGraphicCard() {
         {/* Step 1 */}
         <div
           className={cn(
-            'flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]',
+            'flex items-center gap-3 rounded-xl bg-[#DDEBE7]/70 p-3 md:py-3.5 md:px-4 shadow-2xs transition hover:bg-[#DDEBE7]',
             isMobile ? 'justify-start' : 'justify-center',
           )}
         >
@@ -365,7 +365,7 @@ export function ProcessOverviewGraphicCard() {
         {/* Step 2 */}
         <div
           className={cn(
-            'flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 border border-[#E0D9C8] transition hover:bg-[#F3eee3]',
+            'flex items-center gap-3 rounded-xl bg-[#FAF7F2] p-3 md:py-3.5 md:px-4 shadow-2xs transition hover:bg-[#F3eee3]',
             isMobile ? 'justify-start' : 'justify-center',
           )}
         >
@@ -391,7 +391,7 @@ export function ProcessOverviewGraphicCard() {
         {/* Step 3 */}
         <div
           className={cn(
-            'flex items-center gap-3 rounded-xl bg-[#DDEBE7] p-3 md:py-3.5 md:px-4 border border-[#BBD5CE] transition hover:bg-[#d2e5e0]',
+            'flex items-center gap-3 rounded-xl bg-[#DDEBE7]/70 p-3 md:py-3.5 md:px-4 shadow-2xs transition hover:bg-[#DDEBE7]',
             isMobile ? 'justify-start' : 'justify-center',
           )}
         >
@@ -1684,9 +1684,9 @@ export function ExperienceCardPage() {
       </div>
 
       {experienceCard ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]">
+            <span className="rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]">
               {getExperienceCardCategoryLabel(experienceCard)} 인터뷰 완료
             </span>
             <span className="flex items-center gap-1 text-[11px] font-bold text-[#173F3A]">
@@ -1697,7 +1697,7 @@ export function ExperienceCardPage() {
           <h3 className="text-base font-extrabold text-[#17212B]">{experienceCard.title}</h3>
 
           <div className="flex flex-col gap-2 pt-1">
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
               <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
                 <AlertTriangle className="size-4" />
               </div>
@@ -1707,7 +1707,7 @@ export function ExperienceCardPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
               <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
                 <User className="size-4" />
               </div>
@@ -1717,7 +1717,7 @@ export function ExperienceCardPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
               <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
                 <Settings className="size-4" />
               </div>
@@ -1727,7 +1727,7 @@ export function ExperienceCardPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] border border-[#E0D9C8]/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
               <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
                 <BarChart2 className="size-4" />
               </div>
@@ -1739,7 +1739,7 @@ export function ExperienceCardPage() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#F06B4F]/35 bg-[#FFF8F6] p-6 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-2xl bg-[#FFF8F6] p-6 text-center shadow-xs">
           <div className="flex size-11 items-center justify-center rounded-full bg-[#FDF0ED] text-[#F06B4F]">
             <Mic className="size-5" />
           </div>
@@ -2993,15 +2993,15 @@ export function ReceivedProposalDetailPage() {
       </div>
 
       {/* Employment Promotion Subsidy Report Card for Company */}
-      <div className="flex flex-col gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/90 p-3.5 shadow-2xs">
+      <div className="flex flex-col gap-1.5 rounded-xl bg-[#DDEBE7]/60 p-3.5 shadow-2xs">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
-            <Coins className="size-3.5 text-emerald-800 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
+            <Coins className="size-3.5 text-[#F06B4F] shrink-0" />
             <span>고용촉진장려금 지원 대상</span>
           </span>
-          <span className="text-xs font-extrabold text-emerald-900">연 최대 720만원 혜택</span>
+          <span className="text-xs font-extrabold text-[#173F3A]">연 최대 720만원 혜택</span>
         </div>
-        <p className="text-xs font-semibold text-emerald-900 leading-snug">
+        <p className="text-xs font-semibold text-[#17212B] leading-snug">
           해당 인재 채용 시 분기별 180만원(월 60만원 x 12개월)의 국가 인건비 지원금을 신청할 수 있습니다. (고용보험 및 우선지원대상기업 기준)
         </p>
       </div>
@@ -3133,7 +3133,7 @@ export function SeniorProfilePage() {
               ✓ 본인 인증
             </span>
             {seniorProfile?.employmentSubsidyTarget ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 border border-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
                 ✓ 연 720만원 지원 대상
               </span>
             ) : null}

@@ -257,7 +257,7 @@ export function SignupPage() {
               />
               {form.confirmPassword ? (
                 form.password === form.confirmPassword ? (
-                  <p className="text-[12px] font-extrabold text-emerald-600 flex items-center gap-1 pl-1">
+                  <p className="text-[12px] font-extrabold text-[#173F3A] flex items-center gap-1 pl-1">
                     ✓ 비밀번호가 일치합니다.
                   </p>
                 ) : (
