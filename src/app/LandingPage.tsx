@@ -254,7 +254,7 @@ export function LandingPage() {
                   trackButtonClick('subsidy_talent_cta');
                   void navigate('/login?role=company');
                 }}
-                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-6 text-[15px] sm:text-[16px] font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
+                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F06B4F] px-6 text-[15px] sm:text-[16px] font-extrabold text-white shadow-xs transition hover:bg-[#E05A3E] active:scale-[0.98] cursor-pointer"
               >
                 <span>혜택 대상 인재 보기</span>
                 <ArrowRight className="size-4.5 shrink-0" aria-hidden="true" />

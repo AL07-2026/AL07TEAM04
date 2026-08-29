@@ -108,8 +108,8 @@ export function MobilePage({
   return (
     <>
       {isMobileMode ? (
-        <main className="h-dvh max-h-dvh overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
-          <section className="mx-auto flex h-dvh sm:h-[844px] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
+        <main className="fixed inset-0 sm:static h-full sm:h-dvh sm:max-h-dvh w-full overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
+          <section className="mx-auto flex h-full sm:h-[844px] sm:max-h-[calc(100dvh-3rem)] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
             {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
             <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
@@ -409,40 +409,42 @@ function BottomNav({
     <nav
       aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
       className={cn(
-        'sticky bottom-0 z-40 flex h-[72px] shrink-0 border-t border-[#E0D9C8] bg-white px-2 py-2 shadow-lg pb-[env(safe-area-inset-bottom)]',
-        forceShow ? 'w-full' : 'md:hidden',
+        'w-full shrink-0 border-t border-[#E0D9C8] bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg z-40',
+        forceShow ? 'flex' : 'flex md:hidden',
       )}
     >
-      {navItems[role].map((item) => {
-        const selected = item.id === active;
-        const IconComponent = item.Icon;
-        return (
-          <button
-            aria-current={selected ? 'page' : undefined}
-            className={cn(
-              'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition',
-              selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
-            )}
-            key={item.id}
-            onClick={() => {
-              if (!user && (item.id === 'profile' || item.id === 'proposals')) {
-                void navigate('/login');
-              } else {
-                void navigate(item.path);
-              }
-            }}
-            type="button"
-          >
-            <IconComponent
+      <div className="flex items-center justify-around w-full">
+        {navItems[role].map((item) => {
+          const selected = item.id === active;
+          const IconComponent = item.Icon;
+          return (
+            <button
+              aria-current={selected ? 'page' : undefined}
               className={cn(
-                'size-5 transition-transform',
-                selected ? 'scale-110 text-[#F06B4F]' : 'text-slate-400',
+                'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition cursor-pointer',
+                selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
               )}
-            />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
+              key={item.id}
+              onClick={() => {
+                if (!user && (item.id === 'profile' || item.id === 'proposals')) {
+                  void navigate('/login');
+                } else {
+                  void navigate(item.path);
+                }
+              }}
+              type="button"
+            >
+              <IconComponent
+                className={cn(
+                  'size-5 transition-transform',
+                  selected ? 'scale-110 text-[#F06B4F]' : 'text-slate-400',
+                )}
+              />
+              <span className="whitespace-nowrap">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
@@ -515,9 +517,9 @@ export function Chip({
     <Element
       aria-pressed={onClick ? selected : undefined}
       className={cn(
-        'flex items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition-all duration-200',
-        isMobile ? 'h-[42px] min-h-[42px] px-4 text-[13.5px]' : 'h-11 min-h-11 px-5 text-[14px]',
-        onClick ? 'cursor-pointer' : 'cursor-default select-none',
+        'flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition-all duration-200 break-keep select-none',
+        isMobile ? 'h-[38px] min-h-[38px] px-3.5 text-[13px]' : 'h-11 min-h-11 px-5 text-[14px]',
+        onClick ? 'cursor-pointer' : 'cursor-default',
         selected
           ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]'
           : onClick

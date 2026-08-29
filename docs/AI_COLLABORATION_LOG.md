@@ -16,6 +16,29 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 내 제안 상단 필터 줄바꿈 방지, 혜택 대상 인재 보기 버튼 오렌지 전환 및 모바일 하단 내비게이션 여백 오류 해결
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **내 제안 및 받은 제안 상단 필터 칩 줄바꿈(단어 쪼개짐) 방지**:
+     - `globals.css`의 `.eojob-readable` 텍스트 확대 및 `overflow-wrap: anywhere`로 인해 `전\n체`, `진행\n중`, `검토\n중`, `연락\n받음` 처럼 세로 2줄로 단어가 쪼개지던 현상 해결.
+     - `.whitespace-nowrap` 클래스 우선순위 강제(`!important`, `overflow-wrap: normal !important`, `word-break: keep-all !important`) 및 `.no-scrollbar` 유틸리티 추가.
+     - `Chip` 컴포넌트에 `shrink-0 whitespace-nowrap break-keep` 및 모바일 전용 높이/패딩 최적화(`h-[38px] px-3.5 text-[13px]`) 적용.
+     - `MyProposalsPage` 및 `ReceivedProposalsPage` 상단 탭 래퍼에 `overflow-x-auto no-scrollbar`를 부여하여 모든 모바일 기기에서 줄바꿈 없이 깔끔한 한 줄 탭 렌더링 보장.
+     - 빈 상태 텍스트에 `break-keep`을 적용하여 단어 중간 분리 방지.
+  2. **고용노동부 연계 혜택 배너 CTA 버튼 오렌지 전환**:
+     - `LandingPage.tsx`의 `혜택 대상 인재 보기 ->` 버튼을 기존 다크 그린(`bg-[#173F3A]`)에서 브랜드 포인트 오렌지(`bg-[#F06B4F] hover:bg-[#E05A3E]`)로 전환.
+  3. **모바일 하단 내비게이션 바 하단 간헐적 여백 발생 버그 해결**:
+     - 모바일 브라우저 주소창 토글 및 윈도우 스크롤 시 body 영역이 밀려올라와 바텀 내비게이션 아래에 베이지색 여백이 생기던 현상을 차단.
+     - `MobilePage`를 스마트폰 화면에서 `fixed inset-0 h-full w-full overflow-hidden`으로 락을 걸고, `section`이 100% 뷰포트를 꽉 채우도록 개편.
+     - `BottomNav`를 `w-full shrink-0 border-t border-[#E0D9C8] bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg`로 설정하여 아이폰 홈 바 및 안드로이드 내비게이션 바 하단까지 완벽하게 밀착되도록 보장.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/styles/globals.css`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 인재 홈 맞춤 추천 TOP 5 공고 5개 독립 카드 분리(간격 분리) 및 아웃라인 제거
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

@@ -2205,7 +2205,7 @@ export function MyProposalsPage() {
       showBack={false}
       title="내 제안"
     >
-      <div className="flex gap-2.5">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
         {['전체', '진행 중', '검토 중', '연락 받음'].map((item) => (
           <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
             {item}
@@ -2228,11 +2228,11 @@ export function MyProposalsPage() {
             <div className="flex size-14 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
               <Send className="size-7 text-[#173F3A]" />
             </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-base md:text-lg font-extrabold text-[#17212B]">
+            <div className="flex flex-col gap-1 break-keep">
+              <h3 className="text-base md:text-lg font-extrabold text-[#17212B] break-keep">
                 {filter === '진행 중' ? '아직 진행 중인 제안이 없어요.' : '아직 제출된 지원/제안 내역이 없습니다'}
               </h3>
-              <p className="text-xs md:text-sm font-medium text-slate-500">
+              <p className="text-xs md:text-sm font-medium text-slate-500 break-keep">
                 {filter === '진행 중'
                   ? '마음에 드는 프로젝트를 찾아 첫 지원을 시작해 보세요.'
                   : '마음에 드는 프로젝트를 탐색하고 프로젝트 지원하기 버튼을 눌러 첫 지원을 시작해 보세요!'}
@@ -2909,7 +2909,7 @@ export function ReceivedProposalsPage() {
       showBack={false}
       title="받은 제안"
     >
-      <div className="flex gap-2.5">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
         {['전체', '검토 중', '연락 받음'].map((item) => (
           <Chip
             key={item}

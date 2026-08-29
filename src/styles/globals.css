@@ -147,12 +147,26 @@ input:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.eojob-readable :is(.whitespace-nowrap, [class*='whitespace-nowrap']) {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .eojob-readable :is(input, select, textarea) {
   font-size: 16px;
   line-height: 1.5;
 }
 
-.eojob-readable button {
+.eojob-readable button:not(.whitespace-nowrap):not([class*='whitespace-nowrap']) {
   line-height: 1.35;
   white-space: normal;
 }
