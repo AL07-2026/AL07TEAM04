@@ -418,11 +418,13 @@ export function ProcessOverviewGraphicCard() {
   );
 }
 
-function HomeRecommendationCard({
+function HomeRecommendationRow({
   job,
+  rank,
   onClick,
 }: {
   job: JobPosting;
+  rank: number;
   onClick: () => void;
 }) {
   const analyzed = useMemo(() => analyzeJobPostingForDetail(job), [job]);
@@ -432,74 +434,65 @@ function HomeRecommendationCard({
   return (
     <article
       onClick={onClick}
-      className="group relative flex flex-col justify-between rounded-2xl border border-[#E0D9C8] bg-white p-5 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#173F3A] hover:shadow-md cursor-pointer"
+      className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-5 px-4 py-3.5 sm:px-5 sm:py-4 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0"
     >
-      <div className="flex flex-col gap-3">
-        {/* Top: Company & Tags + Fit Score */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-0.5 text-[12px] font-extrabold text-[#173F3A]">
-              {job.companyName}
-            </span>
-            <span className="inline-flex rounded-md border border-[#E0D9C8]/60 bg-slate-50 px-2 py-0.5 text-[11.5px] font-bold text-slate-600">
-              {analyzed.keyJobFacts.workTypeLabel}
-            </span>
-            <span className="inline-flex rounded-md border border-[#E0D9C8]/60 bg-slate-50 px-2 py-0.5 text-[11.5px] font-bold text-slate-600">
-              {analyzed.keyJobFacts.employmentTypeLabel}
-            </span>
+      {/* Left: Rank + Company + Title + AI 1-line Challenge */}
+      <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
+        {/* Rank Number */}
+        <span className="flex size-6 sm:size-6.5 shrink-0 items-center justify-center rounded-lg bg-[#FAF7F2] text-[12px] font-black text-[#173F3A] group-hover:bg-[#173F3A] group-hover:text-white transition-colors mt-0.5">
+          {rank}
+        </span>
+
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          {/* Company & Category */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-bold text-slate-500">
+            <span className="font-extrabold text-[#173F3A]">{job.companyName}</span>
+            <span className="text-slate-300">·</span>
+            <span>{analyzed.keyJobFacts.workTypeLabel}</span>
+            <span className="text-slate-300">·</span>
+            <span>{analyzed.keyJobFacts.employmentTypeLabel}</span>
           </div>
 
-          {fitScore !== undefined && fitTone ? (
-            <span
-              className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11.5px] font-black',
-                fitTone.containerClassName,
-                fitTone.scoreClassName,
-              )}
-            >
-              <Sparkles className="size-3 text-[#F06B4F]" />
-              <span>적합도 {fitScore}점</span>
-            </span>
-          ) : null}
-        </div>
+          {/* Position Title */}
+          <h4 className="text-[15px] sm:text-[16px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] truncate">
+            {analyzed.keyJobFacts.roleTitle}
+          </h4>
 
-        {/* Title */}
-        <h4 className="line-clamp-2 text-[16.5px] md:text-[17.5px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A]">
-          {analyzed.keyJobFacts.roleTitle}
-        </h4>
-
-        {/* AI Problem Diagnosis & Required Experience Briefing */}
-        <div className="rounded-xl border border-[#BBD5CE]/70 bg-[#F4FAF8] p-3 text-[12.5px] leading-relaxed flex flex-col gap-1.5">
-          <div className="flex items-start gap-1.5">
-            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 과제</span>
-            <p className="line-clamp-1 font-semibold text-[#17212B]">
+          {/* AI 1-line Challenge */}
+          <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-600 truncate mt-0.5">
+            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="truncate font-semibold text-[#17212B]/90">
               {analyzed.aiExecutiveSummary.keyChallenge}
-            </p>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="shrink-0 font-extrabold text-[#173F3A]">🎯 인재</span>
-            <p className="line-clamp-1 font-semibold text-[#17212B]">
-              {analyzed.talentPersona.headline}
-            </p>
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Bottom: Meta conditions + Salary */}
-      <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E0D9C8]/70 pt-3 text-[12px]">
-        <div className="flex items-center gap-1.5 text-slate-500 font-bold">
-          <span>{analyzed.keyJobFacts.locationLabel}</span>
-          <span>·</span>
-          <span>{analyzed.keyJobFacts.experienceRequired}</span>
-          <span>·</span>
-          <span>{analyzed.keyJobFacts.deadlineLabel}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-black text-[#F06B4F] text-[13px]">
+      {/* Right: Conditions, Salary, Fit Score Pill, Arrow */}
+      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0 pt-2 sm:pt-0 border-t border-[#F0ECE1]/60 sm:border-t-0">
+        {/* Location & Experience & Salary */}
+        <div className="flex flex-col items-start sm:items-end text-[11.5px] text-slate-500 font-bold">
+          <span>{analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}</span>
+          <span className="text-[#F06B4F] font-black text-[13px] sm:text-[13.5px]">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
-          <ArrowRight className="size-4 text-slate-400 group-hover:text-[#173F3A] group-hover:translate-x-0.5 transition-all" />
         </div>
+
+        {/* Fit Score Pill */}
+        {fitScore !== undefined && fitTone ? (
+          <span
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+              fitTone.containerClassName,
+              fitTone.scoreClassName,
+            )}
+          >
+            <Sparkles className="size-3 text-[#F06B4F]" />
+            <span>{fitScore}점</span>
+          </span>
+        ) : null}
+
+        <ArrowRight className="size-4 text-slate-300 group-hover:text-[#173F3A] group-hover:translate-x-0.5 transition-all shrink-0 hidden sm:block" />
       </div>
     </article>
   );
@@ -523,9 +516,6 @@ export function SeniorHomePage() {
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
   const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(initialLocalProfile);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
-  const [homePage, setHomePage] = useState(1);
-  const [homeTotalPages, setHomeTotalPages] = useState(1);
-  const homeItemsPerPage = 8;
 
   const hasLoadedRef = useRef(false);
 
@@ -554,7 +544,6 @@ export function SeniorHomePage() {
       if (!user) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
-        setHomeTotalPages(1);
         setHighestFitProject(null);
         setIsExperienceRecommendationApplied(false);
         setRecommendationFeedMessage('맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.');
@@ -564,7 +553,6 @@ export function SeniorHomePage() {
       if (!primaryCategory && !shouldUseOtherOccupation) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
-        setHomeTotalPages(1);
         setHighestFitProject(null);
         setIsExperienceRecommendationApplied(false);
         setRecommendationFeedMessage('내 정보에서 1순위 희망 직종을 먼저 선택해 주세요.');
@@ -594,7 +582,7 @@ export function SeniorHomePage() {
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
           page: 1,
-          pageSize: 10,
+          pageSize: 20,
           profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
             .filter(Boolean)
             .join(' '),
@@ -620,17 +608,9 @@ export function SeniorHomePage() {
           .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
 
         const total = allPersonalizedItems.length;
-        const calculatedTotalPages = Math.max(1, Math.ceil(total / homeItemsPerPage));
-        const currentPage = Math.min(homePage, calculatedTotalPages);
-        const start = (currentPage - 1) * homeItemsPerPage;
-        const pageJobs = allPersonalizedItems.slice(start, start + homeItemsPerPage);
-
-        setRecommendedJobs(pageJobs);
+        setRecommendedJobs(allPersonalizedItems.slice(0, 5));
         setRecommendedProjectsCount(total);
-        setHomeTotalPages(calculatedTotalPages);
-        if (currentPage === 1) {
-          setHighestFitProject(getHighestFitProject(allPersonalizedItems));
-        }
+        setHighestFitProject(getHighestFitProject(allPersonalizedItems));
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(
           total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
@@ -647,15 +627,13 @@ export function SeniorHomePage() {
           experienceCard,
         );
         const total = ranked.length;
-        const start = (homePage - 1) * homeItemsPerPage;
         const pageJobs = ranked
-          .slice(start, start + homeItemsPerPage)
           .map(({ posting }) => posting)
-          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0))
+          .slice(0, 5);
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
-        setHomeTotalPages(Math.max(1, Math.ceil(total / homeItemsPerPage)));
-        if (homePage === 1) setHighestFitProject(getHighestFitProject(pageJobs));
+        setHighestFitProject(getHighestFitProject(pageJobs));
         setIsExperienceRecommendationApplied(Boolean(experienceCard));
         setRecommendationFeedMessage(worknetFeed.message ?? '');
       }
@@ -667,7 +645,6 @@ export function SeniorHomePage() {
           console.warn('Failed to load senior recommendations:', error);
           setRecommendedJobs([]);
           setRecommendedProjectsCount(0);
-          setHomeTotalPages(1);
           setHighestFitProject(null);
           setRecommendationFeedMessage(
             '추천 공고를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
@@ -683,7 +660,6 @@ export function SeniorHomePage() {
 
     const handleProfileUpdate = () => {
       clearWorknetFeedCache();
-      setHomePage(1);
       setRecommendationReloadKey((prev) => prev + 1);
     };
 
@@ -697,7 +673,7 @@ export function SeniorHomePage() {
       window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
       window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [homePage, recommendationReloadKey, user, user?.uid]);
+  }, [recommendationReloadKey, user, user?.uid]);
 
   const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
   const recommendationPrimaryLabel = recommendationPrimaryCategory
@@ -857,45 +833,52 @@ export function SeniorHomePage() {
             className="shrink-0 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] hover:text-[#0F2D2A] hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer"
             type="button"
           >
-            <span>전체 보기 →</span>
+            <span>전체 {recommendedProjectsCount}개 보기 →</span>
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] px-3.5 py-2.5 text-[12px] font-extrabold text-[#173F3A]">
-          <Target className="size-4 shrink-0" />
-          <span>내 정보 1순위 · {recommendationPrimaryLabel}</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[#EBF4F1] px-4 py-2.5 text-[12px] font-bold text-[#173F3A]">
+          <Target className="size-4 shrink-0 text-[#173F3A]" />
+          <span className="font-extrabold">1순위 직무 · {recommendationPrimaryLabel}</span>
           <span className="text-slate-300">|</span>
-          <span>
+          <span className="text-slate-700">
             {isExperienceRecommendationApplied
-              ? 'AI 경험 인터뷰의 역할·행동·성과까지 추천 순서에 반영됨'
-              : '경력 분야·핵심 강점·해결 경험을 추천 순서에 반영함'}
+              ? 'AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천 공고입니다.'
+              : '경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5 공고입니다.'}
           </span>
         </div>
 
         {isLoadingRecommendations ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {[1, 2, 3, 4].map((idx) => (
+          <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white p-2 divide-y divide-[#F0ECE1] shadow-xs">
+            {[1, 2, 3, 4, 5].map((idx) => (
               <div
-                className="flex flex-col gap-3 rounded-2xl border border-[#E0D9C8]/80 bg-white p-5 shadow-xs animate-pulse"
+                className="flex items-center justify-between gap-4 p-4 animate-pulse"
                 key={idx}
               >
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-28 rounded bg-slate-200" />
-                  <div className="h-6 w-20 rounded-full bg-slate-200" />
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="size-6.5 rounded-lg bg-slate-200" />
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <div className="h-3.5 w-24 rounded bg-slate-200" />
+                    <div className="h-4.5 w-3/4 rounded bg-slate-200" />
+                    <div className="h-3.5 w-1/2 rounded bg-slate-100" />
+                  </div>
                 </div>
-                <div className="h-5 w-3/4 rounded bg-slate-200" />
-                <div className="h-16 w-full rounded-xl bg-slate-100" />
-                <div className="h-4 w-1/2 rounded bg-slate-200" />
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="h-4 w-20 rounded bg-slate-200" />
+                  <div className="h-6 w-16 rounded-full bg-slate-200" />
+                </div>
               </div>
             ))}
           </div>
         ) : recommendedJobs.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {recommendedJobs.map((job) => (
-                <HomeRecommendationCard
+          <div className="flex flex-col gap-3">
+            {/* Unified 5-Item List Container */}
+            <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
+              {recommendedJobs.slice(0, 5).map((job, idx) => (
+                <HomeRecommendationRow
                   job={job}
                   key={job.id}
+                  rank={idx + 1}
                   onClick={() =>
                     void navigate(`/senior/projects?jobId=${job.id}&focusProject=${job.id}`)
                   }
@@ -903,64 +886,16 @@ export function SeniorHomePage() {
               ))}
             </div>
 
-            {/* Home Pagination Controls */}
-            {homeTotalPages > 1 && (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
-                <div className="text-xs font-bold text-slate-600">
-                  전체 <span className="font-extrabold text-[#173F3A]">{recommendedProjectsCount}</span>건 중{' '}
-                  <span className="font-extrabold text-[#17212B]">
-                    {(homePage - 1) * homeItemsPerPage + 1}~{Math.min(homePage * homeItemsPerPage, recommendedProjectsCount)}
-                  </span>건 표시
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    onClick={() => setHomePage((p) => Math.max(1, p - 1))}
-                    disabled={homePage === 1}
-                    type="button"
-                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-                  >
-                    이전
-                  </button>
-
-                  {Array.from({ length: Math.min(5, homeTotalPages) }, (_, idx) => {
-                    const totalP = homeTotalPages;
-                    let pageNum = idx + 1;
-                    if (totalP > 5) {
-                      if (homePage > 3 && homePage < totalP - 2) {
-                        pageNum = homePage - 2 + idx;
-                      } else if (homePage >= totalP - 2) {
-                        pageNum = totalP - 4 + idx;
-                      }
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setHomePage(pageNum)}
-                        type="button"
-                        className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
-                          homePage === pageNum
-                            ? 'bg-[#173F3A] text-white shadow-xs'
-                            : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    onClick={() => setHomePage((p) => Math.min(homeTotalPages, p + 1))}
-                    disabled={homePage === homeTotalPages}
-                    type="button"
-                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-                  >
-                    다음
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
+            {/* Bottom Full Exploration Link Button */}
+            <button
+              onClick={() => void navigate('/senior/projects')}
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E0D9C8] bg-white py-3 text-[13.5px] font-extrabold text-[#173F3A] hover:bg-[#F4FAF8] hover:border-[#173F3A] transition-all duration-150 shadow-3xs cursor-pointer"
+            >
+              <span>전체 맞춤 프로젝트 {recommendedProjectsCount}개 보러가기</span>
+              <ArrowRight className="size-4" />
+            </button>
+          </div>
         ) : (
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">
               <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
