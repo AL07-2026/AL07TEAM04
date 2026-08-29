@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 인재 홈 상단 이어잡 로고/하단 구분선 제거 및 AI 경험 인터뷰 카드 아웃라인 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **인재 홈 상단 인사말 영역 불필요한 요소 정리**:
+     - 상단 우측의 이어잡 로고 이미지(`logo_text.png`) 제거.
+     - 인사말 블록 하단의 가로 구분선(`border-b border-[#E0D9C8]/60`)을 제거하여 상단 영역을 시각적으로 가볍고 깔끔하게 정돈.
+  2. **AI 경험 인터뷰 시작하기 카드 테두리 아웃라인 제거**:
+     - 기존 `border border-[#E0D9C8]` 외곽 테두리선을 제거하고, 부드러운 소프트 그림자(`shadow-xs`, 호버 시 `shadow-md`) 기반 모던 카드 스타일로 일체화.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 랜딩페이지 서비스 특징 카드 아웃라인 제거 및 고용 혜택 배너 라이트 오렌지 톤 정리
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

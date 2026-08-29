@@ -774,30 +774,18 @@ export function SeniorHomePage() {
       showBack={false}
       title="인재 홈"
     >
-      <div
-        className={cn(
-          'flex justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3',
-          isMobile ? 'flex-col items-start' : 'flex-row items-center',
-        )}
-      >
-        <div>
-          <h2
-            className={cn(
-              'font-extrabold text-[#17212B]',
-              isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl',
-            )}
-          >
-            {userName}님, 안녕하세요
-          </h2>
-          <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">
-            이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
-          </p>
-        </div>
-        {!isMobile && (
-          <div className="flex items-center gap-2">
-            <img src="/logo_text.png" alt="이어잡" className="h-[27px] w-auto object-contain" />
-          </div>
-        )}
+      <div>
+        <h2
+          className={cn(
+            'font-extrabold text-[#17212B]',
+            isMobile ? 'text-xl' : 'text-2xl md:text-3xl lg:text-4xl',
+          )}
+        >
+          {userName}님, 안녕하세요
+        </h2>
+        <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">
+          이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
+        </p>
       </div>
 
       {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR MOBILE & PC */}
@@ -807,7 +795,7 @@ export function SeniorHomePage() {
       <button
         onClick={() => void navigate('/senior/experience')}
         type="button"
-        className="group w-full rounded-2xl border border-[#E0D9C8] bg-white p-4 md:p-6 text-left shadow-2xs transition hover:border-[#F06B4F]/50 hover:shadow-md active:scale-[0.99]"
+        className="group w-full rounded-2xl bg-white p-4 md:p-6 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
       >
         <div className="flex w-full items-center justify-between gap-3 md:gap-6">
           <div className="flex flex-col gap-1.5 min-w-0 flex-1">
