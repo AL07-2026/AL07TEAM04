@@ -236,14 +236,14 @@ export function LandingPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => {
                   trackSubsidyModalOpen('landing_banner');
                   setShowSubsidyModal(true);
                 }}
-                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[15px] sm:text-[16px] font-extrabold text-[#17212B] shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
+                className="inline-flex h-12 min-h-12 w-full sm:w-auto min-w-[190px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#E0D9C8] bg-white px-6 text-[15px] sm:text-[16px] font-extrabold text-[#17212B] shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
               >
                 <Info className="size-4.5 shrink-0 text-[#173F3A]" />
                 <span>혜택 세부내용 확인</span>
@@ -254,7 +254,7 @@ export function LandingPage() {
                   trackButtonClick('subsidy_talent_cta');
                   void navigate('/login?role=company');
                 }}
-                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F06B4F] px-6 text-[15px] sm:text-[16px] font-extrabold text-white shadow-xs transition hover:bg-[#E05A3E] active:scale-[0.98] cursor-pointer"
+                className="inline-flex h-12 min-h-12 w-full sm:w-auto min-w-[190px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#F06B4F] px-6 text-[15px] sm:text-[16px] font-extrabold text-white shadow-xs transition hover:bg-[#E05A3E] active:scale-[0.98] cursor-pointer"
               >
                 <span>혜택 대상 인재 보기</span>
                 <ArrowRight className="size-4.5 shrink-0" aria-hidden="true" />
