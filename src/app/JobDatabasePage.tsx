@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building2,
   CalendarClock,
+  Check,
   CheckCircle,
   CheckCircle2,
   ChevronDown,
@@ -1280,6 +1281,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [selectedEmploymentType, setSelectedEmploymentType] = useState<EmploymentTypeFilter>(all);
   const [selectedHiringStage, setSelectedHiringStage] = useState<HiringStageFilter>(all);
   const [sortBy, setSortBy] = useState<SortOption>('fit-desc');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    if (isSortDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortDropdownOpen]);
   const [selectedId, setSelectedId] = useState('');
   const [selectedTalentId, setSelectedTalentId] = useState('');
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
@@ -3812,21 +3829,56 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           )}
           {isFilterTransition ? null : '건'}
         </span>
-        <label className="inline-flex shrink-0 items-center gap-2 text-[12px] font-extrabold text-[#17212B]">
-          <span className="sr-only">정렬 기준</span>
-          <select
-            aria-label="정렬 기준"
-            className="h-9 max-w-32 rounded-lg border border-[#E0D9C8] bg-white px-2 text-[12px] font-extrabold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
-            onChange={(event) => changeSort(event.target.value as SortOption)}
-            value={sortBy}
+        <div className="relative inline-block text-left shrink-0" ref={sortDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsSortDropdownOpen((prev) => !prev)}
+            aria-haspopup="listbox"
+            aria-expanded={isSortDropdownOpen}
+            aria-label={`정렬 기준: ${sortOptions.find((option) => option.id === sortBy)?.label || '적합도 높은순'}`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E0D9C8] bg-white px-3.5 text-[12.5px] font-extrabold text-[#17212B] shadow-2xs hover:bg-[#FAF7F2] hover:border-[#173F3A]/40 transition-all focus:outline-none"
           >
-            {sortOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span>{sortOptions.find((option) => option.id === sortBy)?.label || '적합도 높은순'}</span>
+            <ChevronDown
+              className={cn(
+                'size-3.5 text-slate-500 transition-transform duration-200',
+                isSortDropdownOpen && 'rotate-180',
+              )}
+            />
+          </button>
+
+          {isSortDropdownOpen && (
+            <div
+              className="absolute right-0 z-30 mt-1.5 min-w-[130px] rounded-2xl border border-[#E0D9C8]/80 bg-white p-1.5 shadow-lg animate-in fade-in zoom-in-95 duration-100"
+              role="listbox"
+            >
+              {sortOptions.map((option) => {
+                const isSelected = option.id === sortBy;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      changeSort(option.id);
+                      setIsSortDropdownOpen(false);
+                    }}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-extrabold transition-all',
+                      isSelected
+                        ? 'bg-[#173F3A] text-white shadow-2xs'
+                        : 'text-[#17212B] hover:bg-[#FAF7F2]',
+                    )}
+                    role="option"
+                    aria-selected={isSelected}
+                  >
+                    <span>{option.label}</span>
+                    {isSelected ? <Check className="size-3.5 shrink-0 ml-1.5" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <div

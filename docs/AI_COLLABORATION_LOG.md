@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 프로젝트 검색/추천 화면 정렬 드롭다운을 세련된 커스텀 버튼 형태로 개편
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **정렬 셀렉트 UX 개선 (`src/app/JobDatabasePage.tsx`)**:
+     - 기존 브라우저 기본 `<select>` 요소를 앱 전체 디자인 시스템과 통일된 둥근 캡슐형 커스텀 드롭다운 버튼(`rounded-full bg-white shadow-2xs`)으로 교체.
+     - 클릭 시 나타나는 두꺼운 포커스 박스 테두리 및 텍스트 잘림 현상을 완전 제거.
+     - 바깥 클릭 시 닫히는 부드러운 드롭다운 팝오버 메뉴 및 체크 아이콘 선택 피드백 제공.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 기업 홈 요약 카드(SummaryCard) 높이 및 크기 완전 통일
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
