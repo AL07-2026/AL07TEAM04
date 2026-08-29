@@ -16,6 +16,25 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 리멤버/원티드 스타일 채용공고 리스트 간소화 및 AI 경험 중심 인재상 분석·정보 구조화 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **채용공고 리스트 카드 (`PostingCard`) 리멤버/원티드 스타일 미니멀 개편**:
+     - 불필요한 반복 버튼 및 다단 배지를 제거하고, 회사명·산업군, 2줄 제한 볼드 직무명, 핵심 조건 칩(재택/계약직/직종), 1줄 메타데이터(지역·경력·마감일) 및 강조 급여로 간결화.
+     - 선택 시 브랜드 딥그린 인셋 액센트(`border-[#173F3A] bg-[#F4FAF8] shadow-[inset_3px_0_0_#173F3A]`)로 인체공학적 시각 인지성 강화.
+  2. **선택 공고 상세 (`DetailPanel`) AI 경험 중심 인재상 & 직무 정보 구조화**:
+     - **AI 3줄 핵심 요약**: 채용 배경, 핵심 당면 과제, 시니어 기대 역할을 일목요연하게 브리핑.
+     - **기업이 원하는 시니어 인재상 (경험 분석)**: 타겟 시니어 페르소나 헤드라인, 핵심 실무/리딩 경험 3대 하이라이트, 역량 키워드 해시태그 칩, AI 인터뷰/제안서 어필 포인트 제시.
+     - **구직자 핵심 직무 조건 4박스 그리드**: 주요 업무 내용, 자격 요건, 근무 환경/혜택, 채용 정보 요약.
+  3. **전체 공고 데이터베이스 100% 예외 커버리지 (AI Deterministic Fallback)**:
+     - `src/services/aiJobDetailAnalyzer.ts` 신설: 공공/워크넷 데이터 중 상세 설명이 부족한 공고도 직무/산업군 휴리스틱 추론 엔진을 통해 빈칸이나 에러 문구 없이 완성도 높은 AI 경험 페르소나 및 구조화된 직무 정보 자동 생성.
+- **검증 & 결과**: 전체 264개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [NEW] `src/services/aiJobDetailAnalyzer.ts`
+  - [NEW] `src/services/aiJobDetailAnalyzer.test.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-28] 전역 버튼 클릭 자동 캡처 및 단계별 이탈률(Drop-Off/Funnel) 추적 시스템 구축 완료
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
