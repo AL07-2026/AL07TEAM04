@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Compass, Pause, Play } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
@@ -385,19 +385,12 @@ export function LoginPage() {
               Google 계정으로 로그인
             </button>
 
-            <div className="flex flex-col items-center gap-2.5 pt-1.5 pb-1">
+            <div className="flex items-center justify-center pt-2 border-t border-[#E0D9C8]/60 mt-1">
               <Link
                 className="text-[13px] font-extrabold text-[#F06B4F] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#D85A3F]"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
-              </Link>
-              <Link
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#173F3A] bg-[#DDEBE7] px-3.5 py-1.5 rounded-full border border-[#BBD5CE] transition-all hover:bg-[#c9e2dc]"
-                to="/senior/project-database"
-              >
-                <Compass className="size-3.5 text-[#173F3A]" />
-                <span>로그인 없이 전체 프로젝트 둘러보기 →</span>
               </Link>
             </div>
           </form>

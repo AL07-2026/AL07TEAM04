@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 로그인 화면 하단 '로그인 없이 전체 프로젝트 둘러보기' 버튼 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **로그인 화면(`src/app/LoginPage.tsx`) 하단 불필요 링크 정리**:
+     - 모바일 및 PC 뷰 로그인 폼 하단의 `로그인 없이 전체 프로젝트 둘러보기 →` 버튼 제거.
+     - `계정이 없나요? 회원가입` 링크만 중앙에 깔끔하게 배치하여 로그인 전환 집중도 향상.
+     - 미사용 `Compass` 아이콘 import 정리.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 프로젝트 목록 상단 '시니어 맞춤 채용 공고' 헤더 박스 테두리/배경 제거 및 플랫 디자인 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
