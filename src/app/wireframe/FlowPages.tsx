@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Send,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Target,
@@ -3119,11 +3120,14 @@ export function ReceivedProposalDetailPage() {
 export function SeniorProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
   const isMobile = mode === 'mobile';
   const [experienceCard, setExperienceCard] = useState<StoredExperienceCard | null>(() =>
     readStoredExperienceCard(user?.uid),
   );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const seniorProfile = getLocalSeniorProfile(user?.uid);
 
   useEffect(() => {
@@ -3131,6 +3135,21 @@ export function SeniorProfilePage() {
       void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await deleteAccount();
+      setIsDeleteModalOpen(false);
+      void navigate('/', { replace: true });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
+      setDeleteError(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -3268,33 +3287,99 @@ export function SeniorProfilePage() {
         <ActionButton
           onClick={async () => {
             await signOut();
-            void navigate('/senior/project-database', { replace: true });
+            void navigate('/', { replace: true });
           }}
           secondary
-          className="text-rose-500 border-rose-200 hover:bg-rose-50"
+          className="text-slate-700 border-slate-200 hover:bg-slate-50"
         >
           로그아웃
         </ActionButton>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError('');
+            setIsDeleteModalOpen(true);
+          }}
+          className="mt-1 text-center text-xs font-semibold text-slate-400 hover:text-rose-600 underline underline-offset-2 transition-colors cursor-pointer py-1"
+        >
+          회원 탈퇴하기
+        </button>
       </div>
+
+      {/* Account Deletion Confirmation Modal */}
+      {isDeleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl border border-[#E0D9C8]">
+            <div className="flex items-center gap-2 text-rose-600">
+              <ShieldAlert className="size-5 shrink-0" />
+              <strong className="text-base font-extrabold">회원 탈퇴 확인</strong>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600 font-medium">
+              회원 탈퇴 시 등록된 <strong>기본 프로필, AI 경험 카드, 제안 내역</strong>이 모두 즉시 삭제되며 복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
+            </p>
+            {deleteError ? (
+              <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                {deleteError}
+              </p>
+            ) : null}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 h-11 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeleting}
+                className="flex-1 h-11 rounded-xl bg-rose-600 text-xs font-extrabold text-white hover:bg-rose-700 active:scale-[0.98] transition shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? '탈퇴 처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </MobilePage>
   );
 }
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(
     () => getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile(),
   );
   const [projectCount, setProjectCount] = useState(0);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!user && import.meta.env.MODE !== 'test') {
       void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await deleteAccount();
+      setIsDeleteModalOpen(false);
+      void navigate('/', { replace: true });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
+      setDeleteError(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     void (async () => {
@@ -3392,14 +3477,62 @@ export function CompanyProfilePage() {
         <ActionButton
           onClick={async () => {
             await signOut();
-            void navigate('/senior/project-database', { replace: true });
+            void navigate('/', { replace: true });
           }}
           secondary
-          className="text-rose-500 border-rose-200 hover:bg-rose-50"
+          className="text-slate-700 border-slate-200 hover:bg-slate-50"
         >
           로그아웃
         </ActionButton>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError('');
+            setIsDeleteModalOpen(true);
+          }}
+          className="mt-1 text-center text-xs font-semibold text-slate-400 hover:text-rose-600 underline underline-offset-2 transition-colors cursor-pointer py-1"
+        >
+          회원 탈퇴하기
+        </button>
       </div>
+
+      {/* Account Deletion Confirmation Modal */}
+      {isDeleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl border border-[#E0D9C8]">
+            <div className="flex items-center gap-2 text-rose-600">
+              <ShieldAlert className="size-5 shrink-0" />
+              <strong className="text-base font-extrabold">회원 탈퇴 확인</strong>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600 font-medium">
+              회원 탈퇴 시 등록된 <strong>기업 정보 및 등록 프로젝트</strong>가 모두 즉시 삭제되며 복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
+            </p>
+            {deleteError ? (
+              <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                {deleteError}
+              </p>
+            ) : null}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 h-11 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeleting}
+                className="flex-1 h-11 rounded-xl bg-rose-600 text-xs font-extrabold text-white hover:bg-rose-700 active:scale-[0.98] transition shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? '탈퇴 처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </MobilePage>
   );
 }

@@ -16,6 +16,25 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 로그인 세션 유지 정책 UX 개선 및 내 정보 '회원 탈퇴' 기능 구현
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **로그인 세션 유지 정책 & 랜딩페이지 헤더 네비게이션 개선 (`src/app/LandingPage.tsx`)**:
+     - 로그인된 상태일 때 랜딩페이지 상단 헤더에 현재 계정 역할 뱃지(`🏢 기업 로그인됨` / `👤 인재 로그인됨`), `[내 홈]` 바로가기 버튼, `[프로젝트 둘러보기]` 버튼, `[로그아웃]` 버튼을 명확히 노출하여 로그인 여부와 이전 세션을 즉각 인지 및 제어할 수 있도록 개선.
+     - 비로그인 상태일 때는 기존의 `[인재로 로그인]`, `[기업으로 로그인]`, `[프로젝트 보러가기]` 제공.
+  2. **로그인 페이지(`src/app/LoginPage.tsx`) 이미 로그인된 세션 안내 카드 추가**:
+     - 이미 로그인된 사용자가 `/login` 진입 시 현재 로그인 계정(`email`, `name`, `role`) 정보와 함께 `[내 홈으로 바로가기]`, `[프로젝트 둘러보기]`, `[로그아웃하고 다른 계정으로 로그인]` 액션을 제공하여 사용자 혼선 완전 해소.
+  3. **내 정보 '회원 탈퇴' 기능 구현 (`src/lib/authContext.tsx`, `src/app/wireframe/FlowPages.tsx`)**:
+     - `AuthContext`에 `deleteAccount()` 메서드 추가 (Firestore의 `users`, `senior_profiles`, `companies`, `experience_cards` 문서 삭제 및 Firebase Auth `deleteUser()` 연동, 로컬 캐시 클린업).
+     - 시니어 내 정보(`SeniorProfilePage`) 및 기업 내 정보(`CompanyProfilePage`) 하단에 `[회원 탈퇴하기]` 버튼 및 안내 모달 팝업 추가.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 로그인 화면 하단 '로그인 없이 전체 프로젝트 둘러보기' 버튼 제거
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

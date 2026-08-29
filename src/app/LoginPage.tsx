@@ -1,6 +1,13 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Pause, Play } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  CheckCircle2,
+  Home,
+  LogOut,
+  Pause,
+  Play,
+} from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
@@ -118,13 +125,14 @@ export function RollingBanner({
             <button
               type="button"
               onClick={() => setIsPaused((paused) => !paused)}
-              aria-label={isPaused ? '배너 자동 전환 재생' : '배너 자동 전환 일시정지'}
-              className="grid size-11 shrink-0 place-items-center rounded-xl border border-[#D4CBB8] bg-white font-extrabold text-[#173F3A] transition-[background-color,border-color,color] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] cursor-pointer"
+              className="mt-2.5 inline-flex items-center gap-1 rounded-full border border-slate-300 px-2 py-0.5 text-2xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              aria-label={isPaused ? '배너 재생' : '배너 일시정지'}
             >
-              {isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4 fill-current" />}
+              {isPaused ? <Play className="size-3" /> : <Pause className="size-3" />}
+              <span>{isPaused ? '재생' : '일시정지'}</span>
             </button>
           </div>
-          <p className="line-clamp-1 pl-0.5 text-xs font-medium text-[#45556C] md:text-sm">
+          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 md:text-sm text-left">
             {slide.description}
           </p>
         </div>
@@ -137,7 +145,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { user, signIn, signInWithGoogle, signOut } = useAuth();
   const [userSelectedRole, setUserSelectedRole] = useState<'senior' | 'company' | null>(null);
   const roleParam = searchParams.get('role');
   const role: 'senior' | 'company' =
@@ -202,6 +210,70 @@ export function LoginPage() {
   }
 
   const isMobile = mode === 'mobile';
+
+  // 이미 로그인된 사용자인 경우 안내 카드 제공
+  if (user) {
+    const userRoleLabel = user.role === 'company' ? '기업 회원' : '시니어 인재';
+    const homeUrl = user.role === 'company' ? '/company' : '/senior';
+
+    return (
+      <MobilePage
+        contentClassName={cn(
+          'flex flex-col justify-center items-center min-h-0 flex-1',
+          isMobile ? 'px-4.5 py-6' : 'px-6 py-12 md:px-12',
+        )}
+        showBack={false}
+        title="로그인 정보"
+      >
+        <div className="flex flex-col gap-5 w-full max-w-md mx-auto my-auto rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-sm text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
+            <CheckCircle2 className="size-7" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="inline-flex self-center items-center gap-1 rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
+              ✓ 로그인 상태 유지 중
+            </span>
+            <h2 className="text-lg sm:text-xl font-extrabold text-[#17212B] pt-1">
+              이미 <span className="text-[#F06B4F]">{userRoleLabel}</span>으로 로그인되어 있습니다
+            </h2>
+            <p className="text-xs sm:text-sm font-semibold text-slate-500">
+              {user.email} ({user.name || '회원'} 님)
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => void navigate(homeUrl)}
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98]"
+            >
+              <Home className="size-4.5" />
+              <span>{user.role === 'company' ? '기업 홈으로 이동' : '인재 홈으로 이동'} →</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate('/senior/project-database')}
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-4 text-sm font-extrabold text-[#17212B] shadow-2xs transition hover:bg-[#F2ECE0] active:scale-[0.98]"
+            >
+              <BriefcaseBusiness className="size-4.5 text-[#173F3A]" />
+              <span>프로젝트 둘러보기</span>
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+              }}
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+            >
+              <LogOut className="size-4" />
+              <span>로그아웃하고 다른 계정으로 로그인</span>
+            </button>
+          </div>
+        </div>
+      </MobilePage>
+    );
+  }
 
   if (isMobile) {
     return (

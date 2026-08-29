@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   GoogleAuthProvider,
   onAuthStateChanged,
   sendEmailVerification,
@@ -8,7 +9,7 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
@@ -27,6 +28,7 @@ export type UserProfile = {
 type AuthContextType = {
   checkEmailVerified: () => Promise<boolean>;
   clearError: () => void;
+  deleteAccount: () => Promise<void>;
   error: string | null;
   loading: boolean;
   role: UserRole;
@@ -349,6 +351,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 1000);
   };
 
+  const deleteAccount = async () => {
+    const currentFirebaseUser = auth.currentUser;
+    const uid = user?.uid || currentFirebaseUser?.uid;
+    isLoggingOutRef.current = true;
+
+    if (uid) {
+      try {
+        await deleteDoc(doc(db, 'users', uid));
+        await deleteDoc(doc(db, 'senior_profiles', uid));
+        await deleteDoc(doc(db, 'companies', uid));
+        await deleteDoc(doc(db, 'experience_cards', uid));
+      } catch (err) {
+        console.warn('Firestore deletion during account delete:', err);
+      }
+    }
+
+    if (currentFirebaseUser) {
+      try {
+        await deleteUser(currentFirebaseUser);
+      } catch (err: unknown) {
+        const authErr = err as { code?: string; message?: string };
+        if (authErr?.code === 'auth/requires-recent-login') {
+          isLoggingOutRef.current = false;
+          const msg = '보안을 위해 다시 로그인한 후 회원 탈퇴를 진행해 주세요.';
+          setError(msg);
+          throw new Error(msg, { cause: err });
+        }
+        console.warn('Firebase deleteUser warning:', err);
+      }
+    }
+
+    saveUserLocal(null);
+    setUser(null);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('eojob_user_logged_out'));
+      window.dispatchEvent(new Event('storage'));
+    }
+    setTimeout(() => {
+      isLoggingOutRef.current = false;
+    }, 1000);
+  };
+
   const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
     setLoading(true);
     setError(null);
@@ -432,6 +476,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signInWithGoogle,
         signOut,
+        deleteAccount,
         sendVerificationEmail,
         checkEmailVerified,
         clearError,
