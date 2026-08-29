@@ -670,9 +670,9 @@ export function SummaryCard({
   const isMobile = mode === 'mobile';
 
   const classes = cn(
-    'flex flex-1 flex-col rounded-[20px] border border-[#E0D9C8] bg-white shadow-xs text-left min-w-0 overflow-hidden',
+    'flex flex-1 flex-col rounded-[20px] bg-white shadow-xs text-left min-w-0 overflow-hidden',
     onClick &&
-      'cursor-pointer transition hover:-translate-y-px hover:border-[#BBD5CE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+      'cursor-pointer transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
     isMobile
       ? caption
         ? 'min-h-[128px] p-3.5 sm:p-4'

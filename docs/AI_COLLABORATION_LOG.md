@@ -16,6 +16,23 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 모바일 뷰포트 맞춤형 레이아웃 최적화 (텍스트 세로 깨짐 및 필터 칩 찌그러짐 해소)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **인재 홈 맞춤 추천 TOP 5 공고 행(`HomeRecommendationRow`) 모바일 전용 레이아웃 분기**:
+     - 기존 가로 flex 구조가 좁은 화면/모바일 시뮬레이터에서 압축되어 텍스트가 세로 1글자씩 줄바꿈되던 현상을 전면 해결.
+     - 모바일 전용 3단 구조(상단: 순위+기업명+근무형태 / 우측: 정합도 뱃지, 중단: 공고 직무명+AI 해결과제 한줄, 하단: 지역·경력 및 월 보수)로 깔끔하게 전환.
+  2. **직무 선택 가로 스크롤 필터 칩(`CategoryFilterButton`) 찌그러짐 방지**:
+     - 가로 스크롤 영역에서 버튼들이 세로로 찌그러지며 글자가 세로로 떨어지는 문제를 `shrink-0`, `whitespace-nowrap`을 적용하여 원형 칩 모양과 가로 스크롤 스와이프를 온전히 보존.
+  3. **요약 메트릭 카드(`SummaryCard`) 보더라인 제거 및 면 분할 통일**:
+     - 불필요한 보더라인을 제거하고 `shadow-xs` / `shadow-2xs` 기반 모던 카드 디자인 적용.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 프로젝트 상세 헤더 스크롤링 구조화 & 브랜드 컬러 위계 체계 재정립
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

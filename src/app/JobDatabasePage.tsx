@@ -402,7 +402,7 @@ function CategoryFilterButton({
     <button
       aria-pressed={selected}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+        'inline-flex min-h-10 shrink-0 whitespace-nowrap items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
         selected
           ? 'bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-xs'
           : 'bg-[#FAF7F2] text-[#17212B] shadow-2xs hover:bg-[#F0ECE1]',
@@ -413,15 +413,15 @@ function CategoryFilterButton({
       {badge ? (
         <span
           className={cn(
-            'text-[11.5px] font-bold tracking-tight',
+            'shrink-0 text-[11.5px] font-bold tracking-tight',
             selected ? 'text-[#8DD4C3]' : 'text-[#173F3A]/70',
           )}
         >
           {badge}
         </span>
       ) : null}
-      <span>{label}</span>
-      {selected ? <span aria-hidden="true" className="text-[12px]">✓</span> : null}
+      <span className="shrink-0">{label}</span>
+      {selected ? <span aria-hidden="true" className="shrink-0 text-[12px]">✓</span> : null}
     </button>
   );
 }
@@ -3620,7 +3620,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             <p className="text-[13px] font-extrabold text-[#17212B]">
               {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
             </p>
-            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1.5" role="group">
+            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1.5 scrollbar-none" role="group">
               {quickCategoryFilters.map((category) => (
                 <CategoryFilterButton
                   badge={category.badge}
@@ -3634,12 +3634,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <button
                   aria-controls="project-category-picker"
                   aria-haspopup="dialog"
-                  className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                  className="inline-flex min-h-10 shrink-0 whitespace-nowrap items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                   onClick={openCategoryPicker}
                   ref={categoryPickerTriggerRef}
                   type="button"
                 >
-                  {categoryPickerTriggerLabel} <Search aria-hidden="true" className="size-3.5" />
+                  <span className="shrink-0">{categoryPickerTriggerLabel}</span> <Search aria-hidden="true" className="size-3.5 shrink-0" />
                 </button>
               ) : null}
             </div>
@@ -3716,12 +3716,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <button
                     aria-controls="project-category-picker"
                     aria-haspopup="dialog"
-                    className="inline-flex min-h-10 items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                    className="inline-flex min-h-10 shrink-0 whitespace-nowrap items-center gap-1 rounded-full bg-[#FAF7F2] px-3.5 text-[13px] font-extrabold text-[#173F3A] hover:bg-[#F0ECE1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                     onClick={openCategoryPicker}
                     ref={categoryPickerTriggerRef}
                     type="button"
                   >
-                  {categoryPickerTriggerLabel} <Search aria-hidden="true" className="size-3.5" />
+                    <span className="shrink-0">{categoryPickerTriggerLabel}</span> <Search aria-hidden="true" className="size-3.5 shrink-0" />
                   </button>
                 ) : null}
               </div>

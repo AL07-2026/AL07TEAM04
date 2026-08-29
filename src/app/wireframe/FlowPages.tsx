@@ -419,27 +419,96 @@ export function ProcessOverviewGraphicCard() {
 }
 
 function HomeRecommendationRow({
+  isMobile = false,
   job,
-  rank,
   onClick,
+  rank,
 }: {
+  isMobile?: boolean;
   job: JobPosting;
-  rank: number;
   onClick: () => void;
+  rank: number;
 }) {
   const analyzed = useMemo(() => analyzeJobPostingForDetail(job), [job]);
   const fitScore = job.seniorFitScore;
   const fitTone = fitScore === undefined ? null : getFitScoreTone(fitScore);
 
+  if (isMobile) {
+    return (
+      <article
+        onClick={onClick}
+        className="group relative flex flex-col gap-2.5 px-4 py-3.5 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0 w-full min-w-0"
+      >
+        {/* Top: Rank + Company Name + Badges + Score */}
+        <div className="flex items-center justify-between gap-2 w-full min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="flex size-5.5 shrink-0 items-center justify-center rounded-md bg-[#FAF7F2] text-[11px] font-black text-[#173F3A]">
+              {rank}
+            </span>
+            <span className="truncate text-[13px] font-extrabold text-[#173F3A]">
+              {job.companyName}
+            </span>
+            <span className="text-slate-300 text-[11px] shrink-0">·</span>
+            <span className="truncate text-[11.5px] font-bold text-slate-500">
+              {analyzed.keyJobFacts.workTypeLabel}
+            </span>
+          </div>
+
+          {/* Fit Score Pill */}
+          {fitScore !== undefined && fitTone ? (
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11.5px] font-black',
+                fitTone.containerClassName,
+                fitTone.scoreClassName,
+              )}
+            >
+              <Sparkles
+                className={cn(
+                  'size-3 shrink-0',
+                  fitScore >= 90
+                    ? 'text-[#FEEA00] fill-[#FEEA00]'
+                    : 'text-[#F06B4F] fill-[#F06B4F]',
+                )}
+              />
+              <span>{fitScore}점</span>
+            </span>
+          ) : null}
+        </div>
+
+        {/* Middle: Title & AI Challenge */}
+        <div className="flex flex-col gap-1 w-full min-w-0">
+          <h4 className="text-[15px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] break-keep">
+            {analyzed.keyJobFacts.roleTitle}
+          </h4>
+          <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-slate-600 truncate">
+            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="truncate font-semibold text-[#17212B]/90">
+              {analyzed.aiExecutiveSummary.keyChallenge}
+            </span>
+          </div>
+        </div>
+
+        {/* Bottom: Location & Exp + Salary */}
+        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-[#F0ECE1]/60 text-[11.5px] text-slate-500 font-bold w-full min-w-0">
+          <span className="truncate">{analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}</span>
+          <span className="shrink-0 text-[#F06B4F] font-black text-[13px]">
+            {analyzed.keyJobFacts.salaryLabel}
+          </span>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <article
       onClick={onClick}
-      className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-5 px-4 py-3.5 sm:px-5 sm:py-4 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0"
+      className="group relative flex items-center justify-between gap-4 px-5 py-4 bg-white hover:bg-[#F7FAF9] transition-all duration-150 cursor-pointer border-b border-[#F0ECE1] last:border-b-0 w-full min-w-0"
     >
       {/* Left: Rank + Company + Title + AI 1-line Challenge */}
-      <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
+      <div className="flex items-start gap-3.5 min-w-0 flex-1">
         {/* Rank Number */}
-        <span className="flex size-6 sm:size-6.5 shrink-0 items-center justify-center rounded-lg bg-[#FAF7F2] text-[12px] font-black text-[#173F3A] group-hover:bg-[#173F3A] group-hover:text-white transition-colors mt-0.5">
+        <span className="flex size-6.5 shrink-0 items-center justify-center rounded-lg bg-[#FAF7F2] text-[12px] font-black text-[#173F3A] group-hover:bg-[#173F3A] group-hover:text-white transition-colors mt-0.5">
           {rank}
         </span>
 
@@ -454,7 +523,7 @@ function HomeRecommendationRow({
           </div>
 
           {/* Position Title */}
-          <h4 className="text-[15px] sm:text-[16px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] truncate">
+          <h4 className="text-[16px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] truncate">
             {analyzed.keyJobFacts.roleTitle}
           </h4>
 
@@ -469,11 +538,11 @@ function HomeRecommendationRow({
       </div>
 
       {/* Right: Conditions, Salary, Fit Score Pill, Arrow */}
-      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0 pt-2 sm:pt-0 border-t border-[#F0ECE1]/60 sm:border-t-0">
+      <div className="flex items-center justify-end gap-4 shrink-0">
         {/* Location & Experience & Salary */}
-        <div className="flex flex-col items-start sm:items-end text-[11.5px] text-slate-500 font-bold">
+        <div className="flex flex-col items-end text-[11.5px] text-slate-500 font-bold">
           <span>{analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}</span>
-          <span className="text-[#F06B4F] font-black text-[13px] sm:text-[13.5px]">
+          <span className="text-[#F06B4F] font-black text-[13.5px]">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
         </div>
@@ -878,9 +947,10 @@ export function SeniorHomePage() {
             ))}
           </div>
         ) : recommendedJobs.length > 0 ? (
-          <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
+          <div className="rounded-2xl bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
             {recommendedJobs.slice(0, 5).map((job, idx) => (
               <HomeRecommendationRow
+                isMobile={isMobile}
                 job={job}
                 key={job.id}
                 rank={idx + 1}
