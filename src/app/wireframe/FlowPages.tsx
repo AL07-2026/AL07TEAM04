@@ -581,7 +581,7 @@ export function SeniorHomePage() {
 
         const result = await searchFullJobDatabase({
           categories: primaryCategory ? [primaryCategory] : undefined,
-          desiredCategories: primaryCategory ? [primaryCategory] : [],
+          desiredCategories: preferredPreferences,
           desiredLocation: profile?.desiredLocation,
           desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
           desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,

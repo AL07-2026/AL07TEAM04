@@ -16,6 +16,22 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 2순위·3순위 희망 직종 분류 기준 채용공고 필터링 & 정합도 점수 평가 정확도 개선
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **2순위·3순위 직무 선택 시 공고 누락 및 단일 카테고리 덮어쓰기 버그 해결**:
+     - 기존 `JobDatabasePage.tsx`에서 2순위 또는 3순위 직무 칩 클릭 시 `desiredCategories` 파라미터가 선택된 직무 1개로만 덮어씌워져, 백엔드 검색 엔진이 해당 직무를 1순위로 오인하거나 2·3순위 가중치 랭킹이 깨지던 문제 수정.
+     - 사용자 프로필에 등록된 전체 순위 목록(`preferredProfilePreferences`: [1순위, 2순위, 3순위])을 `desiredCategories`로 상시 전달하고, `categories` 파라미터로 선택 직종을 정확히 필터링하도록 정립.
+  2. **클라이언트 직종 매칭 조건 개선**:
+     - `matchesCategory`에서 불필요하게 `hasConfidentOccupation`을 강제하여 일부 고용24/공공 공고가 2·3순위 필터링 시 누락되던 현상 해소. `getPostingOccupationCategory`의 정밀 분류 결과와 직결하여 2순위 및 3순위 공고가 정확히 100% 표출되도록 개선.
+  3. **홈 맞춤 추천 피드 연동 일원화**:
+     - `FlowPages.tsx`의 시니어 홈 맞춤 추천 API 호출부에서도 전체 순위 목록(`preferredPreferences`)을 정상 전달하여 1·2·3순위 간 일관된 정합도 점수와 정합 사유가 표출되도록 연동.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 직무 필터 칩 내부 1·2·3순위 중첩 사각 박스 제거 (타이포그래피 통합)
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

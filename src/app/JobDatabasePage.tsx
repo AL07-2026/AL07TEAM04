@@ -1571,18 +1571,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           categories = [selectedOccupationCategory];
         }
       }
-      let desiredCategories: OccupationPreference[] = [];
-      if (query.trim()) {
-        desiredCategories = [];
-      } else if (isCustomMatchSelected && customFallbackCategories.length > 0) {
-        desiredCategories = customFallbackCategories;
-      } else if (isAllDatabaseSelected) {
-        desiredCategories = preferredProfilePreferences;
-      } else if (!isCustomMatchSelected && selectedOccupationCategory) {
-        desiredCategories = [selectedOccupationCategory];
-      } else if (!isCustomMatchSelected && selectedCategory === all && primaryProfileCategory) {
-        desiredCategories = [primaryProfileCategory];
-      }
+      const desiredCategories: OccupationPreference[] = query.trim()
+        ? []
+        : isCustomMatchSelected && customFallbackCategories.length > 0
+          ? customFallbackCategories
+          : preferredProfilePreferences;
       const otherOccupationRank =
         preferredProfilePreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
       const shouldUseOtherOccupation =
@@ -2128,9 +2121,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             ? primaryProfilePreference === OTHER_OCCUPATION_PREFERENCE
               ? isDirectOccupationMatch
               : !primaryProfileCategory ||
-                (hasConfidentOccupation && postingOccupationCategory === primaryProfileCategory)
+                postingOccupationCategory === primaryProfileCategory
             : selectedOccupationCategory
-              ? hasConfidentOccupation && postingOccupationCategory === selectedOccupationCategory
+              ? postingOccupationCategory === selectedOccupationCategory
               : (posting.category as string) === (effectiveFilterCategory as string));
         const matchesWorkType = selectedWorkType === all || posting.workType === selectedWorkType;
         const matchesEmploymentType =
