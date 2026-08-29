@@ -709,17 +709,23 @@ export function PostingCard({
           {showScore ? (
             <span
               className={cn(
-                'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-extrabold border',
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black border',
                 fitTone.containerClassName,
+                fitTone.scoreClassName,
               )}
             >
-              <span className={fitTone.labelClassName}>{fitTone.label}</span>
-              <span className={cn('font-black text-[12.5px]', fitTone.scoreClassName)}>
-                {displayScore}점
-              </span>
+              <Sparkles
+                className={cn(
+                  'size-3 shrink-0',
+                  displayScore >= 90
+                    ? 'text-white fill-white'
+                    : 'text-[#F06B4F] fill-[#F06B4F]',
+                )}
+              />
+              <span>{displayScore}점</span>
             </span>
           ) : (
-            <span className="rounded-md border border-[#BBD5CE] bg-[#F8FCFB] px-2 py-0.5 text-[11px] font-bold text-[#173F3A]">
+            <span className="rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
               검증 공고
             </span>
           )}
@@ -814,14 +820,20 @@ function RecommendedTalentCard({
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
           className={cn(
-            'shrink-0 rounded-xl border px-2.5 py-1 text-center text-[11px] font-extrabold',
+            'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-black',
             fitTone.containerClassName,
+            fitTone.scoreClassName,
           )}
         >
-          <span className={fitTone.labelClassName}>{fitTone.label}</span>
-          <span className={cn('ml-1 text-[13px] font-black', fitTone.scoreClassName)}>
-            {talent.matchScore}점
-          </span>
+          <Sparkles
+            className={cn(
+              'size-3 shrink-0',
+              talent.matchScore >= 90
+                ? 'text-white fill-white'
+                : 'text-[#F06B4F] fill-[#F06B4F]',
+            )}
+          />
+          <span>{talent.matchScore}점</span>
         </span>
       </div>
 
@@ -916,20 +928,24 @@ export function DetailPanel({
               {posting.title}
             </h2>
             {showScore ? (
-              <div
+              <span
                 aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
                 className={cn(
-                  'inline-flex shrink-0 items-baseline gap-1 rounded-full border px-2.5 py-0.5',
+                  'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
                   fitTone.containerClassName,
+                  fitTone.scoreClassName,
                 )}
               >
-                <span className={cn('text-[11px] font-extrabold', fitTone.labelClassName)}>
-                  {fitTone.label}
-                </span>
-                <strong className={cn('text-[15px] font-black', fitTone.scoreClassName)}>
-                  {displayScore}점
-                </strong>
-              </div>
+                <Sparkles
+                  className={cn(
+                    'size-3.5 shrink-0',
+                    displayScore >= 90
+                      ? 'text-white fill-white'
+                      : 'text-[#F06B4F] fill-[#F06B4F]',
+                  )}
+                />
+                <span>{displayScore}점</span>
+              </span>
             ) : (
               <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
                 직종 탐색
@@ -954,20 +970,24 @@ export function DetailPanel({
 
           {isMobile ? (
             showScore ? (
-              <div
+              <span
                 aria-label={`적합도 ${displayScore}점, ${fitTone.label}`}
                 className={cn(
-                  'inline-flex shrink-0 items-baseline gap-1 rounded-full border px-2.5 py-0.5',
+                  'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
                   fitTone.containerClassName,
+                  fitTone.scoreClassName,
                 )}
               >
-                <span className={cn('text-[11px] font-extrabold', fitTone.labelClassName)}>
-                  {fitTone.label}
-                </span>
-                <strong className={cn('text-[15px] font-black', fitTone.scoreClassName)}>
-                  {displayScore}점
-                </strong>
-              </div>
+                <Sparkles
+                  className={cn(
+                    'size-3.5 shrink-0',
+                    displayScore >= 90
+                      ? 'text-white fill-white'
+                      : 'text-[#F06B4F] fill-[#F06B4F]',
+                  )}
+                />
+                <span>{displayScore}점</span>
+              </span>
             ) : (
               <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
                 직종 탐색

@@ -878,30 +878,17 @@ export function SeniorHomePage() {
             ))}
           </div>
         ) : recommendedJobs.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {/* Unified 5-Item List Container */}
-            <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
-              {recommendedJobs.slice(0, 5).map((job, idx) => (
-                <HomeRecommendationRow
-                  job={job}
-                  key={job.id}
-                  rank={idx + 1}
-                  onClick={() =>
-                    void navigate(`/senior/projects?jobId=${job.id}&focusProject=${job.id}`)
-                  }
-                />
-              ))}
-            </div>
-
-            {/* Bottom Full Exploration Link Button */}
-            <button
-              onClick={() => void navigate('/senior/projects')}
-              type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E0D9C8] bg-white py-3 text-[13.5px] font-extrabold text-[#173F3A] hover:bg-[#F4FAF8] hover:border-[#173F3A] transition-all duration-150 shadow-3xs cursor-pointer"
-            >
-              <span>전체 맞춤 프로젝트 {recommendedProjectsCount}개 보러가기</span>
-              <ArrowRight className="size-4" />
-            </button>
+          <div className="rounded-2xl border border-[#E0D9C8]/70 bg-white shadow-xs overflow-hidden divide-y divide-[#F0ECE1]">
+            {recommendedJobs.slice(0, 5).map((job, idx) => (
+              <HomeRecommendationRow
+                job={job}
+                key={job.id}
+                rank={idx + 1}
+                onClick={() =>
+                  void navigate(`/senior/projects?jobId=${job.id}&focusProject=${job.id}`)
+                }
+              />
+            ))}
           </div>
         ) : (
             <div className="rounded-2xl border border-[#E0D9C8] bg-white p-5 text-center shadow-xs">

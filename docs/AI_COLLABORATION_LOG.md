@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 홈 중복 버튼 제거 및 프로젝트 전체에 별(Sparkles) 캡슐 점수 배지 통일 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **인재 홈 중복 버튼 제거**:
+     - 상단 우측 `전체 {count}개 보기 →`와 중복되던 하단 풀버튼을 제거하여 시각적 간결성 확보.
+  2. **프로젝트 탐색 전체에 별(Sparkles) 캡슐 점수 배지 통일**:
+     - `JobDatabasePage`의 좌측 공고 카드(`JobCard`), 우측/모바일 상세 헤더, 인재 추천 카드(`TalentCard`)에 홈과 동일한 `rounded-full px-2.5 py-1 text-[11.5px] font-black` + `Sparkles` 아이콘 스타일 적용.
+     - 90점 이상 고득점 시 흰색 별/텍스트(`text-white fill-white`), 80점대 시 오렌지 별/텍스트(`text-[#F06B4F] fill-[#F06B4F]`)로 100% 선명한 시각적 일관성 구축.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 인재 홈 맞춤 추천 프로젝트 TOP 5 1줄 리스트 뷰 개편 및 테두리/정렬 시각 위계 최적화
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
