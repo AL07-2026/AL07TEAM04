@@ -413,8 +413,8 @@ function CategoryFilterButton({
       {badge ? (
         <span
           className={cn(
-            'rounded-md px-1.5 py-0.5 text-[10px] font-extrabold',
-            selected ? 'bg-white/25 text-white' : 'bg-[#173F3A]/12 text-[#173F3A]',
+            'text-[11.5px] font-bold tracking-tight',
+            selected ? 'text-[#8DD4C3]' : 'text-[#173F3A]/70',
           )}
         >
           {badge}

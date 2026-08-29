@@ -16,6 +16,17 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 직무 필터 칩 내부 1·2·3순위 중첩 사각 박스 제거 (타이포그래피 통합)
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **필터 칩 '박스 안의 박스' 이중 박스 현상 제거**:
+     - `CategoryFilterButton` 내부의 `1순위`, `2순위`, `3순위`를 감싸던 사각 회색 박스(`rounded-md px-1.5 py-0.5 bg-...`)를 완전히 제거.
+     - 직무명과 자연스럽게 어우러지는 순수 폰트 스타일링(`text-[11.5px] font-bold text-[#173F3A]/70`, 선택 시 `text-[#8DD4C3]`)으로 일원화하여 불필요한 시각적 답답함과 노이즈를 완벽히 해소.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 프로젝트 탐색 전면 보더리스(Borderless) 현대화 & 90점 이상 골든 옐로우 별(Sparkles) 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
