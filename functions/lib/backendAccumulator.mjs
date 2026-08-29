@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { adminDb } from './firestoreAdmin.mjs';
 import { containsUtf8Replacement, decodeUtf8Chunks } from './httpEncoding.mjs';
 import { planJobCatalogCleanup } from './jobDeduplication.mjs';
+import { generateJobContentHash, runIncrementalJobAnalysis } from './jobBatchAnalysisService.mjs';
 
 const GLOBAL_COLLECTION = 'global_job_postings';
 const SYNC_STATE_COLLECTION = 'job_sync_metadata';
@@ -505,6 +506,9 @@ async function upsertPostings(postings) {
       console.warn(`Skipped posting with broken UTF-8 text: ${posting.id}`);
       continue;
     }
+    if (!posting.contentHash) {
+      posting.contentHash = generateJobContentHash(posting);
+    }
     const docRef = adminDb.collection(GLOBAL_COLLECTION).doc(posting.id);
     batch.set(docRef, posting, { merge: true });
     batchCount++;
@@ -947,9 +951,29 @@ export async function runBackendJobSync() {
     console.warn('Failed to save job sync cursor:', error?.message || error);
   }
 
+  // 3. Trigger incremental delta AI analysis on newly synced/un-analyzed postings
+  let aiAnalysisResult = null;
+  try {
+    const recentSnapshot = await adminDb
+      .collection(GLOBAL_COLLECTION)
+      .where('catalogStatus', '==', 'active')
+      .limit(100)
+      .get();
+    const recentPostings = recentSnapshot.docs.map((doc) => ({ documentId: doc.id, ...doc.data() }));
+    aiAnalysisResult = await runIncrementalJobAnalysis(recentPostings, {
+      batchChunkSize: 10,
+      maxToProcess: 50,
+    });
+    console.log('[runBackendJobSync] Incremental AI delta analysis completed:', aiAnalysisResult);
+  } catch (aiErr) {
+    console.warn('[runBackendJobSync] Incremental AI analysis notice:', aiErr?.message || aiErr);
+    aiAnalysisResult = { error: aiErr?.message || String(aiErr) };
+  }
+
   const stats = await getAccumulatedStats();
   return {
     syncedThisRun: newCount,
+    aiAnalysisResult,
     sourceProgress,
     ...stats,
     updatedAt: nowStr,

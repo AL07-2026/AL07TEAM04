@@ -208,61 +208,75 @@ export function analyzeJobPostingForDetail(posting: JobPosting): AIAnalyzedJobDe
     structuredDuties = [...inference.typicalDuties];
   }
 
-  // 2. Build AI 3-Line Executive Summary
+  // 2. Build AI 3-Line Executive Summary (Prioritize persisted backend LLM result)
   const overview =
-    posting.problemStatement && posting.problemStatement.length > 15
+    posting.aiExecutiveSummary?.overview ||
+    (posting.problemStatement && posting.problemStatement.length > 15
       ? posting.problemStatement
-      : `[${posting.companyName}]에서 ${occupationLabel} 영역의 전문성을 바탕으로 핵심 과제를 완수할 시니어 인재를 영입합니다.`;
+      : `[${posting.companyName}]에서 ${occupationLabel} 영역의 전문성을 바탕으로 핵심 과제를 완수할 시니어 인재를 영입합니다.`);
 
   const keyChallenge =
-    posting.projectGoal && posting.projectGoal.length > 10
+    posting.aiExecutiveSummary?.keyChallenge ||
+    (posting.projectGoal && posting.projectGoal.length > 10
       ? posting.projectGoal
-      : `${cleanTitle} 역할을 통해 현업 프로세스를 고도화하고 실질적인 성과를 창출하는 것이 주요 목표입니다.`;
+      : `${cleanTitle} 역할을 통해 현업 프로세스를 고도화하고 실질적인 성과를 창출하는 것이 주요 목표입니다.`);
 
   const expectedImpact =
-    posting.successMetrics && posting.successMetrics.length > 0
+    posting.aiExecutiveSummary?.expectedImpact ||
+    (posting.successMetrics && posting.successMetrics.length > 0
       ? posting.successMetrics.join(' · ')
-      : `시니어의 풍부한 실무 노하우를 바탕으로 ${occupationLabel} 분야의 업무 효율성과 실행 완성도를 극대화합니다.`;
+      : `시니어의 풍부한 실무 노하우를 바탕으로 ${occupationLabel} 분야의 업무 효율성과 실행 완성도를 극대화합니다.`);
 
-  // 3. Build Talent Persona
+  // 3. Build Talent Persona (Prioritize persisted backend LLM result)
   const headline =
-    posting.recommendedTalentType && posting.recommendedTalentType.length > 8
+    posting.talentPersona?.headline ||
+    (posting.recommendedTalentType && posting.recommendedTalentType.length > 8
       ? posting.recommendedTalentType
-      : `${posting.experienceYears || '10년 이상'} ${occupationLabel} 실무 및 총괄 리딩 경험을 보유한 시니어 전문가`;
+      : `${posting.experienceYears || '10년 이상'} ${occupationLabel} 실무 및 총괄 리딩 경험을 보유한 시니어 전문가`);
 
   const experienceHighlights: string[] = [];
-  if (posting.qualifications && posting.qualifications.length > 0) {
-    experienceHighlights.push(...posting.qualifications.slice(0, 3));
-  }
-  if (posting.matchingSignals && posting.matchingSignals.length > 0) {
-    posting.matchingSignals.forEach((sig) => {
-      if (experienceHighlights.length < 3 && !experienceHighlights.includes(sig)) {
-        experienceHighlights.push(sig);
+  if (posting.talentPersona?.experienceHighlights && posting.talentPersona.experienceHighlights.length > 0) {
+    experienceHighlights.push(...posting.talentPersona.experienceHighlights);
+  } else {
+    if (posting.qualifications && posting.qualifications.length > 0) {
+      experienceHighlights.push(...posting.qualifications.slice(0, 3));
+    }
+    if (posting.matchingSignals && posting.matchingSignals.length > 0) {
+      posting.matchingSignals.forEach((sig) => {
+        if (experienceHighlights.length < 3 && !experienceHighlights.includes(sig)) {
+          experienceHighlights.push(sig);
+        }
+      });
+    }
+    while (experienceHighlights.length < 3) {
+      const fallbackExp = inference.experienceHighlights[experienceHighlights.length] || DEFAULT_GENERAL_INFERENCE.experienceHighlights[0]!;
+      if (!experienceHighlights.includes(fallbackExp)) {
+        experienceHighlights.push(fallbackExp);
       }
-    });
-  }
-  while (experienceHighlights.length < 3) {
-    const fallbackExp = inference.experienceHighlights[experienceHighlights.length] || DEFAULT_GENERAL_INFERENCE.experienceHighlights[0]!;
-    if (!experienceHighlights.includes(fallbackExp)) {
-      experienceHighlights.push(fallbackExp);
     }
   }
 
   const competencyTags: string[] = [];
-  if (posting.requiredSkills && posting.requiredSkills.length > 0) {
-    competencyTags.push(...posting.requiredSkills);
-  }
-  if (posting.preferredSkills && posting.preferredSkills.length > 0) {
-    competencyTags.push(...posting.preferredSkills);
-  }
-  inference.competencies.forEach((comp) => {
-    if (competencyTags.length < 6 && !competencyTags.includes(comp)) {
-      competencyTags.push(comp);
+  if (posting.talentPersona?.competencyTags && posting.talentPersona.competencyTags.length > 0) {
+    competencyTags.push(...posting.talentPersona.competencyTags);
+  } else {
+    if (posting.requiredSkills && posting.requiredSkills.length > 0) {
+      competencyTags.push(...posting.requiredSkills);
     }
-  });
+    if (posting.preferredSkills && posting.preferredSkills.length > 0) {
+      competencyTags.push(...posting.preferredSkills);
+    }
+    inference.competencies.forEach((comp) => {
+      if (competencyTags.length < 6 && !competencyTags.includes(comp)) {
+        competencyTags.push(comp);
+      }
+    });
+  }
 
   const interviewPrepFocus: string[] = [];
-  if (posting.interviewFocus && posting.interviewFocus.length > 0) {
+  if (posting.talentPersona?.interviewPrepFocus && posting.talentPersona.interviewPrepFocus.length > 0) {
+    interviewPrepFocus.push(...posting.talentPersona.interviewPrepFocus);
+  } else if (posting.interviewFocus && posting.interviewFocus.length > 0) {
     interviewPrepFocus.push(...posting.interviewFocus);
   } else {
     interviewPrepFocus.push(...inference.interviewFocus);

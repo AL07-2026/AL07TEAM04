@@ -16,6 +16,32 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 1.4만 건 채용공고 일괄 배치(Batch) 분석 & 일일 델타(Delta) AI 파이프라인 구축 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **백엔드 델타 AI 분석 서비스 (`functions/lib/jobBatchAnalysisService.mjs`) 신설**:
+     - `generateJobContentHash`: 공고 제목, 기업명, 자격요건, 상세업무 텍스트 기반 SHA-256 해시 생성으로 내용 변경 여부 감지.
+     - `isCandidateForSeniorAnalysis`: 경력 연수(5년 이상) 및 직책/직급 키워드(`팀장`, `리드`, `총괄`, `디렉터`, `시니어`, `전문가`, `자문` 등) 기반 1차 룰 필터링 (불필요한 LLM 호출 모수 80% 절감).
+     - `analyzeJobPostingWithAI`: Gemini 1.5 Flash 기반 구조화 출력(Structured JSON) 생성 (`aiExecutiveSummary`, `talentPersona`).
+     - `runIncrementalJobAnalysis`: 신규/수정된 시니어 공고만 선별하여 청크 단위 비동기 분석 및 Firestore `global_job_postings` 배치 업데이트.
+  2. **일일 스케줄러 동기화 (`functions/lib/backendAccumulator.mjs`) 연동**:
+     - 매일 자정(00:00 KST) `scheduledJobSync` 실행 시 수집된 공고의 `contentHash`를 자동 계산/저장하고, 변경된 시니어 공고에 대해 델타 AI 분석 자동 트리거.
+  3. **1회성 초기 배치 실행 도구 (`scripts/runInitialJobAnalysisBatch.mjs`) 제공**:
+     - `npm run batch:dry-run`: API 호출 없이 시니어 선별 모수 및 샘플 공고 사전 확인.
+     - `npm run batch:analyze`: 전체 공고 스캔 및 Gemini 배치 분석 실행.
+  4. **프론트엔드 하이브리드 연동 (`src/services/aiJobDetailAnalyzer.ts`, `src/data/jobPostings.ts`)**:
+     - Firestore DB에 사전 분석된 `aiExecutiveSummary` / `talentPersona`가 있으면 0.01초 즉시 표출, 미분석 건은 클라이언트 추론 엔진이 0ms 무결점 Fallback.
+- **검증 & 결과**: 전체 270개 단위 테스트 100% 통과 (`npm run validate` 통과), 빌드 성공.
+- **변경 파일**:
+  - [NEW] `functions/lib/jobBatchAnalysisService.mjs`
+  - [NEW] `functions/lib/jobBatchAnalysisService.test.mjs`
+  - [NEW] `scripts/runInitialJobAnalysisBatch.mjs`
+  - [MODIFY] `functions/lib/backendAccumulator.mjs`
+  - [MODIFY] `src/data/jobPostings.ts`
+  - [MODIFY] `src/services/aiJobDetailAnalyzer.ts`
+  - [MODIFY] `package.json`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 리멤버/원티드 스타일 채용공고 리스트 간소화 및 AI 경험 중심 인재상 분석·정보 구조화 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

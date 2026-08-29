@@ -77,6 +77,21 @@ export type JobPosting = {
   deadlineLabel?: string;
   registeredLabel?: string;
   contactEmail?: string;
+  contentHash?: string;
+  isSeniorTarget?: boolean;
+  analysisStatus?: 'READY' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  analyzedAt?: string;
+  aiExecutiveSummary?: {
+    overview: string;
+    keyChallenge: string;
+    expectedImpact: string;
+  };
+  talentPersona?: {
+    headline: string;
+    experienceHighlights: string[];
+    competencyTags: string[];
+    interviewPrepFocus: string[];
+  };
 };
 
 export const categoryLabels: Record<ProjectCategory, string> = {
