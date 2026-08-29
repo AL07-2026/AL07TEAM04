@@ -94,7 +94,7 @@ function OccupationPreferenceSelect({
       <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">{label}</span>
       <select
         aria-label={label}
-        className="h-11 md:h-12 w-full truncate rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs md:text-sm font-bold text-[#17212B] shadow-2xs outline-none focus:border-[#173F3A]"
+        className="h-11 md:h-12 w-full truncate rounded-xl border-0 bg-white px-3.5 text-xs md:text-sm font-bold text-[#17212B] shadow-2xs outline-none focus:ring-2 focus:ring-[#173F3A]/20"
         onChange={(event) => onChange(event.target.value)}
         value={value || ''}
       >
@@ -565,7 +565,7 @@ export function BasicProfilePage() {
             </div>
 
             {/* Section 1: 희망 직종 1차 / 2차 / 3차 선택 */}
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
+            <div className="flex flex-col gap-2.5 rounded-2xl bg-[#FAF7F2] p-4">
               <div className="flex flex-col gap-0.5">
                 <label className="text-sm md:text-base font-extrabold text-[#173F3A]">
                   희망 직종 선택 (1차 · 2차 · 3차)
@@ -600,7 +600,7 @@ export function BasicProfilePage() {
               </div>
 
               {selectedOccupationValues.includes(OTHER_OCCUPATION_PREFERENCE) ? (
-                <div className="rounded-xl border border-[#BBD5CE] bg-white p-3">
+                <div className="rounded-xl bg-white p-3.5 shadow-2xs">
                   <Field
                     label="기타 희망 직종명 (필수)"
                     maxLength={60}
@@ -614,7 +614,7 @@ export function BasicProfilePage() {
                 </div>
               ) : null}
 
-              <div className="pt-2 border-t border-[#E0D9C8]">
+              <div className="pt-2 border-t border-[#E0D9C8]/40">
                 <div className="flex flex-col gap-1.5 min-w-0">
                   <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
                     희망 근무 지역 (선택 / 기본값: 전국)
@@ -622,7 +622,7 @@ export function BasicProfilePage() {
                   <select
                     value={form.desiredLocation || '전국'}
                     onChange={(e) => update('desiredLocation')(e.target.value)}
-                    className="h-11 md:h-12 w-full truncate rounded-xl border border-[#E0D9C8] px-3 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] bg-white shadow-2xs"
+                    className="h-11 md:h-12 w-full truncate rounded-xl border-0 px-3.5 text-xs md:text-sm font-bold text-[#17212B] outline-none focus:ring-2 focus:ring-[#173F3A]/20 bg-white shadow-2xs"
                   >
                     <option value="전국">전국 (전체 지역 무관)</option>
                     <option value="서울">서울 특별시</option>
@@ -788,7 +788,7 @@ export function BasicProfilePage() {
               <select
                 id="desired-work-type-select"
                 aria-label="원하는 근무 형태"
-                className="w-full rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] px-4 py-3.5 text-sm font-bold text-[#17212B] outline-none focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
+                className="w-full rounded-2xl border-0 bg-[#FAF7F2] px-4 py-3.5 text-sm font-bold text-[#17212B] outline-none focus:bg-white focus:ring-2 focus:ring-[#173F3A]/20 shadow-2xs transition-all"
                 onChange={(e) => {
                   const val = e.target.value;
                   setForm((prev) => ({ ...prev, desiredWorkType: val, experience: val }));

@@ -771,7 +771,7 @@ export function Field({ className, label, ...props }: FieldProps) {
       <span>{label}</span>
       <input
         className={cn(
-          'w-full rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-[46px] md:h-12 text-[13.5px] md:text-sm',
+          'w-full rounded-xl border-0 bg-[#FAF7F2] px-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#173F3A]/20 shadow-2xs transition-all h-[46px] md:h-12 text-[13.5px] md:text-sm',
           className,
         )}
         {...props}
@@ -788,7 +788,7 @@ export function TextAreaField({ className, label, ...props }: TextAreaFieldProps
       <span>{label}</span>
       <textarea
         className={cn(
-          'w-full resize-none rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:bg-white focus:ring-2 focus:ring-[#173F3A]/15 shadow-2xs transition-all h-26 md:h-28 text-[13.5px] md:text-sm leading-relaxed',
+          'w-full resize-none rounded-xl border-0 bg-[#FAF7F2] p-3.5 font-medium text-[#17212B] outline-none placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#173F3A]/20 shadow-2xs transition-all h-26 md:h-28 text-[13.5px] md:text-sm leading-relaxed',
           className,
         )}
         {...props}

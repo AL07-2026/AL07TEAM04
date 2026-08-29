@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 경험 정보 수정(Edit Mode) 화면 입력창 및 컨테이너 박스 아웃라인(Border) 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **수정 모드 전체 입력창 아웃라인 제거 (`src/app/wireframe/Ui.tsx`, `src/app/BasicProfilePage.tsx`)**:
+     - `Field` 및 `TextAreaField`의 기본 `border`를 `border-0`으로 변경하고 부드러운 배경(`bg-[#FAF7F2]`)과 포커스 링(`focus:ring-2 focus:ring-[#173F3A]/20`)을 적용하여 텍스트 입력창들의 회색 테두리선 제거.
+     - 희망 직종 1·2·3순위 드롭다운(`<select>`), 희망 근무 지역 드롭다운, 원하는 근무 형태 드롭다운의 `border` 제거 및 `border-0 bg-white/bg-[#FAF7F2] shadow-2xs` 플랫 스타일 적용.
+     - 최상단 희망 직종 선택 박스 및 기타 직종 입력 박스의 외곽 테두리 제거.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 내 정보(경험 정보) 상세 화면 박스 아웃라인(Border) 제거 및 플랫 디자인 적용
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
