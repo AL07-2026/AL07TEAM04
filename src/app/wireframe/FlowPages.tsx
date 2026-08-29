@@ -2444,33 +2444,33 @@ export function CompanyHomePage() {
 
       {/* Summary Cards */}
       <div
-        className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
+        className={cn('grid gap-3 items-stretch', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
-        <SummaryCard label="등록 프로젝트" role="company" value={`${companyProjects.length}개`} />
-        <SummaryCard label="받은 지원/제안" role="company" value={`${companyProposals.length}건`} />
         <SummaryCard
-          actionHint="지원자 확인"
+          caption="등록 프로젝트 현황"
+          label="등록 프로젝트"
+          role="company"
+          value={`${companyProjects.length}개`}
+        />
+        <SummaryCard
+          caption="시니어 지원서 누적"
+          label="받은 지원/제안"
+          role="company"
+          value={`${companyProposals.length}건`}
+        />
+        <SummaryCard
           caption="연 최대 720만원 혜택"
           label="💰 장려금 대상"
           onClick={() => void navigate('/company/proposals?filter=subsidy')}
           role="company"
           value={`${companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명`}
         />
-        {!isMobile ? (
-          <SummaryCard
-            caption="지원서 검토 및 대화 상태"
-            label="후속 진행"
-            role="company"
-            value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
-          />
-        ) : (
-          <SummaryCard
-            caption="현재 모집 중인 프로젝트"
-            label="공개 중"
-            role="company"
-            value={`${companyProjects.filter((project) => project.hiringStage === 'open').length}개`}
-          />
-        )}
+        <SummaryCard
+          caption="지원서 검토 및 대화 상태"
+          label="후속 진행"
+          role="company"
+          value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
+        />
       </div>
 
       {/* Employment Promotion Subsidy Info Banner Card */}

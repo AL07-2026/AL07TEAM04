@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 기업 홈 요약 카드(SummaryCard) 높이 및 크기 완전 통일
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **요약 카드 컴포넌트 표준화 (`src/app/wireframe/Ui.tsx`)**:
+     - `SummaryCard`에 `h-full justify-between` 및 고정 캡션 영역(`min-h-[16px]`)을 적용하여 캡션 유무 및 버튼 여부와 무관하게 4개 박스 높이를 100% 동일하게 통일.
+  2. **기업 홈 카드 구조 통일 (`src/app/wireframe/FlowPages.tsx` - `CompanyHomePage`)**:
+     - 4개 카드(`등록 프로젝트`, `받은 지원/제안`, `💰 장려금 대상`, `후속 진행`)에 일관된 캡션 및 메타 구조를 부여하여 시각적 불균형 완벽 해소.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 기업 사용자 로그인 시 고용촉진장려금(연 720만원) 대상 지원자 확인 및 필터링 기능 구현
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

@@ -676,21 +676,17 @@ export function SummaryCard({
   const isMobile = mode === 'mobile';
 
   const classes = cn(
-    'flex flex-1 flex-col rounded-[20px] bg-white shadow-xs text-left min-w-0 overflow-hidden',
+    'flex flex-1 flex-col justify-between rounded-[20px] bg-white shadow-xs text-left min-w-0 overflow-hidden h-full',
     onClick &&
       'cursor-pointer transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
     isMobile
-      ? caption
-        ? 'min-h-[128px] p-3.5 sm:p-4'
-        : 'h-[110px] p-3.5 sm:p-4'
-      : caption
-        ? 'min-h-[152px] p-6'
-        : 'h-[136px] p-6',
+      ? 'min-h-[124px] p-3.5 sm:p-4'
+      : 'min-h-[148px] p-5 md:p-6',
   );
   const content = (
     <>
       <span className="flex items-start justify-between gap-2 min-w-0">
-        <span className={cn('font-bold text-[#4B5768] min-w-0 truncate', isMobile ? 'text-[13.5px]' : 'text-[17px]')}>
+        <span className={cn('font-bold text-[#4B5768] min-w-0 truncate', isMobile ? 'text-[13px]' : 'text-[16px]')}>
           {label}
         </span>
         {onClick ? <span aria-hidden="true" className="text-[#173F3A]">→</span> : null}
@@ -699,25 +695,22 @@ export function SummaryCard({
         <strong
           className={cn(
             'block font-extrabold tracking-tight text-[#173F3A] truncate',
-            isMobile ? 'text-[25px] sm:text-[27px]' : 'text-[38px]',
+            isMobile ? 'text-[25px] sm:text-[27px]' : 'text-[34px]',
           )}
         >
           {value}
         </strong>
-        {caption ? (
-          <span
-            className={cn(
-              'mt-1 block font-semibold leading-4 text-slate-400 whitespace-nowrap truncate min-w-0',
-              isMobile ? 'text-[11px] sm:text-[11.5px]' : 'text-[12.5px]',
-            )}
-            title={caption}
-          >
-            {caption}
-          </span>
-        ) : null}
+        <span
+          className={cn(
+            'mt-1 block font-semibold leading-4 text-slate-400 whitespace-nowrap truncate min-w-0 text-[11px] sm:text-[11.5px] md:text-[12.5px] min-h-[16px]',
+          )}
+          title={caption || ''}
+        >
+          {caption || '\u00A0'}
+        </span>
         {actionHint ? (
-          <span className="mt-2 inline-flex items-center gap-1 text-[12px] font-extrabold text-[#173F3A]">
-            {actionHint} <ChevronRight aria-hidden="true" className="size-3.5" />
+          <span className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[#173F3A]">
+            {actionHint} <ChevronRight aria-hidden="true" className="size-3" />
           </span>
         ) : null}
       </div>
