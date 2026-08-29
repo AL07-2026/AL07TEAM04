@@ -253,8 +253,7 @@ export function BasicProfilePage() {
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
-          !isMobile &&
-            'max-w-2xl md:border md:border-[#E0D9C8] md:bg-white md:p-8 md:rounded-2xl md:shadow-md',
+          !isMobile && 'max-w-2xl md:bg-white md:p-8 md:rounded-2xl',
         )}
       >
         {/* Account Header Badge & Logout */}
@@ -266,7 +265,7 @@ export function BasicProfilePage() {
                 ? '이동욱'
                 : '이동욱';
           return (
-            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs">
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF7F2]">
               <div className="flex items-center gap-3">
                 <div className="size-11 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
                   {displayName[0] || '이'}
@@ -299,10 +298,10 @@ export function BasicProfilePage() {
         {message ? (
           <div
             className={cn(
-              'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 border shadow-2xs',
+              'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-2xs',
               message.startsWith('✓')
-                ? 'bg-[#ECFDF5] border-[#10B981]/40 text-[#059669]'
-                : 'bg-rose-50 border-rose-200 text-rose-700',
+                ? 'bg-[#ECFDF5] text-[#059669]'
+                : 'bg-rose-50 text-rose-700',
             )}
           >
             <span>{message}</span>
@@ -339,7 +338,7 @@ export function BasicProfilePage() {
             </div>
 
             {isMobile ? (
-              <dl className="overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xs">
+              <dl className="overflow-hidden rounded-2xl bg-[#FAF7F2] divide-y divide-[#E0D9C8]/40">
                 <ProfileInfoRow
                   label="1순위 희망직종"
                   value={getOccupationPreferenceLabel(
@@ -395,17 +394,17 @@ export function BasicProfilePage() {
               </dl>
             ) : (
               <>
-                <div className="flex flex-col gap-2 rounded-2xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-4 shadow-2xs">
+                <div className="flex flex-col gap-2 rounded-2xl bg-[#EAF3F0] p-4.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                       희망 직종 (1차 · 2차 · 3차 순위) 및 희망 지역
                     </span>
-                    <span className="text-xs font-extrabold text-[#173F3A] bg-white border border-[#BBD5CE] px-2.5 py-0.5 rounded-full shadow-2xs">
+                    <span className="text-xs font-extrabold text-[#173F3A] bg-white px-2.5 py-0.5 rounded-full shadow-2xs">
                       희망지역: {form.desiredLocation || '전국'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#BBD5CE] shadow-2xs">
+                    <div className="flex flex-col p-3 rounded-xl bg-white shadow-2xs">
                       <span className="text-[10px] font-black text-[#173F3A]">1순위 (최우선)</span>
                       <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
                         {getOccupationPreferenceLabel(
@@ -415,7 +414,7 @@ export function BasicProfilePage() {
                         )}
                       </span>
                     </div>
-                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
+                    <div className="flex flex-col p-3 rounded-xl bg-white shadow-2xs">
                       <span className="text-[10px] font-extrabold text-slate-400">
                         2순위 (선택)
                       </span>
@@ -428,7 +427,7 @@ export function BasicProfilePage() {
                           : '선택 안 함'}
                       </span>
                     </div>
-                    <div className="flex flex-col p-2.5 rounded-xl bg-white border border-[#E0D9C8] shadow-2xs">
+                    <div className="flex flex-col p-3 rounded-xl bg-white shadow-2xs">
                       <span className="text-[10px] font-extrabold text-slate-400">
                         3순위 (선택)
                       </span>
@@ -444,14 +443,14 @@ export function BasicProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
                       경험한 대표 분야
                     </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.field}</span>
                   </div>
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                  <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
                       총 경력 기간
                     </span>
@@ -459,7 +458,7 @@ export function BasicProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                     보유 자격증
                   </span>
@@ -469,7 +468,7 @@ export function BasicProfilePage() {
                 </div>
 
                 {form.keySkills ? (
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                  <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                     <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                       경력 분야 세부 핵심 강점
                     </span>
@@ -479,7 +478,7 @@ export function BasicProfilePage() {
                   </div>
                 ) : null}
 
-                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                     해결했던 핵심 문제 및 성과 사례
                   </span>
@@ -488,7 +487,7 @@ export function BasicProfilePage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#BBD5CE]/80 bg-[#F4F9F8]">
+                <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#EAF3F0]">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                     ⏰ 원하는 근무 형태
                   </span>
@@ -498,7 +497,7 @@ export function BasicProfilePage() {
                 </div>
 
                 {form.employmentSubsidyTarget ? (
-                  <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-[#DDEBE7]/60 shadow-2xs">
+                  <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-[#EAF3F0]">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
                         ✓ 연 720만원 정부 지원금 대상 인증됨
@@ -513,14 +512,14 @@ export function BasicProfilePage() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
                       연락처
                     </span>
                     <span className="text-sm font-extrabold text-[#17212B]">{form.phone}</span>
                   </div>
-                  <div className="flex flex-col gap-1 p-3.5 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2]/60">
+                  <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
                       이메일
                     </span>
@@ -531,7 +530,7 @@ export function BasicProfilePage() {
             )}
 
             {attachment ? (
-              <div className="flex items-center gap-2 p-3 rounded-xl border border-[#E0D9C8]/60 bg-[#FAF7F2] text-xs font-extrabold text-[#173F3A]">
+              <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-[#FAF7F2] text-xs font-extrabold text-[#173F3A]">
                 <FileText className="size-4 text-[#173F3A]" />
                 <span>첨부 이력서: {attachment.name}</span>
               </div>
@@ -679,7 +678,7 @@ export function BasicProfilePage() {
             />
 
             {/* Section 5: 고용촉진장려금 지원 대상 자격 인증 (선택) */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#BBD5CE] bg-[#FAF7F2] p-4 shadow-2xs">
+            <div className="flex flex-col gap-3 rounded-2xl bg-[#FAF7F2] p-4">
               <div className="flex flex-col gap-0.5">
                 <label className="text-sm md:text-base font-extrabold text-[#173F3A] flex items-center gap-2">
                   <Coins className="size-4 text-[#173F3A] shrink-0" />
@@ -694,7 +693,7 @@ export function BasicProfilePage() {
                 </p>
               </div>
 
-              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-white border border-[#E0D9C8] cursor-pointer hover:bg-slate-50 transition">
+              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-white cursor-pointer hover:bg-slate-50 shadow-2xs transition">
                 <input
                   type="checkbox"
                   checked={Boolean(form.employmentSubsidyTarget)}
@@ -712,7 +711,7 @@ export function BasicProfilePage() {
               </label>
 
               {form.employmentSubsidyTarget ? (
-                <div className="flex flex-col gap-3 pt-2 border-t border-[#E0D9C8]">
+                <div className="flex flex-col gap-3 pt-2 border-t border-[#E0D9C8]/60">
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
                       이수한 취업지원프로그램
@@ -757,7 +756,7 @@ export function BasicProfilePage() {
                   />
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white border border-[#E0D9C8]">
+                <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white shadow-2xs">
                   <p className="text-xs font-semibold text-slate-600">
                     아직 수료하지 않으셨나요? 국민취업지원제도 1단계를 완료하면 기업 지원 대상이 됩니다.
                   </p>

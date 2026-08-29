@@ -16,6 +16,19 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 내 정보(경험 정보) 상세 화면 박스 아웃라인(Border) 제거 및 플랫 디자인 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **내 경험 정보 조회 화면(`src/app/BasicProfilePage.tsx`) 아웃라인 제거**:
+     - 상단 프로필 헤더 박스, 희망 직종(1·2·3순위) 카드, 대표 경력 분야, 총 경력 기간, 보유 자격증, 세부 강점, 해결 성과 사례, 원하는 근무 형태, 연락처/이메일 박스에서 불필요한 테두리(`border`) 및 무거운 외곽선을 모두 제거.
+     - 자연스럽고 편안한 배경 톤(`bg-[#FAF7F2]`, `bg-[#EAF3F0]`) 및 부드러운 라운드(`rounded-2xl`)를 적용하여 시각적 답답함을 해소하고 모던한 플랫 카드 룩으로 개편.
+  2. **수정 폼(Edit Mode) 고용촉진장려금 섹션 스타일 정돈**:
+     - 수정 모드의 장려금 인증 박스 테두리 제거 및 일관된 플랫 레이아웃 적용.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 로그인 세션 유지 정책 UX 개선 및 내 정보 '회원 탈퇴' 기능 구현
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:
