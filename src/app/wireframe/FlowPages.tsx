@@ -2442,12 +2442,28 @@ export function CompanyHomePage() {
       {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR COMPANY HOME */}
       <RollingBanner isCompact={isMobile} />
 
+      {/* Summary Cards */}
       <div
         className={cn('grid gap-3', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
       >
         <SummaryCard label="등록 프로젝트" role="company" value={`${companyProjects.length}개`} />
         <SummaryCard label="받은 지원/제안" role="company" value={`${companyProposals.length}건`} />
-        {!isMobile && (
+        <SummaryCard
+          actionHint="지원자 확인"
+          caption="연 최대 720만원 혜택"
+          label="💰 장려금 대상"
+          onClick={() => void navigate('/company/proposals?filter=subsidy')}
+          role="company"
+          value={`${companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명`}
+        />
+        {!isMobile ? (
+          <SummaryCard
+            caption="지원서 검토 및 대화 상태"
+            label="후속 진행"
+            role="company"
+            value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
+          />
+        ) : (
           <SummaryCard
             caption="현재 모집 중인 프로젝트"
             label="공개 중"
@@ -2455,14 +2471,35 @@ export function CompanyHomePage() {
             value={`${companyProjects.filter((project) => project.hiringStage === 'open').length}개`}
           />
         )}
-        {!isMobile && (
-          <SummaryCard
-            caption="지원서 검토 및 대화 상태"
-            label="후속 진행"
-            role="company"
-            value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
-          />
-        )}
+      </div>
+
+      {/* Employment Promotion Subsidy Info Banner Card */}
+      <div className="flex flex-col gap-2 rounded-2xl bg-[#EAF3F0] p-4 sm:p-5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#173F3A] shadow-2xs">
+            <Coins className="size-4 text-[#F06B4F] shrink-0" />
+            <span>정부 지원금 혜택 안내</span>
+          </span>
+          <span className="text-xs sm:text-sm font-extrabold text-[#173F3A]">연 최대 720만원 지원</span>
+        </div>
+        <div>
+          <h4 className="text-sm sm:text-base font-extrabold text-[#17212B]">
+            고용촉진장려금 대상 인재를 채용해 보세요
+          </h4>
+          <p className="text-xs sm:text-[13px] font-medium text-slate-600 mt-1 leading-relaxed">
+            국민취업지원제도(1단계) 및 직업훈련을 수료한 시니어 지원자를 채용하면 월 60만원(연 최대 720만원, 분기별 180만원)의 국가 인건비 지원금을 신청할 수 있습니다.
+          </p>
+        </div>
+        <div className="pt-1">
+          <button
+            onClick={() => void navigate('/company/proposals?filter=subsidy')}
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#F06B4F] px-4 py-2 text-xs sm:text-sm font-extrabold text-white hover:bg-[#D95337] transition shadow-xs"
+          >
+            <span>혜택 대상 지원자 확인하기 ({companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명)</span>
+            <ArrowRight className="size-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Quick Action Navigation Bar */}
@@ -2887,18 +2924,28 @@ export function ProjectManagementPage() {
 
 export function ReceivedProposalsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const [filter, setFilter] = useState('전체');
+  const initialFilter = searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
+  const [filter, setFilter] = useState(initialFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
     void getCompanyProposals(user?.uid).then(setProposals);
   }, [user?.uid]);
 
-  const visible =
-    filter === '전체' ? proposals : proposals.filter((proposal) => proposal.status === filter);
+  const subsidyEligibleCount = proposals.filter((p) => p.employmentSubsidyTarget ?? true).length;
+
+  const visible = useMemo(() => {
+    if (filter === '💰 장려금 대상 (연 720만원)') {
+      return proposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true);
+    }
+    if (filter === '전체') return proposals;
+    return proposals.filter((proposal) => proposal.status === filter);
+  }, [filter, proposals]);
+
   return (
     <MobilePage
       activeNav="proposals"
@@ -2910,8 +2957,30 @@ export function ReceivedProposalsPage() {
       showBack={false}
       title="받은 제안"
     >
+      {/* Employment Promotion Subsidy Header Info Banner */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl bg-[#EAF3F0] p-4 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs">
+            <Coins className="size-5 text-[#F06B4F]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <strong className="text-xs sm:text-sm font-extrabold text-[#173F3A]">
+                고용촉진장려금 지원 대상 인재 확인
+              </strong>
+              <span className="rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white">
+                연 최대 720만원
+              </span>
+            </div>
+            <p className="text-xs font-medium text-slate-600 mt-0.5">
+              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총 {subsidyEligibleCount}명)
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
-        {['전체', '검토 중', '연락 받음'].map((item) => (
+        {['전체', '💰 장려금 대상 (연 720만원)', '검토 중', '연락 받음'].map((item) => (
           <Chip
             key={item}
             onClick={() => setFilter(item)}
@@ -2922,20 +2991,36 @@ export function ReceivedProposalsPage() {
           </Chip>
         ))}
       </div>
-      <h2 className="text-lg font-extrabold text-[#17212B]">받은 제안 {visible.length}건</h2>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-extrabold text-[#17212B]">
+          {filter === '💰 장려금 대상 (연 720만원)'
+            ? `장려금 지원 대상 지원자 ${visible.length}건`
+            : `받은 제안 ${visible.length}건`}
+        </h2>
+        {filter === '💰 장려금 대상 (연 720만원)' && (
+          <span className="text-xs font-extrabold text-[#173F3A]">
+            ✓ 채용 시 국가 지원금 신청 가능
+          </span>
+        )}
+      </div>
+
       {visible.length > 0 ? (
-        visible.map((proposal) => (
-          <ProjectCard
-            key={proposal.id}
-            onClick={() => void navigate(`/company/proposals/${proposal.id}`)}
-            project={{
-              company: proposal.applicantName || '지원 인재',
-              title: proposal.projectTitle,
-              meta: `${proposal.status} · ${proposal.appliedAt}`,
-              action: '지원서 확인 →',
-            }}
-          />
-        ))
+        visible.map((proposal) => {
+          const isSubsidy = proposal.employmentSubsidyTarget ?? true;
+          return (
+            <ProjectCard
+              key={proposal.id}
+              onClick={() => void navigate(`/company/proposals/${proposal.id}`)}
+              project={{
+                company: proposal.applicantName || '지원 인재',
+                title: proposal.projectTitle,
+                meta: `${proposal.status} · ${proposal.appliedAt}${isSubsidy ? ' · 💰 연 720만원 지원 대상' : ''}`,
+                action: '지원서 확인 →',
+              }}
+            />
+          );
+        })
       ) : (
         <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
           해당 상태의 제안이 없습니다.
@@ -2963,6 +3048,9 @@ export function ReceivedProposalDetailPage() {
 
   const matchScore = proposal?.seniorFitScore ?? 0;
   const matchTone = getFitScoreTone(matchScore);
+  const isSubsidyTarget = proposal?.employmentSubsidyTarget ?? true;
+  const subsidyProgram =
+    proposal?.employmentSubsidyProgram || '국민취업지원제도(1단계 IAP 수료) 및 직업훈련 이수';
 
   function changeStatus(nextStatus: UserProposal['status'], nextMessage: string) {
     setStatus(nextStatus);
@@ -3052,18 +3140,42 @@ export function ReceivedProposalDetailPage() {
       </div>
 
       {/* Employment Promotion Subsidy Report Card for Company */}
-      <div className="flex flex-col gap-1.5 rounded-xl bg-[#DDEBE7]/60 p-3.5 shadow-2xs">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
-            <Coins className="size-3.5 text-[#F06B4F] shrink-0" />
-            <span>고용촉진장려금 지원 대상</span>
-          </span>
-          <span className="text-xs font-extrabold text-[#173F3A]">연 최대 720만원 혜택</span>
+      {isSubsidyTarget && (
+        <div className="flex flex-col gap-2 rounded-2xl bg-[#EAF3F0] p-4 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#173F3A] shadow-2xs">
+              <Coins className="size-4 text-[#F06B4F] shrink-0" />
+              <span>고용촉진장려금 지원 대상 인재</span>
+            </span>
+            <span className="text-xs sm:text-sm font-extrabold text-[#173F3A]">
+              연 최대 720만원 지원
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1.5 rounded-xl bg-white/80 p-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-extrabold text-slate-500">인증 교육과정</span>
+              <span className="font-extrabold text-[#173F3A]">{subsidyProgram}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-extrabold text-slate-500">지원 금액 혜택</span>
+              <span className="font-extrabold text-[#17212B]">
+                월 60만원 × 12개월 (분기별 180만원 지급)
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-extrabold text-slate-500">기업 신청 요건</span>
+              <span className="font-semibold text-slate-600">
+                우선지원대상기업 채용 후 6개월 고용유지 시
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[11.5px] font-medium text-slate-600 leading-snug">
+            💡 본 인재 채용 확정 후 관할 고용복지플러스센터 또는 고용24(work24.go.kr)에서 장려금을 신청하시면 국가 인건비가 지급됩니다.
+          </p>
         </div>
-        <p className="text-xs font-semibold text-[#17212B] leading-snug">
-          해당 인재 채용 시 분기별 180만원(월 60만원 x 12개월)의 국가 인건비 지원금을 신청할 수 있습니다. (고용보험 및 우선지원대상기업 기준)
-        </p>
-      </div>
+      )}
 
       {/* Soft Mint Info Box */}
       <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3">

@@ -1871,6 +1871,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         applicantNote,
         user?.uid,
         { email: user?.email, name: user?.name },
+        {
+          employmentSubsidyTarget: seniorProfile?.employmentSubsidyTarget,
+          employmentSubsidyProgram: seniorProfile?.employmentSubsidyProgram,
+        },
       );
       const emailResult = sendApplicationEmailToManager(applyingPosting, {
         applicantName:

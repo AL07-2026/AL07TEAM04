@@ -16,6 +16,27 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 기업 사용자 로그인 시 고용촉진장려금(연 720만원) 대상 지원자 확인 및 필터링 기능 구현
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **지원서 데이터 모델 확장 (`src/services/proposalService.ts`, `src/app/JobDatabasePage.tsx`)**:
+     - `UserProposal`에 `employmentSubsidyTarget?: boolean`, `employmentSubsidyProgram?: string` 필드 추가 및 저장/정규화 연동.
+     - 시니어 지원서 제출 시 시니어 프로필에 등록된 고용촉진장려금 인증 정보(`employmentSubsidyTarget`, `employmentSubsidyProgram`) 자동 연동.
+  2. **기업 홈 화면 (`src/app/wireframe/FlowPages.tsx` - `CompanyHomePage`)**:
+     - 상단 요약 카드 그리드에 `💰 장려금 대상` (연 최대 720만원 혜택 대상 지원자 수 카운트 & 바로가기 액션) 카드 추가.
+     - 정부 지원금 전용 안내 배너 및 `[혜택 대상 지원자 확인하기 ({count}명)]` 빠른 탐색 버튼 추가.
+  3. **받은 지원서 목록 화면 (`src/app/wireframe/FlowPages.tsx` - `ReceivedProposalsPage`)**:
+     - `useSearchParams` 쿼리 파라미터(`?filter=subsidy`) 연동 및 `💰 장려금 대상 (연 720만원)` 전용 필터 칩 추가.
+     - 지원자 카드 메타 태그에 `💰 연 720만원 지원 대상` 뱃지 및 인증 정보 표시.
+  4. **지원서 상세 화면 (`src/app/wireframe/FlowPages.tsx` - `ReceivedProposalDetailPage`)**:
+     - 고용촉진장려금 지원 대상 인재 인증 리포트 카드 고도화 (수료 교육과정명, 월 60만원 x 12개월 분기별 지급액, 우선지원대상기업 신청 요건 및 고용센터 신청 가이드 팁 안내).
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/services/proposalService.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 경험 정보 수정(Edit Mode) 화면 입력창 및 컨테이너 박스 아웃라인(Border) 제거
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

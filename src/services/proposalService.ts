@@ -17,6 +17,8 @@ export interface UserProposal {
   category: string;
   companyName: string;
   coverNote?: string;
+  employmentSubsidyProgram?: string;
+  employmentSubsidyTarget?: boolean;
   id: string;
   interviewSummary: string;
   location: string;
@@ -61,6 +63,8 @@ function normalizeProposal(source: unknown, documentId?: string): UserProposal |
     coverNote: value.coverNote,
     problemStatement: value.problemStatement,
     projectOwnerId: value.projectOwnerId,
+    employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
+    employmentSubsidyProgram: value.employmentSubsidyProgram,
     updatedAt: value.updatedAt,
   };
 }
@@ -168,6 +172,7 @@ export async function createProposalFromPosting(
   coverNote?: string,
   userId?: string,
   applicant?: { email?: string; name?: string },
+  subsidyInfo?: { employmentSubsidyProgram?: string; employmentSubsidyTarget?: boolean },
 ): Promise<UserProposal> {
   const proposalData: Omit<UserProposal, 'id'> = {
     userId,
@@ -188,6 +193,8 @@ export async function createProposalFromPosting(
       coverNote || '등록된 시니어 경험과 AI 인터뷰 결과를 바탕으로 프로젝트 지원서를 제출합니다.',
     problemStatement: posting.problemStatement,
     projectOwnerId: posting.ownerId,
+    employmentSubsidyTarget: Boolean(subsidyInfo?.employmentSubsidyTarget),
+    employmentSubsidyProgram: subsidyInfo?.employmentSubsidyProgram,
   };
   return saveProposal(proposalData);
 }
