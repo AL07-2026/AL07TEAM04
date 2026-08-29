@@ -1050,16 +1050,16 @@ export function DetailPanel({
         <div className="flex items-center justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
           <div className="flex items-center gap-2 text-[13.5px] font-extrabold text-[#173F3A]">
             <UserRound className="size-4 text-[#173F3A]" />
-            <span>기업이 원하는 시니어 인재상 (경험 분석)</span>
+            <span>기업 문제 해결에 필요한 실무 경험 (AI 인재상 분석)</span>
           </div>
           <span className="text-[11px] font-bold text-slate-500 bg-[#FAF7F2] px-2 py-0.5 rounded border border-[#E0D9C8]">
-            AI 추천 모델
+            AI 경험 매칭 모델
           </span>
         </div>
 
         {/* Persona Headline */}
         <div className="mt-3.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/40 p-3.5">
-          <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 타겟 시니어 페르소나</p>
+          <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 문제 해결 최적 시니어 페르소나</p>
           <p className="mt-1 text-[14.5px] font-black leading-snug text-[#17212B]">
             {analyzed.talentPersona.headline}
           </p>
@@ -1067,7 +1067,7 @@ export function DetailPanel({
 
         {/* Required Experiences */}
         <div className="mt-4">
-          <p className="text-[12px] font-extrabold text-[#4B756E]">이런 실무·리딩 경험을 높게 평가해요</p>
+          <p className="text-[12px] font-extrabold text-[#4B756E]">이 문제 해결을 위해 기업이 가장 높게 평가하는 실무·리딩 경험</p>
           <ul className="mt-2 space-y-2">
             {analyzed.talentPersona.experienceHighlights.map((exp, idx) => (
               <li className="flex items-start gap-2 text-[13px] font-semibold text-[#17212B]" key={idx}>
@@ -1080,7 +1080,7 @@ export function DetailPanel({
 
         {/* Competency Chips */}
         <div className="mt-4">
-          <p className="text-[12px] font-extrabold text-[#4B756E]">핵심 역량 키워드</p>
+          <p className="text-[12px] font-extrabold text-[#4B756E]">문제 해결 핵심 역량 키워드</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {analyzed.talentPersona.competencyTags.map((comp) => (
               <span
@@ -1097,7 +1097,7 @@ export function DetailPanel({
         <div className="mt-4 rounded-xl border border-[#F06B4F]/30 bg-[#FFF9F7] p-3.5">
           <p className="text-[12px] font-extrabold text-[#F06B4F] flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-[#F06B4F]" />
-            <span>AI 인터뷰 & 제안서 작성 시 어필 포인트</span>
+            <span>AI 인터뷰 & 제안서 작성 시 '문제 해결 경험' 피칭 포인트</span>
           </p>
           <ul className="mt-2 space-y-1.5 text-[12.5px] font-medium leading-relaxed text-[#17212B]">
             {analyzed.talentPersona.interviewPrepFocus.map((focus, idx) => (
