@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-29] 프로젝트 목록 상단 '시니어 맞춤 채용 공고' 헤더 박스 테두리/배경 제거 및 플랫 디자인 적용
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **헤더 영역 흰색 박스 및 그림자 제거 (`src/app/JobDatabasePage.tsx`)**:
+     - 기존 `rounded-2xl bg-white p-4 shadow-xs` 박스 스타일을 제거하고, 자연스러운 플랫 헤더(`px-1 py-0.5`) 구조로 개편.
+     - 메인 타이틀 폰트 크기 및 굵기(`text-lg sm:text-xl md:text-2xl font-black`)와 설명 문구 간격(`mt-1.5 text-[#53606E]`)을 정돈하여 시각적 개방감 확보.
+  2. **고용노동부 연계 혜택 배너 CTA 버튼 크기/폰트/너비 1:1 완벽 일치화 (`src/app/LandingPage.tsx`)**:
+     - 두 버튼의 높이(`h-12 min-h-12`), 최소 너비(`min-w-[190px]`), 폰트 크기(`text-[15px] sm:text-[16px]`), 패딩(`px-6`), `whitespace-nowrap`을 완벽하게 통일.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공 및 Firebase Hosting 배포.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-08-29] 로그인 후 1순위 희망 직종(디자인 등) 공고 조회 시 타 직종(마케팅 등) 혼입 및 캐시/폴백 버그 완벽 해결
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

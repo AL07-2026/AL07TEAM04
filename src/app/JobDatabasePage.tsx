@@ -2501,7 +2501,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       showBack={false}
       title={title ?? (role === 'company' ? '프로젝트 관리' : '프로젝트 목록')}
     >
-      <section className="rounded-2xl bg-white p-4 shadow-xs">
+      <section className="px-1 py-0.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <p className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
@@ -2520,12 +2520,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             </button>
           )}
         </div>
-        <h1 className="mt-2 text-base sm:text-lg md:text-xl font-extrabold leading-snug text-[#17212B]">
+        <h1 className="mt-2.5 text-lg sm:text-xl md:text-2xl font-black leading-snug text-[#17212B]">
           {role === 'senior'
             ? '경력과 전문성을 살릴 수 있는 맞춤 채용 공고'
             : '등록한 프로젝트에 맞는 추천 인재를 검토하세요'}
         </h1>
-        <p className="mt-1.5 text-[12px] sm:text-[13px] font-medium leading-relaxed text-slate-600">
+        <p className="mt-1.5 text-[13px] sm:text-[14px] font-medium leading-relaxed text-[#53606E]">
           {role === 'senior'
             ? '내 정보의 1순위 희망 직종을 먼저 적용하고, 경력·핵심 역량과 AI 경험 인터뷰 결과로 추천 순서를 계산합니다.'
             : '프로젝트 요구조건과 직무 유형을 바탕으로 바로 제안할 수 있는 시니어 인재를 카드로 보여드립니다.'}
