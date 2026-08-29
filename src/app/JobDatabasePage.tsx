@@ -2501,10 +2501,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       showBack={false}
       title={title ?? (role === 'company' ? '프로젝트 관리' : '프로젝트 목록')}
     >
-      <section className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
+      <section className="rounded-2xl bg-white p-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
               <Sparkles className="size-3.5" />
               {role === 'senior' ? '시니어 맞춤 채용 공고' : '회사 등록 프로젝트'}
             </p>
@@ -2630,7 +2630,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               등록 프로젝트 {filteredPostings.length}개
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-bold text-slate-700 shadow-2xs">
-              <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="size-2 rounded-full bg-[#173F3A] shrink-0" />
               <span>추천 인재 {companyRecommendedTalents.length}명</span>
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 text-[11px] sm:text-[12px] font-extrabold text-[#173F3A] shadow-2xs">
@@ -2644,7 +2644,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       {/* New Project Registration Modal */}
       {isRegisterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/50 p-4 backdrop-blur-xs">
-          <div className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-6 shadow-xl">
+          <div className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <h3 className="text-lg font-extrabold text-[#17212B]">신규 프로젝트 등록</h3>
               <button
@@ -2712,7 +2712,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </label>
               </section>
 
-              <section className="grid gap-3.5 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2]/55 p-3.5 md:grid-cols-2">
+              <section className="grid gap-3.5 rounded-xl bg-[#FAF7F2]/65 p-3.5 md:grid-cols-2 shadow-2xs">
                 <p className="text-xs font-extrabold text-[#173F3A] md:col-span-2">근무 조건</p>
                 <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
                   <span>근무 지역</span>
