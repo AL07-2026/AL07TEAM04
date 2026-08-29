@@ -243,10 +243,10 @@ export function LandingPage() {
                   trackSubsidyModalOpen('landing_banner');
                   setShowSubsidyModal(true);
                 }}
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[1rem] font-bold text-[#17212B] shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
+                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[15px] sm:text-[16px] font-extrabold text-[#17212B] shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
               >
-                <Info className="size-4.5 text-[#173F3A]" />
-                혜택 세부내용 확인
+                <Info className="size-4.5 shrink-0 text-[#173F3A]" />
+                <span>혜택 세부내용 확인</span>
               </button>
               <button
                 type="button"
@@ -254,10 +254,10 @@ export function LandingPage() {
                   trackButtonClick('subsidy_talent_cta');
                   void navigate('/login?role=company');
                 }}
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-[1rem] font-black text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer sm:px-6"
+                className="inline-flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-6 text-[15px] sm:text-[16px] font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
               >
-                혜택 대상 인재 보기
-                <ArrowRight className="size-5" aria-hidden="true" />
+                <span>혜택 대상 인재 보기</span>
+                <ArrowRight className="size-4.5 shrink-0" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -265,10 +265,10 @@ export function LandingPage() {
 
         <section className="bg-white px-5 py-14 sm:px-8 sm:py-18">
           <div className="mx-auto max-w-6xl px-5 py-9 text-center sm:px-10 sm:py-12">
-            <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212b] sm:text-[1.875rem]">
+            <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212B] sm:text-[1.875rem]">
               지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-[1rem] font-medium leading-[1.7] text-[#53606e] sm:text-[1.125rem]">
+            <p className="mx-auto mt-3 max-w-2xl text-[1rem] font-medium leading-[1.7] text-[#53606E] sm:text-[1.125rem]">
               로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
             </p>
             <button
@@ -277,10 +277,10 @@ export function LandingPage() {
                 trackButtonClick('bottom_cta_view_projects');
                 void navigate('/senior/project-database');
               }}
-              className="mx-auto mt-7 inline-flex min-h-14 items-center justify-center gap-2.5 whitespace-nowrap rounded-lg bg-[#173f3a] px-5 text-[1rem] font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#0f332f] active:scale-[0.98] cursor-pointer sm:px-7 sm:text-[1.125rem]"
+              className="mx-auto mt-7 inline-flex h-14 min-h-14 items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-[#173F3A] px-7 text-[16px] sm:text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
             >
               <BriefcaseBusiness className="size-5 shrink-0" aria-hidden="true" />
-              전체 프로젝트 보러가기
+              <span>전체 프로젝트 보러가기</span>
               <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
             </button>
           </div>
