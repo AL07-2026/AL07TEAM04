@@ -114,7 +114,7 @@ export function LandingPage() {
         <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
           <div className="mx-auto max-w-6xl">
             <div className="pt-2 text-left">
-              <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#f47a36] sm:text-[1rem]">
+              <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
               </p>
               <h2
@@ -170,12 +170,12 @@ export function LandingPage() {
         <section className="bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
           <div className="mx-auto max-w-6xl">
             <div>
-              <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#f47a36] sm:text-[1rem]">
+              <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡의 서비스 특징
               </p>
               <h2
                 id="service-features-title"
-                className="mt-2 text-[1.5rem] font-medium tracking-normal text-[#17212b] sm:text-[1.875rem]"
+                className="mt-2 text-[1.5rem] font-medium tracking-normal text-[#17212B] sm:text-[1.875rem]"
                 style={{
                   fontFamily:
                     '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
@@ -190,20 +190,20 @@ export function LandingPage() {
                 ({ number, icon: Icon, title, description }) => (
                   <article
                     key={number}
-                    className="min-h-[320px] rounded-lg border border-[#bfd8d0] bg-[#e3f0ec] p-7 text-[#17212b] shadow-[0_12px_30px_rgba(23,63,58,0.12)] sm:p-8"
+                    className="min-h-[320px] rounded-2xl bg-[#DDEBE7]/70 p-7 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-8 transition-transform hover:-translate-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[0.95rem] font-black text-[#f47a36]">{number}</span>
+                      <span className="text-[0.95rem] font-black text-[#F06B4F]">{number}</span>
                       <Icon
-                        className="size-[3.25rem] text-[#173f3a]"
+                        className="size-[3.25rem] text-[#173F3A]"
                         strokeWidth={1.8}
                         aria-hidden="true"
                       />
                     </div>
-                    <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#111820]">
+                    <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#17212B]">
                       {title}
                     </h3>
-                    <p className="mt-4 text-[1.125rem] font-semibold leading-[1.75] text-[#26332f]">
+                    <p className="mt-4 text-[1.0625rem] font-semibold leading-[1.75] text-[#2C3E3A]">
                       {description}
                     </p>
                   </article>
@@ -213,10 +213,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-[#efe5be] bg-[#fffbed] px-5 py-11 sm:px-8">
+        <section className="border-y border-[#FBE3DC] bg-[#FFF5F2] px-5 py-11 sm:px-8">
           <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-3 sm:gap-4">
-              <span className="grid size-11 shrink-0 place-items-center text-[#f47a36] sm:size-12">
+              <span className="grid size-11 shrink-0 place-items-center text-[#F06B4F] sm:size-12">
                 <Sparkles
                   className="size-9 motion-safe:animate-pulse sm:size-10"
                   strokeWidth={1.8}
@@ -224,13 +224,13 @@ export function LandingPage() {
                 />
               </span>
               <div>
-                <p className="text-[0.875rem] font-black text-[#f47a36] sm:text-[1rem]">
+                <p className="text-[0.875rem] font-black text-[#F06B4F] sm:text-[1rem]">
                   고용노동부 연계 혜택
                 </p>
-                <h2 className="mt-2 text-[1.375rem] font-black leading-snug text-[#17212b] sm:text-[1.875rem]">
+                <h2 className="mt-2 text-[1.375rem] font-black leading-snug text-[#17212B] sm:text-[1.875rem]">
                   검증된 시니어 인재와 함께하고, 인건비 부담도 낮추세요
                 </h2>
-                <p className="mt-3 text-[1rem] font-medium leading-[1.7] text-[#465a55] sm:text-[1.0625rem]">
+                <p className="mt-3 text-[1rem] font-medium leading-[1.7] text-[#53606E] sm:text-[1.0625rem]">
                   국민취업지원제도 요건을 충족한 인재를 채용하면 고용촉진장려금 지원 대상이 될 수
                   있습니다.
                 </p>
@@ -243,7 +243,7 @@ export function LandingPage() {
                   trackSubsidyModalOpen('landing_banner');
                   setShowSubsidyModal(true);
                 }}
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#d8d0b9] bg-white px-5 text-[1rem] font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[1rem] font-bold text-[#17212B] shadow-xs transition hover:bg-slate-50 active:scale-[0.98] cursor-pointer"
               >
                 <Info className="size-4.5 text-[#173F3A]" />
                 혜택 세부내용 확인
@@ -254,7 +254,7 @@ export function LandingPage() {
                   trackButtonClick('subsidy_talent_cta');
                   void navigate('/login?role=company');
                 }}
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#173f3a] px-5 text-[1rem] font-black text-white shadow-xs transition hover:bg-[#0f332f] active:scale-[0.98] cursor-pointer sm:px-6"
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-[1rem] font-black text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer sm:px-6"
               >
                 혜택 대상 인재 보기
                 <ArrowRight className="size-5" aria-hidden="true" />
