@@ -921,39 +921,14 @@ export function DetailPanel({
       )}
     >
       {/* Header */}
-      <header className="border-b border-[#E0D9C8] pb-4">
-        {!isMobile ? (
-          <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-3.5 flex items-start justify-between gap-3 border-b border-[#E0D9C8] bg-white px-5 py-3 rounded-t-2xl">
-            <h2 className="min-w-0 line-clamp-2 text-[21px] sm:text-[23px] font-extrabold leading-snug text-[#17212B]">
-              {posting.title}
-            </h2>
-            {showScore ? (
-              <span
-                aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
-                className={cn(
-                  'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
-                  fitTone.containerClassName,
-                  fitTone.scoreClassName,
-                )}
-              >
-                <Sparkles
-                  className={cn(
-                    'size-3.5 shrink-0',
-                    displayScore >= 90
-                      ? 'text-white fill-white'
-                      : 'text-[#F06B4F] fill-[#F06B4F]',
-                  )}
-                />
-                <span>{displayScore}점</span>
-              </span>
-            ) : (
-              <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
-                직종 탐색
-              </span>
-            )}
-          </div>
-        ) : null}
-
+      <header
+        className={cn(
+          'border-b border-[#E0D9C8] bg-white',
+          !isMobile
+            ? 'sticky top-0 z-20 -mx-5 -mt-5 mb-5 rounded-t-2xl px-5 py-4 shadow-2xs'
+            : 'pb-4',
+        )}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
@@ -968,46 +943,42 @@ export function DetailPanel({
             </span>
           </div>
 
-          {isMobile ? (
-            showScore ? (
-              <span
-                aria-label={`적합도 ${displayScore}점, ${fitTone.label}`}
+          {showScore ? (
+            <span
+              aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
+                fitTone.containerClassName,
+                fitTone.scoreClassName,
+              )}
+            >
+              <Sparkles
                 className={cn(
-                  'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-black',
-                  fitTone.containerClassName,
-                  fitTone.scoreClassName,
+                  'size-3.5 shrink-0',
+                  displayScore >= 90
+                    ? 'text-white fill-white'
+                    : 'text-[#F06B4F] fill-[#F06B4F]',
                 )}
-              >
-                <Sparkles
-                  className={cn(
-                    'size-3.5 shrink-0',
-                    displayScore >= 90
-                      ? 'text-white fill-white'
-                      : 'text-[#F06B4F] fill-[#F06B4F]',
-                  )}
-                />
-                <span>{displayScore}점</span>
-              </span>
-            ) : (
-              <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
-                직종 탐색
-              </span>
-            )
-          ) : null}
+              />
+              <span>{displayScore}점</span>
+            </span>
+          ) : (
+            <span className="inline-flex shrink-0 items-center rounded-full border border-[#BBD5CE] bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A]">
+              직종 탐색
+            </span>
+          )}
         </div>
 
-        {isMobile ? (
-          <h2 className="mt-2.5 text-[21px] sm:text-[23px] font-extrabold leading-[1.35] tracking-tight text-[#17212B]">
-            {posting.title}
-          </h2>
-        ) : null}
+        <h2 className="mt-2 text-[20px] sm:text-[22px] font-extrabold leading-snug tracking-tight text-[#17212B]">
+          {posting.title}
+        </h2>
 
-        <p className="mt-1.5 text-[13.5px] font-bold text-[#173F3A]">
+        <p className="mt-1 text-[13px] font-bold text-[#173F3A]">
           {posting.companyName} · {posting.companySize} · {analyzed.keyJobFacts.employmentTypeLabel}
         </p>
 
         {activePrimaryCategory === unclassifiedOccupation || activePrimaryCategory === 'unclassified' ? (
-          <p className="mt-3 border-l-2 border-[#7AA99E] pl-2.5 text-[12px] font-semibold leading-5 text-[#4B756E]">
+          <p className="mt-2.5 border-l-2 border-[#7AA99E] pl-2.5 text-[12px] font-semibold leading-5 text-[#4B756E]">
             자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.
           </p>
         ) : null}
