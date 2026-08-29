@@ -2089,9 +2089,27 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       ? effectivePrimaryProfileFilter
       : selectedCategory;
   const isServerSearchActive = role === 'senior' && serverSearchMeta !== null;
-
   const filteredPostings = useMemo(() => {
-    if (isServerSearchActive) return postings;
+    if (isServerSearchActive) {
+      if (sortBy === 'fit-desc' && role === 'senior' && user) {
+        return [...postings].sort((first, second) => {
+          const scoreFirst = calculatePersonalizedMatch(
+            first,
+            seniorProfile,
+            effectiveSelectedCategory,
+            interviewCard,
+          ).personalizedScore;
+          const scoreSecond = calculatePersonalizedMatch(
+            second,
+            seniorProfile,
+            effectiveSelectedCategory,
+            interviewCard,
+          ).personalizedScore;
+          return scoreSecond - scoreFirst;
+        });
+      }
+      return postings;
+    }
 
     const normalizedQuery = query.trim().toLowerCase();
 
