@@ -3583,10 +3583,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           </div>
 
           <div>
-            <div className="flex h-12 min-h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm focus-within:ring-1 focus-within:ring-[#173F3A]/20">
+            <div className="flex h-12 min-h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm">
               <Search aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
               <input
-                className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[15px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
+                className="h-full min-w-0 flex-1 appearance-none bg-transparent text-[15px] font-semibold text-[#17212B] !outline-none focus:!outline-none focus-visible:!outline-none !ring-0 focus:!ring-0 focus-visible:!ring-0 border-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:hidden"
                 id="mobile-project-search"
                 onChange={(event) => changeQuery(event.target.value)}
                 placeholder={
@@ -3680,23 +3680,33 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       ) : (
         <>
           <section className="rounded-2xl bg-white p-5 shadow-xs flex flex-col gap-4">
-            <label className="flex h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm focus-within:ring-1 focus-within:ring-[#173F3A]/20">
+            <label className="flex h-12 items-center gap-3 rounded-xl bg-[#FAF7F2]/80 px-4 transition-all focus-within:bg-white focus-within:shadow-sm">
               <Search className="size-5 text-slate-400 shrink-0" />
               <input
-                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] outline-none placeholder:text-slate-400 border-none ring-0 focus:outline-none focus:ring-0"
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#17212B] !outline-none focus:!outline-none focus-visible:!outline-none !ring-0 focus:!ring-0 focus-visible:!ring-0 border-none placeholder:text-slate-400"
                 onChange={(event) => changeQuery(event.target.value)}
                 placeholder={role === 'senior' ? '회사명, 직무, 업종 또는 지역 검색' : '회사명, 기술스택, 해결 프로젝트 검색'}
                 type="search"
                 value={query}
               />
+              {query ? (
+                <button
+                  aria-label="검색어 지우기"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-[#FAF7F2] hover:text-[#17212B]"
+                  onClick={() => changeQuery('')}
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-3.5" />
+                </button>
+              ) : null}
             </label>
 
-            <div className="mt-4 border-t border-[#F0ECE1] pt-4">
+            <div className="flex flex-col gap-2.5">
               <div className="flex items-center gap-2 text-[13px] font-extrabold text-[#17212B]">
                 <Filter className="size-4 text-[#173F3A]" />
                 {role === 'senior' ? '직무 선택' : '프로젝트 유형'}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2" role="group">
+              <div className="flex flex-wrap gap-2" role="group">
                 {quickCategoryFilters.map((category) => (
                   <CategoryFilterButton
                     badge={category.badge}
@@ -3721,16 +3731,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </div>
             </div>
 
-            <div className="mt-4 border-t border-[#F0ECE1] pt-4">
+            <div>
               <button
                 aria-controls="desktop-project-detail-filters"
                 aria-expanded={isDetailFiltersExpanded}
-                className="flex min-h-10 items-center gap-2 rounded-xl px-1 text-[13px] font-extrabold text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                className="flex min-h-9 items-center gap-2 rounded-xl px-1 text-[13px] font-extrabold text-[#17212B] hover:text-[#173F3A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                 onClick={() => setIsDetailFiltersExpanded((value) => !value)}
                 type="button"
               >
                 <SlidersHorizontal className="size-4 text-[#173F3A]" />
-                상세 조건{activeDetailFilterCount ? ` (${activeDetailFilterCount})` : ''}
+                <span>상세 조건{activeDetailFilterCount ? ` (${activeDetailFilterCount})` : ''}</span>
                 <ChevronDown className={cn('size-4 text-[#173F3A] transition-transform', isDetailFiltersExpanded && 'rotate-180')} />
               </button>
               {isDetailFiltersExpanded ? (

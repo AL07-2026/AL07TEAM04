@@ -108,9 +108,16 @@ textarea {
   touch-action: manipulation;
 }
 
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+:where(a, button, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
+}
+
+input,
+input:focus,
+input:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
 }
 
 :where(h1, h2, h3) {
