@@ -2450,6 +2450,7 @@ export function MyProposalDetailPage() {
   const { user } = useAuth();
   const [cancelled, setCancelled] = useState(false);
   const [proposal, setProposal] = useState<UserProposal | null>(null);
+  const seniorProfile = getLocalSeniorProfile(user?.uid);
 
   useEffect(() => {
     void getUserProposals(user?.uid).then((proposals) => {
@@ -2486,10 +2487,7 @@ export function MyProposalDetailPage() {
             {proposal.coverNote || '전달 메시지가 없습니다.'}
           </InfoPanel>
           <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5">
-            <ExperienceSummaryView
-              legacyText={proposal.interviewSummary}
-              snapshot={proposal.experienceSnapshotV1}
-            />
+            <ProposalExperience proposal={proposal} profile={seniorProfile} />
           </div>
           <InfoPanel label="첨부 서류">
             {proposal.resumeFileName || '첨부된 서류가 없습니다.'}
@@ -3362,6 +3360,10 @@ export function ReceivedProposalDetailPage() {
 
   function renderProfileActions() {
     if (!proposal || proposal.projectOwnerId !== user?.uid) return null;
+    const hasUsableResume = Boolean(
+      proposal.resumeFiles?.some((file) => file.storagePath?.trim()),
+    );
+    const hasLegacyAttachment = Boolean(proposal.resumeFileName?.trim());
     return (
       <div
         className={cn(
@@ -3386,7 +3388,7 @@ export function ReceivedProposalDetailPage() {
         <button
           aria-label="지원자 이력서 보기"
           className="flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-          disabled={!proposal.resumeFiles?.length}
+          disabled={!hasUsableResume}
           onClick={() => {
             profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement;
             setDialogView('resume');
@@ -3396,8 +3398,8 @@ export function ReceivedProposalDetailPage() {
           }}
           type="button"
         >
-          <span className={cn('flex size-9 items-center justify-center rounded-full', proposal.resumeFiles?.length ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>
-          {proposal.resumeFiles?.length ? '이력서' : '이력서 없음'}
+          <span className={cn('flex size-9 items-center justify-center rounded-full', hasUsableResume ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>
+          {hasUsableResume ? '이력서' : hasLegacyAttachment ? '첨부 기록' : '이력서 없음'}
         </button>
       </div>
     );
