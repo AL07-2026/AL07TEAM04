@@ -259,11 +259,7 @@ export function BasicProfilePage() {
         {/* Account Header Badge & Logout */}
         {(() => {
           const displayName =
-            user?.name
-              ? user.name
-              : user?.email === 'sehddnr2@gmail.com'
-                ? '이동욱'
-                : '이동욱';
+            user?.name || '지원자';
           return (
             <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF7F2]">
               <div className="flex items-center gap-3">

@@ -810,12 +810,7 @@ export function SeniorHomePage() {
     ? getOccupationCategoryLabel(recommendationPrimaryCategory, '1순위 직종')
     : '1순위 직종 미설정';
 
-  const userName =
-    user?.name
-      ? user.name
-      : user?.email === 'sehddnr2@gmail.com'
-        ? '이동욱'
-        : '이동욱';
+  const userName = user?.name || '지원자';
 
   return (
     <MobilePage
