@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
 
 import { App } from '@/app/App';
 import { saveLocalCompanyProfile } from '@/services/profileService';
+import * as proposalService from '@/services/proposalService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
@@ -69,6 +71,21 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
     sessionStorage.clear();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          card: {
+            title: '고객 문의 운영 개선',
+            problem: '고객 문의 기준이 부족해 응답이 지연되었습니다.',
+            role: '서비스 운영 책임자로 개선을 주도했습니다.',
+            action: '문의 유형을 분석하고 처리 절차를 표준화했습니다.',
+            result: '평균 응답 시간을 30% 줄였습니다.',
+            skills: ['문제 해결', '프로세스 개선'],
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
     window.history.pushState({}, '', '/senior/experience/interview');
     render(<App />);
 
@@ -94,10 +111,13 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText('고객 문의 기준이 부족해 광고 운영 문의 응답이 지연되었습니다.'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('평균 응답 시간을 30% 줄였습니다.')).toBeInTheDocument();
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    const requestBody = JSON.parse(String(requestInit?.body ?? '{}')) as {
+      history?: Array<{ answer?: string }>;
+    };
+    expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
+    expect(screen.getAllByText('평균 응답 시간을 30% 줄였습니다.').length).toBeGreaterThanOrEqual(1);
+    fetchMock.mockRestore();
   });
 
   it('인재 홈의 AI 경험 인터뷰 CTA는 경험 선택 화면으로 먼저 이동한다', async () => {
@@ -216,13 +236,34 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(window.location.pathname).toBe('/company/project-complete');
   });
 
-  it('받은 제안의 상태와 대화 제안을 확인한다', () => {
+  it('받은 제안의 진행 단계와 연락 상태를 확인한다', async () => {
+    const proposal = {
+      id: '1',
+      projectId: 'project-1',
+      projectOwnerId: 'company-test-uid',
+      userId: 'senior-test-user',
+      projectTitle: '테스트 프로젝트',
+      status: '검토 중',
+      processStage: 'document_review',
+      appliedAt: '2026-08-30',
+      applicantName: '지원자',
+      applicantEmail: 'applicant@example.com',
+    } as proposalService.UserProposal;
+    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
+    const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
+    window.localStorage.clear();
     window.history.pushState({}, '', '/company/proposals/1');
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: '검토 중으로 변경' }));
-    expect(screen.getByText('제안 상태를 검토 중으로 변경했습니다.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '대화 제안하기' }));
-    expect(screen.getByText(/010-1234-5678/)).toBeInTheDocument();
+    await waitFor(() => expect(proposalsSpy).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '2차 면접' }));
+    await waitFor(() => expect(stageSpy).toHaveBeenCalledWith('1', 'second_interview'));
+    fireEvent.click(screen.getByRole('button', { name: '연락 완료로 표시' }));
+    await waitFor(() => expect(contactSpy).toHaveBeenCalledWith('1', 'contacted'));
+    expect(screen.getByRole('button', { name: '2차 면접' })).toHaveClass('bg-[#173F3A]');
+    stageSpy.mockRestore();
+    contactSpy.mockRestore();
+    proposalsSpy.mockRestore();
   });
 
   it('인재 기본정보를 수정하고 정상적으로 저장되는지 확인한다', async () => {
