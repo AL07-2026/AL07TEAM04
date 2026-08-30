@@ -111,8 +111,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
-    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
-    const requestBody = JSON.parse(String(requestInit?.body ?? '{}')) as {
+    const requestInit = fetchMock.mock.calls[0]?.[1];
+    const requestBody = JSON.parse(typeof requestInit?.body === 'string' ? requestInit.body : '{}') as {
       history?: Array<{ answer?: string }>;
     };
     expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
