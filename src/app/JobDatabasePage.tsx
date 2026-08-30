@@ -1930,9 +1930,19 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       setTimeout(() => setActionNotice(''), 7000);
     } catch (err) {
       console.error('Failed to submit proposal:', err);
+      setApplicationError('지원서를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsApplying(false);
     }
+  }
+
+  function handleBypassInterview() {
+    setIsInterviewBypassConfirmOpen(false);
+    if (applicationFiles.length === 0) {
+      setApplicationError('1개 이상의 첨부파일을 확인해 주세요.');
+      return;
+    }
+    void handleConfirmSubmitApplication({ allowInterviewMismatch: true });
   }
 
   async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
@@ -3329,9 +3339,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </button>
                 <button
                   className="min-h-11 rounded-xl border border-[#F06B4F]/35 bg-white px-3 py-2.5 text-[13px] font-extrabold leading-5 text-[#D85A3F] transition hover:bg-[#FFF1ED]"
-                  onClick={() =>
-                    void handleConfirmSubmitApplication({ allowInterviewMismatch: true })
-                  }
+                  onClick={handleBypassInterview}
                   type="button"
                 >
                   인터뷰 없이 지원하기
