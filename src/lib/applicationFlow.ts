@@ -10,6 +10,7 @@ export const EXPERIENCE_CARD_STORAGE_KEY = 'eojob_experience_card';
 const PENDING_APPLICATION_INTERVIEW_KEY = 'eojob_pending_application_interview';
 const PENDING_EXPERIENCE_CARD_KEY = 'eojob_pending_experience_card';
 const RESUME_APPLICATION_KEY = 'eojob_resume_application';
+const EXPERIENCE_PROFILE_DRAFT_KEY = 'eojob_experience_profile_draft';
 
 export type StoredExperienceCard = {
   action: string;
@@ -30,6 +31,14 @@ export type ExperienceInterviewAnswers = {
   problem: string;
   result: string;
   role: string;
+};
+
+export type ExperienceProfileDraft = {
+  workedOn: string;
+  accomplished: string;
+  strengths: string[];
+  version: 1;
+  generatedAt: string;
 };
 
 export type ExperienceCardMatch = {
@@ -274,6 +283,37 @@ export function readPendingExperienceCard(): ExperienceCardInput | null {
 
 export function clearPendingExperienceCard() {
   if (isBrowser()) sessionStorage.removeItem(PENDING_EXPERIENCE_CARD_KEY);
+}
+
+function normalizeExperienceProfileDraft(value: unknown): ExperienceProfileDraft | null {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Partial<ExperienceProfileDraft>;
+  const workedOn = typeof source.workedOn === 'string' ? source.workedOn.trim() : '';
+  const accomplished = typeof source.accomplished === 'string' ? source.accomplished.trim() : '';
+  const strengths = Array.isArray(source.strengths)
+    ? source.strengths.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, 3)
+    : [];
+  if (!workedOn && !accomplished && strengths.length === 0) return null;
+  return { workedOn, accomplished, strengths, version: 1, generatedAt: typeof source.generatedAt === 'string' ? source.generatedAt : new Date().toISOString() };
+}
+
+export function saveExperienceProfileDraft(draft: ExperienceProfileDraft, ownerId?: string) {
+  if (!isBrowser()) return;
+  const normalized = normalizeExperienceProfileDraft(draft);
+  if (normalized) sessionStorage.setItem(getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId), JSON.stringify(normalized));
+}
+
+export function readExperienceProfileDraft(ownerId?: string): ExperienceProfileDraft | null {
+  if (!isBrowser()) return null;
+  try {
+    return normalizeExperienceProfileDraft(JSON.parse(sessionStorage.getItem(getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId)) || 'null'));
+  } catch {
+    return null;
+  }
+}
+
+export function clearExperienceProfileDraft(ownerId?: string) {
+  if (isBrowser()) sessionStorage.removeItem(getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId));
 }
 
 function readApplicationReturn(key: string): ApplicationInterviewReturn | null {

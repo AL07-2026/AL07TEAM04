@@ -31,7 +31,18 @@ export type SeniorProfileData = {
   employmentSubsidyTarget?: boolean;
   employmentSubsidyProgram?: string;
   employmentSubsidyDocName?: string;
+  experienceProfileV1?: ExperienceProfileV1;
   updatedAt?: string;
+};
+
+/** Confirmed public experience only. Unconfirmed interview drafts are session scoped. */
+export type ExperienceProfileV1 = {
+  workedOn: string;
+  accomplished: string;
+  strengths: string[];
+  version: 1;
+  generatedAt?: string;
+  confirmedAt: string;
 };
 
 export type CompanyProfileData = {
@@ -52,6 +63,30 @@ const COMPANY_PROFILE_STORAGE_KEY = 'eojob_company_profile';
 
 function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function normalizeExperienceProfile(value: unknown): ExperienceProfileV1 | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const workedOn = stringValue(source.workedOn);
+  const accomplished = stringValue(source.accomplished);
+  const strengths = Array.isArray(source.strengths)
+    ? source.strengths
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  const confirmedAt = stringValue(source.confirmedAt);
+  if (!workedOn && !accomplished && strengths.length === 0) return undefined;
+  return {
+    workedOn,
+    accomplished,
+    strengths,
+    version: 1,
+    generatedAt: stringValue(source.generatedAt) || undefined,
+    confirmedAt: confirmedAt || new Date(0).toISOString(),
+  };
 }
 
 function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
@@ -88,6 +123,7 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
     employmentSubsidyProgram: stringValue(value.employmentSubsidyProgram) || undefined,
     employmentSubsidyDocName: stringValue(value.employmentSubsidyDocName) || undefined,
+    experienceProfileV1: normalizeExperienceProfile(value.experienceProfileV1),
     phone: stringValue(value.phone),
     email,
     updatedAt: stringValue(value.updatedAt) || undefined,
