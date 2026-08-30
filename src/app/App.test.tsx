@@ -256,11 +256,13 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', '/company/proposals/1');
     render(<App />);
     await waitFor(() => expect(proposalsSpy).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: '2차 면접' }));
+    fireEvent.click(screen.getByRole('button', { name: '2차 면접 단계로 변경' }));
     await waitFor(() => expect(stageSpy).toHaveBeenCalledWith('1', 'second_interview'));
     fireEvent.click(screen.getByRole('button', { name: '연락 완료로 표시' }));
     await waitFor(() => expect(contactSpy).toHaveBeenCalledWith('1', 'contacted'));
-    expect(screen.getByRole('button', { name: '2차 면접' })).toHaveClass('bg-[#173F3A]');
+    const activeStageButton = screen.getByRole('button', { name: '2차 면접 단계로 변경' });
+    expect(activeStageButton).toHaveAttribute('aria-pressed', 'true');
+    expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#173F3A]');
     stageSpy.mockRestore();
     contactSpy.mockRestore();
     proposalsSpy.mockRestore();

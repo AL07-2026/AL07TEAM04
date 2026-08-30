@@ -8,7 +8,6 @@ import {
   Coins,
   FileText,
   ImagePlus,
-  Info,
   Loader2,
   Mic,
   Pencil,
@@ -19,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  ThumbsUp,
   User,
   X,
   Zap,
@@ -273,12 +273,12 @@ export function ExperienceSummaryView({
   const { mode } = useViewportMode();
   const items = snapshot
     ? [
-        { label: '해온 일', value: snapshot.workedOn },
-        { label: '해낸 일', value: snapshot.accomplished },
-        { label: '잘하는 점', value: snapshot.strengths.join(' · ') },
+        { label: '해온 일', value: snapshot.workedOn, icon: ArrowRight, tone: 'emerald' },
+        { label: '해낸 일', value: snapshot.accomplished, icon: Target, tone: 'coral' },
+        { label: '잘하는 점', value: snapshot.strengths.join(' · '), icon: ThumbsUp, tone: 'slate' },
       ]
-    : legacyText
-      ? [{ label: '해온 일', value: legacyText }]
+      : legacyText
+      ? [{ label: '해온 일', value: legacyText, icon: ArrowRight, tone: 'emerald' }]
       : [];
 
   if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
@@ -291,13 +291,13 @@ export function ExperienceSummaryView({
       )}
       data-testid={mode === 'mobile' ? 'experience-summary-mobile' : 'experience-summary-desktop'}
     >
-      {items.map(({ label, value }) => (
-        <div className="min-w-0" key={label}>
-          <p className="text-xs font-extrabold text-[#173F3A]">{label}</p>
+      {items.map(({ label, value, icon: Icon, tone }) => (
+        <div className={cn('min-w-0 rounded-xl border p-3', tone === 'emerald' ? 'border-emerald-100 bg-emerald-50/60' : tone === 'coral' ? 'border-orange-100 bg-orange-50/60' : 'border-slate-200 bg-slate-50')} key={label}>
+          <p className={cn('flex items-center gap-1.5 text-xs font-extrabold', tone === 'emerald' ? 'text-[#173F3A]' : tone === 'coral' ? 'text-[#C85039]' : 'text-slate-700')}><span className="flex size-6 items-center justify-center rounded-full bg-white"><Icon className="size-3.5" /></span>{label}</p>
           <p
             className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]"
           >
-            {value || '아직 정리된 내용이 없습니다.'}
+            {label === '잘하는 점' && snapshot ? snapshot.strengths.map((strength) => <span className="mr-1.5 inline-flex rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700" key={strength}>{strength}</span>) : value || '아직 정리된 내용이 없습니다.'}
           </p>
         </div>
       ))}
@@ -3158,6 +3158,34 @@ export function ReceivedProposalsPage() {
   );
 }
 
+function cleanLegacyText(value: string) { return value.replace(/\u25a1/g, '').replace(/\s{2,}/g, ' ').trim(); }
+
+const proposalStageDisplayLabels: Record<ProposalProcessStage, string> = {
+  document_review: '검토',
+  first_interview: '1차 면접',
+  second_interview: '2차 면접',
+  mission: '미션',
+  final_connection: '최종 연결',
+};
+
+const proposalStageHelper: Record<ProposalProcessStage, string> = {
+  document_review: '기업이 지원 내용을 살펴보고 있어요.',
+  first_interview: '첫 면접 단계까지 이어졌어요.',
+  second_interview: '다음 면접 단계로 이어졌어요.',
+  mission: '이제 실제로 함께 맞춰보는 단계예요.',
+  final_connection: '좋은 연결이 만들어졌어요.',
+};
+
+function ProposalProgress({ current, onSelect }: { current: ProposalProcessStage; onSelect?: (stage: ProposalProcessStage) => void }) {
+  const stages = Object.keys(proposalProcessStageLabels) as ProposalProcessStage[];
+  const currentIndex = stages.indexOf(current);
+  return <div className="flex gap-0 overflow-x-auto pb-1 md:overflow-visible" role={onSelect ? 'group' : 'list'} aria-label="채용 진행 단계">{stages.map((stage, index) => { const active = index === currentIndex; const completed = index < currentIndex; const content = <><span aria-hidden="true" className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', active ? 'border-[#173F3A] bg-[#173F3A] text-white' : completed ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]' : 'border-[#D4CBB8] bg-white text-slate-400')}>{completed ? '✓' : active ? '●' : '○'}</span><span className={cn('mt-1 w-14 text-center text-[10px] font-extrabold leading-4', active ? 'text-[#173F3A]' : completed ? 'text-[#4B756E]' : 'text-slate-500')}>{proposalStageDisplayLabels[stage]}</span></>; return <div className="flex min-w-[56px] items-start" key={stage}>{onSelect ? <button aria-pressed={active} aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`} className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => onSelect(stage)} type="button">{content}</button> : <div className="flex flex-col items-center" role="listitem">{content}</div>}{index < stages.length - 1 ? <span aria-hidden="true" className={cn('mt-3 h-px min-w-3 flex-1', index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]')} /> : null}</div>; })}</div>;
+}
+
+function ProposalExperience({ proposal, profile }: { proposal: UserProposal; profile?: SeniorProfileData | null }) {
+  return <ExperienceSummaryView legacyText={cleanLegacyText(proposal.interviewSummary || '')} snapshot={proposal.experienceSnapshotV1 || profile?.experienceProfileV1} />;
+}
+
 export function ReceivedProposalDetailPage() {
   const { proposalId } = useParams();
   const { user } = useAuth();
@@ -3166,102 +3194,198 @@ export function ReceivedProposalDetailPage() {
   const [proposal, setProposal] = useState<UserProposal | null>(null);
   const [isProposalLoading, setIsProposalLoading] = useState(true);
   const [proposalLoadError, setProposalLoadError] = useState(false);
-  const [processStage, setProcessStage] = useState<ProposalProcessStage>('document_review');
-  const [contactStatus, setContactStatus] = useState<UserProposal['contactStatus']>('not_contacted');
+  const [contactStatus, setContactStatus] =
+    useState<UserProposal['contactStatus']>('not_contacted');
   const [message, setMessage] = useState('');
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
   const [profileLoadError, setProfileLoadError] = useState(false);
-  const [seniorProfileUserId, setSeniorProfileUserId] = useState<string>();
+  const [seniorProfileUserId, setSeniorProfileUserId] = useState<string | undefined>();
   const [isProfileResumeOpen, setIsProfileResumeOpen] = useState(false);
   const [dialogView, setDialogView] = useState<'profile' | 'resume'>('profile');
   const profileResumeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const profileResumeCloseRef = useRef<HTMLButtonElement | null>(null);
   const [resumeUrls, setResumeUrls] = useState<Record<string, string>>({});
   const [resumeError, setResumeError] = useState(false);
+  const [processStage, setProcessStage] = useState<ProposalProcessStage>('document_review');
 
   useEffect(() => {
-    void getCompanyProposals(user?.uid).then((proposals) => {
-      const selected = proposals.find((item) => item.id === proposalId) ?? null;
-      setProposal(selected);
-      if (selected) {
-        setProcessStage(getProposalProcessStage(selected));
-        setContactStatus(selected.contactStatus || 'not_contacted');
-      }
-      setIsProposalLoading(false);
-    }).catch(() => { setProposal(null); setProposalLoadError(true); setIsProposalLoading(false); });
+    void getCompanyProposals(user?.uid)
+      .then((proposals) => {
+        const selected = proposals.find((item) => item.id === proposalId) ?? null;
+        setProposal(selected);
+        if (selected) {
+          setContactStatus(
+            selected.contactStatus ||
+              (selected.status === '연락 받음' ? 'contacted' : 'not_contacted'),
+          );
+          setProcessStage(
+            selected.processStage ||
+              (selected.status === '승인' ? 'final_connection' : 'document_review'),
+          );
+        }
+        setIsProposalLoading(false);
+      })
+      .catch(() => {
+        setIsProposalLoading(false);
+        setProposalLoadError(true);
+      });
   }, [proposalId, user?.uid]);
 
   useEffect(() => {
     let active = true;
-    window.setTimeout(() => { setSeniorProfile(null); setProfileLoadError(false); setSeniorProfileUserId(undefined); }, 0);
-    if (!proposal?.userId || proposal.projectOwnerId !== user?.uid) return () => { active = false; };
-    void getSeniorProfile(proposal.userId).then((profile) => {
-      if (active) { setSeniorProfile(profile); setSeniorProfileUserId(proposal.userId); }
-    }).catch(() => { if (active) { setProfileLoadError(true); setSeniorProfileUserId(proposal.userId); } });
-    return () => { active = false; };
+    window.setTimeout(() => {
+      setSeniorProfile(null);
+      setProfileLoadError(false);
+      setSeniorProfileUserId(undefined);
+    }, 0);
+    if (!proposal?.userId || proposal.projectOwnerId !== user?.uid) {
+      return () => {
+        active = false;
+      };
+    }
+    void getSeniorProfile(proposal.userId)
+      .then((profile) => {
+        if (active) {
+          setSeniorProfile(profile);
+          setSeniorProfileUserId(proposal.userId);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setProfileLoadError(true);
+          setSeniorProfileUserId(proposal.userId);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [proposal?.projectOwnerId, proposal?.userId, user?.uid]);
 
   useEffect(() => {
     if (!isProfileResumeOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') closeProfileResume(); };
-    window.addEventListener('keydown', onKeyDown);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeProfileResume();
+    };
+    window.addEventListener('keydown', handleKeyDown);
     window.setTimeout(() => profileResumeCloseRef.current?.focus(), 0);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isProfileResumeOpen]);
 
   useEffect(() => {
     if (!isProfileResumeOpen || !proposal?.resumeFiles?.length) return;
     let active = true;
-    void Promise.allSettled(proposal.resumeFiles.map(async (file) => [file.storagePath, await resolveProposalResumeUrl(file.storagePath)] as const)).then((results) => {
+    void Promise.allSettled(
+      proposal.resumeFiles.map(
+        async (file) =>
+          [file.storagePath, await resolveProposalResumeUrl(file.storagePath)] as const,
+      ),
+    ).then((results) => {
       if (!active) return;
-      setResumeUrls(Object.fromEntries(results.flatMap((r) => r.status === 'fulfilled' ? [r.value] : [])));
-      setResumeError(results.some((r) => r.status === 'rejected'));
+      const resolved = results.flatMap((result) =>
+        result.status === 'fulfilled' ? [result.value] : [],
+      );
+      setResumeUrls(Object.fromEntries(resolved));
+      setResumeError(results.some((result) => result.status === 'rejected'));
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [isProfileResumeOpen, proposal?.resumeFiles]);
 
-  if (isProposalLoading) return <MobilePage activeNav="proposals" backTo="/company/proposals" role="company" title="제안 상세"><div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">제안 정보를 불러오는 중입니다.</div></MobilePage>;
-  if (!proposal) return <MobilePage activeNav="proposals" backTo="/company/proposals" role="company" title="제안 상세"><div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">{proposalLoadError ? '제안 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' : '제안 정보를 찾을 수 없습니다.'}</div></MobilePage>;
-  const currentProposal = proposal;
+  if (isProposalLoading && !proposal) {
+    return (
+      <MobilePage
+        activeNav="proposals"
+        backTo="/company/proposals"
+        role="company"
+        title="제안 상세"
+      >
+        <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
+          제안 정보를 불러오는 중입니다.
+        </div>
+      </MobilePage>
+    );
+  }
+  if (!proposal) {
+    const text = proposalLoadError
+      ? '제안 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+      : '제안 정보를 찾을 수 없습니다.';
+    return (
+      <MobilePage
+        activeNav="proposals"
+        backTo="/company/proposals"
+        role="company"
+        title="제안 상세"
+      >
+        <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
+          {text}
+        </div>
+      </MobilePage>
+    );
+  }
 
-  function closeProfileResume() { setIsProfileResumeOpen(false); window.setTimeout(() => profileResumeTriggerRef.current?.focus(), 0); }
-  function renderProfileActions() {
-    if (currentProposal.projectOwnerId !== user?.uid) return null;
-    return <div className={cn('flex items-center gap-3', isMobile ? 'order-2 justify-center' : 'justify-end')}>
-      <button aria-label="지원자 프로필 보기" className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => { profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement; setDialogView('profile'); setIsProfileResumeOpen(true); }} ref={profileResumeTriggerRef} type="button"><span className="flex size-9 items-center justify-center rounded-full bg-[#DDEBE7]"><User className="size-4" /></span>프로필</button>
-      <button aria-label="지원자 이력서 보기" className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" disabled={!currentProposal.resumeFiles?.length} onClick={() => { profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement; setDialogView('resume'); setResumeUrls({}); setResumeError(false); setIsProfileResumeOpen(true); }} type="button"><span className={cn('flex size-9 items-center justify-center rounded-full', currentProposal.resumeFiles?.length ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>{currentProposal.resumeFiles?.length ? '이력서' : '이력서 없음'}</button>
-    </div>;
+  function closeProfileResume() {
+    setIsProfileResumeOpen(false);
+    window.setTimeout(() => profileResumeTriggerRef.current?.focus(), 0);
   }
 
   const matchScore = proposal?.seniorFitScore ?? 0;
   const matchTone = getFitScoreTone(matchScore);
-  const isSubsidyTarget = proposal?.employmentSubsidyTarget ?? true;
-  const subsidyProgram =
-    proposal?.employmentSubsidyProgram || '국민취업지원제도(1단계 IAP 수료) 및 직업훈련 이수';
 
   async function changeProcessStage(nextStage: ProposalProcessStage) {
     if (!proposal || nextStage === processStage) return;
-    const previous = processStage;
+    const previousStage = processStage;
     setProcessStage(nextStage);
+    setMessage(`${proposalProcessStageLabels[nextStage]} 단계로 변경했습니다.`);
     try {
       await updateProposalProcessStage(proposal.id, nextStage);
-      setMessage(`진행 단계를 ${proposalProcessStageLabels[nextStage]}로 변경했습니다.`);
     } catch {
-      setProcessStage(previous);
-      setMessage('진행 단계 저장에 실패했습니다.');
+      setProcessStage(previousStage);
+      setMessage('단계 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
   }
 
-  async function markContacted() {
-    if (!proposal || contactStatus === 'contacted') return;
-    setContactStatus('contacted');
-    try {
-      await updateProposalContactStatus(proposal.id, 'contacted');
-      setMessage('연락 완료로 표시했습니다.');
-    } catch {
-      setContactStatus('not_contacted');
-      setMessage('연락 상태 저장에 실패했습니다.');
-    }
+  function renderProfileActions() {
+    if (!proposal || proposal.projectOwnerId !== user?.uid) return null;
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-3',
+          isMobile ? 'order-2 justify-center' : 'self-start mb-2 justify-end',
+        )}
+      >
+        <button
+          aria-label="지원자 프로필 보기"
+          className="flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+          onClick={() => {
+            profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement;
+            setDialogView('profile');
+            setIsProfileResumeOpen(true);
+          }}
+          ref={profileResumeTriggerRef}
+          type="button"
+        >
+          <span className="flex size-9 items-center justify-center rounded-full bg-[#DDEBE7]"><User className="size-4" /></span>
+          프로필
+        </button>
+        <button
+          aria-label="지원자 이력서 보기"
+          className="flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+          disabled={!proposal.resumeFiles?.length}
+          onClick={() => {
+            profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement;
+            setDialogView('resume');
+            setResumeError(false);
+            setResumeUrls({});
+            setIsProfileResumeOpen(true);
+          }}
+          type="button"
+        >
+          <span className={cn('flex size-9 items-center justify-center rounded-full', proposal.resumeFiles?.length ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>
+          {proposal.resumeFiles?.length ? '이력서' : '이력서 없음'}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -3272,34 +3396,44 @@ export function ReceivedProposalDetailPage() {
       role="company"
       title="제안 상세"
     >
-      <div className={cn('grid gap-2', isMobile ? 'grid-cols-1' : 'md:grid-cols-[minmax(0,1fr)_auto]')}>
-        {!isMobile ? <div className="col-span-2 flex items-start justify-between"><StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>{renderProfileActions()}</div> : null}
-        <div className="min-w-0"><h2 className="break-words text-xl font-extrabold tracking-tight text-[#17212B]">{isMobile ? proposal.applicantName || '지원 인재' : `${proposal.applicantName || '지원 인재'}의 제안`}</h2><p className="mt-1 break-words text-xs font-medium text-slate-500">{proposal.projectTitle} · 지원일 {proposal.appliedAt}</p></div>
-        <div className="flex items-start justify-end gap-2">{isMobile ? <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge> : null}{!isMobile ? null : renderProfileActions()}<span aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`} className={cn('flex min-w-[7.5rem] items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold', matchTone.containerClassName)}><ShieldCheck className="size-3.5" />{matchScore}점 · {matchTone.label}</span></div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">지원자 경험과 적합도</h2>
-          <span
-            aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`}
-            className={cn(
-              'flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-extrabold',
-              matchTone.containerClassName,
-            )}
-          >
-            <ShieldCheck className="size-3.5" /> {matchScore}점 · {matchTone.label}
-          </span>
+      <div className={cn('grid gap-2', isMobile ? 'grid-cols-1' : 'md:grid-cols-[minmax(0,1fr)_auto] md:items-start')}>
+        {!isMobile ? (
+          <div className="col-span-2 flex items-start justify-between">
+            <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
+            {renderProfileActions()}
+          </div>
+        ) : null}
+        <div className={cn('contents', !isMobile && 'md:col-start-1 md:row-start-2 md:block')}>
+          <h2 className={cn('min-w-0 break-words text-xl font-extrabold tracking-tight text-[#17212B]', isMobile ? 'order-3' : 'md:order-none')}>
+            {isMobile ? proposal.applicantName || '지원 인재' : `${proposal.applicantName || '지원 인재'}의 제안`}
+          </h2>
+          <p className={cn('mt-1 break-words text-xs font-medium text-slate-500', isMobile ? 'order-4' : 'md:order-none')}>
+            {proposal.projectTitle} · 지원일 {proposal.appliedAt}
+          </p>
         </div>
-        <p className="text-xs font-medium text-slate-500">
-          {[proposal?.applicantName, proposal?.applicantEmail].filter(Boolean).join(' · ') || '지원자 정보 미등록'}
-        </p>
+        <div className={cn('contents', !isMobile && 'md:order-2 md:col-start-2 md:row-start-2 md:grid md:items-start md:justify-end md:gap-2')}>
+          <div className={cn('flex min-w-0 items-center justify-between gap-3', isMobile ? 'order-1' : 'md:order-2 md:contents')}>
+            <div className={isMobile ? 'flex' : 'hidden'}>
+              <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
+            </div>
+            <span
+              aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`}
+              className={cn(
+                'flex min-w-[7.5rem] shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold',
+                matchTone.containerClassName,
+              )}
+            >
+              <ShieldCheck className="size-3.5 shrink-0" /> <span className="whitespace-nowrap">{matchScore}점 · {matchTone.label}</span>
+            </span>
+          </div>
+          {isMobile ? renderProfileActions() : null}
+        </div>
       </div>
 
       {/* AI Match Score Gauge */}
       <div className="flex flex-col gap-1.5 rounded-xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-extrabold text-[#17212B]">AI 프로젝트 매칭 적합도</span>
+          <span className="font-extrabold text-[#17212B]">프로젝트 적합도</span>
           <span className={cn('font-extrabold', matchTone.scoreClassName)}>
             {matchScore}점 · {matchTone.label}
           </span>
@@ -3312,85 +3446,93 @@ export function ReceivedProposalDetailPage() {
         </div>
       </div>
 
-      {/* Target Task Banner (Warm Coral Accent) */}
       <div className="flex items-center gap-3 rounded-xl border border-[#F06B4F]/30 bg-[#FDF0ED] p-3.5 shadow-xs">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white shadow-xs">
           <Target className="size-4" />
         </div>
         <strong className="text-xs font-extrabold text-[#F06B4F]">
-          기업 핵심 프로젝트: {proposal?.projectTitle || '프로젝트명 미등록'}
+          기업 핵심 프로젝트: {proposal.projectTitle || '프로젝트명 미등록'}
         </strong>
       </div>
 
+      <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5 text-xs">
+        <strong className="font-extrabold text-[#173F3A]">경험 한눈에 보기</strong>
+        <div className="mt-3">
+          <ProposalExperience proposal={proposal} profile={seniorProfile} />
+        </div>
+        {proposal.coverNote ? (
+          <p className="mt-3 font-medium text-[#17212B]/80">
+            <span className="font-extrabold">지원자 메시지: </span>
+            {proposal.coverNote}
+          </p>
+        ) : null}
+      </div>
+
       {/* Employment Promotion Subsidy Report Card for Company */}
-      {isSubsidyTarget && (
-        <div className="flex flex-col gap-2 rounded-2xl bg-[#EAF3F0] p-4 shadow-2xs">
+      {seniorProfile?.employmentSubsidyTarget ? (
+        <div className="flex flex-col gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/90 p-3.5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#173F3A] shadow-2xs">
-              <Coins className="size-4 text-[#F06B4F] shrink-0" />
-              <span>고용촉진장려금 지원 대상 인재</span>
-            </span>
-            <span className="text-xs sm:text-sm font-extrabold text-[#173F3A]">
-              연 최대 720만원 지원
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 border border-emerald-300">
+              <Coins className="size-3.5 text-emerald-800 shrink-0" />
+              <span>채용지원금 관련 정보</span>
             </span>
           </div>
-
-          <div className="flex flex-col gap-1.5 rounded-xl bg-white/80 p-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-extrabold text-slate-500">인증 교육과정</span>
-              <span className="font-extrabold text-[#173F3A]">{subsidyProgram}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-extrabold text-slate-500">지원 금액 혜택</span>
-              <span className="font-extrabold text-[#17212B]">
-                월 60만원 × 12개월 (분기별 180만원 지급)
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-extrabold text-slate-500">기업 신청 요건</span>
-              <span className="font-semibold text-slate-600">
-                우선지원대상기업 채용 후 6개월 고용유지 시
-              </span>
-            </div>
-          </div>
-
-          <p className="text-[11.5px] font-medium text-slate-600 leading-snug">
-            💡 본 인재 채용 확정 후 관할 고용복지플러스센터 또는 고용24(work24.go.kr)에서 장려금을 신청하시면 국가 인건비가 지급됩니다.
+          <p className="text-xs font-semibold text-emerald-900 leading-snug">
+            {seniorProfile.employmentSubsidyProgram ||
+              '관련 지원 프로그램 정보가 등록되어 있습니다.'}{' '}
+            실제 지원 여부와 금액은 적용 요건 확인이 필요합니다.
           </p>
         </div>
-      )}
+      ) : null}
 
-      {/* Soft Mint Info Box */}
-      <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/80 p-3">
-        <Info className="mt-0.5 size-4 shrink-0 text-[#173F3A]" />
-        <div className="flex flex-col text-[11px] leading-relaxed text-[#17212B]">
-          <strong className="font-bold text-[#173F3A]">추가로 확인해 보세요</strong>
-          <span>현재 조직 규모와 적용 가능성</span>
+      <section
+        aria-label="채용 진행 단계"
+        className="rounded-xl border border-[#E0D9C8] bg-white p-3.5"
+      >
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <strong className="text-sm font-extrabold text-[#17212B]">이 지원은 지금</strong>
+          <span className="text-xs font-bold text-[#173F3A]">
+            {proposalProcessStageLabels[processStage]}
+          </span>
         </div>
-      </div>
+        <p className="mb-3 text-xs font-medium text-slate-600">
+          {proposalStageHelper[processStage]}
+        </p>
+        <ProposalProgress
+          current={processStage}
+          onSelect={(stage) => void changeProcessStage(stage)}
+        />
+      </section>
 
-      <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5 text-xs"><strong className="font-extrabold text-[#173F3A]">경험 한눈에 보기</strong><div className="mt-3"><ExperienceSummaryView legacyText={proposal.interviewSummary} snapshot={proposal.experienceSnapshotV1 || seniorProfile?.experienceProfileV1} /></div>{proposal.coverNote ? <InfoPanel label="지원자 메시지">{proposal.coverNote}</InfoPanel> : null}</div>
-
-      <div className="flex flex-col gap-2.5 pt-1">
-        <ActionButton role="company" onClick={() => void markContacted()}>
-          {contactStatus === 'contacted' ? '연락 완료' : '연락 완료로 표시'}
-        </ActionButton>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(proposalProcessStageLabels) as ProposalProcessStage[]).map((stage) => (
-            <button
-              className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors',
-                processStage === stage ? 'bg-[#173F3A] text-white' : 'bg-[#EAF3F0] text-[#173F3A]',
-              )}
-              key={stage}
-              onClick={() => void changeProcessStage(stage)}
-              type="button"
-            >
-              {proposalProcessStageLabels[stage]}
-            </button>
-          ))}
+      <section className="flex items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5">
+        <div>
+          <p className="text-sm font-extrabold text-[#17212B]">연락 상태</p>
+          <p className="mt-0.5 text-xs font-medium text-slate-600">
+            {contactStatus === 'contacted' ? '✓ 연락했어요' : '아직 연락 전'}
+          </p>
         </div>
-      </div>
+        {contactStatus !== 'contacted' ? (
+          <button
+            className="min-h-11 rounded-xl border border-[#F06B4F]/45 bg-white px-3 text-xs font-extrabold text-[#C85039] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+            onClick={() => {
+              if (!proposal) return;
+              setContactStatus('contacted');
+              setMessage(
+                proposal.applicantEmail
+                  ? `연락 상태를 기록했습니다. (${proposal.applicantEmail})`
+                  : '연락 상태를 기록했습니다. 등록된 연락처가 없습니다.',
+              );
+              void updateProposalContactStatus(proposal.id, 'contacted').catch(() => {
+                setContactStatus(proposal.contactStatus || 'not_contacted');
+                setMessage('연락 상태 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+              });
+            }}
+            type="button"
+          >
+            연락 완료로 표시
+          </button>
+        ) : null}
+      </section>
 
       {message ? (
         <p aria-live="polite" className="text-center text-xs font-bold text-[#173F3A]">
@@ -3398,7 +3540,130 @@ export function ReceivedProposalDetailPage() {
         </p>
       ) : null}
 
-      {isProfileResumeOpen ? <div role="dialog" aria-modal="true" aria-labelledby="profile-resume-dialog-title" className={cn('inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center', isMobile ? 'absolute' : 'fixed')} onMouseDown={(event) => { if (event.target === event.currentTarget) closeProfileResume(); }}><section className="max-h-[min(760px,calc(100dvh-24px))] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-xl"><div className="flex items-start justify-between border-b border-[#E0D9C8]/70 pb-3"><h2 id="profile-resume-dialog-title" className="text-lg font-extrabold text-[#17212B]">{proposal.applicantName || '지원 인재'}의 {dialogView === 'profile' ? '프로필' : '이력서'}</h2><button aria-label="프로필·이력서 보기 닫기" onClick={closeProfileResume} ref={profileResumeCloseRef} type="button" className="flex size-10 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"><X aria-hidden="true" className="size-5" /></button></div><div className="mt-4">{dialogView === 'profile' ? (seniorProfileUserId !== proposal.userId ? <p>프로필 정보를 불러오는 중입니다.</p> : profileLoadError ? <p>프로필 정보를 불러오지 못했습니다.</p> : seniorProfile ? <ExperienceSummaryView snapshot={seniorProfile.experienceProfileV1} /> : <p>등록된 프로필 정보가 없습니다.</p>) : proposal.resumeFiles?.length ? <div className="grid gap-2">{proposal.resumeFiles.map((file) => resumeUrls[file.storagePath] ? <a key={file.storagePath} href={resumeUrls[file.storagePath]} target="_blank" rel="noreferrer" className="rounded-lg border p-3 text-xs underline">{file.name}</a> : <p key={file.storagePath} className="rounded-lg border p-3 text-xs">{resumeError ? `${file.name} 파일을 열 수 없습니다.` : `${file.name} 파일을 불러오는 중입니다.`}</p>)}</div> : <p>등록된 이력서 파일이 없습니다.</p>}</div></section></div> : null}
+      {isProfileResumeOpen && proposal?.projectOwnerId === user?.uid ? (
+        <div
+          aria-labelledby="profile-resume-dialog-title"
+          aria-modal="true"
+          className={cn(
+            'inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center sm:justify-center',
+            isMobile ? 'absolute' : 'fixed',
+          )}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeProfileResume();
+          }}
+          role="dialog"
+        >
+          <section className="max-h-[min(760px,calc(100dvh-24px))] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3 border-b border-[#E0D9C8]/70 pb-3">
+              <div>
+                <p className="text-xs font-extrabold text-[#4B756E]">지원자 정보</p>
+                <h2
+                  className="mt-1 text-lg font-extrabold text-[#17212B]"
+                  id="profile-resume-dialog-title"
+                >
+                  {proposal?.applicantName || '지원 인재'}의{' '}
+                  {dialogView === 'profile' ? '프로필' : '이력서'}
+                </h2>
+              </div>
+              <button
+                aria-label="프로필·이력서 보기 닫기"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                onClick={closeProfileResume}
+                ref={profileResumeCloseRef}
+                type="button"
+              >
+                <X aria-hidden="true" className="size-5" />
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 text-sm">
+              {dialogView === 'profile' ? (
+                <div className="rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5">
+                  <h3 className="font-extrabold text-[#173F3A]">경험 한눈에 보기</h3>
+                  {proposal?.userId !== seniorProfileUserId ? (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      프로필 정보를 불러오는 중입니다.
+                    </p>
+                  ) : profileLoadError ? (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      프로필 정보를 불러오지 못했습니다.
+                    </p>
+                  ) : seniorProfile ? (
+                    <>
+                      <div className="mt-3">
+                        <ProposalExperience proposal={proposal} profile={seniorProfile} />
+                      </div>
+                      <dl className="mt-4 grid gap-2 border-t border-[#E0D9C8] pt-3 text-xs font-semibold text-slate-700">
+                        <div>
+                          <dt className="inline font-extrabold">경력: </dt>
+                          <dd className="inline">
+                            {[seniorProfile.field, seniorProfile.period]
+                              .filter(Boolean)
+                              .join(' · ') || '등록된 정보가 없습니다'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="inline font-extrabold">희망 조건: </dt>
+                          <dd className="inline">
+                            {[seniorProfile.desiredLocation, seniorProfile.desiredWorkType]
+                              .filter(Boolean)
+                              .join(' · ') || '등록된 정보가 없습니다'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="inline font-extrabold">연락받을 정보: </dt>
+                          <dd className="inline">
+                            {[seniorProfile.phone, seniorProfile.email]
+                              .filter(Boolean)
+                              .join(' · ') || '등록된 정보가 없습니다'}
+                          </dd>
+                        </div>
+                      </dl>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      등록된 프로필 정보가 없습니다.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5">
+                  <h3 className="font-extrabold text-[#173F3A]">이력서</h3>
+                  {proposal?.resumeFiles?.length ? (
+                    <div className="mt-2 grid gap-2">
+                      {proposal?.resumeFiles?.map((file) =>
+                        resumeUrls[file.storagePath] ? (
+                          <a
+                            className="rounded-lg border border-[#BBD5CE] bg-[#F4FAF8] p-3 text-xs font-extrabold text-[#173F3F] underline"
+                            href={resumeUrls[file.storagePath]}
+                            key={file.storagePath}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {file.name} · {(file.size / 1024 / 1024).toFixed(1)}MB
+                          </a>
+                        ) : (
+                          <p
+                            className="rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-xs font-semibold text-slate-500"
+                            key={file.storagePath}
+                          >
+                            {resumeError
+                              ? `${file.name} 파일을 열 수 없습니다.`
+                              : `${file.name} 파일을 불러오는 중입니다.`}
+                          </p>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      등록된 이력서 파일이 없습니다.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </MobilePage>
   );
 }
