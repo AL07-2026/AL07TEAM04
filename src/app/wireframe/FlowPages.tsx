@@ -43,15 +43,17 @@ import {
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import {
-  buildExperienceCardFromAnswers,
+  clearExperienceProfileDraft,
   clearPendingExperienceCard,
   completeApplicationInterview,
   getExperienceCardCategoryLabel,
   getPendingApplicationInterview,
   readPendingExperienceCard,
+  readExperienceProfileDraft,
   readStoredExperienceCard,
   saveStoredExperienceCard,
   savePendingExperienceCard,
+  saveExperienceProfileDraft,
   type ExperienceCardInput,
   type ExperienceInterviewAnswers,
   type StoredExperienceCard,
@@ -80,6 +82,7 @@ import {
   getLocalSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
+  saveSeniorProfile,
   saveLocalSeniorProfile,
   type CompanyProfileData,
   type SeniorProfileData,
@@ -87,11 +90,16 @@ import {
 import {
   clearLegacyProposals,
   getCompanyProposals,
+  getProposalProcessStage,
   getUserProposals,
+  proposalProcessStageLabels,
   saveProposal,
   type UserProposal,
-  updateProposalStatus,
+  type ProposalProcessStage,
+  updateProposalContactStatus,
+  updateProposalProcessStage,
 } from '@/services/proposalService';
+import type { ExperienceProfileV1 } from '@/services/profileService';
 import {
   getPublishedCompanyProjects,
   matchesPublishedCompanyProject,
@@ -246,6 +254,51 @@ export function ExperienceSummaryCard({
           <span className="mt-1 block">{coverNote}</span>
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/** Shared, confirmed experience presentation used across profile and proposal views. */
+export function ExperienceSummaryView({
+  snapshot,
+  legacyText,
+  emptyText = '저장된 경험 요약이 없습니다.',
+}: {
+  snapshot?: ExperienceProfileV1;
+  legacyText?: string;
+  emptyText?: string;
+}) {
+  const { mode } = useViewportMode();
+  const items = snapshot
+    ? [
+        { label: '해온 일', value: snapshot.workedOn },
+        { label: '해낸 일', value: snapshot.accomplished },
+        { label: '잘하는 점', value: snapshot.strengths.join(' · ') },
+      ]
+    : legacyText
+      ? [{ label: '해온 일', value: legacyText }]
+      : [];
+
+  if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
+
+  return (
+    <div
+      className={cn(
+        'grid min-w-0 gap-3',
+        mode === 'mobile' ? 'grid-cols-1' : 'md:grid-cols-2',
+      )}
+      data-testid={mode === 'mobile' ? 'experience-summary-mobile' : 'experience-summary-desktop'}
+    >
+      {items.map(({ label, value }) => (
+        <div className="min-w-0" key={label}>
+          <p className="text-xs font-extrabold text-[#173F3A]">{label}</p>
+          <p
+            className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]"
+          >
+            {value || '아직 정리된 내용이 없습니다.'}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1150,6 +1203,7 @@ export function ExperienceInterviewPage() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isStructuring, setIsStructuring] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [voiceNotice, setVoiceNotice] = useState(defaultVoiceNotice);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
@@ -1374,7 +1428,7 @@ export function ExperienceInterviewPage() {
         sender: 'ai',
         text: nextQuestion
           ? nextQuestion.prompt
-          : '네 가지 답변을 모두 확인했습니다. 실제 입력 내용으로 경험 카드를 만들었어요.',
+          : '이야기해주신 내용을 정리했어요. 다음 화면에서 직접 확인하고 수정할 수 있어요.',
       },
     ]);
     if (!nextQuestion) {
@@ -1428,24 +1482,58 @@ export function ExperienceInterviewPage() {
     setCurrentAnswer(null);
   }
 
-  function handleReviewCard() {
-    if (
-      !answers.problem ||
-      !answers.role ||
-      !answers.action ||
-      !answers.result ||
-      !interviewComplete
-    ) {
-      setVoiceNotice('네 가지 질문에 모두 답한 뒤 경험 카드를 확인할 수 있습니다.');
+  async function handleReviewCard() {
+    if (!answers.problem || !answers.role || !answers.action || !answers.result || !interviewComplete) {
+      setVoiceNotice('네 가지 질문에 모두 답한 뒤 경험 정리를 확인할 수 있습니다.');
       return;
     }
-
-    const card = buildExperienceCardFromAnswers(answers as ExperienceInterviewAnswers, {
-      category: targetCategory,
-      targetTitle: applicationReturn?.targetTitle,
-    });
-    savePendingExperienceCard(card);
-    void navigate('/senior/experience/card');
+    setIsStructuring(true);
+    setVoiceNotice('AI가 답변 전체를 읽고 경험을 정리하고 있어요.');
+    try {
+      const response = await fetch('/api/interview/experience-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedFields: targetCategoryLabel ? [targetCategoryLabel] : ['희망 직종'],
+          history: interviewQuestions.map((question) => ({
+            question: question.prompt,
+            answer: answers[question.field] ?? '',
+          })),
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        card?: { title?: string; problem?: string | null; role?: string | null; action?: string | null; result?: string | null; skills?: string[] };
+        error?: { message?: string };
+      } | null;
+      const cardResult = payload?.card;
+      if (!response.ok || !cardResult || typeof cardResult.title !== 'string') {
+        throw new Error(payload?.error?.message || 'AI 경험 정리 결과를 확인하지 못했어요.');
+      }
+      const normalizedProfile = {
+        workedOn: (cardResult.role || cardResult.problem || cardResult.title || '').trim(),
+        accomplished: (cardResult.result || cardResult.action || '').trim(),
+        strengths: (cardResult.skills || []).filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, 3),
+      };
+      if (!normalizedProfile.workedOn || !normalizedProfile.accomplished) {
+        throw new Error('AI 경험 정리 결과가 충분하지 않아요. 다시 시도해 주세요.');
+      }
+      const card: ExperienceCardInput = {
+        title: cardResult.title.trim() || normalizedProfile.workedOn,
+        problem: cardResult.problem?.trim() || normalizedProfile.workedOn,
+        role: cardResult.role?.trim() || normalizedProfile.workedOn,
+        action: cardResult.action?.trim() || normalizedProfile.accomplished,
+        result: cardResult.result?.trim() || normalizedProfile.accomplished,
+        category: targetCategory,
+        targetTitle: applicationReturn?.targetTitle,
+      };
+      savePendingExperienceCard(card);
+      saveExperienceProfileDraft({ ...normalizedProfile, version: 1, generatedAt: new Date().toISOString() }, user?.uid);
+      void navigate('/senior/experience/card');
+    } catch (error) {
+      setVoiceNotice(error instanceof Error ? error.message : 'AI 경험 정리에 실패했어요. 다시 시도해 주세요.');
+    } finally {
+      setIsStructuring(false);
+    }
   }
 
   return (
@@ -1658,10 +1746,12 @@ export function ExperienceInterviewPage() {
           <span>입력한 네 가지 답변만 경험 카드에 저장됩니다.</span>
         </div>
 
-        <ActionButton disabled={!interviewComplete} onClick={handleReviewCard} className="mt-1">
-          {interviewComplete
-            ? '실제 답변으로 만든 경험 카드 확인 →'
-            : '인터뷰 답변을 완료해 주세요'}
+          <ActionButton disabled={!interviewComplete || isStructuring} onClick={() => void handleReviewCard()} className="mt-1">
+            {isStructuring
+              ? 'AI가 경험을 정리하는 중...'
+              : interviewComplete
+              ? '실제 답변으로 만든 경험 카드 확인 →'
+              : '인터뷰 답변을 완료해 주세요'}
         </ActionButton>
       </div>
     </MobilePage>
@@ -1672,6 +1762,11 @@ export function ExperienceCardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [draft, setDraft] = useState(() => readExperienceProfileDraft(user?.uid));
+  const [strengthsEditor, setStrengthsEditor] = useState(
+    () => readExperienceProfileDraft(user?.uid)?.strengths.join('\n') ?? '',
+  );
   const [experienceCard, setExperienceCard] = useState<StoredExperienceCard | null>(() => {
     const pendingCard = readPendingExperienceCard();
     if (pendingCard) {
@@ -1692,8 +1787,15 @@ export function ExperienceCardPage() {
   }, [hasFreshInterview, user?.uid]);
 
   async function handleSaveCard() {
-    if (!experienceCard) return;
+    if (!experienceCard || !draft || !user?.uid) return;
     setIsSaving(true);
+    setSaveError('');
+    const currentProfile = getLocalSeniorProfile(user.uid);
+    if (!currentProfile) {
+      setSaveError('기본 프로필을 먼저 저장해 주세요.');
+      setIsSaving(false);
+      return;
+    }
     const cardInput: ExperienceCardInput = {
       action: experienceCard.action,
       category: experienceCard.category,
@@ -1703,22 +1805,30 @@ export function ExperienceCardPage() {
       targetTitle: experienceCard.targetTitle,
       title: experienceCard.title,
     };
-    saveStoredExperienceCard(cardInput, user?.uid);
+    const confirmedProfile = {
+      ...currentProfile,
+      experienceProfileV1: {
+        ...draft,
+        strengths: strengthsEditor.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 3),
+        confirmedAt: new Date().toISOString(),
+      },
+    };
+    saveStoredExperienceCard(cardInput, user.uid);
     try {
-      if (user?.uid) {
-        await saveExperienceCard({
-          uid: user.uid,
-          ...cardInput,
-        });
-      }
+      await saveSeniorProfile(user.uid, confirmedProfile);
+      saveLocalSeniorProfile(confirmedProfile, user.uid);
+      await saveExperienceCard({ uid: user.uid, ...cardInput });
     } catch (err) {
       console.warn('Failed to save experience card to Firestore:', err);
-    } finally {
+      setSaveError('내 경험 프로필을 저장하지 못했습니다. 다시 시도해 주세요.');
       setIsSaving(false);
-      clearPendingExperienceCard();
-      const returnState = completeApplicationInterview();
-      void navigate(returnState?.path ?? '/senior/projects');
+      return;
     }
+    setIsSaving(false);
+    clearPendingExperienceCard();
+    clearExperienceProfileDraft(user.uid);
+    const returnState = completeApplicationInterview();
+    void navigate(returnState?.path ?? '/senior/projects');
   }
 
   return (
@@ -1742,7 +1852,7 @@ export function ExperienceCardPage() {
         </p>
       </div>
 
-      {experienceCard ? (
+      {experienceCard && draft ? (
         <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]">
@@ -1754,6 +1864,21 @@ export function ExperienceCardPage() {
           </div>
 
           <h3 className="text-base font-extrabold text-[#17212B]">{experienceCard.title}</h3>
+
+          <div className="grid gap-3">
+            <label className="text-xs font-extrabold text-[#173F3A]">
+              해온 일
+              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={draft.workedOn} onChange={(event) => setDraft((current) => current ? { ...current, workedOn: event.target.value } : current)} />
+            </label>
+            <label className="text-xs font-extrabold text-[#173F3A]">
+              해낸 일
+              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={draft.accomplished} onChange={(event) => setDraft((current) => current ? { ...current, accomplished: event.target.value } : current)} />
+            </label>
+            <label className="text-xs font-extrabold text-[#173F3A]">
+              잘하는 점
+              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={strengthsEditor} onChange={(event) => setStrengthsEditor(event.target.value)} />
+            </label>
+          </div>
 
           <div className="flex flex-col gap-2 pt-1">
             <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
@@ -1814,7 +1939,7 @@ export function ExperienceCardPage() {
       )}
 
       <div className="flex flex-col gap-2.5 pt-1">
-        {experienceCard ? (
+        {experienceCard && draft ? (
           <>
             <ActionButton secondary onClick={() => void navigate('/senior/experience/interview')}>
               인터뷰 다시 진행하기
@@ -1824,7 +1949,7 @@ export function ExperienceCardPage() {
                 ? '저장 중...'
                 : applicationReturn
                   ? '결과 저장하고 지원서로 돌아가기'
-                  : '대표 경험 카드로 저장하기'}
+              : '내 경험 프로필에 반영하기'}
             </ActionButton>
           </>
         ) : (
@@ -1833,6 +1958,7 @@ export function ExperienceCardPage() {
           </ActionButton>
         )}
       </div>
+      {saveError ? <p className="text-center text-sm font-bold text-rose-600">{saveError}</p> : null}
     </MobilePage>
   );
 }
@@ -2338,16 +2464,21 @@ export function MyProposalDetailPage() {
     >
       {proposal ? (
         <>
-          <StatusBadge>{cancelled ? '취소됨' : proposal.status}</StatusBadge>
+          <StatusBadge>
+            {cancelled ? '취소됨' : proposalProcessStageLabels[getProposalProcessStage(proposal)]}
+          </StatusBadge>
           <p className="text-xs font-extrabold text-[#173F3A]">{proposal.companyName}</p>
           <h2 className="text-[21px] font-extrabold text-[#17212B]">{proposal.projectTitle}</h2>
           <p className="text-xs font-medium text-slate-500">보낸 날짜 · {proposal.appliedAt}</p>
           <InfoPanel label="전달 메시지">
             {proposal.coverNote || '전달 메시지가 없습니다.'}
           </InfoPanel>
-          <InfoPanel label="AI 경험 요약">
-            {proposal.interviewSummary || '저장된 인터뷰 요약이 없습니다.'}
-          </InfoPanel>
+          <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5">
+            <ExperienceSummaryView
+              legacyText={proposal.interviewSummary}
+              snapshot={proposal.experienceSnapshotV1}
+            />
+          </div>
           <InfoPanel label="첨부 서류">
             {proposal.resumeFileName || '첨부된 서류가 없습니다.'}
           </InfoPanel>
@@ -3034,7 +3165,8 @@ export function ReceivedProposalDetailPage() {
   const { proposalId } = useParams();
   const { user } = useAuth();
   const [proposal, setProposal] = useState<UserProposal | null>(null);
-  const [status, setStatus] = useState<UserProposal['status']>('검토 중');
+  const [processStage, setProcessStage] = useState<ProposalProcessStage>('document_review');
+  const [contactStatus, setContactStatus] = useState<UserProposal['contactStatus']>('not_contacted');
   const [message, setMessage] = useState('');
   const [showDetailCard, setShowDetailCard] = useState(false);
 
@@ -3042,7 +3174,10 @@ export function ReceivedProposalDetailPage() {
     void getCompanyProposals(user?.uid).then((proposals) => {
       const selected = proposals.find((item) => item.id === proposalId) ?? null;
       setProposal(selected);
-      if (selected) setStatus(selected.status);
+      if (selected) {
+        setProcessStage(getProposalProcessStage(selected));
+        setContactStatus(selected.contactStatus || 'not_contacted');
+      }
     });
   }, [proposalId, user?.uid]);
 
@@ -3052,10 +3187,29 @@ export function ReceivedProposalDetailPage() {
   const subsidyProgram =
     proposal?.employmentSubsidyProgram || '국민취업지원제도(1단계 IAP 수료) 및 직업훈련 이수';
 
-  function changeStatus(nextStatus: UserProposal['status'], nextMessage: string) {
-    setStatus(nextStatus);
-    setMessage(nextMessage);
-    if (proposal) void updateProposalStatus(proposal.id, nextStatus);
+  async function changeProcessStage(nextStage: ProposalProcessStage) {
+    if (!proposal || nextStage === processStage) return;
+    const previous = processStage;
+    setProcessStage(nextStage);
+    try {
+      await updateProposalProcessStage(proposal.id, nextStage);
+      setMessage(`진행 단계를 ${proposalProcessStageLabels[nextStage]}로 변경했습니다.`);
+    } catch {
+      setProcessStage(previous);
+      setMessage('진행 단계 저장에 실패했습니다.');
+    }
+  }
+
+  async function markContacted() {
+    if (!proposal || contactStatus === 'contacted') return;
+    setContactStatus('contacted');
+    try {
+      await updateProposalContactStatus(proposal.id, 'contacted');
+      setMessage('연락 완료로 표시했습니다.');
+    } catch {
+      setContactStatus('not_contacted');
+      setMessage('연락 상태 저장에 실패했습니다.');
+    }
   }
 
   return (
@@ -3066,16 +3220,14 @@ export function ReceivedProposalDetailPage() {
       role="company"
       title="제안 상세"
     >
-      <div className="flex items-center justify-between">
-        <StatusBadge>{status}</StatusBadge>
-        <span className="text-xs font-semibold text-slate-400">기업 근거 판단 3/3</span>
+      <div className="flex items-center justify-between gap-3">
+        <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
+        <span className="text-xs font-semibold text-slate-400">{proposal?.projectTitle || '프로젝트명 미등록'}</span>
       </div>
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">
-            이 인재가 적합한 이유
-          </h2>
+          <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">지원자 경험과 적합도</h2>
           <span
             aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`}
             className={cn(
@@ -3087,7 +3239,7 @@ export function ReceivedProposalDetailPage() {
           </span>
         </div>
         <p className="text-xs font-medium text-slate-500">
-          {proposal?.applicantName || '이동욱'} · {proposal?.applicantEmail || '서비스 운영 전문가'}
+          {[proposal?.applicantName, proposal?.applicantEmail].filter(Boolean).join(' · ') || '지원자 정보 미등록'}
         </p>
       </div>
 
@@ -3113,30 +3265,8 @@ export function ReceivedProposalDetailPage() {
           <Target className="size-4" />
         </div>
         <strong className="text-xs font-extrabold text-[#F06B4F]">
-          기업 핵심 프로젝트: {proposal?.projectTitle || '반복되는 납기 지연 개선'}
+          기업 핵심 프로젝트: {proposal?.projectTitle || '프로젝트명 미등록'}
         </strong>
-      </div>
-
-      {/* Checklist items */}
-      <div className="flex flex-col gap-2.5 rounded-xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs">
-        <div className="flex items-center gap-2.5 text-xs font-bold text-[#17212B]">
-          <div className="flex size-5 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A] border border-[#BBD5CE]">
-            ✓
-          </div>
-          <span>유사한 문제를 해결한 경험</span>
-        </div>
-        <div className="flex items-center gap-2.5 text-xs font-bold text-[#17212B]">
-          <div className="flex size-5 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A] border border-[#BBD5CE]">
-            ✓
-          </div>
-          <span>개선 과정을 직접 주도</span>
-        </div>
-        <div className="flex items-center gap-2.5 text-xs font-bold text-[#17212B]">
-          <div className="flex size-5 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A] border border-[#BBD5CE]">
-            ✓
-          </div>
-          <span>성과로 이어진 실행 경험</span>
-        </div>
       </div>
 
       {/* Employment Promotion Subsidy Report Card for Company */}
@@ -3186,38 +3316,40 @@ export function ReceivedProposalDetailPage() {
         </div>
       </div>
 
-      {showDetailCard && (
-        <ExperienceSummaryCard
-          coverNote={proposal?.coverNote}
-          summary={proposal?.interviewSummary}
-        />
-      )}
-
-      <p className="text-xs font-extrabold text-[#173F3A]">✓ 프로필·이력서 공유 동의 완료</p>
+      {showDetailCard ? (
+        <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
+          <ExperienceSummaryView
+            legacyText={proposal?.interviewSummary}
+            snapshot={proposal?.experienceSnapshotV1}
+          />
+          {proposal?.coverNote ? (
+            <InfoPanel label="지원자 메시지">{proposal.coverNote}</InfoPanel>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2.5 pt-1">
         <ActionButton secondary onClick={() => setShowDetailCard(!showDetailCard)}>
           {showDetailCard ? '경험 접기' : '경험 자세히 보기'}
         </ActionButton>
-        <ActionButton
-          role="company"
-          onClick={() => {
-            changeStatus(
-              '연락 받음',
-              `대화 제안을 보냈습니다. (연락처: ${proposal?.applicantEmail || '010-1234-5678'})`,
-            );
-          }}
-        >
-          대화 제안하기
+        <ActionButton role="company" onClick={() => void markContacted()}>
+          {contactStatus === 'contacted' ? '연락 완료' : '연락 완료로 표시'}
         </ActionButton>
-        <ActionButton
-          secondary
-          onClick={() => {
-            changeStatus('검토 중', '제안 상태를 검토 중으로 변경했습니다.');
-          }}
-        >
-          검토 중으로 변경
-        </ActionButton>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(proposalProcessStageLabels) as ProposalProcessStage[]).map((stage) => (
+            <button
+              className={cn(
+                'rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors',
+                processStage === stage ? 'bg-[#173F3A] text-white' : 'bg-[#EAF3F0] text-[#173F3A]',
+              )}
+              key={stage}
+              onClick={() => void changeProcessStage(stage)}
+              type="button"
+            >
+              {proposalProcessStageLabels[stage]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {message ? (
@@ -3277,25 +3409,9 @@ export function SeniorProfilePage() {
     };
   }, [user?.uid]);
 
-  const userName =
-    user?.name && user.name !== '김인재'
-      ? user.name
-      : user?.email === 'sehddnr2@gmail.com'
-        ? '이동욱'
-        : user?.name || '이동욱';
-  const userEmail = user?.email || 'sehddnr2@gmail.com';
-  const experienceCategory = experienceCard ? getExperienceCardCategoryLabel(experienceCard) : null;
-  const experienceCompletedTimestamp = experienceCard
-    ? Date.parse(experienceCard.completedAt)
-    : Number.NaN;
-  const experienceCompletedDate =
-    Number.isFinite(experienceCompletedTimestamp) && experienceCompletedTimestamp > 0
-      ? new Intl.DateTimeFormat('ko-KR', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }).format(new Date(experienceCompletedTimestamp))
-      : '저장일 정보 없음';
+  const userName = user?.name || '지원자';
+  const userEmail = user?.email || '';
+  const confirmedExperience = seniorProfile?.experienceProfileV1;
 
   return (
     <MobilePage
@@ -3319,7 +3435,7 @@ export function SeniorProfilePage() {
               {userName} 님
             </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              ✓ 본인 인증
+              {confirmedExperience ? '확인 완료' : '경험 정리 전'}
             </span>
             {seniorProfile?.employmentSubsidyTarget ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
@@ -3332,7 +3448,7 @@ export function SeniorProfilePage() {
         </div>
       </div>
 
-      {/* Experience Summary Card */}
+      {/* Confirmed Experience Summary */}
       <div
         className={cn(
           'flex flex-col gap-3 rounded-2xl border p-4 shadow-2xs',
@@ -3355,27 +3471,10 @@ export function SeniorProfilePage() {
             {experienceCard ? 'AI 경험 인터뷰 완료' : '인터뷰 미진행'}
           </span>
         </div>
-        {experienceCard ? (
-          <div className="flex flex-col gap-2.5 text-[13px]">
-            <div className="flex items-start gap-2.5">
-              <span className="font-extrabold text-[#173F3A] shrink-0">인터뷰 직종:</span>
-              <span className="font-medium text-slate-700">
-                {experienceCategory}
-                {seniorProfile?.period ? ` · 경력 ${seniorProfile.period}` : ''}
-              </span>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <span className="font-extrabold text-[#173F3A] shrink-0">대표 경험:</span>
-              <span className="font-medium leading-5 text-slate-700">{experienceCard.title}</span>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <span className="font-extrabold text-[#173F3A] shrink-0">핵심 결과:</span>
-              <span className="font-medium leading-5 text-slate-700">{experienceCard.result}</span>
-            </div>
-            <p className="pt-1 text-[11px] font-semibold text-slate-500">
-              최근 인터뷰 저장 · {experienceCompletedDate}
-            </p>
-          </div>
+        {confirmedExperience ? (
+          <ExperienceSummaryView snapshot={confirmedExperience} />
+        ) : experienceCard ? (
+          <p className="text-[13px] font-medium leading-5 text-slate-600">확인 후 공개할 경험 요약이 준비되어 있습니다.</p>
         ) : (
           <div className="flex flex-col gap-2">
             <p className="text-[14px] font-extrabold text-[#17212B]">
