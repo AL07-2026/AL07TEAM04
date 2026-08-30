@@ -2470,6 +2470,15 @@ export function MyProposalDetailPage() {
           <StatusBadge>
             {cancelled ? '취소됨' : proposalProcessStageLabels[getProposalProcessStage(proposal)]}
           </StatusBadge>
+          {!cancelled ? (
+            <section aria-label="채용 진행 단계" className="rounded-xl border border-[#E0D9C8] bg-white p-3.5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <strong className="text-sm font-extrabold text-[#17212B]">기업과 여기까지 이어졌어요</strong>
+                <span className="text-xs font-bold text-[#173F3A]">{proposalStageDisplayLabels[getProposalProcessStage(proposal)]}</span>
+              </div>
+              <ProposalProgress current={getProposalProcessStage(proposal)} />
+            </section>
+          ) : null}
           <p className="text-xs font-extrabold text-[#173F3A]">{proposal.companyName}</p>
           <h2 className="text-[21px] font-extrabold text-[#17212B]">{proposal.projectTitle}</h2>
           <p className="text-xs font-medium text-slate-500">보낸 날짜 · {proposal.appliedAt}</p>
@@ -3662,10 +3671,12 @@ export function ReceivedProposalDetailPage() {
                         ),
                       )}
                     </div>
-                  ) : (
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      등록된 이력서 파일이 없습니다.
+                  ) : proposal?.resumeFileName ? (
+                    <p className="mt-2 rounded-lg border border-[#E0D9C8] bg-[#FAF7F2] p-3 text-xs font-semibold text-slate-600">
+                      첨부 서류: {proposal.resumeFileName}
                     </p>
+                  ) : (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">등록된 이력서 파일이 없습니다.</p>
                   )}
                 </div>
               )}
