@@ -1888,19 +1888,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         applicantNote,
         user?.uid,
         { email: user?.email, name: user?.name },
+        applicationFiles,
+        seniorProfile?.experienceProfileV1,
         {
           employmentSubsidyTarget: seniorProfile?.employmentSubsidyTarget,
           employmentSubsidyProgram: seniorProfile?.employmentSubsidyProgram,
         },
       );
       const emailResult = sendApplicationEmailToManager(applyingPosting, {
-        applicantName:
-          user?.name
-            ? user.name
-            : user?.email === 'sehddnr2@gmail.com'
-              ? '이동욱'
-              : '이동욱',
-        applicantEmail: user?.email || 'sehddnr2@gmail.com',
+        applicantName: user?.name || '지원자',
+        applicantEmail: user?.email,
         attachedResumeName: attachedFileNames,
         interviewSummary,
         coverNote: applicantNote,
@@ -3398,7 +3395,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <button
                     className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#173F3A] py-3.5 px-4 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#21544E] active:scale-[0.99]"
                     onClick={() => {
-                      const textToCopy = `[이음잡 40+ AI 경험 인터뷰 검증 요약]\n지원 공고: ${completedApplication.posting.title} (${completedApplication.posting.companyName})\n\n■ AI 검증 역량 분석:\n${completedApplication.interviewSummary}\n\n■ 한 줄 지원 소신:\n"${completedApplication.coverNote || '10년 이상 실무 노하우를 발휘하겠습니다.'}"`;
+                      const textToCopy = `[이어잡 경험 인터뷰 요약]\n지원 공고: ${completedApplication.posting.title} (${completedApplication.posting.companyName})\n\n■ 경험 요약:\n${completedApplication.interviewSummary}\n\n■ 한 줄 지원 소신:\n"${completedApplication.coverNote || '등록된 전달 메시지가 없습니다.'}"`;
                       void navigator.clipboard.writeText(textToCopy);
                       setCopiedSummaryToast(true);
                       setTimeout(() => setCopiedSummaryToast(false), 4000);
