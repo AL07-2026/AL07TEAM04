@@ -80,6 +80,7 @@ import {
 import {
   getLocalCompanyProfile,
   getLocalSeniorProfile,
+  getSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
   saveSeniorProfile,
@@ -98,6 +99,7 @@ import {
   type ProposalProcessStage,
   updateProposalContactStatus,
   updateProposalProcessStage,
+  resolveProposalResumeUrl,
 } from '@/services/proposalService';
 import type { ExperienceProfileV1 } from '@/services/profileService';
 import {
@@ -3159,11 +3161,23 @@ export function ReceivedProposalsPage() {
 export function ReceivedProposalDetailPage() {
   const { proposalId } = useParams();
   const { user } = useAuth();
+  const { mode } = useViewportMode();
+  const isMobile = mode === 'mobile';
   const [proposal, setProposal] = useState<UserProposal | null>(null);
+  const [isProposalLoading, setIsProposalLoading] = useState(true);
+  const [proposalLoadError, setProposalLoadError] = useState(false);
   const [processStage, setProcessStage] = useState<ProposalProcessStage>('document_review');
   const [contactStatus, setContactStatus] = useState<UserProposal['contactStatus']>('not_contacted');
   const [message, setMessage] = useState('');
-  const [showDetailCard, setShowDetailCard] = useState(false);
+  const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
+  const [profileLoadError, setProfileLoadError] = useState(false);
+  const [seniorProfileUserId, setSeniorProfileUserId] = useState<string>();
+  const [isProfileResumeOpen, setIsProfileResumeOpen] = useState(false);
+  const [dialogView, setDialogView] = useState<'profile' | 'resume'>('profile');
+  const profileResumeTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const profileResumeCloseRef = useRef<HTMLButtonElement | null>(null);
+  const [resumeUrls, setResumeUrls] = useState<Record<string, string>>({});
+  const [resumeError, setResumeError] = useState(false);
 
   useEffect(() => {
     void getCompanyProposals(user?.uid).then((proposals) => {
@@ -3173,8 +3187,51 @@ export function ReceivedProposalDetailPage() {
         setProcessStage(getProposalProcessStage(selected));
         setContactStatus(selected.contactStatus || 'not_contacted');
       }
-    });
+      setIsProposalLoading(false);
+    }).catch(() => { setProposal(null); setProposalLoadError(true); setIsProposalLoading(false); });
   }, [proposalId, user?.uid]);
+
+  useEffect(() => {
+    let active = true;
+    window.setTimeout(() => { setSeniorProfile(null); setProfileLoadError(false); setSeniorProfileUserId(undefined); }, 0);
+    if (!proposal?.userId || proposal.projectOwnerId !== user?.uid) return () => { active = false; };
+    void getSeniorProfile(proposal.userId).then((profile) => {
+      if (active) { setSeniorProfile(profile); setSeniorProfileUserId(proposal.userId); }
+    }).catch(() => { if (active) { setProfileLoadError(true); setSeniorProfileUserId(proposal.userId); } });
+    return () => { active = false; };
+  }, [proposal?.projectOwnerId, proposal?.userId, user?.uid]);
+
+  useEffect(() => {
+    if (!isProfileResumeOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') closeProfileResume(); };
+    window.addEventListener('keydown', onKeyDown);
+    window.setTimeout(() => profileResumeCloseRef.current?.focus(), 0);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isProfileResumeOpen]);
+
+  useEffect(() => {
+    if (!isProfileResumeOpen || !proposal?.resumeFiles?.length) return;
+    let active = true;
+    void Promise.allSettled(proposal.resumeFiles.map(async (file) => [file.storagePath, await resolveProposalResumeUrl(file.storagePath)] as const)).then((results) => {
+      if (!active) return;
+      setResumeUrls(Object.fromEntries(results.flatMap((r) => r.status === 'fulfilled' ? [r.value] : [])));
+      setResumeError(results.some((r) => r.status === 'rejected'));
+    });
+    return () => { active = false; };
+  }, [isProfileResumeOpen, proposal?.resumeFiles]);
+
+  if (isProposalLoading) return <MobilePage activeNav="proposals" backTo="/company/proposals" role="company" title="제안 상세"><div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">제안 정보를 불러오는 중입니다.</div></MobilePage>;
+  if (!proposal) return <MobilePage activeNav="proposals" backTo="/company/proposals" role="company" title="제안 상세"><div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">{proposalLoadError ? '제안 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' : '제안 정보를 찾을 수 없습니다.'}</div></MobilePage>;
+  const currentProposal = proposal;
+
+  function closeProfileResume() { setIsProfileResumeOpen(false); window.setTimeout(() => profileResumeTriggerRef.current?.focus(), 0); }
+  function renderProfileActions() {
+    if (currentProposal.projectOwnerId !== user?.uid) return null;
+    return <div className={cn('flex items-center gap-3', isMobile ? 'order-2 justify-center' : 'justify-end')}>
+      <button aria-label="지원자 프로필 보기" className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => { profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement; setDialogView('profile'); setIsProfileResumeOpen(true); }} ref={profileResumeTriggerRef} type="button"><span className="flex size-9 items-center justify-center rounded-full bg-[#DDEBE7]"><User className="size-4" /></span>프로필</button>
+      <button aria-label="지원자 이력서 보기" className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[11px] font-extrabold text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" disabled={!currentProposal.resumeFiles?.length} onClick={() => { profileResumeTriggerRef.current = document.activeElement as HTMLButtonElement; setDialogView('resume'); setResumeUrls({}); setResumeError(false); setIsProfileResumeOpen(true); }} type="button"><span className={cn('flex size-9 items-center justify-center rounded-full', currentProposal.resumeFiles?.length ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>{currentProposal.resumeFiles?.length ? '이력서' : '이력서 없음'}</button>
+    </div>;
+  }
 
   const matchScore = proposal?.seniorFitScore ?? 0;
   const matchTone = getFitScoreTone(matchScore);
@@ -3215,9 +3272,10 @@ export function ReceivedProposalDetailPage() {
       role="company"
       title="제안 상세"
     >
-      <div className="flex items-center justify-between gap-3">
-        <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
-        <span className="text-xs font-semibold text-slate-400">{proposal?.projectTitle || '프로젝트명 미등록'}</span>
+      <div className={cn('grid gap-2', isMobile ? 'grid-cols-1' : 'md:grid-cols-[minmax(0,1fr)_auto]')}>
+        {!isMobile ? <div className="col-span-2 flex items-start justify-between"><StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>{renderProfileActions()}</div> : null}
+        <div className="min-w-0"><h2 className="break-words text-xl font-extrabold tracking-tight text-[#17212B]">{isMobile ? proposal.applicantName || '지원 인재' : `${proposal.applicantName || '지원 인재'}의 제안`}</h2><p className="mt-1 break-words text-xs font-medium text-slate-500">{proposal.projectTitle} · 지원일 {proposal.appliedAt}</p></div>
+        <div className="flex items-start justify-end gap-2">{isMobile ? <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge> : null}{!isMobile ? null : renderProfileActions()}<span aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`} className={cn('flex min-w-[7.5rem] items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold', matchTone.containerClassName)}><ShieldCheck className="size-3.5" />{matchScore}점 · {matchTone.label}</span></div>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -3311,22 +3369,9 @@ export function ReceivedProposalDetailPage() {
         </div>
       </div>
 
-      {showDetailCard ? (
-        <div className="rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
-          <ExperienceSummaryView
-            legacyText={proposal?.interviewSummary}
-            snapshot={proposal?.experienceSnapshotV1}
-          />
-          {proposal?.coverNote ? (
-            <InfoPanel label="지원자 메시지">{proposal.coverNote}</InfoPanel>
-          ) : null}
-        </div>
-      ) : null}
+      <div className="rounded-xl border border-[#E0D9C8] bg-white p-3.5 text-xs"><strong className="font-extrabold text-[#173F3A]">경험 한눈에 보기</strong><div className="mt-3"><ExperienceSummaryView legacyText={proposal.interviewSummary} snapshot={proposal.experienceSnapshotV1 || seniorProfile?.experienceProfileV1} /></div>{proposal.coverNote ? <InfoPanel label="지원자 메시지">{proposal.coverNote}</InfoPanel> : null}</div>
 
       <div className="flex flex-col gap-2.5 pt-1">
-        <ActionButton secondary onClick={() => setShowDetailCard(!showDetailCard)}>
-          {showDetailCard ? '경험 접기' : '경험 자세히 보기'}
-        </ActionButton>
         <ActionButton role="company" onClick={() => void markContacted()}>
           {contactStatus === 'contacted' ? '연락 완료' : '연락 완료로 표시'}
         </ActionButton>
@@ -3352,6 +3397,8 @@ export function ReceivedProposalDetailPage() {
           {message}
         </p>
       ) : null}
+
+      {isProfileResumeOpen ? <div role="dialog" aria-modal="true" aria-labelledby="profile-resume-dialog-title" className={cn('inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center', isMobile ? 'absolute' : 'fixed')} onMouseDown={(event) => { if (event.target === event.currentTarget) closeProfileResume(); }}><section className="max-h-[min(760px,calc(100dvh-24px))] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-xl"><div className="flex items-start justify-between border-b border-[#E0D9C8]/70 pb-3"><h2 id="profile-resume-dialog-title" className="text-lg font-extrabold text-[#17212B]">{proposal.applicantName || '지원 인재'}의 {dialogView === 'profile' ? '프로필' : '이력서'}</h2><button aria-label="프로필·이력서 보기 닫기" onClick={closeProfileResume} ref={profileResumeCloseRef} type="button" className="flex size-10 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"><X aria-hidden="true" className="size-5" /></button></div><div className="mt-4">{dialogView === 'profile' ? (seniorProfileUserId !== proposal.userId ? <p>프로필 정보를 불러오는 중입니다.</p> : profileLoadError ? <p>프로필 정보를 불러오지 못했습니다.</p> : seniorProfile ? <ExperienceSummaryView snapshot={seniorProfile.experienceProfileV1} /> : <p>등록된 프로필 정보가 없습니다.</p>) : proposal.resumeFiles?.length ? <div className="grid gap-2">{proposal.resumeFiles.map((file) => resumeUrls[file.storagePath] ? <a key={file.storagePath} href={resumeUrls[file.storagePath]} target="_blank" rel="noreferrer" className="rounded-lg border p-3 text-xs underline">{file.name}</a> : <p key={file.storagePath} className="rounded-lg border p-3 text-xs">{resumeError ? `${file.name} 파일을 열 수 없습니다.` : `${file.name} 파일을 불러오는 중입니다.`}</p>)}</div> : <p>등록된 이력서 파일이 없습니다.</p>}</div></section></div> : null}
     </MobilePage>
   );
 }
