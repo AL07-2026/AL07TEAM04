@@ -3363,7 +3363,6 @@ export function ReceivedProposalDetailPage() {
     const hasUsableResume = Boolean(
       proposal.resumeFiles?.some((file) => file.storagePath?.trim()),
     );
-    const hasLegacyAttachment = Boolean(proposal.resumeFileName?.trim());
     return (
       <div
         className={cn(
@@ -3399,7 +3398,7 @@ export function ReceivedProposalDetailPage() {
           type="button"
         >
           <span className={cn('flex size-9 items-center justify-center rounded-full', hasUsableResume ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>
-          {hasUsableResume ? '이력서' : hasLegacyAttachment ? '첨부 기록' : '이력서 없음'}
+          {hasUsableResume ? '이력서' : '이력서 없음'}
         </button>
       </div>
     );
