@@ -4,12 +4,16 @@ import {
   AudioLines,
   Award,
   BarChart2,
+  BriefcaseBusiness,
   Check,
   Coins,
+  CircleCheck,
   FileText,
   ImagePlus,
   Loader2,
   Mic,
+  MapPin,
+  MessageCircle,
   Pencil,
   RefreshCw,
   Send,
@@ -19,6 +23,8 @@ import {
   Sparkles,
   Target,
   ThumbsUp,
+  Route,
+  Link2,
   User,
   X,
   Zap,
@@ -273,12 +279,12 @@ export function ExperienceSummaryView({
   const { mode } = useViewportMode();
   const items = snapshot
     ? [
-        { label: '해온 일', value: snapshot.workedOn, icon: ArrowRight, tone: 'emerald' },
+        { label: '해온 일', value: snapshot.workedOn, icon: Route, tone: 'emerald' },
         { label: '해낸 일', value: snapshot.accomplished, icon: Target, tone: 'coral' },
         { label: '잘하는 점', value: snapshot.strengths.join(' · '), icon: ThumbsUp, tone: 'slate' },
       ]
       : legacyText
-      ? [{ label: '해온 일', value: legacyText, icon: ArrowRight, tone: 'emerald' }]
+      ? [{ label: '해온 일', value: legacyText, icon: Route, tone: 'emerald' }]
       : [];
 
   if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
@@ -292,7 +298,7 @@ export function ExperienceSummaryView({
       data-testid={mode === 'mobile' ? 'experience-summary-mobile' : 'experience-summary-desktop'}
     >
       {items.map(({ label, value, icon: Icon, tone }) => (
-        <div className={cn('min-w-0 rounded-xl border p-3', tone === 'emerald' ? 'border-emerald-100 bg-emerald-50/60' : tone === 'coral' ? 'border-orange-100 bg-orange-50/60' : 'border-slate-200 bg-slate-50')} key={label}>
+        <div className={cn('min-w-0 rounded-xl border p-3', label === '잘하는 점' && 'md:col-span-2', tone === 'emerald' ? 'border-emerald-100 bg-emerald-50/60' : tone === 'coral' ? 'border-orange-100 bg-orange-50/60' : 'border-slate-200 bg-slate-50')} key={label}>
           <p className={cn('flex items-center gap-1.5 text-xs font-extrabold', tone === 'emerald' ? 'text-[#173F3A]' : tone === 'coral' ? 'text-[#C85039]' : 'text-slate-700')}><span className="flex size-6 items-center justify-center rounded-full bg-white"><Icon className="size-3.5" /></span>{label}</p>
           <p
             className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]"
@@ -3093,11 +3099,11 @@ export function ReceivedProposalsPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <strong className="text-xs sm:text-sm font-extrabold text-[#173F3A]">
-                고용촉진장려금 지원 대상 인재 확인
+              <strong className={cn('text-xs sm:text-sm font-extrabold text-[#173F3A]', isMobile && 'max-w-[11rem] leading-5')}>
+                고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
               </strong>
-              <span className="rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white">
-                연 최대 720만원
+              <span className={cn('rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white', isMobile && 'flex min-w-[4.5rem] shrink-0 flex-col items-center leading-4')}>
+                {isMobile ? <><span className="whitespace-nowrap text-[10px] font-semibold">연 최대</span><span className="whitespace-nowrap text-xs font-black">720만원</span></> : '연 최대 720만원'}
               </span>
             </div>
             <p className="text-xs font-medium text-slate-600 mt-0.5">
@@ -3179,7 +3185,7 @@ const proposalStageHelper: Record<ProposalProcessStage, string> = {
 function ProposalProgress({ current, onSelect }: { current: ProposalProcessStage; onSelect?: (stage: ProposalProcessStage) => void }) {
   const stages = Object.keys(proposalProcessStageLabels) as ProposalProcessStage[];
   const currentIndex = stages.indexOf(current);
-  return <div className="flex gap-0 overflow-x-auto pb-1 md:overflow-visible" role={onSelect ? 'group' : 'list'} aria-label="채용 진행 단계">{stages.map((stage, index) => { const active = index === currentIndex; const completed = index < currentIndex; const content = <><span aria-hidden="true" className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', active ? 'border-[#173F3A] bg-[#173F3A] text-white' : completed ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]' : 'border-[#D4CBB8] bg-white text-slate-400')}>{completed ? '✓' : active ? '●' : '○'}</span><span className={cn('mt-1 w-14 text-center text-[10px] font-extrabold leading-4', active ? 'text-[#173F3A]' : completed ? 'text-[#4B756E]' : 'text-slate-500')}>{proposalStageDisplayLabels[stage]}</span></>; return <div className="flex min-w-[56px] items-start" key={stage}>{onSelect ? <button aria-pressed={active} aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`} className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => onSelect(stage)} type="button">{content}</button> : <div className="flex flex-col items-center" role="listitem">{content}</div>}{index < stages.length - 1 ? <span aria-hidden="true" className={cn('mt-3 h-px min-w-3 flex-1', index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]')} /> : null}</div>; })}</div>;
+  return <div className="flex gap-0 overflow-x-auto pb-1 md:overflow-visible" role={onSelect ? 'group' : 'list'} aria-label="채용 진행 단계">{stages.map((stage, index) => { const active = index === currentIndex; const completed = index < currentIndex; const content = <><span aria-hidden="true" className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', active ? 'border-[#173F3A] bg-[#173F3A] text-white ring-4 ring-[#DDEBE7]' : completed ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]' : 'border-[#D4CBB8] bg-white text-slate-400')}>{completed ? '✓' : active ? '●' : '○'}</span><span className={cn('mt-1 w-14 text-center text-[10px] leading-4', active ? 'font-black text-[#173F3A]' : completed ? 'font-extrabold text-[#4B756E]' : 'font-extrabold text-slate-500')}>{proposalStageDisplayLabels[stage]}</span></>; return <div className="flex min-w-[56px] items-start" key={stage}>{onSelect ? <button aria-pressed={active} aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`} className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => onSelect(stage)} type="button">{content}</button> : <div className="flex flex-col items-center" role="listitem">{content}</div>}{index < stages.length - 1 ? <span aria-hidden="true" className={cn('mt-3 h-px min-w-3 flex-1', index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]')} /> : null}</div>; })}</div>;
 }
 
 function ProposalExperience({ proposal, profile }: { proposal: UserProposal; profile?: SeniorProfileData | null }) {
@@ -3461,10 +3467,10 @@ export function ReceivedProposalDetailPage() {
           <ProposalExperience proposal={proposal} profile={seniorProfile} />
         </div>
         {proposal.coverNote ? (
-          <p className="mt-3 font-medium text-[#17212B]/80">
-            <span className="font-extrabold">지원자 메시지: </span>
-            {proposal.coverNote}
-          </p>
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-3 text-xs font-medium leading-5 text-[#17212B]/80">
+            <MessageCircle className="mt-0.5 size-4 shrink-0 text-[#4B756E]" aria-hidden="true" />
+            <p><span className="font-extrabold text-[#173F3A]">지원자 메시지</span><span className="mt-0.5 block">{proposal.coverNote}</span></p>
+          </div>
         ) : null}
       </div>
 
@@ -3506,9 +3512,9 @@ export function ReceivedProposalDetailPage() {
 
       <section className="flex items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5">
         <div>
-          <p className="text-sm font-extrabold text-[#17212B]">연락 상태</p>
+          <p className="flex items-center gap-2 text-sm font-extrabold text-[#17212B]"><span className="flex size-7 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]"><Link2 className="size-3.5" aria-hidden="true" /></span>연락 상태</p>
           <p className="mt-0.5 text-xs font-medium text-slate-600">
-            {contactStatus === 'contacted' ? '✓ 연락했어요' : '아직 연락 전'}
+            {contactStatus === 'contacted' ? <span className="inline-flex items-center gap-1 text-[#4B756E]"><CircleCheck className="size-3.5" aria-hidden="true" />연락했어요</span> : '아직 연락 전'}
           </p>
         </div>
         {contactStatus !== 'contacted' ? (
@@ -3593,24 +3599,27 @@ export function ReceivedProposalDetailPage() {
                         <ProposalExperience proposal={proposal} profile={seniorProfile} />
                       </div>
                       <dl className="mt-4 grid gap-2 border-t border-[#E0D9C8] pt-3 text-xs font-semibold text-slate-700">
-                        <div>
-                          <dt className="inline font-extrabold">경력: </dt>
+                        <div className="flex items-start gap-2">
+                          <BriefcaseBusiness className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <dt className="font-extrabold">경력</dt>
                           <dd className="inline">
                             {[seniorProfile.field, seniorProfile.period]
                               .filter(Boolean)
                               .join(' · ') || '등록된 정보가 없습니다'}
                           </dd>
                         </div>
-                        <div>
-                          <dt className="inline font-extrabold">희망 조건: </dt>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <dt className="font-extrabold">희망 조건</dt>
                           <dd className="inline">
                             {[seniorProfile.desiredLocation, seniorProfile.desiredWorkType]
                               .filter(Boolean)
                               .join(' · ') || '등록된 정보가 없습니다'}
                           </dd>
                         </div>
-                        <div>
-                          <dt className="inline font-extrabold">연락받을 정보: </dt>
+                        <div className="flex items-start gap-2">
+                          <User className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <dt className="font-extrabold">연락받을 정보</dt>
                           <dd className="inline">
                             {[seniorProfile.phone, seniorProfile.email]
                               .filter(Boolean)
