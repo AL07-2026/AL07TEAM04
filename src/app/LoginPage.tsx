@@ -222,6 +222,7 @@ export function LoginPage() {
           'flex flex-col justify-center items-center min-h-0 flex-1',
           isMobile ? 'px-4.5 py-6' : 'px-6 py-12 md:px-12',
         )}
+        role={user.role}
         showBack={false}
         title="로그인 정보"
       >
@@ -279,6 +280,7 @@ export function LoginPage() {
     return (
       <MobilePage
         contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
+        role={role}
         showBack={false}
         title="경험매칭"
       >
@@ -474,6 +476,7 @@ export function LoginPage() {
   return (
     <MobilePage
       contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1"
+      role={role}
       showBack={false}
       title="경험매칭"
     >
