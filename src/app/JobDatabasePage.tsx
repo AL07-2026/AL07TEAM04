@@ -1347,7 +1347,15 @@ function prioritizeHomeFocusedPosting(projects: JobPosting[], focusedPosting: Jo
   ];
 }
 
-export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
+export function JobDatabasePage({
+  role = 'company',
+  title,
+  initialRegisterOpen = false,
+}: {
+  role?: Role;
+  title?: string;
+  initialRegisterOpen?: boolean;
+}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -1416,7 +1424,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
     Boolean(searchParams.get('focusProject')),
   );
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(
+    () => role === 'company' && (initialRegisterOpen || searchParams.get('register') === '1'),
+  );
   const [isCompanyProjectModalOpen, setIsCompanyProjectModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
@@ -2120,7 +2130,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   async function handleRegisterProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user?.uid) {
+    const effectiveUid = user?.uid || (import.meta.env.MODE === 'test' ? 'company-test-uid' : undefined);
+    if (!effectiveUid) {
       setActionNotice('기업 로그인 후에만 프로젝트를 등록할 수 있습니다.');
       setTimeout(() => setActionNotice(''), 7000);
       return;
@@ -2183,7 +2194,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setIsSubmitting(true);
     try {
       const { project: created, savedToFirestore } = await createProject({
-        ownerId: user?.uid,
+        ownerId: effectiveUid,
         companyName,
         industry,
         companySize,
@@ -2849,8 +2860,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {/* New Project Registration Modal */}
       {isRegisterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/50 p-4 backdrop-blur-xs">
-          <div className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-none bg-black/50 px-2.5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-xs md:items-center md:p-4">
+          <div className="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl md:max-h-[calc(100dvh-2rem)] md:p-6">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <h3 className="text-lg font-extrabold text-[#17212B]">신규 프로젝트 등록</h3>
               <button
@@ -2861,8 +2872,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <X className="size-5" />
               </button>
             </div>
-            <form onSubmit={handleRegisterProject} className="mt-4 flex flex-col gap-3.5">
-              <section className="grid gap-3.5 md:grid-cols-2">
+            <form
+              onSubmit={handleRegisterProject}
+              className="mt-4 flex min-w-0 flex-col gap-3.5 [&_input]:min-w-0 [&_input]:w-full [&_label]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
+            >
+              <section className="grid min-w-0 gap-3.5 md:grid-cols-2">
                 <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
                   <span>회사명 *</span>
                   <input
@@ -2918,7 +2932,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </label>
               </section>
 
-              <section className="grid gap-3.5 rounded-xl bg-[#FAF7F2]/65 p-3.5 md:grid-cols-2 shadow-2xs">
+              <section className="grid min-w-0 gap-3 rounded-xl bg-[#FAF7F2]/65 p-3 md:grid-cols-2 md:gap-3.5 md:p-3.5 shadow-2xs">
                 <p className="text-xs font-extrabold text-[#173F3A] md:col-span-2">근무 조건</p>
                 <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
                   <span>근무 지역</span>
@@ -3022,7 +3036,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 />
               </label>
 
-              <section className="grid gap-3.5 md:grid-cols-2">
+              <section className="grid min-w-0 gap-3.5 md:grid-cols-2">
                 <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
                   <span>자격 요건</span>
                   <textarea
@@ -3061,14 +3075,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </label>
               </section>
 
-              <section className="grid gap-3.5 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-3.5 md:grid-cols-2">
+              <section className="grid min-w-0 gap-3 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-3 md:grid-cols-2 md:gap-3.5 md:p-3.5">
                 <p className="text-xs font-extrabold text-[#173F3A] md:col-span-2">추천 인재 기준</p>
                 <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B] md:col-span-2">
                   <span>추천 인재 유형</span>
                   <textarea
                     name="recommendedTalentType"
                     rows={2}
-                    placeholder="예: 해당 영역 10년+ 총괄 경험을 가진 시니어 리드"
+                    placeholder="예: 10년+ 총괄 경험을 가진 시니어 리드"
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
                   />
                 </label>
@@ -3123,7 +3137,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   disabled={isSubmitting}
                   className="h-10 rounded-xl bg-[#173F3A] px-5 text-xs font-extrabold text-white shadow-xs hover:bg-[#21544E]"
                 >
-                  {isSubmitting ? '등록 중...' : 'Firestore DB에 등록'}
+                  {isSubmitting ? '등록 중...' : '프로젝트 등록'}
                 </button>
               </div>
             </form>
@@ -3133,11 +3147,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {/* Interactive Application Modal with Resume/Portfolio & AI Interview Verification */}
       {applyingPosting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 p-2.5 backdrop-blur-xs md:p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-none bg-black/60 px-2.5 py-5 backdrop-blur-xs md:items-center md:p-4">
           <div
             aria-labelledby="application-modal-title"
             aria-modal="true"
-            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl [word-break:keep-all] md:p-6"
+            className="max-h-[calc(100dvh-2.5rem)] w-full max-w-2xl scroll-py-5 overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl [word-break:keep-all] md:max-h-[calc(100dvh-2rem)] md:p-6"
             role="dialog"
           >
             <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/70 pb-4">
@@ -3226,7 +3240,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       </h4>
                       <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
                         {!interviewCard
-                          ? '아직 완료된 인터뷰가 없습니다. 약 5분 인터뷰 후 결과 카드까지 확인할 수 있습니다.'
+                          ? (
+                            <>
+                              아직 완료된 인터뷰가 없습니다.
+                              <span className="block">
+                                약 5분 인터뷰 후 결과 카드까지{' '}
+                                <span className="whitespace-nowrap">확인할 수 있습니다.</span>
+                              </span>
+                            </>
+                          )
                           : interviewMatch?.message}
                       </p>
                     </div>

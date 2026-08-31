@@ -11,6 +11,7 @@ import {
   FileText,
   ImagePlus,
   Loader2,
+  LogOut,
   Mic,
   MapPin,
   MessageCircle,
@@ -3438,42 +3439,22 @@ export function ReceivedProposalsPage() {
       title="받은 제안"
     >
       {/* Employment Promotion Subsidy Header Info Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl bg-[#EAF3F0] p-4 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs">
+      <div className="rounded-2xl bg-[#EAF3F0] p-4 shadow-2xs">
+        <div className="grid grid-cols-[3rem_minmax(0,1fr)_4.75rem] items-center gap-3 sm:grid-cols-[3rem_minmax(0,1fr)_auto]">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-2xs">
             <Coins className="size-5 text-[#F06B4F]" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <strong
-                className={cn(
-                  'text-xs sm:text-sm font-extrabold text-[#173F3A]',
-                  isMobile && 'max-w-[11rem] leading-5',
-                )}
-              >
-                고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
-              </strong>
-              <span
-                className={cn(
-                  'rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white',
-                  isMobile && 'flex min-w-[4.5rem] shrink-0 flex-col items-center leading-4',
-                )}
-              >
-                {isMobile ? (
-                  <>
-                    <span className="whitespace-nowrap text-[10px] font-semibold">연 최대</span>
-                    <span className="whitespace-nowrap text-xs font-black">720만원</span>
-                  </>
-                ) : (
-                  '연 최대 720만원'
-                )}
-              </span>
-            </div>
-            <p className="text-xs font-medium text-slate-600 mt-0.5">
-              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총{' '}
-              {subsidyEligibleCount}명)
+          <div className="min-w-0">
+            <strong className={cn('block font-extrabold text-[#173F3A]', isMobile ? 'text-[15px] leading-6' : 'text-sm')}>
+              고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
+            </strong>
+            <p className={cn('mt-1 font-medium text-slate-600', isMobile ? 'text-[13px] leading-5' : 'text-xs')}>
+              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총 {subsidyEligibleCount}명)
             </p>
           </div>
+          <span className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-center font-black text-white', isMobile ? 'size-[4.75rem] flex-col leading-5' : 'px-3 py-1.5 text-xs')}>
+            {isMobile ? <><span className="whitespace-nowrap text-[13px]">연 최대</span><span className="whitespace-nowrap text-lg">720만원</span></> : '연 최대 720만원'}
+          </span>
         </div>
       </div>
 
@@ -3490,14 +3471,14 @@ export function ReceivedProposalsPage() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold text-[#17212B]">
           {filter === '💰 장려금 대상 (연 720만원)'
             ? `장려금 지원 대상 지원자 ${visible.length}건`
             : `받은 제안 ${visible.length}건`}
         </h2>
         {filter === '💰 장려금 대상 (연 720만원)' && (
-          <span className="text-xs font-extrabold text-[#173F3A]">
+          <span className="shrink-0 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] sm:text-xs">
             ✓ 채용 시 국가 지원금 신청 가능
           </span>
         )}
@@ -4573,13 +4554,26 @@ export function CompanyProfilePage() {
           {companyName.slice(0, 1)}
         </div>
         <div className="flex flex-col gap-1 text-left min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <strong className="text-base sm:text-lg font-extrabold text-[#17212B] truncate">
-              {companyName}
-            </strong>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              기업 회원
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <strong className="truncate text-base font-extrabold text-[#17212B] sm:text-lg">
+                {companyName}
+              </strong>
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
+                기업 회원
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                void navigate('/', { replace: true });
+              }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-extrabold text-rose-600 shadow-2xs transition hover:bg-rose-100"
+            >
+              <LogOut className="size-3.5" />
+              <span className="whitespace-nowrap">로그아웃</span>
+            </button>
           </div>
           <span className="text-xs font-bold text-slate-500 truncate">{email}</span>
           <span className="text-xs font-extrabold text-[#F06B4F]">담당자: {managerName}</span>
@@ -4621,16 +4615,6 @@ export function CompanyProfilePage() {
         </ActionButton>
         <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
           + 새 프로젝트 등록
-        </ActionButton>
-        <ActionButton
-          onClick={async () => {
-            await signOut();
-            void navigate('/', { replace: true });
-          }}
-          secondary
-          className="text-slate-700 border-slate-200 hover:bg-slate-50"
-        >
-          로그아웃
         </ActionButton>
         <button
           type="button"

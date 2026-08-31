@@ -57,7 +57,6 @@ const ProjectCompletePage = lazyPage(loadFlowPages, 'ProjectCompletePage');
 const ProjectDetailPage = lazyPage(loadFlowPages, 'ProjectDetailPage');
 const ProjectListPage = lazyPage(loadFlowPages, 'ProjectListPage');
 const ProjectManagementPage = lazyPage(loadFlowPages, 'ProjectManagementPage');
-const ProjectRegisterPage = lazyPage(loadFlowPages, 'ProjectRegisterPage');
 const ProposalCompletePage = lazyPage(loadFlowPages, 'ProposalCompletePage');
 const ProposalPage = lazyPage(loadFlowPages, 'ProposalPage');
 const ReceivedProposalDetailPage = lazyPage(loadFlowPages, 'ReceivedProposalDetailPage');
@@ -98,7 +97,7 @@ function createAppRouter() {
     { path: '/senior/profile', Component: SeniorProfilePage },
     { path: '/company', Component: CompanyHomePage },
     { path: '/company/projects', Component: ProjectManagementPage },
-    { path: '/company/projects/new', Component: ProjectRegisterPage },
+    { path: '/company/projects/new', element: <Navigate replace to="/company/project-database?register=1" /> },
     { path: '/company/project-complete', Component: ProjectCompletePage },
     { path: '/company/proposals', Component: ReceivedProposalsPage },
     { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },

@@ -681,7 +681,10 @@ export function BasicProfilePage() {
               <div className="flex flex-col gap-0.5">
                 <label className="flex items-start gap-2 text-sm font-extrabold leading-6 text-[#173F3A] md:items-center md:text-base">
                   <Coins className="size-4 text-[#173F3A] shrink-0" />
-                  <span className="min-w-0">고용촉진장려금(연 720만원) 지원 대상자 인증</span>
+                  <span className="min-w-0">
+                    <span className="block">고용촉진장려금(연 720만원)</span>
+                    <span className="block">지원 대상자 인증</span>
+                  </span>
                   <span className="ml-auto shrink-0 whitespace-nowrap rounded-full bg-[#173F3A]/10 px-3 py-1 text-[11px] font-extrabold leading-none text-[#173F3A]">
                     선택
                   </span>
@@ -779,7 +782,7 @@ export function BasicProfilePage() {
             <TextAreaField
               label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
-              placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해주세요."
+              placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해 주세요."
               value={form.solvedExperiences || ''}
             />
 

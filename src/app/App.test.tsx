@@ -24,7 +24,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/senior/proposals', '내 제안'],
     ['/senior/proposals/1', '내 제안 상세'],
     ['/company', '회사 홈'],
-    ['/company/projects/new', '프로젝트 등록'],
+    ['/company/projects/new', '신규 프로젝트 등록'],
     ['/company/project-complete', '등록 완료'],
     ['/company/projects', '프로젝트 관리'],
     ['/company/proposals', '받은 제안'],
@@ -221,19 +221,27 @@ describe('Figma v2 통합 화면 라우팅', () => {
     );
     window.history.pushState({}, '', '/company/projects/new');
     render(<App />);
-    for (const [label, value] of [
-      ['프로젝트 제목', '운영 체계 만들기'],
-      ['프로젝트 내용', '업무 흐름을 정리합니다.'],
-      ['필요 경험', '서비스 운영 5년 이상'],
-      ['진행 조건', '주 2회 · 원격'],
-      ['근무 위치', '서울'],
-      ['보수/급여', '월 300만원'],
-    ] as const)
-      fireEvent.change(screen.getByLabelText(label), { target: { value } });
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록하기' }));
-    expect(await screen.findByRole('heading', { name: '등록 완료' })).toBeInTheDocument();
+    fireEvent.change(await screen.findByLabelText('회사명 *'), {
+      target: { value: '테스트 회사' },
+    });
+    fireEvent.change(screen.getByLabelText('프로젝트 제목 *'), {
+      target: { value: '운영 체계 만들기' },
+    });
+    fireEvent.change(screen.getByLabelText('근무 지역'), { target: { value: '서울' } });
+    fireEvent.change(screen.getByLabelText('필요 경력'), {
+      target: { value: '서비스 운영 5년 이상' },
+    });
+    fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '주 2회 · 원격' } });
+    fireEvent.change(screen.getByLabelText('보수/예산'), { target: { value: '월 300만원' } });
+    fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
+      target: { value: '업무 흐름을 정리합니다.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
+    expect(
+      await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
+    ).toBeInTheDocument();
     expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
-    expect(window.location.pathname).toBe('/company/project-complete');
+    expect(window.location.pathname).toBe('/company/project-database');
   });
 
   it('받은 제안의 진행 단계와 연락 상태를 확인한다', async () => {
