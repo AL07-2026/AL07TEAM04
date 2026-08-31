@@ -38,6 +38,7 @@ import {
   getPostingPhotoCandidateSlots,
   getPostingPhotoPosition,
   getPostingPhotoPositionsForPage,
+  getPostingSpecificRoleLabel,
   type FilterOption,
 } from '@/app/JobDatabasePage';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
@@ -144,6 +145,42 @@ describe('추천 카드 점수 표시', () => {
     );
 
     expect(screen.getByText('65점')).toBeTruthy();
+  });
+});
+
+describe('추천 카드 직무 라벨 표시', () => {
+  it('미리보기 카드는 대분류 대신 공고의 구체 직무명을 표시한다', () => {
+    const posting: JobPosting = {
+      ...companyProject,
+      industry: '보육 교사',
+      occupationCategory: 'education',
+      title: '연장반 선생님',
+    };
+
+    expect(getPostingSpecificRoleLabel(posting)).toBe('보육 교사');
+
+    render(
+      createElement(PostingCard, {
+        activePrimaryCategory: 'education',
+        onSelect: vi.fn(),
+        posting,
+        selected: false,
+      }),
+    );
+
+    expect(screen.getByText('보육 교사')).toBeTruthy();
+    expect(screen.queryByText('교육')).toBeNull();
+  });
+
+  it('공고 분야가 대분류뿐이면 제목에서 구체 역할을 대신 보여준다', () => {
+    expect(
+      getPostingSpecificRoleLabel({
+        ...companyProject,
+        industry: '교육',
+        occupationCategory: 'education',
+        title: '연장반 선생님',
+      }),
+    ).toBe('연장반 선생님');
   });
 });
 

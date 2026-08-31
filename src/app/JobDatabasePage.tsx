@@ -204,6 +204,32 @@ function getPostingOccupationLabel(posting: JobPosting) {
   return occupationCategoryLabels[getPostingOccupationCategory(posting)];
 }
 
+const broadOccupationLabelSet = new Set(Object.values(occupationCategoryLabels));
+
+function normalizeCardLabel(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed && trimmed !== '상세 공고에서 확인' ? trimmed : '';
+}
+
+export function getPostingSpecificRoleLabel(posting: JobPosting) {
+  const industryLabel = normalizeCardLabel(posting.industry);
+  if (industryLabel && !broadOccupationLabelSet.has(industryLabel)) {
+    return industryLabel;
+  }
+
+  const cleanTitle = normalizeCardLabel(extractCleanPositionTitle(posting.title, posting.companyName));
+  if (cleanTitle) {
+    return cleanTitle;
+  }
+
+  const talentTypeLabel = normalizeCardLabel(posting.recommendedTalentType);
+  if (talentTypeLabel && !broadOccupationLabelSet.has(talentTypeLabel)) {
+    return talentTypeLabel;
+  }
+
+  return getPostingOccupationLabel(posting);
+}
+
 const workTypeFilters: { id: WorkTypeFilter; label: string }[] = [
   { id: all, label: '전체 근무' },
   { id: 'remote', label: '원격' },
@@ -565,12 +591,13 @@ function getApplicationInterviewSummary({
 
 function getRecommendedTalentsForPosting(posting: JobPosting): RecommendedTalent[] {
   const occupationLabel = getPostingOccupationLabel(posting);
+  const specificRoleLabel = getPostingSpecificRoleLabel(posting);
   const primarySkills = [
+    specificRoleLabel,
     ...(posting.requiredSkills ?? []),
     ...(posting.preferredSkills ?? []),
-    occupationLabel,
   ]
-    .filter(Boolean)
+    .filter((skill, index, skills): skill is string => Boolean(skill) && skills.indexOf(skill) === index)
     .slice(0, 4);
   const responsibilities = posting.coreResponsibilities?.length
     ? posting.coreResponsibilities
@@ -585,13 +612,13 @@ function getRecommendedTalentsForPosting(posting: JobPosting): RecommendedTalent
     evidence: [
       responsibilities[index % responsibilities.length] ?? '유사 프로젝트 수행 경험',
       posting.matchingSignals?.[index % Math.max(1, posting.matchingSignals.length)] ??
-        `${occupationLabel} 프로젝트 리딩 경험`,
+        `${specificRoleLabel} 프로젝트 리딩 경험`,
     ].filter(Boolean),
     headline:
       index === 0
-        ? `${occupationLabel} 프로젝트를 주도한 시니어`
+        ? `${specificRoleLabel} 프로젝트를 주도한 시니어`
         : index === 1
-          ? `${posting.industry} 실무 개선 경험 보유`
+          ? `${specificRoleLabel} 실무 개선 경험 보유`
           : `${posting.projectDuration} 단기 과제 해결에 강점`,
     id: `${posting.id}-talent-${index + 1}`,
     location: posting.workType === 'remote' ? '전국 · 원격 가능' : posting.location,
@@ -951,7 +978,7 @@ export function PostingCard({
         : 75;
   const fitTone = getFitScoreTone(displayScore);
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
-  const categoryLabel = getPostingOccupationLabel(posting);
+  const specificRoleLabel = getPostingSpecificRoleLabel(posting);
 
   return (
     <button
@@ -981,8 +1008,11 @@ export function PostingCard({
 
       <div className="flex min-h-[9.5rem] flex-1 flex-col p-4 sm:min-h-[10.25rem] sm:p-5">
         <div className="flex items-center justify-between gap-2">
-          <span className="rounded-md bg-[#ECF5F0] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]">
-            {categoryLabel}
+          <span
+            className="min-w-0 truncate text-[13px] font-extrabold leading-5 text-[#65748A]"
+            title={specificRoleLabel}
+          >
+            {specificRoleLabel}
           </span>
           <span
             aria-label={`AI 매칭 점수 ${displayScore}점, ${fitTone.label}`}
