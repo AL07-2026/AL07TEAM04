@@ -835,7 +835,6 @@ export function PostingCard({
   profile,
   role = 'company',
   selected,
-  useServerScore,
   visualIndex = 0,
 }: {
   activePrimaryCategory?: string;
@@ -846,7 +845,6 @@ export function PostingCard({
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
-  useServerScore?: boolean;
   selected: boolean;
   visualIndex?: number;
 }) {
@@ -857,7 +855,9 @@ export function PostingCard({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
+  const displayScore = hasUserProfile && matchResult.personalizedScore > 0
+    ? matchResult.personalizedScore
+    : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
   const categoryLabel = getPostingOccupationLabel(posting);
@@ -1055,7 +1055,6 @@ export function DetailPanel({
   posting,
   profile,
   role,
-  useServerScore,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
@@ -1063,7 +1062,6 @@ export function DetailPanel({
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
-  useServerScore?: boolean;
 }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
@@ -1074,7 +1072,9 @@ export function DetailPanel({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
+  const displayScore = hasUserProfile && matchResult.personalizedScore > 0
+    ? matchResult.personalizedScore
+    : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -1962,7 +1962,7 @@ export function JobDatabasePage({
         requireDesiredOccupationMatch:
           isCustomMatchSelected && customFallbackCategories.length === 0,
         signal: abortController.signal,
-        sortBy: !user && sortBy === 'fit-desc' ? 'title-asc' : sortBy,
+        sortBy,
         workType: selectedWorkType,
       })
         .then((result) => {
@@ -2552,9 +2552,6 @@ export function JobDatabasePage({
         }
         if (sortBy === 'latest-desc') {
           return new Date(second.postedAt).getTime() - new Date(first.postedAt).getTime();
-        }
-        if (!user) {
-          return first.title.localeCompare(second.title, 'ko');
         }
         const scoreFirst =
           role === 'senior'
@@ -4410,7 +4407,6 @@ export function JobDatabasePage({
                       posting={posting}
                       profile={seniorProfile}
                       role={role}
-                      useServerScore={isServerSearchActive}
                       selected={selectedPosting?.id === posting.id}
                       visualIndex={(safeCurrentPage - 1) * itemsPerPage + index}
                     />
@@ -4547,7 +4543,6 @@ export function JobDatabasePage({
                   posting={selectedPosting}
                   profile={seniorProfile}
                   role={role}
-                  useServerScore={isServerSearchActive}
                 />
               ) : null}
               {role === 'company' && selectedTalent ? (
