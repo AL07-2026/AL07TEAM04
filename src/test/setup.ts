@@ -6,6 +6,7 @@ import { afterEach, vi } from 'vitest';
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => ({})),
   deleteDoc: vi.fn(() => Promise.resolve(undefined)),
+  deleteField: vi.fn(() => ({ __deleteField: true })),
   doc: vi.fn(() => ({})),
   getDoc: vi.fn(() =>
     Promise.resolve({

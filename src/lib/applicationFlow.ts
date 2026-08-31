@@ -16,6 +16,7 @@ export type StoredExperienceCard = {
   action: string;
   category?: ProjectCategory;
   completedAt: string;
+  id?: string;
   problem: string;
   result: string;
   role: string;

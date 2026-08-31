@@ -70,3 +70,26 @@ export function removeUndefinedValues<T extends Record<string, unknown>>(value: 
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
   ) as Partial<T>;
 }
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object') return false;
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+export function removeDeepUndefinedValues<T>(value: T): T {
+  if (Array.isArray(value)) {
+    const arrayValue = value as unknown[];
+    return arrayValue
+      .filter((item) => item !== undefined)
+      .map((item) => removeDeepUndefinedValues(item)) as T;
+  }
+
+  if (!isPlainObject(value)) return value;
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, fieldValue]) => fieldValue !== undefined)
+      .map(([key, fieldValue]) => [key, removeDeepUndefinedValues(fieldValue)]),
+  ) as T;
+}

@@ -23,6 +23,7 @@ import {
   Sparkles,
   Target,
   ThumbsUp,
+  Trash2,
   Route,
   Link2,
   User,
@@ -74,7 +75,12 @@ import {
   getRecommendedProjectsDestination,
   isActiveProposalStatus,
 } from '@/services/homeMetricNavigation';
-import { getLatestUserExperienceCard, saveExperienceCard } from '@/services/interviewService';
+import {
+  deleteExperienceCard,
+  getLatestUserExperienceCard,
+  getUserExperienceCards,
+  saveExperienceCard,
+} from '@/services/interviewService';
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import {
   createProject,
@@ -89,6 +95,7 @@ import {
   getSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
+  saveSeniorExperienceCards,
   saveSeniorProfile,
   saveLocalSeniorProfile,
   type CompanyProfileData,
@@ -113,9 +120,7 @@ import {
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
 } from '@/app/jobDatabaseProjectVisibility';
-import {
-  OTHER_OCCUPATION_PREFERENCE,
-} from '@/data/occupationCategories';
+import { OTHER_OCCUPATION_PREFERENCE } from '@/data/occupationCategories';
 import {
   calculatePersonalizedMatch,
   getExperienceCardRecommendationText,
@@ -231,19 +236,14 @@ export function ExperienceSummaryCard({
         {hasStructuredSummary ? (
           rows.map(({ icon: Icon, label, value }) =>
             value ? (
-              <section
-                className="rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3"
-                key={label}
-              >
+              <section className="rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3" key={label}>
                 <div className="flex items-start gap-2.5">
                   <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
                     <Icon className="size-4" />
                   </span>
                   <div className="min-w-0">
                     <p className="text-[12px] font-extrabold text-[#173F3A]">{label}</p>
-                    <p className="mt-1 text-[13px] font-medium leading-6 text-[#17212B]">
-                      {value}
-                    </p>
+                    <p className="mt-1 text-[13px] font-medium leading-6 text-[#17212B]">{value}</p>
                   </div>
                 </div>
               </section>
@@ -281,9 +281,14 @@ export function ExperienceSummaryView({
     ? [
         { label: '해온 일', value: snapshot.workedOn, icon: Route, tone: 'emerald' },
         { label: '해낸 일', value: snapshot.accomplished, icon: Target, tone: 'coral' },
-        { label: '잘하는 점', value: snapshot.strengths.join(' · '), icon: ThumbsUp, tone: 'slate' },
+        {
+          label: '잘하는 점',
+          value: snapshot.strengths.join(' · '),
+          icon: ThumbsUp,
+          tone: 'slate',
+        },
       ]
-      : legacyText
+    : legacyText
       ? [{ label: '해온 일', value: legacyText, icon: Route, tone: 'emerald' }]
       : [];
 
@@ -291,19 +296,48 @@ export function ExperienceSummaryView({
 
   return (
     <div
-      className={cn(
-        'grid min-w-0 gap-3',
-        mode === 'mobile' ? 'grid-cols-1' : 'md:grid-cols-2',
-      )}
+      className={cn('grid min-w-0 gap-3', mode === 'mobile' ? 'grid-cols-1' : 'md:grid-cols-2')}
       data-testid={mode === 'mobile' ? 'experience-summary-mobile' : 'experience-summary-desktop'}
     >
       {items.map(({ label, value, icon: Icon, tone }) => (
-        <div className={cn('min-w-0 rounded-xl border p-3', label === '잘하는 점' && 'md:col-span-2', tone === 'emerald' ? 'border-emerald-100 bg-emerald-50/60' : tone === 'coral' ? 'border-orange-100 bg-orange-50/60' : 'border-slate-200 bg-slate-50')} key={label}>
-          <p className={cn('flex items-center gap-1.5 text-xs font-extrabold', tone === 'emerald' ? 'text-[#173F3A]' : tone === 'coral' ? 'text-[#C85039]' : 'text-slate-700')}><span className="flex size-6 items-center justify-center rounded-full bg-white"><Icon className="size-3.5" /></span>{label}</p>
+        <div
+          className={cn(
+            'min-w-0 rounded-xl border p-3',
+            label === '잘하는 점' && 'md:col-span-2',
+            tone === 'emerald'
+              ? 'border-emerald-100 bg-emerald-50/60'
+              : tone === 'coral'
+                ? 'border-orange-100 bg-orange-50/60'
+                : 'border-slate-200 bg-slate-50',
+          )}
+          key={label}
+        >
           <p
-            className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]"
+            className={cn(
+              'flex items-center gap-1.5 text-xs font-extrabold',
+              tone === 'emerald'
+                ? 'text-[#173F3A]'
+                : tone === 'coral'
+                  ? 'text-[#C85039]'
+                  : 'text-slate-700',
+            )}
           >
-            {label === '잘하는 점' && snapshot ? snapshot.strengths.map((strength) => <span className="mr-1.5 inline-flex rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700" key={strength}>{strength}</span>) : value || '아직 정리된 내용이 없습니다.'}
+            <span className="flex size-6 items-center justify-center rounded-full bg-white">
+              <Icon className="size-3.5" />
+            </span>
+            {label}
+          </p>
+          <p className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]">
+            {label === '잘하는 점' && snapshot
+              ? snapshot.strengths.map((strength) => (
+                  <span
+                    className="mr-1.5 inline-flex rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                    key={strength}
+                  >
+                    {strength}
+                  </span>
+                ))
+              : value || '아직 정리된 내용이 없습니다.'}
           </p>
         </div>
       ))}
@@ -553,7 +587,9 @@ function HomeRecommendationRow({
 
         {/* Bottom: Location & Exp + Salary */}
         <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-[#F0ECE1]/60 text-[11.5px] text-slate-500 font-bold w-full min-w-0">
-          <span className="truncate">{analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}</span>
+          <span className="truncate">
+            {analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}
+          </span>
           <span className="shrink-0 text-[#F06B4F] font-black text-[13px]">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
@@ -603,7 +639,9 @@ function HomeRecommendationRow({
       <div className="flex items-center justify-end gap-4 shrink-0">
         {/* Location & Experience & Salary */}
         <div className="flex flex-col items-end text-[11.5px] text-slate-500 font-bold">
-          <span>{analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}</span>
+          <span>
+            {analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}
+          </span>
           <span className="text-[#F06B4F] font-black text-[13.5px]">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
@@ -621,9 +659,7 @@ function HomeRecommendationRow({
             <Sparkles
               className={cn(
                 'size-3 shrink-0',
-                fitScore >= 90
-                  ? 'text-[#FEEA00] fill-[#FEEA00]'
-                  : 'text-[#F06B4F] fill-[#F06B4F]',
+                fitScore >= 90 ? 'text-[#FEEA00] fill-[#FEEA00]' : 'text-[#F06B4F] fill-[#F06B4F]',
               )}
             />
             <span>{fitScore}점</span>
@@ -652,7 +688,9 @@ export function SeniorHomePage() {
   const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
-  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(initialLocalProfile);
+  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(
+    initialLocalProfile,
+  );
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   const hasLoadedRef = useRef(false);
@@ -701,7 +739,9 @@ export function SeniorHomePage() {
         const publishedProjects = getPublishedCompanyProjects(rawCompanyProjects);
         const matchingCompanyProjects = publishedProjects.filter((project) =>
           matchesPublishedCompanyProject(project, {
-            desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
+            desiredOccupationText: shouldUseOtherOccupation
+              ? profile?.desiredOccupationText
+              : undefined,
             employmentType: 'all',
             hiringStage: 'open',
             query: '',
@@ -715,7 +755,9 @@ export function SeniorHomePage() {
           desiredCategories: preferredPreferences,
           desiredLocation: profile?.desiredLocation,
           desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
-          desiredOccupationText: shouldUseOtherOccupation ? profile?.desiredOccupationText : undefined,
+          desiredOccupationText: shouldUseOtherOccupation
+            ? profile?.desiredOccupationText
+            : undefined,
           experienceCardCategory: experienceCard?.category,
           experienceCardText: getExperienceCardRecommendationText(experienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
@@ -740,7 +782,9 @@ export function SeniorHomePage() {
               ...item,
               seniorFitScore: matchResult.personalizedScore,
               recommendationReasons:
-                matchResult.matchReasons.length > 0 ? matchResult.matchReasons : item.recommendationReasons,
+                matchResult.matchReasons.length > 0
+                  ? matchResult.matchReasons
+                  : item.recommendationReasons,
             };
           })
           .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
@@ -893,7 +937,11 @@ export function SeniorHomePage() {
           caption={`1순위 희망 직무 · ${recommendationPrimaryLabel}`}
           interactiveLabel={`추천 프로젝트 ${recommendedProjectsCount}개 보기`}
           label="추천 프로젝트"
-          onClick={() => void navigate(getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined))}
+          onClick={() =>
+            void navigate(
+              getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined),
+            )
+          }
           role="senior"
           value={`${recommendedProjectsCount}개`}
         />
@@ -915,9 +963,7 @@ export function SeniorHomePage() {
               : '새 경험 정보 만들기'
           }
           label="저장된 경험 정보"
-          onClick={() =>
-            void navigate(getExperienceMetricDestination(savedExperienceCount > 0))
-          }
+          onClick={() => void navigate(getExperienceMetricDestination(savedExperienceCount > 0))}
           role="senior"
           value={`${savedExperienceCount}건`}
         />
@@ -1006,37 +1052,37 @@ export function SeniorHomePage() {
             ))}
           </div>
         ) : (
-            <div className="rounded-2xl bg-white p-5 text-center shadow-xs">
-              <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
-              <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
-                {!user
-                  ? '맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.'
-                  : recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
-              </p>
-              <button
-                className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
-                onClick={() =>
-                  !user
-                    ? void navigate('/login')
-                    : hasProfileRecommendationCriteria(recommendationProfile)
-                      ? setRecommendationReloadKey((value) => value + 1)
-                      : void navigate('/basic-profile')
-                }
-                type="button"
-              >
-                {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
-                  <RefreshCw className="size-4" />
-                ) : null}
-                {!user
-                  ? '로그인 / 회원가입하기 ➔'
+          <div className="rounded-2xl bg-white p-5 text-center shadow-xs">
+            <AlertTriangle className="mx-auto size-6 text-[#F06B4F]" />
+            <p className="mt-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
+              {!user
+                ? '맞춤 추천 프로젝트를 확인하려면 로그인이 필요합니다.'
+                : recommendationFeedMessage || '현재 추천 프로젝트 공고가 없습니다.'}
+            </p>
+            <button
+              className="mx-auto mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-4 text-[13px] font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              onClick={() =>
+                !user
+                  ? void navigate('/login')
                   : hasProfileRecommendationCriteria(recommendationProfile)
-                    ? '다시 불러오기'
-                    : '내 정보 입력하기'}
-              </button>
-            </div>
-          )}
-        </div>
-      </MobilePage>
+                    ? setRecommendationReloadKey((value) => value + 1)
+                    : void navigate('/basic-profile')
+              }
+              type="button"
+            >
+              {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
+                <RefreshCw className="size-4" />
+              ) : null}
+              {!user
+                ? '로그인 / 회원가입하기 ➔'
+                : hasProfileRecommendationCriteria(recommendationProfile)
+                  ? '다시 불러오기'
+                  : '내 정보 입력하기'}
+            </button>
+          </div>
+        )}
+      </div>
+    </MobilePage>
   );
 }
 
@@ -1486,7 +1532,13 @@ export function ExperienceInterviewPage() {
   }
 
   async function handleReviewCard() {
-    if (!answers.problem || !answers.role || !answers.action || !answers.result || !interviewComplete) {
+    if (
+      !answers.problem ||
+      !answers.role ||
+      !answers.action ||
+      !answers.result ||
+      !interviewComplete
+    ) {
       setVoiceNotice('네 가지 질문에 모두 답한 뒤 경험 정리를 확인할 수 있습니다.');
       return;
     }
@@ -1505,7 +1557,14 @@ export function ExperienceInterviewPage() {
         }),
       });
       const payload = (await response.json().catch(() => null)) as {
-        card?: { title?: string; problem?: string | null; role?: string | null; action?: string | null; result?: string | null; skills?: string[] };
+        card?: {
+          title?: string;
+          problem?: string | null;
+          role?: string | null;
+          action?: string | null;
+          result?: string | null;
+          skills?: string[];
+        };
         error?: { message?: string };
       } | null;
       const cardResult = payload?.card;
@@ -1515,7 +1574,11 @@ export function ExperienceInterviewPage() {
       const normalizedProfile = {
         workedOn: (cardResult.role || cardResult.problem || cardResult.title || '').trim(),
         accomplished: (cardResult.result || cardResult.action || '').trim(),
-        strengths: (cardResult.skills || []).filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, 3),
+        strengths: (cardResult.skills || [])
+          .filter((item): item is string => typeof item === 'string')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, 3),
       };
       if (!normalizedProfile.workedOn || !normalizedProfile.accomplished) {
         throw new Error('AI 경험 정리 결과가 충분하지 않아요. 다시 시도해 주세요.');
@@ -1530,10 +1593,15 @@ export function ExperienceInterviewPage() {
         targetTitle: applicationReturn?.targetTitle,
       };
       savePendingExperienceCard(card);
-      saveExperienceProfileDraft({ ...normalizedProfile, version: 1, generatedAt: new Date().toISOString() }, user?.uid);
+      saveExperienceProfileDraft(
+        { ...normalizedProfile, version: 1, generatedAt: new Date().toISOString() },
+        user?.uid,
+      );
       void navigate('/senior/experience/card');
     } catch (error) {
-      setVoiceNotice(error instanceof Error ? error.message : 'AI 경험 정리에 실패했어요. 다시 시도해 주세요.');
+      setVoiceNotice(
+        error instanceof Error ? error.message : 'AI 경험 정리에 실패했어요. 다시 시도해 주세요.',
+      );
     } finally {
       setIsStructuring(false);
     }
@@ -1725,22 +1793,22 @@ export function ExperienceInterviewPage() {
             직접 입력하기
           </label>
           <div className="flex items-stretch gap-2">
-          <textarea
-            aria-label="현재 인터뷰 답변"
-            disabled={interviewComplete || isRecording || isTranscribing}
-            id="interview-text-answer"
-            placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
-            value={inputText}
-            onChange={(e) => handleAnswerTextChange(e.target.value)}
-            className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
-          />
-          <button
-            disabled={interviewComplete || isRecording || isTranscribing}
-            type="submit"
-            className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-          >
-            입력
-          </button>
+            <textarea
+              aria-label="현재 인터뷰 답변"
+              disabled={interviewComplete || isRecording || isTranscribing}
+              id="interview-text-answer"
+              placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
+              value={inputText}
+              onChange={(e) => handleAnswerTextChange(e.target.value)}
+              className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
+            />
+            <button
+              disabled={interviewComplete || isRecording || isTranscribing}
+              type="submit"
+              className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              입력
+            </button>
           </div>
         </form>
 
@@ -1749,10 +1817,14 @@ export function ExperienceInterviewPage() {
           <span>입력한 네 가지 답변만 경험 카드에 저장됩니다.</span>
         </div>
 
-          <ActionButton disabled={!interviewComplete || isStructuring} onClick={() => void handleReviewCard()} className="mt-1">
-            {isStructuring
-              ? 'AI가 경험을 정리하는 중...'
-              : interviewComplete
+        <ActionButton
+          disabled={!interviewComplete || isStructuring}
+          onClick={() => void handleReviewCard()}
+          className="mt-1"
+        >
+          {isStructuring
+            ? 'AI가 경험을 정리하는 중...'
+            : interviewComplete
               ? '실제 답변으로 만든 경험 카드 확인 →'
               : '인터뷰 답변을 완료해 주세요'}
         </ActionButton>
@@ -1808,19 +1880,39 @@ export function ExperienceCardPage() {
       targetTitle: experienceCard.targetTitle,
       title: experienceCard.title,
     };
+    const confirmedAt = new Date().toISOString();
     const confirmedProfile = {
       ...currentProfile,
       experienceProfileV1: {
         ...draft,
-        strengths: strengthsEditor.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 3),
-        confirmedAt: new Date().toISOString(),
+        strengths: strengthsEditor
+          .split('\n')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, 3),
+        confirmedAt,
       },
     };
-    saveStoredExperienceCard(cardInput, user.uid);
     try {
-      await saveSeniorProfile(user.uid, confirmedProfile);
-      saveLocalSeniorProfile(confirmedProfile, user.uid);
-      await saveExperienceCard({ uid: user.uid, ...cardInput });
+      const cardId = await saveExperienceCard({ uid: user.uid, ...cardInput });
+      const confirmedExperience = {
+        ...confirmedProfile.experienceProfileV1,
+        id: cardId,
+      };
+      const previousCards =
+        currentProfile.experienceCardsV1 ??
+        (currentProfile.experienceProfileV1 ? [currentProfile.experienceProfileV1] : []);
+      const nextProfile = {
+        ...confirmedProfile,
+        experienceProfileV1: confirmedExperience,
+        experienceCardsV1: [
+          confirmedExperience,
+          ...previousCards.filter((card) => (card.id || card.confirmedAt) !== cardId),
+        ],
+      };
+      saveStoredExperienceCard({ ...cardInput, id: cardId }, user.uid);
+      await saveSeniorProfile(user.uid, nextProfile);
+      saveLocalSeniorProfile(nextProfile, user.uid);
     } catch (err) {
       console.warn('Failed to save experience card to Firestore:', err);
       setSaveError('내 경험 프로필을 저장하지 못했습니다. 다시 시도해 주세요.');
@@ -1871,15 +1963,35 @@ export function ExperienceCardPage() {
           <div className="grid gap-3">
             <label className="text-xs font-extrabold text-[#173F3A]">
               해온 일
-              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={draft.workedOn} onChange={(event) => setDraft((current) => current ? { ...current, workedOn: event.target.value } : current)} />
+              <textarea
+                className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium"
+                value={draft.workedOn}
+                onChange={(event) =>
+                  setDraft((current) =>
+                    current ? { ...current, workedOn: event.target.value } : current,
+                  )
+                }
+              />
             </label>
             <label className="text-xs font-extrabold text-[#173F3A]">
               해낸 일
-              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={draft.accomplished} onChange={(event) => setDraft((current) => current ? { ...current, accomplished: event.target.value } : current)} />
+              <textarea
+                className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium"
+                value={draft.accomplished}
+                onChange={(event) =>
+                  setDraft((current) =>
+                    current ? { ...current, accomplished: event.target.value } : current,
+                  )
+                }
+              />
             </label>
             <label className="text-xs font-extrabold text-[#173F3A]">
               잘하는 점
-              <textarea className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium" value={strengthsEditor} onChange={(event) => setStrengthsEditor(event.target.value)} />
+              <textarea
+                className="mt-1 min-h-16 w-full rounded-xl border border-[#E0D9C8] p-2 text-sm font-medium"
+                value={strengthsEditor}
+                onChange={(event) => setStrengthsEditor(event.target.value)}
+              />
             </label>
           </div>
 
@@ -1952,7 +2064,7 @@ export function ExperienceCardPage() {
                 ? '저장 중...'
                 : applicationReturn
                   ? '결과 저장하고 지원서로 돌아가기'
-              : '내 경험 프로필에 반영하기'}
+                  : '내 경험 프로필에 반영하기'}
             </ActionButton>
           </>
         ) : (
@@ -1961,7 +2073,9 @@ export function ExperienceCardPage() {
           </ActionButton>
         )}
       </div>
-      {saveError ? <p className="text-center text-sm font-bold text-rose-600">{saveError}</p> : null}
+      {saveError ? (
+        <p className="text-center text-sm font-bold text-rose-600">{saveError}</p>
+      ) : null}
     </MobilePage>
   );
 }
@@ -2349,7 +2463,9 @@ export function MyProposalsPage() {
           isMobile ? 'text-[16px]' : 'text-xl md:text-2xl',
         )}
       >
-        {filter === '진행 중' ? `진행 중인 제안 ${visible.length}건` : `보낸 제안 ${visible.length}건`}
+        {filter === '진행 중'
+          ? `진행 중인 제안 ${visible.length}건`
+          : `보낸 제안 ${visible.length}건`}
       </h2>
 
       <div className="flex flex-col gap-4">
@@ -2360,7 +2476,9 @@ export function MyProposalsPage() {
             </div>
             <div className="flex flex-col gap-1 break-keep">
               <h3 className="text-base md:text-lg font-extrabold text-[#17212B] break-keep">
-                {filter === '진행 중' ? '아직 진행 중인 제안이 없어요.' : '아직 제출된 지원/제안 내역이 없습니다'}
+                {filter === '진행 중'
+                  ? '아직 진행 중인 제안이 없어요.'
+                  : '아직 제출된 지원/제안 내역이 없습니다'}
               </h3>
               <p className="text-xs md:text-sm font-medium text-slate-500 break-keep">
                 {filter === '진행 중'
@@ -2472,10 +2590,17 @@ export function MyProposalDetailPage() {
             {cancelled ? '취소됨' : proposalProcessStageLabels[getProposalProcessStage(proposal)]}
           </StatusBadge>
           {!cancelled ? (
-            <section aria-label="채용 진행 단계" className="rounded-xl border border-[#E0D9C8] bg-white p-3.5">
+            <section
+              aria-label="채용 진행 단계"
+              className="rounded-xl border border-[#E0D9C8] bg-white p-3.5"
+            >
               <div className="mb-2 flex items-center justify-between gap-2">
-                <strong className="text-sm font-extrabold text-[#17212B]">기업과 여기까지 이어졌어요</strong>
-                <span className="text-xs font-bold text-[#173F3A]">{proposalStageDisplayLabels[getProposalProcessStage(proposal)]}</span>
+                <strong className="text-sm font-extrabold text-[#17212B]">
+                  기업과 여기까지 이어졌어요
+                </strong>
+                <span className="text-xs font-bold text-[#173F3A]">
+                  {proposalStageDisplayLabels[getProposalProcessStage(proposal)]}
+                </span>
               </div>
               <ProposalProgress current={getProposalProcessStage(proposal)} />
             </section>
@@ -2525,9 +2650,7 @@ export function CompanyHomePage() {
         fetchProjects(),
         getCompanyProposals(user?.uid),
       ]);
-      setCompanyProjects(
-        getCompanyOwnedProjects(projectsFromDatabase, user?.uid),
-      );
+      setCompanyProjects(getCompanyOwnedProjects(projectsFromDatabase, user?.uid));
       setCompanyProposals(proposalsFromDatabase);
     })();
   }, [user?.uid]);
@@ -2585,7 +2708,10 @@ export function CompanyHomePage() {
 
       {/* Summary Cards */}
       <div
-        className={cn('grid gap-3 items-stretch', isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4')}
+        className={cn(
+          'grid gap-3 items-stretch',
+          isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4 gap-4',
+        )}
       >
         <SummaryCard
           caption="등록 프로젝트 현황"
@@ -2621,14 +2747,17 @@ export function CompanyHomePage() {
             <Coins className="size-4 text-[#F06B4F] shrink-0" />
             <span>정부 지원금 혜택 안내</span>
           </span>
-          <span className="text-xs sm:text-sm font-extrabold text-[#173F3A]">연 최대 720만원 지원</span>
+          <span className="text-xs sm:text-sm font-extrabold text-[#173F3A]">
+            연 최대 720만원 지원
+          </span>
         </div>
         <div>
           <h4 className="text-sm sm:text-base font-extrabold text-[#17212B]">
             고용촉진장려금 대상 인재를 채용해 보세요
           </h4>
           <p className="text-xs sm:text-[13px] font-medium text-slate-600 mt-1 leading-relaxed">
-            국민취업지원제도(1단계) 및 직업훈련을 수료한 시니어 지원자를 채용하면 월 60만원(연 최대 720만원, 분기별 180만원)의 국가 인건비 지원금을 신청할 수 있습니다.
+            국민취업지원제도(1단계) 및 직업훈련을 수료한 시니어 지원자를 채용하면 월 60만원(연 최대
+            720만원, 분기별 180만원)의 국가 인건비 지원금을 신청할 수 있습니다.
           </p>
         </div>
         <div className="pt-1">
@@ -2637,7 +2766,14 @@ export function CompanyHomePage() {
             type="button"
             className="inline-flex items-center gap-1.5 rounded-xl bg-[#F06B4F] px-4 py-2 text-xs sm:text-sm font-extrabold text-white hover:bg-[#D95337] transition shadow-xs"
           >
-            <span>혜택 대상 지원자 확인하기 ({companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명)</span>
+            <span>
+              혜택 대상 지원자 확인하기 (
+              {
+                companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true)
+                  .length
+              }
+              명)
+            </span>
             <ArrowRight className="size-3.5" />
           </button>
         </div>
@@ -2774,12 +2910,15 @@ export function ProjectRegisterPage() {
   }
 
   function formatFileSize(size: number) {
-    return size < 1024 * 1024 ? `${Math.max(1, Math.round(size / 1024))}KB` : `${(size / 1024 / 1024).toFixed(1)}MB`;
+    return size < 1024 * 1024
+      ? `${Math.max(1, Math.round(size / 1024))}KB`
+      : `${(size / 1024 / 1024).toFixed(1)}MB`;
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const effectiveUid = user?.uid || (import.meta.env.MODE === 'test' ? 'company-test-uid' : undefined);
+    const effectiveUid =
+      user?.uid || (import.meta.env.MODE === 'test' ? 'company-test-uid' : undefined);
     if (!effectiveUid) {
       setSaveError('기업 로그인 후에만 프로젝트를 등록할 수 있습니다.');
       return;
@@ -2959,7 +3098,9 @@ export function ProjectRegisterPage() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-[#17212B]">{attachment.file.name}</p>
+                    <p className="truncate text-sm font-bold text-[#17212B]">
+                      {attachment.file.name}
+                    </p>
                     <p className="text-xs font-medium text-slate-500">
                       {attachment.file.type === 'application/pdf' ? 'PDF' : '이미지'} ·{' '}
                       {formatFileSize(attachment.file.size)}
@@ -3069,7 +3210,8 @@ export function ReceivedProposalsPage() {
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const initialFilter = searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
+  const initialFilter =
+    searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
   const [filter, setFilter] = useState(initialFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
@@ -3106,15 +3248,33 @@ export function ReceivedProposalsPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <strong className={cn('text-xs sm:text-sm font-extrabold text-[#173F3A]', isMobile && 'max-w-[11rem] leading-5')}>
+              <strong
+                className={cn(
+                  'text-xs sm:text-sm font-extrabold text-[#173F3A]',
+                  isMobile && 'max-w-[11rem] leading-5',
+                )}
+              >
                 고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
               </strong>
-              <span className={cn('rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white', isMobile && 'flex min-w-[4.5rem] shrink-0 flex-col items-center leading-4')}>
-                {isMobile ? <><span className="whitespace-nowrap text-[10px] font-semibold">연 최대</span><span className="whitespace-nowrap text-xs font-black">720만원</span></> : '연 최대 720만원'}
+              <span
+                className={cn(
+                  'rounded-full bg-[#173F3A] px-2 py-0.5 text-[10.5px] font-extrabold text-white',
+                  isMobile && 'flex min-w-[4.5rem] shrink-0 flex-col items-center leading-4',
+                )}
+              >
+                {isMobile ? (
+                  <>
+                    <span className="whitespace-nowrap text-[10px] font-semibold">연 최대</span>
+                    <span className="whitespace-nowrap text-xs font-black">720만원</span>
+                  </>
+                ) : (
+                  '연 최대 720만원'
+                )}
               </span>
             </div>
             <p className="text-xs font-medium text-slate-600 mt-0.5">
-              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총 {subsidyEligibleCount}명)
+              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총{' '}
+              {subsidyEligibleCount}명)
             </p>
           </div>
         </div>
@@ -3171,7 +3331,12 @@ export function ReceivedProposalsPage() {
   );
 }
 
-function cleanLegacyText(value: string) { return value.replace(/\u25a1/g, '').replace(/\s{2,}/g, ' ').trim(); }
+function cleanLegacyText(value: string) {
+  return value
+    .replace(/\u25a1/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
 
 const proposalStageDisplayLabels: Record<ProposalProcessStage, string> = {
   document_review: '검토',
@@ -3189,14 +3354,99 @@ const proposalStageHelper: Record<ProposalProcessStage, string> = {
   final_connection: '좋은 연결이 만들어졌어요.',
 };
 
-function ProposalProgress({ current, onSelect }: { current: ProposalProcessStage; onSelect?: (stage: ProposalProcessStage) => void }) {
+function ProposalProgress({
+  current,
+  onSelect,
+}: {
+  current: ProposalProcessStage;
+  onSelect?: (stage: ProposalProcessStage) => void;
+}) {
   const stages = Object.keys(proposalProcessStageLabels) as ProposalProcessStage[];
   const currentIndex = stages.indexOf(current);
-  return <div className="flex gap-0 overflow-x-auto pb-1 md:overflow-visible" role={onSelect ? 'group' : 'list'} aria-label="채용 진행 단계">{stages.map((stage, index) => { const active = index === currentIndex; const completed = index < currentIndex; const content = <><span aria-hidden="true" className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black', active ? 'border-[#173F3A] bg-[#173F3A] text-white ring-4 ring-[#DDEBE7]' : completed ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]' : 'border-[#D4CBB8] bg-white text-slate-400')}>{completed ? '✓' : active ? '●' : '○'}</span><span className={cn('mt-1 w-14 text-center text-[10px] leading-4', active ? 'font-black text-[#173F3A]' : completed ? 'font-extrabold text-[#4B756E]' : 'font-extrabold text-slate-500')}>{proposalStageDisplayLabels[stage]}</span></>; return <div className="flex min-w-[56px] items-start" key={stage}>{onSelect ? <button aria-pressed={active} aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`} className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]" onClick={() => onSelect(stage)} type="button">{content}</button> : <div className="flex flex-col items-center" role="listitem">{content}</div>}{index < stages.length - 1 ? <span aria-hidden="true" className={cn('mt-3 h-px min-w-3 flex-1', index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]')} /> : null}</div>; })}</div>;
+  return (
+    <div
+      className="flex gap-0 overflow-x-auto pb-1 md:overflow-visible"
+      role={onSelect ? 'group' : 'list'}
+      aria-label="채용 진행 단계"
+    >
+      {stages.map((stage, index) => {
+        const active = index === currentIndex;
+        const completed = index < currentIndex;
+        const content = (
+          <>
+            <span
+              aria-hidden="true"
+              className={cn(
+                'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black',
+                active
+                  ? 'border-[#173F3A] bg-[#173F3A] text-white ring-4 ring-[#DDEBE7]'
+                  : completed
+                    ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]'
+                    : 'border-[#D4CBB8] bg-white text-slate-400',
+              )}
+            >
+              {completed ? '✓' : active ? '●' : '○'}
+            </span>
+            <span
+              className={cn(
+                'mt-1 w-14 text-center text-[10px] leading-4',
+                active
+                  ? 'font-black text-[#173F3A]'
+                  : completed
+                    ? 'font-extrabold text-[#4B756E]'
+                    : 'font-extrabold text-slate-500',
+              )}
+            >
+              {proposalStageDisplayLabels[stage]}
+            </span>
+          </>
+        );
+        return (
+          <div className="flex min-w-[56px] items-start" key={stage}>
+            {onSelect ? (
+              <button
+                aria-pressed={active}
+                aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`}
+                className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                onClick={() => onSelect(stage)}
+                type="button"
+              >
+                {content}
+              </button>
+            ) : (
+              <div className="flex flex-col items-center" role="listitem">
+                {content}
+              </div>
+            )}
+            {index < stages.length - 1 ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'mt-3 h-px min-w-3 flex-1',
+                  index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]',
+                )}
+              />
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function ProposalExperience({ proposal, profile }: { proposal: UserProposal; profile?: SeniorProfileData | null }) {
-  return <ExperienceSummaryView legacyText={cleanLegacyText(proposal.interviewSummary || '')} snapshot={proposal.experienceSnapshotV1 || profile?.experienceProfileV1} />;
+function ProposalExperience({
+  proposal,
+  profile,
+}: {
+  proposal: UserProposal;
+  profile?: SeniorProfileData | null;
+}) {
+  return (
+    <ExperienceSummaryView
+      legacyText={cleanLegacyText(proposal.interviewSummary || '')}
+      snapshot={proposal.experienceSnapshotV1 || profile?.experienceProfileV1}
+    />
+  );
 }
 
 export function ReceivedProposalDetailPage() {
@@ -3360,9 +3610,7 @@ export function ReceivedProposalDetailPage() {
 
   function renderProfileActions() {
     if (!proposal || proposal.projectOwnerId !== user?.uid) return null;
-    const hasUsableResume = Boolean(
-      proposal.resumeFiles?.some((file) => file.storagePath?.trim()),
-    );
+    const hasUsableResume = Boolean(proposal.resumeFiles?.some((file) => file.storagePath?.trim()));
     return (
       <div
         className={cn(
@@ -3381,7 +3629,9 @@ export function ReceivedProposalDetailPage() {
           ref={profileResumeTriggerRef}
           type="button"
         >
-          <span className="flex size-9 items-center justify-center rounded-full bg-[#DDEBE7]"><User className="size-4" /></span>
+          <span className="flex size-9 items-center justify-center rounded-full bg-[#DDEBE7]">
+            <User className="size-4" />
+          </span>
           프로필
         </button>
         <button
@@ -3397,7 +3647,14 @@ export function ReceivedProposalDetailPage() {
           }}
           type="button"
         >
-          <span className={cn('flex size-9 items-center justify-center rounded-full', hasUsableResume ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400')}><FileText className="size-4" /></span>
+          <span
+            className={cn(
+              'flex size-9 items-center justify-center rounded-full',
+              hasUsableResume ? 'bg-[#DDEBE7]' : 'bg-slate-100 text-slate-400',
+            )}
+          >
+            <FileText className="size-4" />
+          </span>
           {hasUsableResume ? '이력서' : '이력서 없음'}
         </button>
       </div>
@@ -3412,7 +3669,12 @@ export function ReceivedProposalDetailPage() {
       role="company"
       title="제안 상세"
     >
-      <div className={cn('grid gap-2', isMobile ? 'grid-cols-1' : 'md:grid-cols-[minmax(0,1fr)_auto] md:items-start')}>
+      <div
+        className={cn(
+          'grid gap-2',
+          isMobile ? 'grid-cols-1' : 'md:grid-cols-[minmax(0,1fr)_auto] md:items-start',
+        )}
+      >
         {!isMobile ? (
           <div className="col-span-2 flex items-start justify-between">
             <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
@@ -3420,15 +3682,38 @@ export function ReceivedProposalDetailPage() {
           </div>
         ) : null}
         <div className={cn('contents', !isMobile && 'md:col-start-1 md:row-start-2 md:block')}>
-          <h2 className={cn('min-w-0 break-words text-xl font-extrabold tracking-tight text-[#17212B]', isMobile ? 'order-3' : 'md:order-none')}>
-            {isMobile ? proposal.applicantName || '지원 인재' : `${proposal.applicantName || '지원 인재'}의 제안`}
+          <h2
+            className={cn(
+              'min-w-0 break-words text-xl font-extrabold tracking-tight text-[#17212B]',
+              isMobile ? 'order-3' : 'md:order-none',
+            )}
+          >
+            {isMobile
+              ? proposal.applicantName || '지원 인재'
+              : `${proposal.applicantName || '지원 인재'}의 제안`}
           </h2>
-          <p className={cn('mt-1 break-words text-xs font-medium text-slate-500', isMobile ? 'order-4' : 'md:order-none')}>
+          <p
+            className={cn(
+              'mt-1 break-words text-xs font-medium text-slate-500',
+              isMobile ? 'order-4' : 'md:order-none',
+            )}
+          >
             {proposal.projectTitle} · 지원일 {proposal.appliedAt}
           </p>
         </div>
-        <div className={cn('contents', !isMobile && 'md:order-2 md:col-start-2 md:row-start-2 md:grid md:items-start md:justify-end md:gap-2')}>
-          <div className={cn('flex min-w-0 items-center justify-between gap-3', isMobile ? 'order-1' : 'md:order-2 md:contents')}>
+        <div
+          className={cn(
+            'contents',
+            !isMobile &&
+              'md:order-2 md:col-start-2 md:row-start-2 md:grid md:items-start md:justify-end md:gap-2',
+          )}
+        >
+          <div
+            className={cn(
+              'flex min-w-0 items-center justify-between gap-3',
+              isMobile ? 'order-1' : 'md:order-2 md:contents',
+            )}
+          >
             <div className={isMobile ? 'flex' : 'hidden'}>
               <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
             </div>
@@ -3439,7 +3724,10 @@ export function ReceivedProposalDetailPage() {
                 matchTone.containerClassName,
               )}
             >
-              <ShieldCheck className="size-3.5 shrink-0" /> <span className="whitespace-nowrap">{matchScore}점 · {matchTone.label}</span>
+              <ShieldCheck className="size-3.5 shrink-0" />{' '}
+              <span className="whitespace-nowrap">
+                {matchScore}점 · {matchTone.label}
+              </span>
             </span>
           </div>
           {isMobile ? renderProfileActions() : null}
@@ -3479,7 +3767,10 @@ export function ReceivedProposalDetailPage() {
         {proposal.coverNote ? (
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-[#BBD5CE] bg-[#F8FCFB] p-3 text-xs font-medium leading-5 text-[#17212B]/80">
             <MessageCircle className="mt-0.5 size-4 shrink-0 text-[#4B756E]" aria-hidden="true" />
-            <p><span className="font-extrabold text-[#173F3A]">지원자 메시지</span><span className="mt-0.5 block">{proposal.coverNote}</span></p>
+            <p>
+              <span className="font-extrabold text-[#173F3A]">지원자 메시지</span>
+              <span className="mt-0.5 block">{proposal.coverNote}</span>
+            </p>
           </div>
         ) : null}
       </div>
@@ -3522,9 +3813,21 @@ export function ReceivedProposalDetailPage() {
 
       <section className="flex items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5">
         <div>
-          <p className="flex items-center gap-2 text-sm font-extrabold text-[#17212B]"><span className="flex size-7 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]"><Link2 className="size-3.5" aria-hidden="true" /></span>연락 상태</p>
+          <p className="flex items-center gap-2 text-sm font-extrabold text-[#17212B]">
+            <span className="flex size-7 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
+              <Link2 className="size-3.5" aria-hidden="true" />
+            </span>
+            연락 상태
+          </p>
           <p className="mt-0.5 text-xs font-medium text-slate-600">
-            {contactStatus === 'contacted' ? <span className="inline-flex items-center gap-1 text-[#4B756E]"><CircleCheck className="size-3.5" aria-hidden="true" />연락했어요</span> : '아직 연락 전'}
+            {contactStatus === 'contacted' ? (
+              <span className="inline-flex items-center gap-1 text-[#4B756E]">
+                <CircleCheck className="size-3.5" aria-hidden="true" />
+                연락했어요
+              </span>
+            ) : (
+              '아직 연락 전'
+            )}
           </p>
         </div>
         {contactStatus !== 'contacted' ? (
@@ -3610,7 +3913,10 @@ export function ReceivedProposalDetailPage() {
                       </div>
                       <dl className="mt-4 grid gap-2 border-t border-[#E0D9C8] pt-3 text-xs font-semibold text-slate-700">
                         <div className="flex items-start gap-2">
-                          <BriefcaseBusiness className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <BriefcaseBusiness
+                            className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]"
+                            aria-hidden="true"
+                          />
                           <dt className="font-extrabold">경력</dt>
                           <dd className="inline">
                             {[seniorProfile.field, seniorProfile.period]
@@ -3619,7 +3925,10 @@ export function ReceivedProposalDetailPage() {
                           </dd>
                         </div>
                         <div className="flex items-start gap-2">
-                          <MapPin className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <MapPin
+                            className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]"
+                            aria-hidden="true"
+                          />
                           <dt className="font-extrabold">희망 조건</dt>
                           <dd className="inline">
                             {[seniorProfile.desiredLocation, seniorProfile.desiredWorkType]
@@ -3628,7 +3937,10 @@ export function ReceivedProposalDetailPage() {
                           </dd>
                         </div>
                         <div className="flex items-start gap-2">
-                          <User className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]" aria-hidden="true" />
+                          <User
+                            className="mt-0.5 size-3.5 shrink-0 text-[#4B756E]"
+                            aria-hidden="true"
+                          />
                           <dt className="font-extrabold">연락받을 정보</dt>
                           <dd className="inline">
                             {[seniorProfile.phone, seniorProfile.email]
@@ -3677,7 +3989,9 @@ export function ReceivedProposalDetailPage() {
                       첨부 서류: {proposal.resumeFileName}
                     </p>
                   ) : (
-                    <p className="mt-2 text-xs font-semibold text-slate-500">등록된 이력서 파일이 없습니다.</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      등록된 이력서 파일이 없습니다.
+                    </p>
                   )}
                 </div>
               )}
@@ -3694,13 +4008,20 @@ export function SeniorProfilePage() {
   const { mode } = useViewportMode();
   const { user, signOut, deleteAccount } = useAuth();
   const isMobile = mode === 'mobile';
-  const [experienceCard, setExperienceCard] = useState<StoredExperienceCard | null>(() =>
-    readStoredExperienceCard(user?.uid),
+  const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(() =>
+    getLocalSeniorProfile(user?.uid),
   );
+  const [experienceCards, setExperienceCards] = useState<ExperienceProfileV1[]>(() => {
+    const localProfile = getLocalSeniorProfile(user?.uid);
+    return (
+      localProfile?.experienceCardsV1 ??
+      (localProfile?.experienceProfileV1 ? [localProfile.experienceProfileV1] : [])
+    );
+  });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingCardKey, setDeletingCardKey] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const seniorProfile = getLocalSeniorProfile(user?.uid);
 
   useEffect(() => {
     if (!user && import.meta.env.MODE !== 'test') {
@@ -3716,7 +4037,8 @@ export function SeniorProfilePage() {
       setIsDeleteModalOpen(false);
       void navigate('/', { replace: true });
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
+      const errorMsg =
+        err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
       setDeleteError(errorMsg);
     } finally {
       setIsDeleting(false);
@@ -3725,11 +4047,43 @@ export function SeniorProfilePage() {
 
   useEffect(() => {
     let active = true;
-    void getLatestUserExperienceCard(user?.uid).then((card) => {
-      if (active) setExperienceCard(card);
-    });
+    const refreshExperienceCards = async () => {
+      const profile = user?.uid
+        ? await resolveSeniorProfile(user.uid)
+        : getLocalSeniorProfile(user?.uid);
+      if (!active) return;
 
-    const handleCardUpdate = () => setExperienceCard(readStoredExperienceCard(user?.uid));
+      setSeniorProfile(profile);
+      const profileCards =
+        profile?.experienceCardsV1 ??
+        (profile?.experienceProfileV1 ? [profile.experienceProfileV1] : []);
+
+      if (profileCards.length > 0) {
+        setExperienceCards(profileCards);
+      } else if (user?.uid) {
+        const remoteCards = await getUserExperienceCards(user.uid);
+        if (!active) return;
+        setExperienceCards(
+          remoteCards.map((card) => ({
+            id: card.id,
+            workedOn: card.role || card.problem,
+            accomplished: card.result || card.action,
+            strengths: [card.action].filter(Boolean).slice(0, 3),
+            version: 1,
+            generatedAt: card.createdAt,
+            confirmedAt: card.createdAt || new Date(0).toISOString(),
+          })),
+        );
+      } else {
+        setExperienceCards([]);
+      }
+
+      await getLatestUserExperienceCard(user?.uid);
+    };
+
+    void refreshExperienceCards();
+
+    const handleCardUpdate = () => void refreshExperienceCards();
     window.addEventListener('eojob_experience_card_updated', handleCardUpdate);
     return () => {
       active = false;
@@ -3737,10 +4091,36 @@ export function SeniorProfilePage() {
     };
   }, [user?.uid]);
 
+  async function handleDeleteExperienceCard(card: ExperienceProfileV1) {
+    if (!user?.uid || deletingCardKey) return;
+    const cardKey = card.id || card.confirmedAt;
+    setDeletingCardKey(cardKey);
+    setDeleteError('');
+
+    try {
+      const currentProfile = getLocalSeniorProfile(user.uid) ?? seniorProfile;
+      if (!currentProfile) throw new Error('인재 프로필을 확인하지 못했습니다.');
+
+      const currentCards =
+        currentProfile.experienceCardsV1 ??
+        (currentProfile.experienceProfileV1 ? [currentProfile.experienceProfileV1] : []);
+      const nextCards = currentCards.filter((item) => (item.id || item.confirmedAt) !== cardKey);
+
+      if (card.id) await deleteExperienceCard(card.id);
+      const nextProfile = await saveSeniorExperienceCards(user.uid, currentProfile, nextCards);
+      setSeniorProfile(nextProfile);
+      setExperienceCards(nextCards);
+      window.dispatchEvent(new CustomEvent('eojob_experience_card_updated'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '경험 카드를 삭제하지 못했습니다.';
+      setDeleteError(message);
+    } finally {
+      setDeletingCardKey('');
+    }
+  }
+
   const userName = user?.name || '지원자';
   const userEmail = user?.email || '';
-  const confirmedExperience = seniorProfile?.experienceProfileV1;
-
   return (
     <MobilePage
       activeNav="profile"
@@ -3763,7 +4143,7 @@ export function SeniorProfilePage() {
               {userName} 님
             </strong>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              {confirmedExperience ? '확인 완료' : '경험 정리 전'}
+              {experienceCards.length > 0 ? '확인 완료' : '경험 정리 전'}
             </span>
             {seniorProfile?.employmentSubsidyTarget ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
@@ -3780,29 +4160,60 @@ export function SeniorProfilePage() {
       <div
         className={cn(
           'flex flex-col gap-3 rounded-2xl border p-4 shadow-2xs',
-          experienceCard ? 'border-[#E0D9C8] bg-white' : 'border-[#F06B4F]/35 bg-[#FFF8F6]',
+          experienceCards.length > 0
+            ? 'border-[#E0D9C8] bg-white'
+            : 'border-[#F06B4F]/35 bg-[#FFF8F6]',
         )}
       >
         <div
           className={cn(
             'flex items-center justify-between gap-3 border-b pb-2.5',
-            experienceCard ? 'border-[#E0D9C8]/60' : 'border-[#F06B4F]/20',
+            experienceCards.length > 0 ? 'border-[#E0D9C8]/60' : 'border-[#F06B4F]/20',
           )}
         >
           <strong className="text-[15px] font-extrabold text-[#17212B]">대표 경험 카드</strong>
           <span
             className={cn(
               'text-xs font-extrabold',
-              experienceCard ? 'text-[#173F3A]' : 'text-[#F06B4F]',
+              experienceCards.length > 0 ? 'text-[#173F3A]' : 'text-[#F06B4F]',
             )}
           >
-            {experienceCard ? 'AI 경험 인터뷰 완료' : '인터뷰 미진행'}
+            {experienceCards.length > 0 ? `${experienceCards.length}개 등록` : '인터뷰 미진행'}
           </span>
         </div>
-        {confirmedExperience ? (
-          <ExperienceSummaryView snapshot={confirmedExperience} />
-        ) : experienceCard ? (
-          <p className="text-[13px] font-medium leading-5 text-slate-600">확인 후 공개할 경험 요약이 준비되어 있습니다.</p>
+        {deleteError ? (
+          <p className="rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-600">{deleteError}</p>
+        ) : null}
+        {experienceCards.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {experienceCards.map((card, index) => {
+              const cardKey = card.id || card.confirmedAt;
+              return (
+                <section className="rounded-xl bg-[#FAF7F2] p-3.5" key={cardKey}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="text-xs font-extrabold text-[#173F3A]">
+                      경험 카드 {experienceCards.length - index}
+                    </span>
+                    <button
+                      aria-label="경험 카드 삭제"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-2xs transition hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={deletingCardKey === cardKey}
+                      onClick={() => void handleDeleteExperienceCard(card)}
+                      title="경험 카드 삭제"
+                      type="button"
+                    >
+                      {deletingCardKey === cardKey ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                  <ExperienceSummaryView snapshot={card} />
+                </section>
+              );
+            })}
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             <p className="text-[14px] font-extrabold text-[#17212B]">
@@ -3821,7 +4232,7 @@ export function SeniorProfilePage() {
           기본 정보 수정
         </ActionButton>
         <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
-          {experienceCard ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
+          {experienceCards.length > 0 ? 'AI 경험 인터뷰 다시 진행하기' : 'AI 경험 인터뷰 시작하기'}
         </ActionButton>
         <ActionButton
           onClick={async () => {
@@ -3854,7 +4265,8 @@ export function SeniorProfilePage() {
               <strong className="text-base font-extrabold">회원 탈퇴 확인</strong>
             </div>
             <p className="text-xs leading-relaxed text-slate-600 font-medium">
-              회원 탈퇴 시 등록된 <strong>기본 프로필, AI 경험 카드, 제안 내역</strong>이 모두 즉시 삭제되며 복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
+              회원 탈퇴 시 등록된 <strong>기본 프로필, AI 경험 카드, 제안 내역</strong>이 모두 즉시
+              삭제되며 복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
             </p>
             {deleteError ? (
               <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
@@ -3913,7 +4325,8 @@ export function CompanyProfilePage() {
       setIsDeleteModalOpen(false);
       void navigate('/', { replace: true });
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
+      const errorMsg =
+        err instanceof Error ? err.message : '회원 탈퇴 처리 중 문제가 발생했습니다.';
       setDeleteError(errorMsg);
     } finally {
       setIsDeleting(false);
@@ -3934,9 +4347,7 @@ export function CompanyProfilePage() {
 
   useEffect(() => {
     void fetchProjects().then((projectsFromDatabase) => {
-      setProjectCount(
-        getCompanyOwnedProjects(projectsFromDatabase, user?.uid).length,
-      );
+      setProjectCount(getCompanyOwnedProjects(projectsFromDatabase, user?.uid).length);
     });
   }, [user?.uid]);
 
@@ -4044,7 +4455,8 @@ export function CompanyProfilePage() {
               <strong className="text-base font-extrabold">회원 탈퇴 확인</strong>
             </div>
             <p className="text-xs leading-relaxed text-slate-600 font-medium">
-              회원 탈퇴 시 등록된 <strong>기업 정보 및 등록 프로젝트</strong>가 모두 즉시 삭제되며 복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
+              회원 탈퇴 시 등록된 <strong>기업 정보 및 등록 프로젝트</strong>가 모두 즉시 삭제되며
+              복구할 수 없습니다. 정말로 탈퇴하시겠습니까?
             </p>
             {deleteError ? (
               <p className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">

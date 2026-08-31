@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   query,
@@ -21,6 +22,7 @@ export type ExperienceCardData = {
   action: string;
   category?: ProjectCategory;
   createdAt?: string;
+  id?: string;
   problem: string;
   result: string;
   role: string;
@@ -31,7 +33,7 @@ export type ExperienceCardData = {
 
 const EXPERIENCE_CARDS_COLLECTION = 'experience_cards';
 
-function normalizeExperienceCard(source: unknown): ExperienceCardData | null {
+function normalizeExperienceCard(source: unknown, documentId?: string): ExperienceCardData | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
   const stringValue = (field: string) =>
@@ -45,6 +47,7 @@ function normalizeExperienceCard(source: unknown): ExperienceCardData | null {
     action: stringValue('action'),
     category,
     createdAt: stringValue('createdAt') || undefined,
+    id: documentId || stringValue('id') || undefined,
     problem: stringValue('problem'),
     result: stringValue('result'),
     role: stringValue('role'),
@@ -64,12 +67,15 @@ function normalizeExperienceCard(source: unknown): ExperienceCardData | null {
 }
 
 export async function saveExperienceCard(cardData: ExperienceCardData): Promise<string> {
-  const cardId = createStableRecordId('EXPERIENCE', cardData.uid, cardData.title);
+  const cardId =
+    cardData.id ||
+    `${createStableRecordId('EXPERIENCE', cardData.uid, cardData.title)}-${Date.now().toString(36)}`;
   try {
     await setDoc(
       doc(db, EXPERIENCE_CARDS_COLLECTION, cardId),
       removeUndefinedValues({
         ...cardData,
+        id: cardId,
         createdAt: new Date().toISOString(),
         timestamp: serverTimestamp(),
       }),
@@ -82,6 +88,10 @@ export async function saveExperienceCard(cardData: ExperienceCardData): Promise<
   }
 }
 
+export async function deleteExperienceCard(cardId: string): Promise<void> {
+  await deleteDoc(doc(db, EXPERIENCE_CARDS_COLLECTION, cardId));
+}
+
 export async function getUserExperienceCards(uid: string): Promise<ExperienceCardData[]> {
   try {
     const cardsRef = collection(db, EXPERIENCE_CARDS_COLLECTION);
@@ -89,11 +99,11 @@ export async function getUserExperienceCards(uid: string): Promise<ExperienceCar
     const snapshot = await getDocs(q);
 
     const cards = snapshot.docs
-      .map((docSnap) => normalizeExperienceCard(docSnap.data()))
+      .map((docSnap) => normalizeExperienceCard(docSnap.data(), docSnap.id))
       .filter((card): card is ExperienceCardData => Boolean(card?.uid === uid));
 
-    return uniqueByKey(cards, (card) => `${card.uid}:${card.title}`).sort((first, second) =>
-      (second.createdAt || '').localeCompare(first.createdAt || ''),
+    return uniqueByKey(cards, (card) => card.id || `${card.uid}:${card.title}`).sort(
+      (first, second) => (second.createdAt || '').localeCompare(first.createdAt || ''),
     );
   } catch (error) {
     console.warn(`getUserExperienceCards(${uid}) failed:`, error);
@@ -106,6 +116,7 @@ function toStoredExperienceCard(card: ExperienceCardData): StoredExperienceCard 
     action: card.action,
     category: card.category,
     completedAt: card.createdAt || new Date(0).toISOString(),
+    id: card.id,
     problem: card.problem,
     result: card.result,
     role: card.role,
