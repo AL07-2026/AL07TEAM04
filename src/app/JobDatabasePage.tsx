@@ -633,6 +633,7 @@ export function PostingCard({
   profile,
   role = 'company',
   selected,
+  useServerScore,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
@@ -641,6 +642,7 @@ export function PostingCard({
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
+  useServerScore?: boolean;
   selected: boolean;
 }) {
   const matchResult = calculatePersonalizedMatch(
@@ -650,7 +652,7 @@ export function PostingCard({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : (posting.seniorFitScore || 75);
+  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -891,6 +893,7 @@ export function DetailPanel({
   posting,
   profile,
   role,
+  useServerScore,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
@@ -898,6 +901,7 @@ export function DetailPanel({
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
+  useServerScore?: boolean;
 }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
@@ -908,7 +912,7 @@ export function DetailPanel({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : (posting.seniorFitScore || 75);
+  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -2287,27 +2291,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       : selectedCategory;
   const isServerSearchActive = role === 'senior' && serverSearchMeta !== null;
   const filteredPostings = useMemo(() => {
-    if (isServerSearchActive) {
-      if (sortBy === 'fit-desc' && role === 'senior' && user) {
-        const sortedPostings = [...postings].sort((first, second) => {
-          const scoreFirst = calculatePersonalizedMatch(
-            first,
-            seniorProfile,
-            effectiveSelectedCategory,
-            interviewCard,
-          ).personalizedScore;
-          const scoreSecond = calculatePersonalizedMatch(
-            second,
-            seniorProfile,
-            effectiveSelectedCategory,
-            interviewCard,
-          ).personalizedScore;
-          return scoreSecond - scoreFirst;
-        });
-        return prioritizeHomeFocusedPosting(sortedPostings, homeFocusedPosting);
-      }
-      return prioritizeHomeFocusedPosting(postings, homeFocusedPosting);
-    }
+    if (isServerSearchActive) return prioritizeHomeFocusedPosting(postings, homeFocusedPosting);
 
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -4196,6 +4180,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       posting={posting}
                       profile={seniorProfile}
                       role={role}
+                      useServerScore={isServerSearchActive}
                       selected={selectedPosting?.id === posting.id}
                     />
                   ))}
@@ -4290,6 +4275,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   posting={selectedPosting}
                   profile={seniorProfile}
                   role={role}
+                  useServerScore={isServerSearchActive}
                 />
               </div>
             ) : null}
