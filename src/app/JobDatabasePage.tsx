@@ -331,8 +331,12 @@ function isWithinPreviousMonth(value?: string) {
   return date.getTime() >= previousMonth.getTime() && date.getTime() <= today.getTime();
 }
 
-function getPostingHighlightTone(posting: JobPosting, topFitPostingIds: Set<string>) {
-  if (topFitPostingIds.has(posting.id)) return postingHighlightTones.fit;
+function getPostingIdentityKey(posting: JobPosting) {
+  return `${posting.id}::${posting.title}`;
+}
+
+function getPostingHighlightTone(posting: JobPosting, topFitPostingKeys: Set<string>) {
+  if (topFitPostingKeys.has(getPostingIdentityKey(posting))) return postingHighlightTones.fit;
   if (isWithinNextMonth(posting.deadline)) return postingHighlightTones.deadline;
   if (isWithinPreviousMonth(posting.postedAt)) return postingHighlightTones.latest;
   return postingHighlightTones.default;
@@ -1627,6 +1631,7 @@ export function JobDatabasePage({
       | 'catalogTotal'
       | 'closingSoonTotal'
       | 'page'
+      | 'pageSize'
       | 'partTimeTotal'
       | 'preferredTotal'
       | 'total'
@@ -2019,6 +2024,7 @@ export function JobDatabasePage({
             catalogTotal: result.catalogTotal,
             closingSoonTotal: result.closingSoonTotal,
             page: result.page,
+            pageSize: result.pageSize,
             partTimeTotal: result.partTimeTotal,
             preferredTotal: result.preferredTotal,
             total: result.total + additionalCompanyProjectCount,
@@ -2620,14 +2626,31 @@ export function JobDatabasePage({
         : [],
     [filteredPostings, role],
   );
-  const topFitPostingIds = useMemo(() => {
+  const topFitPostingKeys = useMemo(() => {
     if (role !== 'senior' || filteredPostings.length === 0) return new Set<string>();
 
-    const topFitCount = Math.max(1, Math.ceil(filteredPostings.length * 0.1));
+    const totalTopFitBase = isServerSearchActive
+      ? Math.max(serverSearchMeta?.total ?? 0, filteredPostings.length)
+      : filteredPostings.length;
+    const topFitCount = Math.max(1, Math.ceil(totalTopFitBase * 0.1));
+
+    if (isServerSearchActive) {
+      if (sortBy !== 'fit-desc') return new Set<string>();
+
+      const serverPage = Math.max(1, serverSearchMeta?.page ?? currentPage);
+      const serverPageSize = Math.max(1, serverSearchMeta?.pageSize ?? itemsPerPage);
+      const pageStartIndex = (serverPage - 1) * serverPageSize;
+      return new Set(
+        filteredPostings
+          .filter((_, index) => pageStartIndex + index < topFitCount)
+          .map(getPostingIdentityKey),
+      );
+    }
+
     return new Set(
       filteredPostings
         .map((posting) => ({
-          id: posting.id,
+          key: getPostingIdentityKey(posting),
           score: calculatePersonalizedMatch(
             posting,
             seniorProfile,
@@ -2637,9 +2660,22 @@ export function JobDatabasePage({
         }))
         .sort((first, second) => second.score - first.score)
         .slice(0, topFitCount)
-        .map(({ id }) => id),
+        .map(({ key }) => key),
     );
-  }, [effectiveSelectedCategory, filteredPostings, interviewCard, role, seniorProfile]);
+  }, [
+    currentPage,
+    effectiveSelectedCategory,
+    filteredPostings,
+    interviewCard,
+    isServerSearchActive,
+    itemsPerPage,
+    role,
+    seniorProfile,
+    serverSearchMeta?.page,
+    serverSearchMeta?.pageSize,
+    serverSearchMeta?.total,
+    sortBy,
+  ]);
   const displayedResultCount =
     role === 'company'
       ? companyRecommendedTalents.length
@@ -4387,7 +4423,7 @@ export function JobDatabasePage({
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
-                      highlightTone={getPostingHighlightTone(posting, topFitPostingIds)}
+                      highlightTone={getPostingHighlightTone(posting, topFitPostingKeys)}
                       key={`${posting.id}-${posting.title}-${index}`}
                       onApply={() => handleApply(posting)}
                       onSelect={() => {
