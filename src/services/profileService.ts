@@ -4,6 +4,11 @@ import {
   OTHER_OCCUPATION_PREFERENCE,
   normalizeOccupationPreferenceValues,
 } from '@/data/occupationCategories';
+import type {
+  ExperienceInferredSkill,
+  ExperienceInformationQuality,
+  ExperienceMissingInformation,
+} from '@/lib/applicationFlow';
 import {
   getScopedStorageKey,
   removeDeepUndefinedValues,
@@ -39,10 +44,18 @@ export type SeniorProfileData = {
 
 /** Confirmed public experience only. Unconfirmed interview drafts are session scoped. */
 export type ExperienceProfileV1 = {
+  facts?: string[];
   id?: string;
+  inferredSkills?: ExperienceInferredSkill[];
+  informationQuality?: ExperienceInformationQuality;
+  jobKeywords?: string[];
+  missingInformation?: ExperienceMissingInformation[];
   workedOn: string;
   accomplished: string;
+  recruiterHighlight?: string;
   strengths: string[];
+  strengthInsight?: string;
+  summary?: string;
   version: 1;
   generatedAt?: string;
   confirmedAt: string;
@@ -83,14 +96,80 @@ function normalizeExperienceProfile(value: unknown): ExperienceProfileV1 | undef
   const confirmedAt = stringValue(source.confirmedAt);
   if (!workedOn && !accomplished && strengths.length === 0) return undefined;
   return {
+    facts: normalizeStringArray(source.facts, 8),
     id: stringValue(source.id) || undefined,
+    inferredSkills: normalizeInferredSkills(source.inferredSkills),
+    informationQuality: normalizeInformationQuality(source.informationQuality),
+    jobKeywords: normalizeStringArray(source.jobKeywords, 5),
+    missingInformation: normalizeMissingInformation(source.missingInformation),
     workedOn,
     accomplished,
+    recruiterHighlight: stringValue(source.recruiterHighlight) || undefined,
     strengths,
+    strengthInsight: stringValue(source.strengthInsight) || undefined,
+    summary: stringValue(source.summary) || undefined,
     version: 1,
     generatedAt: stringValue(source.generatedAt) || undefined,
     confirmedAt: confirmedAt || new Date(0).toISOString(),
   };
+}
+
+function normalizeStringArray(value: unknown, maxLength: number) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = [
+    ...new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, maxLength);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeInferredSkills(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      skill: stringValue(item.skill),
+      reason: stringValue(item.reason),
+    }))
+    .filter((item) => item.skill && item.reason)
+    .slice(0, 6);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeQualityValue(value: unknown) {
+  return value === 'complete' || value === 'weak' || value === 'missing' ? value : undefined;
+}
+
+function normalizeInformationQuality(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const normalized = {
+    problem: normalizeQualityValue(source.problem),
+    role: normalizeQualityValue(source.role),
+    action: normalizeQualityValue(source.action),
+    result: normalizeQualityValue(source.result),
+  };
+  return normalized.problem && normalized.role && normalized.action && normalized.result
+    ? (normalized as ExperienceInformationQuality)
+    : undefined;
+}
+
+function normalizeMissingInformation(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      field: stringValue(item.field),
+      reason: stringValue(item.reason),
+      followUpQuestion: stringValue(item.followUpQuestion),
+    }))
+    .filter((item) => item.field && item.reason && item.followUpQuestion)
+    .slice(0, 4);
+  return normalized.length > 0 ? normalized : undefined;
 }
 
 function normalizeExperienceProfiles(value: unknown): ExperienceProfileV1[] {

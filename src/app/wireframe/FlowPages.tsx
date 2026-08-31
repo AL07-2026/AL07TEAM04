@@ -50,11 +50,14 @@ import {
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
 import {
+  beginExperienceFollowUp,
   clearExperienceProfileDraft,
   clearPendingExperienceCard,
+  clearPendingExperienceFollowUp,
   completeApplicationInterview,
   getExperienceCardCategoryLabel,
   getPendingApplicationInterview,
+  readPendingExperienceFollowUp,
   readPendingExperienceCard,
   readExperienceProfileDraft,
   readStoredExperienceCard,
@@ -62,6 +65,9 @@ import {
   savePendingExperienceCard,
   saveExperienceProfileDraft,
   type ExperienceCardInput,
+  type ExperienceInferredSkill,
+  type ExperienceInformationQuality,
+  type ExperienceMissingInformation,
   type ExperienceInterviewAnswers,
   type StoredExperienceCard,
 } from '@/lib/applicationFlow';
@@ -162,6 +168,23 @@ type ParsedExperienceSummary = {
   problem?: string;
   result?: string;
   role?: string;
+};
+
+type GeneratedExperienceCardPayload = {
+  action?: string | null;
+  facts?: string[];
+  inferredSkills?: ExperienceInferredSkill[];
+  informationQuality?: ExperienceInformationQuality;
+  jobKeywords?: string[];
+  missingInformation?: ExperienceMissingInformation[];
+  problem?: string | null;
+  recruiterHighlight?: string;
+  result?: string | null;
+  role?: string | null;
+  skills?: string[];
+  strengthInsight?: string;
+  summary?: string;
+  title?: string;
 };
 
 function parseExperienceSummary(summary?: string): ParsedExperienceSummary {
@@ -341,6 +364,95 @@ export function ExperienceSummaryView({
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ExperienceCardAnalysisPanel({
+  card,
+  onContinueFollowUp,
+}: {
+  card: StoredExperienceCard;
+  onContinueFollowUp?: () => void;
+}) {
+  const inferredSkills = card.inferredSkills?.length
+    ? card.inferredSkills
+    : (card.skills?.map((skill) => ({
+        skill,
+        reason: '인터뷰 답변에서 확인된 경험을 근거로 판단했습니다.',
+      })) ?? []);
+  const missingInformation = card.missingInformation ?? [];
+
+  if (
+    inferredSkills.length === 0 &&
+    !card.strengthInsight &&
+    !card.recruiterHighlight &&
+    missingInformation.length === 0
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-[#E0D9C8]/60 pt-3">
+      {inferredSkills.length > 0 ? (
+        <section className="flex flex-col gap-2">
+          <h4 className="text-xs font-extrabold text-[#173F3A]">AI가 발견한 핵심 역량</h4>
+          <div className="flex flex-wrap gap-2">
+            {inferredSkills.map((item) => (
+              <span
+                className="rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]"
+                key={`${item.skill}-${item.reason}`}
+                title={item.reason}
+              >
+                {item.skill}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {card.strengthInsight ? (
+        <section className="rounded-xl bg-[#F4FAF8] p-3">
+          <h4 className="text-xs font-extrabold text-[#173F3A]">AI 경험 분석</h4>
+          <p className="mt-1 text-[13px] font-medium leading-5 text-[#17212B]">
+            {card.strengthInsight}
+          </p>
+        </section>
+      ) : null}
+
+      {card.recruiterHighlight ? (
+        <section className="rounded-xl bg-[#FAF7F2] p-3">
+          <h4 className="text-xs font-extrabold text-[#173F3A]">채용 담당자에게 강조할 부분</h4>
+          <p className="mt-1 text-[13px] font-medium leading-5 text-[#17212B]">
+            {card.recruiterHighlight}
+          </p>
+        </section>
+      ) : null}
+
+      {missingInformation.length > 0 ? (
+        <section className="rounded-xl bg-[#FFF8F6] p-3">
+          <div className="flex items-start justify-between gap-3">
+            <h4 className="text-xs font-extrabold text-[#C85039]">추가로 보완하면 좋은 정보</h4>
+            {onContinueFollowUp ? (
+              <button
+                className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-[#C85039] shadow-2xs transition hover:bg-[#FDF0ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F06B4F]/30"
+                onClick={onContinueFollowUp}
+                type="button"
+              >
+                추가 질문 이어서 답하기
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            {missingInformation.map((item) => (
+              <div className="text-[13px] leading-5" key={`${item.field}-${item.followUpQuestion}`}>
+                <p className="font-semibold text-slate-600">{item.reason}</p>
+                <p className="mt-1 font-extrabold text-[#17212B]">질문: {item.followUpQuestion}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -1257,7 +1369,10 @@ export function ExperienceInterviewPage() {
   const targetCategoryLabel = applicationReturn?.targetCategory
     ? categoryLabels[applicationReturn.targetCategory]
     : selectedCategoryLabel || getOccupationCategoryLabel(profileOccupationCategory, '희망 직종');
-  const interviewQuestions = getInterviewQuestions(targetCategory, targetCategoryLabel);
+  const [pendingFollowUp] = useState(() => readPendingExperienceFollowUp());
+  const defaultInterviewQuestions = getInterviewQuestions(targetCategory, targetCategoryLabel);
+  const interviewQuestions = pendingFollowUp?.questions ?? defaultInterviewQuestions;
+  const isFollowUpInterview = Boolean(pendingFollowUp);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSecondsRef = useRef(0);
@@ -1268,7 +1383,16 @@ export function ExperienceInterviewPage() {
   const [messages, setMessages] = useState<InterviewMessage[]>([
     { id: 1, sender: 'ai', text: interviewQuestions[0]!.prompt },
   ]);
-  const [answers, setAnswers] = useState<Partial<ExperienceInterviewAnswers>>({});
+  const [answers, setAnswers] = useState<Partial<ExperienceInterviewAnswers>>(() =>
+    pendingFollowUp
+      ? {
+          action: pendingFollowUp.baseCard.action,
+          problem: pendingFollowUp.baseCard.problem,
+          result: pendingFollowUp.baseCard.result,
+          role: pendingFollowUp.baseCard.role,
+        }
+      : {},
+  );
   const [editingAnswer, setEditingAnswer] = useState<{
     field: keyof ExperienceInterviewAnswers;
     messageId: number;
@@ -1503,7 +1627,9 @@ export function ExperienceInterviewPage() {
         sender: 'ai',
         text: nextQuestion
           ? nextQuestion.prompt
-          : '이야기해주신 내용을 정리했어요. 다음 화면에서 직접 확인하고 수정할 수 있어요.',
+          : isFollowUpInterview
+            ? '보완 답변까지 반영했어요. 다음 화면에서 경험 카드가 더 구체적으로 정리됐는지 확인해 주세요.'
+            : '이야기해주신 내용을 정리했어요. 다음 화면에서 직접 확인하고 수정할 수 있어요.',
       },
     ]);
     if (!nextQuestion) {
@@ -1571,26 +1697,26 @@ export function ExperienceInterviewPage() {
     setIsStructuring(true);
     setVoiceNotice('AI가 답변 전체를 읽고 경험을 정리하고 있어요.');
     try {
+      const baseHistory = pendingFollowUp
+        ? defaultInterviewQuestions.map((question) => ({
+            question: question.prompt,
+            answer: pendingFollowUp.baseCard[question.field] ?? '',
+          }))
+        : [];
+      const followUpHistory = interviewQuestions.map((question) => ({
+        question: question.prompt,
+        answer: answers[question.field] ?? '',
+      }));
       const response = await fetch('/api/interview/experience-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           selectedFields: targetCategoryLabel ? [targetCategoryLabel] : ['희망 직종'],
-          history: interviewQuestions.map((question) => ({
-            question: question.prompt,
-            answer: answers[question.field] ?? '',
-          })),
+          history: [...baseHistory, ...followUpHistory],
         }),
       });
       const payload = (await response.json().catch(() => null)) as {
-        card?: {
-          title?: string;
-          problem?: string | null;
-          role?: string | null;
-          action?: string | null;
-          result?: string | null;
-          skills?: string[];
-        };
+        card?: GeneratedExperienceCardPayload;
         error?: { message?: string };
       } | null;
       const cardResult = payload?.card;
@@ -1600,11 +1726,19 @@ export function ExperienceInterviewPage() {
       const normalizedProfile = {
         workedOn: (cardResult.role || cardResult.problem || cardResult.title || '').trim(),
         accomplished: (cardResult.result || cardResult.action || '').trim(),
-        strengths: (cardResult.skills || [])
+        facts: cardResult.facts,
+        inferredSkills: cardResult.inferredSkills,
+        informationQuality: cardResult.informationQuality,
+        jobKeywords: cardResult.jobKeywords,
+        missingInformation: cardResult.missingInformation,
+        recruiterHighlight: cardResult.recruiterHighlight,
+        strengths: (cardResult.skills || cardResult.inferredSkills?.map((item) => item.skill) || [])
           .filter((item): item is string => typeof item === 'string')
           .map((item) => item.trim())
           .filter(Boolean)
           .slice(0, 3),
+        strengthInsight: cardResult.strengthInsight,
+        summary: cardResult.summary,
       };
       if (!normalizedProfile.workedOn || !normalizedProfile.accomplished) {
         throw new Error('AI 경험 정리 결과가 충분하지 않아요. 다시 시도해 주세요.');
@@ -1615,6 +1749,15 @@ export function ExperienceInterviewPage() {
         role: cardResult.role?.trim() || normalizedProfile.workedOn,
         action: cardResult.action?.trim() || normalizedProfile.accomplished,
         result: cardResult.result?.trim() || normalizedProfile.accomplished,
+        facts: cardResult.facts,
+        inferredSkills: cardResult.inferredSkills,
+        informationQuality: cardResult.informationQuality,
+        jobKeywords: cardResult.jobKeywords,
+        missingInformation: cardResult.missingInformation,
+        recruiterHighlight: cardResult.recruiterHighlight,
+        skills: cardResult.skills,
+        strengthInsight: cardResult.strengthInsight,
+        summary: cardResult.summary,
         category: targetCategory,
         targetTitle: applicationReturn?.targetTitle,
       };
@@ -1623,6 +1766,7 @@ export function ExperienceInterviewPage() {
         { ...normalizedProfile, version: 1, generatedAt: new Date().toISOString() },
         user?.uid,
       );
+      clearPendingExperienceFollowUp();
       void navigate('/senior/experience/card');
     } catch (error) {
       setVoiceNotice(
@@ -1646,9 +1790,11 @@ export function ExperienceInterviewPage() {
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
         <p className="text-xl font-extrabold tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
         <p className="text-xs font-medium text-slate-500">
-          {applicationReturn?.targetTitle
-            ? `“${applicationReturn.targetTitle}” 지원에 맞는 경험을 확인합니다.`
-            : `${targetCategoryLabel} 분야의 실제 경험을 네 단계로 확인합니다.`}
+          {isFollowUpInterview
+            ? '부족한 정보를 조금 더 답하면 경험 카드의 구체성이 높아집니다.'
+            : applicationReturn?.targetTitle
+              ? `“${applicationReturn.targetTitle}” 지원에 맞는 경험을 확인합니다.`
+              : `${targetCategoryLabel} 분야의 실제 경험을 네 단계로 확인합니다.`}
         </p>
       </div>
 
@@ -1660,7 +1806,8 @@ export function ExperienceInterviewPage() {
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
-          질문 {Math.min(questionIndex + 1, interviewQuestions.length)}/{interviewQuestions.length}
+          {isFollowUpInterview ? '보완 질문' : '질문'}{' '}
+          {Math.min(questionIndex + 1, interviewQuestions.length)}/{interviewQuestions.length}
         </span>
       </div>
 
@@ -1887,6 +2034,12 @@ export function ExperienceCardPage() {
     void getLatestUserExperienceCard(user.uid).then(setExperienceCard);
   }, [hasFreshInterview, user?.uid]);
 
+  function handleContinueFollowUpInterview() {
+    if (!experienceCard?.missingInformation?.length) return;
+    const started = beginExperienceFollowUp(experienceCard, experienceCard.missingInformation);
+    if (started) void navigate('/senior/experience/interview');
+  }
+
   async function handleSaveCard() {
     if (!experienceCard || !draft || !user?.uid) return;
     setIsSaving(true);
@@ -1900,9 +2053,18 @@ export function ExperienceCardPage() {
     const cardInput: ExperienceCardInput = {
       action: experienceCard.action,
       category: experienceCard.category,
+      facts: experienceCard.facts,
+      inferredSkills: experienceCard.inferredSkills,
+      informationQuality: experienceCard.informationQuality,
+      jobKeywords: experienceCard.jobKeywords,
+      missingInformation: experienceCard.missingInformation,
       problem: experienceCard.problem,
+      recruiterHighlight: experienceCard.recruiterHighlight,
       result: experienceCard.result,
       role: experienceCard.role,
+      skills: experienceCard.skills,
+      strengthInsight: experienceCard.strengthInsight,
+      summary: experienceCard.summary,
       targetTitle: experienceCard.targetTitle,
       title: experienceCard.title,
     };
@@ -2062,6 +2224,15 @@ export function ExperienceCardPage() {
               </div>
             </div>
           </div>
+
+          <ExperienceCardAnalysisPanel
+            card={experienceCard}
+            onContinueFollowUp={
+              experienceCard.missingInformation?.length
+                ? handleContinueFollowUpInterview
+                : undefined
+            }
+          />
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-2xl bg-[#FFF8F6] p-6 text-center shadow-xs">

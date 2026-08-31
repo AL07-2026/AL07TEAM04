@@ -3,10 +3,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { JobPosting } from '@/data/jobPostings';
 import {
   beginApplicationInterview,
+  beginExperienceFollowUp,
   buildExperienceCardFromAnswers,
   cancelApplicationInterview,
+  clearPendingExperienceFollowUp,
   evaluateExperienceCardMatch,
   getPendingApplicationInterview,
+  readPendingExperienceFollowUp,
   readPendingExperienceCard,
   readStoredExperienceCard,
   savePendingExperienceCard,
@@ -87,5 +90,43 @@ describe('AI 인터뷰 경험 카드 흐름', () => {
 
     cancelApplicationInterview();
     expect(getPendingApplicationInterview()).toBeNull();
+  });
+
+  it('부족한 정보가 있으면 보완 질문 큐를 저장하고 다시 읽는다', () => {
+    const card = buildExperienceCardFromAnswers(answers, { category: 'operations' });
+    const started = beginExperienceFollowUp(card, [
+      {
+        field: 'result',
+        reason: '성과가 구체적이지 않습니다.',
+        followUpQuestion: '개선 이후 어떤 수치나 변화가 있었나요?',
+      },
+      {
+        field: 'unknown',
+        reason: '무시되어야 하는 필드입니다.',
+        followUpQuestion: '이 질문은 저장되지 않아야 합니다.',
+      },
+    ]);
+
+    expect(started).toBe(true);
+    expect(readPendingExperienceFollowUp()).toMatchObject({
+      baseCard: {
+        action: card.action,
+        category: card.category,
+        problem: card.problem,
+        result: card.result,
+        role: card.role,
+        title: card.title,
+      },
+      questions: [
+        {
+          field: 'result',
+          prompt: '개선 이후 어떤 수치나 변화가 있었나요?',
+          reason: '성과가 구체적이지 않습니다.',
+        },
+      ],
+    });
+
+    clearPendingExperienceFollowUp();
+    expect(readPendingExperienceFollowUp()).toBeNull();
   });
 });
