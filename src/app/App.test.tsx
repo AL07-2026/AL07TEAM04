@@ -55,9 +55,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it.each([
+    ['홈', '/'],
     ['인재로 로그인', '/login?role=senior'],
     ['기업으로 로그인', '/login?role=company'],
-    ['프로젝트 보러가기', '/senior/project-database'],
   ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
     window.history.pushState({}, '', '/');
     render(<App />);
@@ -66,6 +66,24 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
     await waitFor(() => {
       expect(`${window.location.pathname}${window.location.search}`).toBe(destination);
+    });
+  });
+
+  it.each([
+    ['프로젝트', '/senior/project-database'],
+    ['AI 경험 인터뷰', '/senior/experience/interview'],
+    ['내 제안', '/login'],
+    ['내 정보', '/login'],
+  ])('전체 메뉴의 %s 항목은 의미에 맞는 화면으로 이동한다', async (label, destination) => {
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '전체 메뉴 열기' }));
+    expect(await screen.findByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: label }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe(destination);
     });
   });
 
