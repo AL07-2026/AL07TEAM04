@@ -119,6 +119,16 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
     void navigate(path);
   };
 
+  const moveToLogin = async (targetRole: Role) => {
+    if (user) await signOut();
+    void navigate(`/login?role=${targetRole}`);
+  };
+
+  const signOutToLanding = async () => {
+    if (user) await signOut();
+    void navigate('/');
+  };
+
   return (
     <>
       <header className="sticky top-0 z-30 w-full shrink-0 border-b border-[#E0D9C8] bg-white">
@@ -142,38 +152,33 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
             >
               <Home className="size-5" strokeWidth={1.8} aria-hidden="true" />
             </button>
-            {!user ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => void navigate('/login?role=senior')}
-                  className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
-                  aria-label="인재로 로그인"
-                  title="인재로 로그인"
-                >
-                  <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void navigate('/login?role=company')}
-                  className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
-                  aria-label="기업으로 로그인"
-                  title="기업으로 로그인"
-                >
-                  <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#FFF0EC] hover:text-[#C7503B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
-                aria-label="로그아웃"
-                title="로그아웃"
-              >
-                <LogOut className="size-5" strokeWidth={1.8} aria-hidden="true" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => void moveToLogin('senior')}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="인재로 로그인"
+              title="인재로 로그인"
+            >
+              <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void moveToLogin('company')}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="기업으로 로그인"
+              title="기업으로 로그인"
+            >
+              <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void signOutToLanding()}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#FFF0EC] hover:text-[#C7503B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="로그아웃"
+              title="로그아웃"
+            >
+              <LogOut className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}

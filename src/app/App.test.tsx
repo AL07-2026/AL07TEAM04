@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
@@ -372,7 +372,11 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', '/company-info');
     render(<App />);
     expect(await screen.findByRole('heading', { name: '저장된 회사 정보' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    const quickNav = screen.getByRole('navigation', { name: '빠른 이동' });
+    for (const label of ['홈', '인재로 로그인', '기업으로 로그인', '로그아웃', '전체 메뉴 열기']) {
+      expect(within(quickNav).getByRole('button', { name: label })).toBeInTheDocument();
+    }
+    fireEvent.click(within(quickNav).getByRole('button', { name: '로그아웃' }));
     await waitFor(() => expect(window.location.pathname).toBe('/'));
     expect(window.location.pathname).not.toContain('/senior');
   });
