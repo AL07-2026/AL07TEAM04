@@ -23,12 +23,11 @@ describe('ExperienceSummaryView responsive ownership', () => {
     const root = screen.getByTestId('experience-summary-mobile');
     expect(root.className).toMatch(/flex-col|grid-cols-1/);
     expect(root.className).not.toMatch(/grid-cols-2|md:grid-cols-2|basis-1\/2|w-1\/2/);
-    const labels = Array.from(root.querySelectorAll('p')).map((node) => node.textContent?.trim());
-    expect(labels.findIndex((label) => label?.includes('해온 일'))).toBeLessThan(
-      labels.findIndex((label) => label?.includes('해낸 일')),
+    expect(screen.getByText('해온 일').compareDocumentPosition(screen.getByText('해낸 일'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     );
-    expect(labels.findIndex((label) => label?.includes('해낸 일'))).toBeLessThan(
-      labels.findIndex((label) => label?.includes('잘하는 점')),
+    expect(screen.getByText('해낸 일').compareDocumentPosition(screen.getByText('잘하는 점'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
     );
     localStorage.removeItem('eojob_viewport_mode');
   });

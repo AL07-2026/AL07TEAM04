@@ -290,6 +290,10 @@ export function ExperienceSummaryCard({
   );
 }
 
+function normalizeExperienceDisplayText(value?: string) {
+  return (value || '').replace(/\s+/g, ' ').trim();
+}
+
 /** Shared, confirmed experience presentation used across profile and proposal views. */
 export function ExperienceSummaryView({
   snapshot,
@@ -303,68 +307,77 @@ export function ExperienceSummaryView({
   const { mode } = useViewportMode();
   const items = snapshot
     ? [
-        { label: '해온 일', value: snapshot.workedOn, icon: Route, tone: 'emerald' },
-        { label: '해낸 일', value: snapshot.accomplished, icon: Target, tone: 'coral' },
+        { label: '해온 일', value: normalizeExperienceDisplayText(snapshot.workedOn), icon: Route, tone: 'emerald' },
+        { label: '해낸 일', value: normalizeExperienceDisplayText(snapshot.accomplished), icon: Target, tone: 'coral' },
         {
           label: '잘하는 점',
-          value: snapshot.strengths.join(' · '),
+          value: snapshot.strengths.map(normalizeExperienceDisplayText).filter(Boolean).join(' · '),
           icon: ThumbsUp,
           tone: 'slate',
         },
       ]
     : legacyText
-      ? [{ label: '해온 일', value: legacyText, icon: Route, tone: 'emerald' }]
+      ? [{ label: '해온 일', value: normalizeExperienceDisplayText(legacyText), icon: Route, tone: 'emerald' }]
       : [];
 
   if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
+  const isMobile = mode === 'mobile';
 
   return (
     <div
-      className={cn('grid min-w-0 gap-3', mode === 'mobile' ? 'grid-cols-1' : 'md:grid-cols-2')}
+      className={cn('w-full min-w-0 gap-3', isMobile ? 'flex flex-col' : 'grid md:grid-cols-2')}
       data-testid={mode === 'mobile' ? 'experience-summary-mobile' : 'experience-summary-desktop'}
     >
-      {items.map(({ label, value, icon: Icon, tone }) => (
-        <div
-          className={cn(
-            'min-w-0 rounded-xl border p-3',
-            label === '잘하는 점' && 'md:col-span-2',
-            tone === 'emerald'
-              ? 'border-emerald-100 bg-emerald-50/60'
-              : tone === 'coral'
-                ? 'border-orange-100 bg-orange-50/60'
-                : 'border-slate-200 bg-slate-50',
-          )}
-          key={label}
-        >
-          <p
+      {items.map(({ label, value, icon: Icon, tone }) => {
+        const displayValue = normalizeExperienceDisplayText(value);
+
+        return (
+          <div
             className={cn(
-              'flex items-center gap-1.5 text-xs font-extrabold',
+              'w-full min-w-0 max-w-full rounded-xl border p-3',
+              !isMobile && 'md:col-span-1',
+              label === '잘하는 점' && 'md:col-span-2',
               tone === 'emerald'
-                ? 'text-[#173F3A]'
+                ? 'border-emerald-100 bg-emerald-50/60'
                 : tone === 'coral'
-                  ? 'text-[#C85039]'
-                  : 'text-slate-700',
+                  ? 'border-orange-100 bg-orange-50/60'
+                  : 'border-slate-200 bg-slate-50',
             )}
+            key={label}
           >
-            <span className="flex size-6 items-center justify-center rounded-full bg-white">
-              <Icon className="size-3.5" />
-            </span>
-            {label}
-          </p>
-          <p className="mt-1 break-words text-sm font-medium leading-6 text-[#17212B] [overflow-wrap:break-word] [word-break:keep-all]">
-            {label === '잘하는 점' && snapshot
-              ? snapshot.strengths.map((strength) => (
-                  <span
-                    className="mr-1.5 inline-flex rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                    key={strength}
-                  >
-                    {strength}
-                  </span>
-                ))
-              : value || '아직 정리된 내용이 없습니다.'}
-          </p>
-        </div>
-      ))}
+            <div
+              className={cn(
+                'flex w-full min-w-0 items-center gap-1.5 text-xs font-extrabold',
+                tone === 'emerald'
+                  ? 'text-[#173F3A]'
+                  : tone === 'coral'
+                    ? 'text-[#C85039]'
+                    : 'text-slate-700',
+              )}
+            >
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white">
+                <Icon className="size-3.5" />
+              </span>
+              <span className="min-w-0 flex-1">{label}</span>
+            </div>
+            <div className="experience-summary-text mt-2 w-full min-w-0 max-w-full text-[13px] font-semibold leading-6 text-[#17212B]">
+              {label === '잘하는 점' && snapshot
+                ? snapshot.strengths
+                    .map(normalizeExperienceDisplayText)
+                    .filter(Boolean)
+                    .map((strength) => (
+                      <span
+                        className="mr-1.5 inline-flex rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                        key={strength}
+                      >
+                        {strength}
+                      </span>
+                    ))
+                : displayValue || '아직 정리된 내용이 없습니다.'}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

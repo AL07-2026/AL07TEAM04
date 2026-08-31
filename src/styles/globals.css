@@ -164,6 +164,27 @@ input:focus-visible {
   word-break: keep-all !important;
 }
 
+.eojob-readable .experience-summary-text {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  word-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.eojob-readable .experience-summary-text * {
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
