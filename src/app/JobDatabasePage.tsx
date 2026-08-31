@@ -4322,6 +4322,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 posting={selectedPosting}
                 profile={seniorProfile}
                 role={role}
+                useServerScore={isServerSearchActive}
               />
             </div>
           </div>
