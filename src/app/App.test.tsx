@@ -12,6 +12,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/signup', '회원가입'],
     ['/role', '역할 선택'],
     ['/basic-profile', '인재 기본정보'],
+    ['/board', '이어잡 게시판'],
     ['/company-info', '회사 기본정보'],
     ['/senior', '인재 홈'],
     ['/senior/experience', '경험 선택'],
@@ -55,7 +56,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it.each([
-    ['홈', '/'],
+    ['서비스 홈', '/senior'],
     ['인재로 로그인', '/login?role=senior'],
     ['기업으로 로그인', '/login?role=company'],
   ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
@@ -74,6 +75,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['AI 경험 인터뷰', '/senior/experience/interview'],
     ['내 제안', '/login'],
     ['내 정보', '/login'],
+    ['Brand', '/'],
+    ['Board', '/board'],
   ])('전체 메뉴의 %s 항목은 의미에 맞는 화면으로 이동한다', async (label, destination) => {
     window.history.pushState({}, '', '/');
     render(<App />);
@@ -85,6 +88,40 @@ describe('Figma v2 통합 화면 라우팅', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe(destination);
     });
+  });
+
+  it('전체 메뉴에서 커뮤니티와 문의 채널을 확인할 수 있다', async () => {
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '전체 메뉴 열기' }));
+    const drawer = await screen.findByRole('dialog', { name: '전체 메뉴' });
+
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Community' }));
+    expect(within(drawer).getByRole('link', { name: '카카오 오픈채팅방' })).toHaveAttribute(
+      'href',
+      'https://open.kakao.com/o/pCtnwCIi',
+    );
+
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Contact' }));
+    expect(within(drawer).getByRole('link', { name: '이어잡에 컨택하기' })).toHaveAttribute(
+      'href',
+      'mailto:phj1120@gmail.com',
+    );
+  });
+
+  it('게시판에 질문과 의견을 작성해 목록에서 확인한다', async () => {
+    window.localStorage.removeItem('eojob_community_board_posts');
+    window.history.pushState({}, '', '/board');
+    render(<App />);
+
+    fireEvent.change(await screen.findByLabelText('제목'), { target: { value: '프로젝트 검색에 관한 질문' } });
+    fireEvent.change(screen.getByLabelText('내용'), { target: { value: '희망 직종으로 더 자세히 찾을 수 있나요?' } });
+    fireEvent.click(screen.getByRole('button', { name: '글 등록하기' }));
+
+    expect(await screen.findByText('의견을 게시판에 등록했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('프로젝트 검색에 관한 질문')).toBeInTheDocument();
+    expect(screen.getByText('희망 직종으로 더 자세히 찾을 수 있나요?')).toBeInTheDocument();
   });
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
@@ -378,7 +415,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/company'));
 
     const quickNav = screen.getByRole('navigation', { name: '빠른 이동' });
-    for (const label of ['홈', '인재로 로그인', '기업으로 로그인', '로그아웃', '전체 메뉴 열기']) {
+    for (const label of ['인재로 로그인', '기업으로 로그인', '서비스 홈', '로그아웃', '전체 메뉴 열기']) {
       expect(within(quickNav).getByRole('button', { name: label })).toBeInTheDocument();
     }
     fireEvent.click(within(quickNav).getByRole('button', { name: '전체 메뉴 열기' }));

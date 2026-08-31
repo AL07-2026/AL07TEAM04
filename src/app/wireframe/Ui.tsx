@@ -1,14 +1,18 @@
 import {
   Briefcase,
   Building2,
+  ChevronDown,
   ChevronRight,
   ContactRound,
   FolderKanban,
   Home,
   Inbox,
   LogOut,
+  Mail,
   Menu,
   Mic,
+  MessageCircle,
+  MessageSquare,
   Send,
   UserRound,
   X,
@@ -115,7 +119,9 @@ export function SiteHeader({
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [expandedSupportMenu, setExpandedSupportMenu] = useState<'community' | 'contact' | null>(null);
   const menuRole = user?.role ?? role ?? 'senior';
+  const serviceHomePath = menuRole === 'company' ? '/company' : '/senior';
 
   const moveTo = (path: string, itemId?: string) => {
     setIsMenuOpen(false);
@@ -133,6 +139,7 @@ export function SiteHeader({
 
   const signOutToLanding = async () => {
     setIsMenuOpen(false);
+    setExpandedSupportMenu(null);
     if (user) await signOut();
     void navigate('/');
   };
@@ -153,15 +160,6 @@ export function SiteHeader({
           <nav className="flex items-center gap-1" aria-label="빠른 이동">
             <button
               type="button"
-              onClick={() => void navigate('/')}
-              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
-              aria-label="홈"
-              title="홈"
-            >
-              <Home className="size-5" strokeWidth={1.8} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
               onClick={() => void moveToLogin('senior')}
               className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
               aria-label="인재로 로그인"
@@ -177,6 +175,15 @@ export function SiteHeader({
               title="기업으로 로그인"
             >
               <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate(serviceHomePath)}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="서비스 홈"
+              title="서비스 홈"
+            >
+              <Home className="size-5" strokeWidth={1.8} aria-hidden="true" />
             </button>
             {showLogout && user ? (
               <button
@@ -229,7 +236,7 @@ export function SiteHeader({
                 <X className="size-5" strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
-            <nav className="flex min-h-0 flex-1 flex-col px-4 py-5" aria-label="주요 메뉴">
+            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5" aria-label="주요 메뉴">
               <div className="flex flex-col gap-1.5">
                 {navItems[menuRole].map((item) => {
                   const IconComponent = item.Icon;
@@ -251,6 +258,82 @@ export function SiteHeader({
                     </button>
                   );
                 })}
+              </div>
+              <div className="mt-5 border-t border-[#E0D9C8]">
+                <button
+                  type="button"
+                  onClick={() => moveTo('/')}
+                  className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[#E0D9C8] px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                >
+                  <span>Brand</span>
+                  <ChevronRight className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <div
+                  className="border-b border-[#E0D9C8]"
+                  onMouseEnter={() => setExpandedSupportMenu('community')}
+                  onMouseLeave={() => setExpandedSupportMenu((current) => (current === 'community' ? null : current))}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSupportMenu('community')}
+                    aria-expanded={expandedSupportMenu === 'community'}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                  >
+                    <span>Community</span>
+                    <ChevronDown
+                      className={cn('size-5 shrink-0 transition-transform', expandedSupportMenu === 'community' && 'rotate-180')}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {expandedSupportMenu === 'community' ? (
+                    <a
+                      href="https://open.kakao.com/o/pCtnwCIi"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mb-3 flex min-h-12 items-center gap-3 rounded-md bg-[#EDF6F2] px-3.5 text-base font-extrabold text-[#173F3A] transition-colors hover:bg-[#DDEBE7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
+                    >
+                      <MessageCircle className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                      카카오 오픈채팅방
+                    </a>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => moveTo('/board')}
+                  className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[#E0D9C8] px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                >
+                  <span>Board</span>
+                  <MessageSquare className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <div
+                  className="border-b border-[#E0D9C8]"
+                  onMouseEnter={() => setExpandedSupportMenu('contact')}
+                  onMouseLeave={() => setExpandedSupportMenu((current) => (current === 'contact' ? null : current))}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSupportMenu('contact')}
+                    aria-expanded={expandedSupportMenu === 'contact'}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                  >
+                    <span>Contact</span>
+                    <ChevronDown
+                      className={cn('size-5 shrink-0 transition-transform', expandedSupportMenu === 'contact' && 'rotate-180')}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {expandedSupportMenu === 'contact' ? (
+                    <a
+                      href="mailto:phj1120@gmail.com"
+                      className="mb-3 flex min-h-12 items-center gap-3 rounded-md bg-[#FFF0EC] px-3.5 text-base font-extrabold text-[#9E3D2E] transition-colors hover:bg-[#FFE3DC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
+                    >
+                      <Mail className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                      이어잡에 컨택하기
+                    </a>
+                  ) : null}
+                </div>
               </div>
               {user ? (
                 <button
