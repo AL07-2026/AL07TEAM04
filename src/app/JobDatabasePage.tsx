@@ -811,7 +811,10 @@ function RecommendedTalentCard({
             <UserRound className="size-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="truncate text-[16px] font-extrabold text-[#17212B]">{talent.name}</h3>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h3 className="truncate text-[16px] font-extrabold text-[#17212B]">{talent.name}</h3>
+              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-500">예시 인재</span>
+            </div>
             <p className="mt-0.5 truncate text-[12px] font-bold text-slate-500">
               {talent.career} · {talent.location}
             </p>
@@ -870,13 +873,11 @@ function RecommendedTalentCard({
         </span>
         <button
           className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] px-4 py-1.5 text-[13px] font-extrabold text-white shadow-2xs transition-all duration-200 hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]"
-          onClick={(event) => {
-            event.stopPropagation();
-            onPropose();
-          }}
+          disabled
+          onClick={(event) => { event.stopPropagation(); onPropose(); }}
           type="button"
         >
-          제안하기
+          데모 전용
         </button>
       </div>
     </article>
@@ -4154,6 +4155,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         ) : (
           <>
             <section className="grid gap-3 self-start">
+              {role === 'company' ? (
+                <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+                  아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
+                </p>
+              ) : null}
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
