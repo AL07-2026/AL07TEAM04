@@ -895,20 +895,9 @@ export function PostingCard({
           </span>
           <span
             aria-label={`AI 매칭 점수 ${displayScore}점, ${fitTone.label}`}
-            className={cn(
-              'inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
-              fitTone.containerClassName,
-              fitTone.scoreClassName,
-            )}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F3F6FA] px-3 py-1.5 text-[13px] font-black text-[#2C4967]"
           >
-            <Sparkles
-              className={cn(
-                'size-3 shrink-0',
-                displayScore >= 90
-                  ? 'text-[#FEEA00] fill-[#FEEA00]'
-                  : 'text-[#F06B4F] fill-[#F06B4F]',
-              )}
-            />
+            <Sparkles className="size-3 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
             <span>{displayScore}점</span>
           </span>
         </div>
@@ -968,20 +957,9 @@ function RecommendedTalentCard({
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
-          className={cn(
-            'inline-flex w-fit items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
-            fitTone.containerClassName,
-            fitTone.scoreClassName,
-          )}
+          className="inline-flex w-fit items-center gap-1 rounded-full bg-[#F3F6FA] px-3 py-1.5 text-[13px] font-black text-[#2C4967]"
         >
-          <Sparkles
-            className={cn(
-              'size-3 shrink-0',
-              talent.matchScore >= 90
-                ? 'text-[#FEEA00] fill-[#FEEA00]'
-                : 'text-[#F06B4F] fill-[#F06B4F]',
-            )}
-          />
+          <Sparkles className="size-3 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
           <span>{talent.matchScore}점</span>
         </span>
 
@@ -1106,20 +1084,9 @@ export function DetailPanel({
           {showScore ? (
             <span
               aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
-              className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-black',
-                fitTone.containerClassName,
-                fitTone.scoreClassName,
-              )}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F3F6FA] px-2.5 py-1 text-[12px] font-black text-[#2C4967]"
             >
-              <Sparkles
-                className={cn(
-                  'size-3.5 shrink-0',
-                  displayScore >= 90
-                    ? 'text-[#FEEA00] fill-[#FEEA00]'
-                    : 'text-[#F06B4F] fill-[#F06B4F]',
-                )}
-              />
+              <Sparkles className="size-3.5 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
               <span>{displayScore}점</span>
             </span>
           ) : (
@@ -1903,9 +1870,7 @@ export function JobDatabasePage({
         ? preferredProfileCategories
         : [];
       let categories: JobOccupationFilter[] = [];
-      if (!query.trim() && isCustomMatchSelected && customFallbackCategories.length > 0) {
-        categories = customFallbackCategories;
-      } else if (!query.trim() && !isAllDatabaseSelected && !isCustomMatchSelected) {
+      if (!isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -1914,11 +1879,14 @@ export function JobDatabasePage({
           categories = [selectedOccupationCategory];
         }
       }
-      const desiredCategories: OccupationPreference[] = query.trim()
-        ? []
-        : isCustomMatchSelected && customFallbackCategories.length > 0
-          ? customFallbackCategories
-          : preferredProfilePreferences;
+      let desiredCategories: OccupationPreference[] = [];
+      if (isAllDatabaseSelected) {
+        desiredCategories = preferredProfilePreferences;
+      } else if (!isCustomMatchSelected && selectedOccupationCategory) {
+        desiredCategories = [selectedOccupationCategory];
+      } else if (!isCustomMatchSelected && selectedCategory === all && primaryProfileCategory) {
+        desiredCategories = [primaryProfileCategory];
+      }
       const otherOccupationRank =
         preferredProfilePreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
       const shouldUseOtherOccupation =
@@ -1959,8 +1927,7 @@ export function JobDatabasePage({
         pageSize: itemsPerPage,
         profileText,
         query,
-        requireDesiredOccupationMatch:
-          isCustomMatchSelected && customFallbackCategories.length === 0,
+        requireDesiredOccupationMatch: isCustomMatchSelected,
         signal: abortController.signal,
         sortBy,
         workType: selectedWorkType,
