@@ -870,8 +870,8 @@ export function PostingCard({
       className={cn(
         'group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-[#FEFDFC] text-left transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(23,63,58,0.12)] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
         selected
-          ? 'border-[#AAB6B2] ring-2 ring-[#173F3A]/15'
-          : 'border-[#D9DEE6] hover:border-[#BFC8D2]',
+          ? 'border-[#C7CDD5] ring-2 ring-[#173F3A]/15'
+          : 'border-[#C7CDD5] hover:border-[#AAB6B2]',
       )}
       onClick={onSelect}
     >
@@ -948,8 +948,8 @@ function RecommendedTalentCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'group flex min-h-[250px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[280px]',
-        selected ? 'border-[#C9D0D8] ring-2 ring-[#173F3A]/15' : 'border-[#D9DEE6] hover:border-[#C9D0D8]',
+        'group flex min-h-[250px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(23,63,58,0.12)] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[280px]',
+        selected ? 'border-[#C7CDD5] ring-2 ring-[#173F3A]/15' : 'border-[#C7CDD5] hover:border-[#AAB6B2]',
       )}
       onClick={onSelect}
     >
