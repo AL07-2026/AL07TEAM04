@@ -277,29 +277,39 @@ function PostingCategoryVisual({ category }: { category: ProjectCategory }) {
 type PostingHighlightKey = 'fit' | 'deadline' | 'latest' | 'default';
 
 type PostingHighlightTone = {
+  accentClassName: string;
   headerClassName: string;
+  iconClassName: string;
   key: PostingHighlightKey;
   label: string;
 };
 
 const postingHighlightTones: Record<PostingHighlightKey, PostingHighlightTone> = {
   fit: {
-    headerClassName: 'bg-[#FFF0EC] text-[#B9472D]',
+    accentClassName: 'bg-[#D65A3D]',
+    headerClassName: 'bg-[#FFF0EC] text-[#993720]',
+    iconClassName: 'text-[#B9472D]',
     key: 'fit',
     label: '적합도 상위 10%',
   },
   deadline: {
-    headerClassName: 'bg-[#F1ECFA] text-[#654A9B]',
+    accentClassName: 'bg-[#7656AF]',
+    headerClassName: 'bg-[#F1ECFA] text-[#5C438C]',
+    iconClassName: 'text-[#654A9B]',
     key: 'deadline',
     label: '마감 1개월 이내',
   },
   latest: {
-    headerClassName: 'bg-[#E7F3EF] text-[#176257]',
+    accentClassName: 'bg-[#237060]',
+    headerClassName: 'bg-[#E7F3EF] text-[#15594F]',
+    iconClassName: 'text-[#176257]',
     key: 'latest',
     label: '최근 1개월 등록',
   },
   default: {
-    headerClassName: 'bg-[#EEF3F6] text-[#2E5572]',
+    accentClassName: 'bg-[#315E79]',
+    headerClassName: 'bg-[#EEF3F6] text-[#294D67]',
+    iconClassName: 'text-[#2E5572]',
     key: 'default',
     label: '일반 추천',
   },
@@ -849,20 +859,8 @@ export function PostingCard({
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
   const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
-  const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
-
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
-
-  // Keep preview badges to work-location cues only; employment details stay in the detail card.
-  const badges: { isMint?: boolean; label: string }[] = [];
-  if (posting.workType === 'remote' || posting.title.includes('재택')) {
-    badges.push({ isMint: true, label: '재택·원격' });
-  } else if (posting.workType === 'hybrid' || posting.title.includes('하이브리드')) {
-    badges.push({ isMint: true, label: '하이브리드' });
-  }
-
   const categoryLabel = getPostingOccupationLabel(posting);
-  const secondaryBadges = badges.filter((badge) => badge.label !== categoryLabel);
 
   return (
     <button
@@ -870,79 +868,58 @@ export function PostingCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative flex min-h-[300px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[340px]',
+        'group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-[#FEFDFC] text-left transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(23,63,58,0.12)] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
         selected
-          ? 'border-[#C9D0D8] ring-2 ring-[#173F3A]/15'
-          : 'border-[#D9DEE6] hover:border-[#C9D0D8]',
+          ? 'border-[#AAB6B2] ring-2 ring-[#173F3A]/15'
+          : 'border-[#D9DEE6] hover:border-[#BFC8D2]',
       )}
       onClick={onSelect}
     >
-      <div className={cn('flex min-h-[5.75rem] items-center px-4 py-3.5 sm:px-5', highlightTone.headerClassName)}>
-        <div className="flex min-w-0 items-center gap-3.5">
-          <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
+      <div className={cn('relative flex min-h-[5.5rem] items-center overflow-hidden px-4 pb-3 pt-4 sm:px-5', highlightTone.headerClassName)}>
+        <span className={cn('absolute inset-x-4 top-0 h-1 sm:inset-x-5', highlightTone.accentClassName)} aria-hidden="true" />
+        <div className="flex min-w-0 items-center gap-3.5 pt-1">
+          <div className={cn('grid size-12 shrink-0 place-items-center rounded-lg border border-white/80 bg-white/90', highlightTone.iconClassName)}>
             <PostingCategoryVisual category={posting.category} />
           </div>
           <div className="min-w-0">
-            <p className="text-[24px] font-black leading-tight text-balance [word-break:keep-all] sm:text-[26px]">{posting.companyName}</p>
-            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75 [word-break:keep-all]">{posting.industry || categoryLabel}</p>
+            <p className="text-[23px] font-black leading-tight text-balance [word-break:keep-all] sm:text-[25px]">{posting.companyName}</p>
             <p className="sr-only">{highlightTone.label}</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
+      <div className="flex min-h-[9.5rem] flex-1 flex-col p-4 sm:min-h-[10.25rem] sm:p-5">
         <div className="flex items-center justify-between gap-2">
-          <span className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]">
+          <span className="rounded-md bg-[#ECF5F0] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]">
             {categoryLabel}
           </span>
-          {showScore ? (
-            <span
+          <span
+            aria-label={`AI 매칭 점수 ${displayScore}점, ${fitTone.label}`}
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
+              fitTone.containerClassName,
+              fitTone.scoreClassName,
+            )}
+          >
+            <Sparkles
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
-                fitTone.containerClassName,
-                fitTone.scoreClassName,
+                'size-3 shrink-0',
+                displayScore >= 90
+                  ? 'text-[#FEEA00] fill-[#FEEA00]'
+                  : 'text-[#F06B4F] fill-[#F06B4F]',
               )}
-            >
-              <Sparkles
-                className={cn(
-                  'size-3 shrink-0',
-                  displayScore >= 90
-                    ? 'text-[#FEEA00] fill-[#FEEA00]'
-                    : 'text-[#F06B4F] fill-[#F06B4F]',
-                )}
-              />
-              <span>{displayScore}점</span>
-            </span>
-          ) : (
-            <span className="rounded-full bg-[#F8FCFB] px-3 py-1.5 text-[13px] font-bold text-[#173F3A]">
-              검증 공고
-            </span>
-          )}
+            />
+            <span>{displayScore}점</span>
+          </span>
         </div>
 
-        <h3 className="mt-3 text-[18px] font-extrabold leading-7 text-[#17212B] text-pretty [word-break:keep-all] group-hover:text-[#173F3A] sm:text-[19px] sm:leading-7">
+        <h3 className="mt-3 text-[17px] font-extrabold leading-6 text-[#17212B] text-pretty [word-break:keep-all] group-hover:text-[#173F3A] sm:text-[18px] sm:leading-7">
           {cleanPositionTitle}
         </h3>
-
-        {secondaryBadges.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {secondaryBadges.slice(0, 2).map((badge, idx) => (
-              <span
-                className={cn(
-                  'rounded-md px-2.5 py-1.5 text-[13px] font-bold leading-5',
-                  badge.isMint ? 'bg-[#DDEBE7] text-[#173F3A]' : 'bg-[#FAF7F2] text-slate-600',
-                )}
-                key={`${badge.label}-${idx}`}
-              >
-                {badge.label}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </div>
       <div
         aria-hidden="true"
-        className="mt-auto h-32 shrink-0 border-t border-[#D9DEE6]/80 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
+        className="mt-auto h-28 shrink-0 border-t border-[#D9DEE6] bg-cover transition-transform duration-200 ease-out group-hover:scale-[1.015] sm:h-32"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
           backgroundPosition: getPostingPhotoPosition(posting, visualIndex),
@@ -2629,10 +2606,7 @@ export function JobDatabasePage({
   const topFitPostingKeys = useMemo(() => {
     if (role !== 'senior' || filteredPostings.length === 0) return new Set<string>();
 
-    const totalTopFitBase = isServerSearchActive
-      ? Math.max(serverSearchMeta?.total ?? 0, filteredPostings.length)
-      : filteredPostings.length;
-    const topFitCount = Math.max(1, Math.ceil(totalTopFitBase * 0.1));
+    const topFitCount = 1;
 
     if (isServerSearchActive) {
       if (sortBy !== 'fit-desc') return new Set<string>();
@@ -4399,7 +4373,7 @@ export function JobDatabasePage({
                   아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
                 </p>
               ) : null}
-              <div className={cn('grid gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3')}>
+              <div className={cn('mx-auto grid w-full max-w-7xl gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3')}>
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
