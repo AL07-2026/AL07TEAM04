@@ -12,7 +12,6 @@ import {
   Menu,
   Mic,
   MessageCircle,
-  MessageSquare,
   Send,
   UserRound,
   X,
@@ -294,18 +293,10 @@ export function SiteHeader({
                       className="mb-3 flex min-h-12 items-center gap-3 rounded-md bg-[#EDF6F2] px-3.5 text-base font-extrabold text-[#173F3A] transition-colors hover:bg-[#DDEBE7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
                     >
                       <MessageCircle className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                      카카오 오픈채팅방
+                      카카오톡 오픈채팅방
                     </a>
                   ) : null}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => moveTo('/board')}
-                  className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[#E0D9C8] px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
-                >
-                  <span>Board</span>
-                  <MessageSquare className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                </button>
                 <div
                   className="border-b border-[#E0D9C8]"
                   onMouseEnter={() => setExpandedSupportMenu('contact')}

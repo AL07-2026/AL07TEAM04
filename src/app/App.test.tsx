@@ -12,7 +12,6 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/signup', '회원가입'],
     ['/role', '역할 선택'],
     ['/basic-profile', '인재 기본정보'],
-    ['/board', '이어잡 게시판'],
     ['/company-info', '회사 기본정보'],
     ['/senior', '인재 홈'],
     ['/senior/experience', '경험 선택'],
@@ -76,7 +75,6 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['내 제안', '/login'],
     ['내 정보', '/login'],
     ['Brand', '/'],
-    ['Board', '/board'],
   ])('전체 메뉴의 %s 항목은 의미에 맞는 화면으로 이동한다', async (label, destination) => {
     window.history.pushState({}, '', '/');
     render(<App />);
@@ -98,7 +96,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     const drawer = await screen.findByRole('dialog', { name: '전체 메뉴' });
 
     fireEvent.click(within(drawer).getByRole('button', { name: 'Community' }));
-    expect(within(drawer).getByRole('link', { name: '카카오 오픈채팅방' })).toHaveAttribute(
+    expect(within(drawer).getByRole('link', { name: '카카오톡 오픈채팅방' })).toHaveAttribute(
       'href',
       'https://open.kakao.com/o/pCtnwCIi',
     );
@@ -110,19 +108,6 @@ describe('Figma v2 통합 화면 라우팅', () => {
     );
   });
 
-  it('게시판에 질문과 의견을 작성해 목록에서 확인한다', async () => {
-    window.localStorage.removeItem('eojob_community_board_posts');
-    window.history.pushState({}, '', '/board');
-    render(<App />);
-
-    fireEvent.change(await screen.findByLabelText('제목'), { target: { value: '프로젝트 검색에 관한 질문' } });
-    fireEvent.change(screen.getByLabelText('내용'), { target: { value: '희망 직종으로 더 자세히 찾을 수 있나요?' } });
-    fireEvent.click(screen.getByRole('button', { name: '글 등록하기' }));
-
-    expect(await screen.findByText('의견을 게시판에 등록했습니다.')).toBeInTheDocument();
-    expect(screen.getByText('프로젝트 검색에 관한 질문')).toBeInTheDocument();
-    expect(screen.getByText('희망 직종으로 더 자세히 찾을 수 있나요?')).toBeInTheDocument();
-  });
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
     sessionStorage.clear();

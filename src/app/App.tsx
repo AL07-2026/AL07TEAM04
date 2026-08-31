@@ -40,7 +40,6 @@ function lazyPage<TModule, TKey extends keyof TModule>(
 
 const loadFlowPages = () => import('@/app/wireframe/FlowPages');
 const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
-const BoardPage = lazyPage(() => import('@/app/BoardPage'), 'BoardPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
 const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
@@ -78,7 +77,6 @@ function RouteLoadingFallback() {
 function createAppRouter() {
   return createBrowserRouter([
     { path: '/', Component: LandingPage },
-    { path: '/board', Component: BoardPage },
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
     { path: '/role', Component: RoleSelectionPage },
