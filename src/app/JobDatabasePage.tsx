@@ -755,21 +755,21 @@ export function PostingCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative flex min-h-[246px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
+        'group relative flex min-h-[390px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[430px]',
         selected
           ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20'
           : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      <div className={cn('flex h-[5.5rem] items-center justify-between px-4 sm:px-5', getPostingVisualTone(posting.category))}>
-        <div className="flex min-w-0 items-center gap-3">
+      <div className={cn('flex min-h-[6.5rem] items-center justify-between px-4 py-4 sm:px-5', getPostingVisualTone(posting.category))}>
+        <div className="flex min-w-0 items-center gap-3.5">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
             <PostingCategoryVisual category={posting.category} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[18px] font-black leading-tight sm:text-[20px]">{posting.companyName}</p>
-            <p className="mt-0.5 truncate text-[12px] font-bold opacity-75">{posting.industry || categoryLabel}</p>
+            <p className="text-[20px] font-black leading-tight text-balance sm:text-[22px]">{posting.companyName}</p>
+            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75">{posting.industry || categoryLabel}</p>
           </div>
         </div>
         <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
@@ -777,13 +777,13 @@ export function PostingCard({
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2">
-          <span className="rounded-md bg-[#F8FCFB] px-2 py-1 text-[11px] font-extrabold text-[#173F3A]">
+          <span className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]">
             {categoryLabel}
           </span>
           {showScore ? (
             <span
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
                 fitTone.containerClassName,
                 fitTone.scoreClassName,
               )}
@@ -799,13 +799,13 @@ export function PostingCard({
               <span>{displayScore}점</span>
             </span>
           ) : (
-            <span className="rounded-full bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-bold text-[#173F3A]">
+            <span className="rounded-full bg-[#F8FCFB] px-3 py-1.5 text-[13px] font-bold text-[#173F3A]">
               검증 공고
             </span>
           )}
         </div>
 
-        <h3 className="mt-3 line-clamp-2 text-[17px] font-extrabold leading-6 text-[#17212B] [text-wrap:balance] group-hover:text-[#173F3A] sm:text-[18px]">
+        <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#17212B] text-pretty group-hover:text-[#173F3A] sm:text-[21px] sm:leading-8">
           {cleanPositionTitle}
         </h3>
 
@@ -813,7 +813,7 @@ export function PostingCard({
           {badges.slice(0, 2).map((badge, idx) => (
             <span
               className={cn(
-                'rounded-md px-2 py-1 text-[11px] font-bold',
+                'rounded-md px-2.5 py-1.5 text-[13px] font-bold leading-5',
                 badge.isMint ? 'bg-[#DDEBE7] text-[#173F3A]' : 'bg-[#FAF7F2] text-slate-600',
               )}
               key={`${badge.label}-${idx}`}
@@ -823,17 +823,20 @@ export function PostingCard({
           ))}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-[#E0D9C8]/70 pt-3 text-[12px]">
-          <div className="min-w-0 font-semibold leading-5 text-slate-500">
-            <p className="truncate">{simpleLocation} · {posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</p>
-            <p className="mt-0.5">마감 {getDeadlineText(posting)}</p>
+        <div className="mt-auto border-t border-[#E0D9C8]/70 pt-3">
+          <div className="flex flex-wrap gap-x-2 gap-y-1 text-[14px] font-semibold leading-6 text-slate-500">
+            <span>{simpleLocation}</span>
+            <span aria-hidden="true">·</span>
+            <span>{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
+            <span aria-hidden="true">·</span>
+            <span>마감 {getDeadlineText(posting)}</span>
           </div>
-          <span className="shrink-0 text-[14px] font-black text-[#F06B4F]">{simpleSalary}</span>
+          <p className="mt-2 text-right text-[17px] font-black leading-6 text-[#F06B4F]">{simpleSalary}</p>
         </div>
       </div>
       <div
         aria-hidden="true"
-        className="h-28 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        className="h-32 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
           backgroundPosition: getPostingPhotoPosition(posting.category),
@@ -862,19 +865,19 @@ function RecommendedTalentCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'group flex min-h-[300px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
+        'group flex min-h-[320px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[350px]',
         selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20' : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      <div className="flex items-center justify-between gap-3 bg-[#E7F3EF] px-4 py-4 text-[#173F3A] sm:px-5">
+      <div className="flex min-h-[6rem] items-center justify-between gap-3 bg-[#E7F3EF] px-4 py-4 text-[#173F3A] sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 text-[#173F3A] shadow-2xs">
             <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[20px] font-black leading-tight">{talent.name}</p>
-            <p className="mt-0.5 truncate text-[12px] font-bold opacity-75">{talent.career} · {talent.location}</p>
+            <p className="text-[22px] font-black leading-tight">{talent.name}</p>
+            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75">{talent.career} · {talent.location}</p>
           </div>
         </div>
         <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
@@ -884,7 +887,7 @@ function RecommendedTalentCard({
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
           className={cn(
-            'inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+            'inline-flex w-fit items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-black',
             fitTone.containerClassName,
             fitTone.scoreClassName,
           )}
@@ -900,18 +903,18 @@ function RecommendedTalentCard({
           <span>{talent.matchScore}점</span>
         </span>
 
-        <h3 className="mt-3 line-clamp-2 text-[18px] font-extrabold leading-7 text-[#17212B] [text-wrap:balance]">
+        <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#17212B] text-pretty sm:text-[21px] sm:leading-8">
           {talent.headline}
         </h3>
-        <p className="mt-2 line-clamp-1 text-[12px] font-extrabold text-[#173F3A]">
+        <p className="mt-2 text-[13px] font-extrabold leading-5 text-[#173F3A]">
           연결 프로젝트 · <span>{talent.projectTitle}</span>
         </p>
-        <p className="mt-2 line-clamp-1 text-[12px] font-extrabold text-[#173F3A]">대표 경험</p>
+        <p className="mt-2 text-[13px] font-extrabold leading-5 text-[#173F3A]">대표 경험</p>
 
         <div className="mt-1.5 flex flex-wrap gap-1.5">
         {talent.skills.slice(0, 2).map((skill) => (
           <span
-            className="rounded-md bg-[#F8FCFB] px-2 py-1 text-[11px] font-extrabold text-[#173F3A]"
+            className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]"
             key={skill}
           >
             {skill}
@@ -919,7 +922,7 @@ function RecommendedTalentCard({
         ))}
       </div>
 
-        <p className="mt-auto border-t border-[#E0D9C8]/70 pt-3 text-[12px] font-semibold leading-5 text-slate-500">
+        <p className="mt-auto border-t border-[#E0D9C8]/70 pt-3 text-[14px] font-semibold leading-6 text-slate-500">
           {talent.workType} · {talent.availability}
         </p>
       </div>
@@ -1543,7 +1546,7 @@ export function JobDatabasePage({
     closingSoonTotal: number;
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(requestedPage);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
   const detailContainerRef = useRef<HTMLDivElement>(null);
   const focusedViewportIdRef = useRef<string | null>(null);
   const preferredProfileCategories = useMemo(
@@ -4245,7 +4248,7 @@ export function JobDatabasePage({
                   아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
                 </p>
               ) : null}
-              <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5')}>
+              <div className={cn('grid gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3')}>
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
