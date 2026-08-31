@@ -93,9 +93,9 @@ export function RollingBanner({
         className={cn(
           'relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-[#E0D9C8] bg-[#FAF6EF] shadow-2xs',
           effectiveVariant === 'mobile'
-            ? 'h-[clamp(170px,26dvh,225px)]'
+            ? 'h-[clamp(190px,28dvh,245px)]'
             : effectiveVariant === 'login-desktop'
-              ? 'h-[clamp(210px,32dvh,310px)]'
+              ? 'h-[clamp(270px,34dvh,390px)]'
               : 'h-[clamp(250px,32vw,380px)]',
         )}
       >
@@ -114,18 +114,18 @@ export function RollingBanner({
         <div className="flex flex-col gap-1.5 px-1 pt-2 md:pt-2.5 pb-1">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 overflow-hidden pt-2.5">
-              <span className="shrink-0 whitespace-nowrap text-sm md:text-base font-extrabold text-[#F06B4F] leading-tight">
+              <span className="shrink-0 whitespace-nowrap text-sm font-extrabold leading-tight text-[#F06B4F] md:text-lg">
                 {slide.tag}
               </span>
               <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-slate-300 mx-0.5" />
-              <strong className="truncate text-sm font-extrabold leading-tight text-[#17212B] md:text-base">
+              <strong className="truncate text-sm font-extrabold leading-tight text-[#17212B] md:text-lg">
                 {slide.title}
               </strong>
             </div>
             <button
               type="button"
               onClick={() => setIsPaused((paused) => !paused)}
-              className="mt-2.5 inline-flex items-center gap-1 rounded-full border border-slate-300 px-2 py-0.5 text-2xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              className="mt-2.5 inline-flex items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
               aria-label={isPaused ? '배너 재생' : '배너 일시정지'}
             >
               {isPaused ? <Play className="size-3" /> : <Pause className="size-3" />}
@@ -299,7 +299,7 @@ export function LoginPage() {
                 setErrorMessage('');
               }}
               className={cn(
-                'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 sm:text-sm',
+                'flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-extrabold transition-[background-color,color,box-shadow] duration-200',
                 role === 'senior'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-[#FAF7F2] hover:text-[#17212B]',
@@ -315,7 +315,7 @@ export function LoginPage() {
                 setErrorMessage('');
               }}
               className={cn(
-                'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 sm:text-sm',
+                'flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-extrabold transition-[background-color,color,box-shadow] duration-200',
                 role === 'company'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-[#FAF7F2] hover:text-[#17212B]',
@@ -327,7 +327,7 @@ export function LoginPage() {
 
           {/* Heading Pitch */}
           <div className="flex flex-col gap-1.5 text-left px-0.5">
-            <h2 className="text-[16px] font-extrabold tracking-tight text-[#17212B] leading-snug">
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[#17212B] leading-snug">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <span className="text-[#F06B4F]">기업의 가치</span>가 됩니다.
@@ -338,7 +338,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-[13px] leading-relaxed font-medium text-[#45556C]">
+            <p className="text-sm leading-relaxed font-medium text-[#45556C]">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -371,7 +371,7 @@ export function LoginPage() {
                   setErrorMessage('');
                 }}
                 placeholder="이메일을 입력하세요"
-                className="h-11 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs font-medium text-[#17212B] outline-none transition-[background-color,border-color,box-shadow] duration-200 focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20 sm:text-sm"
+                className="h-12 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-sm font-medium text-[#17212B] outline-none transition-[background-color,border-color,box-shadow] duration-200 focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
               />
             </div>
 
@@ -394,7 +394,7 @@ export function LoginPage() {
                   setErrorMessage('');
                 }}
                 placeholder="비밀번호를 입력하세요"
-                className="h-11 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-xs font-medium text-[#17212B] outline-none transition-[background-color,border-color,box-shadow] duration-200 focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20 sm:text-sm"
+                className="h-12 w-full rounded-xl border border-[#E0D9C8] bg-white px-3.5 text-sm font-medium text-[#17212B] outline-none transition-[background-color,border-color,box-shadow] duration-200 focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
               />
             </div>
 
@@ -408,7 +408,7 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -431,7 +431,7 @@ export function LoginPage() {
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D4CBB8] bg-white px-4 text-xs font-extrabold text-[#17212B] shadow-xs transition-[background-color,border-color,color,box-shadow,transform] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] hover:text-[#173F3A] hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D4CBB8] bg-white px-4 text-sm font-extrabold text-[#17212B] shadow-xs transition-[background-color,border-color,color,box-shadow,transform] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] hover:text-[#173F3A] hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none"
             >
               <svg
                 aria-hidden="true"
@@ -480,11 +480,11 @@ export function LoginPage() {
       showBack={false}
       title="경험매칭"
     >
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
+      <div className="grid w-full max-w-6xl grid-cols-1 items-center gap-10 py-6 md:my-auto md:grid-cols-12 md:gap-12 md:py-8 xl:max-w-7xl xl:gap-16">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
-        <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">
-          <div className="flex flex-col gap-2.5 items-start text-left">
-            <h2 className="text-2xl md:text-3xl lg:text-[34px] font-extrabold tracking-tight text-[#17212B] leading-[1.25]">
+        <div className="flex flex-col justify-center gap-7 py-2 md:col-span-7 lg:gap-8">
+          <div className="flex flex-col items-start gap-3 text-left">
+            <h2 className="text-3xl font-extrabold tracking-tight text-[#17212B] leading-[1.2] md:text-[2.5rem] lg:text-[3rem]">
               {role === 'senior' ? (
                 <>
                   당신의 오랜 경험이 <br className="hidden md:inline" />
@@ -497,7 +497,7 @@ export function LoginPage() {
                 </>
               )}
             </h2>
-            <p className="text-sm md:text-base lg:text-[17px] leading-relaxed font-medium text-slate-600 max-w-xl">
+            <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-600 md:text-lg lg:text-xl">
               {role === 'senior'
                 ? '자신의 경험으로 기업의 문제를 해결할 수 있도록 AI 경험 인터뷰로 매칭합니다.'
                 : '필요한 전문 프로젝트를 경험 카드로 검증된 인재에게 즉시 제안해보세요.'}
@@ -509,7 +509,7 @@ export function LoginPage() {
         </div>
 
         {/* Right Side: Role Selector Tabs & Login Form (PC: col-span-5) */}
-        <div className="md:col-span-5 my-2 flex flex-col gap-4 rounded-2xl border border-[#E0D9C8] bg-white p-6 shadow-sm md:p-7 lg:p-8">
+        <div className="my-2 flex flex-col gap-5 rounded-2xl border border-[#E0D9C8] bg-white p-7 shadow-sm md:col-span-5 md:p-8 lg:p-9">
           {/* Initial Role Choice Tabs */}
           <div
             aria-label="로그인 사용자 유형"
@@ -521,7 +521,7 @@ export function LoginPage() {
               aria-pressed={role === 'senior'}
               onClick={() => setRole('senior')}
               className={cn(
-                'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 md:text-sm',
+                'flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-extrabold transition-[background-color,color,box-shadow] duration-200 md:min-h-14 md:text-lg',
                 role === 'senior'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-white hover:text-[#17212B]',
@@ -534,7 +534,7 @@ export function LoginPage() {
               aria-pressed={role === 'company'}
               onClick={() => setRole('company')}
               className={cn(
-                'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-extrabold transition-[background-color,color,box-shadow] duration-200 md:text-sm',
+                'flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-extrabold transition-[background-color,color,box-shadow] duration-200 md:min-h-14 md:text-lg',
                 role === 'company'
                   ? 'bg-[#F06B4F] text-white shadow-xs'
                   : 'text-[#45556C] hover:bg-white hover:text-[#17212B]',
@@ -544,7 +544,7 @@ export function LoginPage() {
             </button>
           </div>
 
-          <form className="flex flex-col gap-3.5" onSubmit={submit}>
+          <form className="flex flex-col gap-5" onSubmit={submit}>
             <Field
               autoComplete="email"
               inputMode="email"
@@ -559,6 +559,7 @@ export function LoginPage() {
               spellCheck={false}
               type="email"
               value={email}
+              className="md:h-14 md:px-4 md:text-base"
             />
             <Field
               autoComplete="current-password"
@@ -572,6 +573,7 @@ export function LoginPage() {
               required
               type="password"
               value={password}
+              className="md:h-14 md:px-4 md:text-base"
             />
 
             {errorMessage ? (
@@ -584,7 +586,7 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-13 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none md:h-14 md:text-base"
             >
               {isSubmitting
                 ? '로그인 처리 중...'
@@ -607,7 +609,7 @@ export function LoginPage() {
               onClick={() => void handleGoogleSignIn()}
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D4CBB8] bg-white px-4 text-xs font-extrabold text-[#17212B] shadow-xs transition-[background-color,border-color,color,box-shadow,transform] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] hover:text-[#173F3A] hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D4CBB8] bg-white px-4 text-sm font-extrabold text-[#17212B] shadow-xs transition-[background-color,border-color,color,box-shadow,transform] duration-200 hover:border-[#173F3A] hover:bg-[#DDEBE7] hover:text-[#173F3A] hover:shadow-sm active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none md:h-14 md:text-base"
             >
               <svg
                 aria-hidden="true"
@@ -636,7 +638,7 @@ export function LoginPage() {
             </button>
             <div className="flex items-center justify-center pt-2 border-t border-[#E0D9C8]/60 mt-1">
               <Link
-                className="text-xs font-extrabold text-[#F06B4F] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#D85A3F] md:text-sm"
+                className="text-sm font-extrabold text-[#F06B4F] underline decoration-2 underline-offset-4 transition-colors duration-200 hover:text-[#D85A3F] md:text-base"
                 to={`/signup?role=${role}`}
               >
                 계정이 없나요? 회원가입
