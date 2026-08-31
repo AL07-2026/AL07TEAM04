@@ -107,7 +107,7 @@ export function LandingPage() {
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
       <KakaoBrowserNotice />
-      <SiteHeader title="이어잡 랜딩" showPageTitle={false} />
+      <SiteHeader title="이어잡 랜딩" showLogout={false} showPageTitle={false} />
 
       <main>
         <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">

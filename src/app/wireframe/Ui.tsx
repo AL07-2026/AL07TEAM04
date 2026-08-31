@@ -100,11 +100,18 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
 type SiteHeaderProps = {
   activeNav?: SeniorNav | CompanyNav;
   role?: Role;
+  showLogout?: boolean;
   showPageTitle?: boolean;
   title: string;
 };
 
-export function SiteHeader({ activeNav, role, showPageTitle = true, title }: SiteHeaderProps) {
+export function SiteHeader({
+  activeNav,
+  role,
+  showLogout = true,
+  showPageTitle = true,
+  title,
+}: SiteHeaderProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -125,6 +132,7 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
   };
 
   const signOutToLanding = async () => {
+    setIsMenuOpen(false);
     if (user) await signOut();
     void navigate('/');
   };
@@ -170,15 +178,17 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
             >
               <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              onClick={() => void signOutToLanding()}
-              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#FFF0EC] hover:text-[#C7503B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
-              aria-label="로그아웃"
-              title="로그아웃"
-            >
-              <LogOut className="size-5" strokeWidth={1.8} aria-hidden="true" />
-            </button>
+            {showLogout && user ? (
+              <button
+                type="button"
+                onClick={() => void signOutToLanding()}
+                className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#FFF0EC] hover:text-[#C7503B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LogOut className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
@@ -219,7 +229,7 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
                 <X className="size-5" strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
-            <nav className="px-4 py-5" aria-label="주요 메뉴">
+            <nav className="flex min-h-0 flex-1 flex-col px-4 py-5" aria-label="주요 메뉴">
               <div className="flex flex-col gap-1">
                 {navItems[menuRole].map((item) => {
                   const IconComponent = item.Icon;
@@ -242,6 +252,16 @@ export function SiteHeader({ activeNav, role, showPageTitle = true, title }: Sit
                   );
                 })}
               </div>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => void signOutToLanding()}
+                  className="mt-auto flex min-h-12 w-full items-center gap-3 rounded-md border-t border-[#E0D9C8] px-3 pt-4 text-left text-[0.98rem] font-extrabold text-[#C7503B] transition-colors hover:bg-[#FFF0EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99]"
+                >
+                  <LogOut className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span>로그아웃</span>
+                </button>
+              ) : null}
             </nav>
           </aside>
         </div>
