@@ -341,4 +341,13 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(screen.getByText('010-5271-3612')).toBeInTheDocument();
     expect(screen.getByText('생활용품 제조')).toBeInTheDocument();
   });
+
+  it('회사 기본정보 로그아웃은 시니어 경로가 아닌 공개 홈으로 이동한다', async () => {
+    window.history.pushState({}, '', '/company-info');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '저장된 회사 정보' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/'));
+    expect(window.location.pathname).not.toContain('/senior');
+  });
 });
