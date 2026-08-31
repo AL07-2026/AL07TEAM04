@@ -143,8 +143,19 @@ input:focus-visible {
   line-height: 1.55;
 }
 
-.eojob-readable :is(p, li, label, input, select, textarea, button) {
+.eojob-readable {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.eojob-readable :is(p, li, label, button, span, strong, dd, dt, h1, h2, h3, h4) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.eojob-readable :is(input, select, textarea) {
   overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .eojob-readable :is(.whitespace-nowrap, [class*='whitespace-nowrap']) {

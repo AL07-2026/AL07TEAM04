@@ -265,6 +265,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<UserProfile> => {
     setError(null);
     setLoading(true);
+
+    if (canUseDemoAuth(email)) {
+      const defaultName =
+        email === 'sehddnr2@gmail.com'
+          ? '이동욱'
+          : email?.split('@')[0] || (targetRole === 'senior' ? '이동욱' : '채용담당자');
+      const demoProfile: UserProfile = {
+        uid: 'demo-user-' + Date.now(),
+        email: email || 'demo@eojob.com',
+        name: defaultName,
+        role: targetRole,
+      };
+      saveUserLocal(demoProfile);
+      setLoading(false);
+      return demoProfile;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;

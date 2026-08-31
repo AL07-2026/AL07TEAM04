@@ -180,6 +180,16 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
   });
 
+  it('외부 공고 ID가 같아도 제목이 다르면 서로 다른 공고로 유지한다', () => {
+    const firstPosting = { ...companyProject, id: 'shared-worknet-id', title: '첫 번째 추천 공고' };
+    const secondPosting = { ...companyProject, id: 'shared-worknet-id', title: '두 번째 추천 공고' };
+
+    expect(mergeSeniorPostings([], [firstPosting, secondPosting])).toEqual([
+      firstPosting,
+      secondPosting,
+    ]);
+  });
+
   it('새로고침 후에도 1순위 직무를 기업 공개 공고 필터에 적용한다', () => {
     const selectedCategory = resolveSeniorCategoryFilter('all', 'design');
     const designCompanyProject = {

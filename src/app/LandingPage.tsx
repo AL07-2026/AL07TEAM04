@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   CreditCard,
+  ExternalLink,
   FileText,
   Handshake,
   Home,
@@ -46,6 +47,63 @@ const features = [
   },
 ] as const;
 
+function isKakaoInAppBrowser() {
+  if (typeof window === 'undefined') return false;
+  return /kakaotalk/i.test(window.navigator.userAgent);
+}
+
+function KakaoBrowserNotice() {
+  const [isVisible, setIsVisible] = useState(() => isKakaoInAppBrowser());
+
+  if (!isVisible) return null;
+
+  const openExternalBrowser = () => {
+    const currentUrl = window.location.href;
+    window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(currentUrl)}`;
+  };
+
+  return (
+    <section
+      className="border-b border-[#f4d8d1] bg-[#fff4f1] px-5 py-4 text-[#17212B] sm:px-8"
+      aria-label="카카오톡 브라우저 안내"
+    >
+      <div className="mx-auto grid max-w-6xl grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 sm:grid-cols-[48px_minmax(0,1fr)_auto_auto]">
+        <span className="grid size-11 place-items-center rounded-full bg-[#F06B4F] text-white shadow-[0_8px_18px_rgba(240,107,79,0.24)] sm:size-12">
+          <Sparkles className="size-6" strokeWidth={1.8} aria-hidden="true" />
+        </span>
+
+        <div className="min-w-0">
+          <p className="text-[1.05rem] font-black leading-tight text-[#D85F48] sm:text-[1.125rem]">
+            카카오톡 브라우저로 접속 중
+          </p>
+          <p className="mt-1 max-w-[38rem] text-[0.92rem] font-semibold leading-[1.55] text-[#53606E] sm:text-[1rem]">
+            구글 보안 정책으로 인해 크롬이나 사파리<span className="whitespace-nowrap">에서</span>{' '}
+            더 원활하게 로그인하실 수 있습니다.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={openExternalBrowser}
+          className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#173F3A] px-5 text-[0.95rem] font-black text-white shadow-[0_8px_20px_rgba(23,63,58,0.22)] transition hover:bg-[#21544E] active:scale-[0.98] sm:col-span-1 sm:h-12 sm:px-6 sm:text-[1rem]"
+        >
+          <span>기본 브라우저로 열기</span>
+          <ExternalLink className="size-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsVisible(false)}
+          className="col-start-3 row-start-1 grid size-10 place-items-center rounded-full text-slate-500 transition hover:bg-white/70 hover:text-[#17212B] active:scale-[0.96] sm:col-start-4"
+          aria-label="카카오톡 브라우저 안내 닫기"
+        >
+          <X className="size-5" strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function LandingPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -55,6 +113,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
+      <KakaoBrowserNotice />
       <header className="sticky top-0 z-50 border-b border-[#e7dfcb] bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
           <button

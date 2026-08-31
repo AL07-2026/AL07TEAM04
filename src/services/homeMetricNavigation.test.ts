@@ -20,11 +20,20 @@ describe('home metric navigation contracts', () => {
     expect(getActiveProposalsDestination()).toBe('/senior/proposals?filter=active');
   });
 
-  it('hands the exact home recommendation category to the existing project list route', () => {
+  it('hands the exact home recommendation context to the project database route', () => {
     expect(getRecommendedProjectsDestination('marketing-sales')).toBe(
-      '/senior/projects?recommendedCategory=marketing-sales',
+      '/senior/project-database?recommendedCategory=marketing-sales',
     );
-    expect(getRecommendedProjectsDestination()).toBe('/senior/projects');
+    expect(
+      getRecommendedProjectsDestination('marketing-sales', {
+        page: 3,
+        projectId: 'best-match',
+        projectTitle: '마케팅 운영 리뉴얼',
+      }),
+    ).toBe(
+      '/senior/project-database?recommendedCategory=marketing-sales&focusProject=best-match&focusTitle=%EB%A7%88%EC%BC%80%ED%8C%85+%EC%9A%B4%EC%98%81+%EB%A6%AC%EB%89%B4%EC%96%BC&page=3',
+    );
+    expect(getRecommendedProjectsDestination()).toBe('/senior/project-database');
     expect(shouldMergePublicProjectsForDiscovery(true)).toBe(false);
     expect(shouldMergePublicProjectsForDiscovery(false)).toBe(true);
   });
@@ -42,11 +51,11 @@ describe('home metric navigation contracts', () => {
     ]);
 
     expect(highest).toEqual({ id: 'best', seniorFitScore: 91 });
-    expect(getHighestFitDestination(highest?.id)).toBe('/senior/projects?focusProject=best');
+    expect(getHighestFitDestination(highest?.id)).toBe('/senior/project-database?focusProject=best');
   });
 
   it('keeps the project list as a useful fallback when no highest-fit project exists', () => {
     expect(getHighestFitProject([])).toBeNull();
-    expect(getHighestFitDestination()).toBe('/senior/projects');
+    expect(getHighestFitDestination()).toBe('/senior/project-database');
   });
 });

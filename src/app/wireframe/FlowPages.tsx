@@ -672,6 +672,15 @@ function HomeRecommendationRow({
   );
 }
 
+function rememberHomeRecommendationPosting(posting: JobPosting) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem('eojob_home_focus_project', JSON.stringify(posting));
+  } catch {
+    // Ignore unavailable session storage.
+  }
+}
+
 export function SeniorHomePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
@@ -913,7 +922,7 @@ export function SeniorHomePage() {
               AI 경험 인터뷰 시작하기
             </strong>
             <span className="text-xs md:text-base font-medium text-slate-600">
-              말로 편하게 답하면 전용 경험 카드가 자동 완성됩니다.
+              말로 편하게 답하면 전용 경험 카드가 자동 <span className="whitespace-nowrap">완성됩니다.</span>
             </span>
           </div>
 
@@ -1010,8 +1019,18 @@ export function SeniorHomePage() {
           <span className="text-slate-300">|</span>
           <span className="text-slate-700">
             {isExperienceRecommendationApplied
-              ? 'AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천 공고입니다.'
-              : '경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5 공고입니다.'}
+              ? (
+                <>
+                  AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천{' '}
+                  <span className="whitespace-nowrap">공고입니다.</span>
+                </>
+              )
+              : (
+                <>
+                  경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5{' '}
+                  <span className="whitespace-nowrap">공고입니다.</span>
+                </>
+              )}
           </span>
         </div>
 
@@ -1043,11 +1062,18 @@ export function SeniorHomePage() {
               <HomeRecommendationRow
                 isMobile={isMobile}
                 job={job}
-                key={job.id}
+                key={`${job.id}-${job.title}-${idx}`}
                 rank={idx + 1}
-                onClick={() =>
-                  void navigate(`/senior/projects?jobId=${job.id}&focusProject=${job.id}`)
-                }
+                onClick={() => {
+                  rememberHomeRecommendationPosting(job);
+                  void navigate(
+                    getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined, {
+                      page: 1,
+                      projectId: job.id,
+                      projectTitle: job.title,
+                    }),
+                  );
+                }}
               />
             ))}
           </div>
@@ -4220,7 +4246,8 @@ export function SeniorProfilePage() {
               아직 대표 경험 카드가 없습니다.
             </p>
             <p className="text-[13px] font-medium leading-5 text-slate-600">
-              AI 인터뷰에서 실제 문제·역할·실행·결과를 답하면 이 영역에 저장된 결과가 표시됩니다.
+              AI 인터뷰에서 실제 문제·역할·실행·결과를 답하면{' '}
+              <span className="whitespace-nowrap">이 영역에</span> 저장된 결과가 표시됩니다.
             </p>
           </div>
         )}
@@ -4352,8 +4379,8 @@ export function CompanyProfilePage() {
   }, [user?.uid]);
 
   const companyName = companyProfile?.companyName || '회사명 미입력';
-  const managerName = companyProfile?.managerName || '담당자 정보 미입력';
-  const email = companyProfile?.email || '이메일 정보 미입력';
+  const managerName = companyProfile?.managerName || user?.name || '담당자 정보 미입력';
+  const email = companyProfile?.email || user?.email || '이메일 정보 미입력';
   const companyAddress = companyProfile?.companyAddress || '주소 정보 미입력';
   const phone = companyProfile?.phone || '연락처 정보 미입력';
   const industry = companyProfile?.industry || '산업 정보 미입력';
