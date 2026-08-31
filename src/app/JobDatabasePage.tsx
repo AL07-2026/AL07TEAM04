@@ -11,23 +11,32 @@ import {
   CircleAlert,
   ClipboardCheck,
   Coins,
+  Code2,
   Copy,
+  Database,
   ExternalLink,
+  Factory,
   FileText,
   Filter,
   Loader2,
   Mail,
   MapPin,
+  Megaphone,
   Mic,
+  Palette,
   Plus,
   RefreshCw,
   Search,
   Send,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
   UserRound,
+  UsersRound,
+  Workflow,
+  Wrench,
   X,
 } from 'lucide-react';
 import {
@@ -236,6 +245,64 @@ const formatFileSize = (size: number) => `${(size / 1024 / 1024).toFixed(1)}MB`;
 
 function getRequiredFormValue(formData: FormData, key: string) {
   return ((formData.get(key) as string) || '').trim();
+}
+
+function PostingCategoryVisual({ category }: { category: ProjectCategory }) {
+  const className = 'size-9 sm:size-10';
+
+  switch (category) {
+    case 'design-brand':
+      return <Palette className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'marketing-sales':
+    case 'growth':
+      return <Megaphone className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'hr-strategy':
+      return <UsersRound className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'r-and-d-manufacturing':
+      return <Factory className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'security':
+      return <ShieldCheck className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'ai-automation':
+    case 'legacy-modernization':
+      return <Workflow className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'operations':
+      return <Wrench className={className} strokeWidth={1.8} aria-hidden="true" />;
+    case 'data-platform':
+      return <Database className={className} strokeWidth={1.8} aria-hidden="true" />;
+    default:
+      return <Code2 className={className} strokeWidth={1.8} aria-hidden="true" />;
+  }
+}
+
+function getPostingVisualTone(category: ProjectCategory) {
+  switch (category) {
+    case 'design-brand':
+      return 'bg-[#F2EEFB] text-[#6755A0]';
+    case 'marketing-sales':
+    case 'growth':
+      return 'bg-[#FFF0E7] text-[#B84F2D]';
+    case 'r-and-d-manufacturing':
+    case 'operations':
+      return 'bg-[#EEF3F6] text-[#3F6178]';
+    default:
+      return 'bg-[#E7F3EF] text-[#1F5A50]';
+  }
+}
+
+function getPostingPhotoPosition(category: ProjectCategory) {
+  switch (category) {
+    case 'design-brand':
+      return '100% 0%';
+    case 'r-and-d-manufacturing':
+    case 'operations':
+      return '0% 100%';
+    case 'marketing-sales':
+    case 'growth':
+    case 'hr-strategy':
+      return '100% 100%';
+    default:
+      return '0% 0%';
+  }
 }
 
 function getOptionalFormValue(formData: FormData, key: string, fallback: string) {
@@ -683,33 +750,36 @@ export function PostingCard({
   }
 
   return (
-    <article
+    <button
+      type="button"
       aria-current={selected ? 'true' : undefined}
+      aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative w-full max-w-full cursor-pointer rounded-2xl p-4 text-left transition-all duration-200 min-w-0',
+        'group relative flex min-h-[246px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
         selected
-          ? 'bg-[#F2FAF7] shadow-[inset_3px_0_0_#173F3A,0_4px_12px_rgba(23,63,58,0.08)]'
-          : 'bg-white shadow-xs hover:bg-[#FAFDFB] hover:shadow-md',
+          ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20'
+          : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      {/* Top: Company Name + Category & Top-Right Score/Tag */}
-      <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-        <div className="flex items-center gap-1.5 min-w-0 max-w-[72%]">
-          <span className="truncate text-[13px] font-extrabold text-[#173F3A]">
-            {posting.companyName}
-          </span>
-          {posting.industry ? (
-            <>
-              <span className="text-slate-300 text-[11px]">·</span>
-              <span className="truncate text-[12px] font-medium text-slate-500">
-                {posting.industry}
-              </span>
-            </>
-          ) : null}
+      <div className={cn('flex h-[5.5rem] items-center justify-between px-4 sm:px-5', getPostingVisualTone(posting.category))}>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
+            <PostingCategoryVisual category={posting.category} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[18px] font-black leading-tight sm:text-[20px]">{posting.companyName}</p>
+            <p className="mt-0.5 truncate text-[12px] font-bold opacity-75">{posting.industry || categoryLabel}</p>
+          </div>
         </div>
+        <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
+      </div>
 
-        <div className="shrink-0 ml-auto">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-md bg-[#F8FCFB] px-2 py-1 text-[11px] font-extrabold text-[#173F3A]">
+            {categoryLabel}
+          </span>
           {showScore ? (
             <span
               className={cn(
@@ -729,64 +799,52 @@ export function PostingCard({
               <span>{displayScore}점</span>
             </span>
           ) : (
-            <span className="rounded-full bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A] shadow-2xs">
+            <span className="rounded-full bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-bold text-[#173F3A]">
               검증 공고
             </span>
           )}
         </div>
-      </div>
 
-      {/* Title */}
-      <h3 className="mt-1.5 text-[15.5px] font-extrabold leading-snug text-[#17212B] min-w-0 break-keep line-clamp-2 transition-colors group-hover:text-[#173F3A]">
-        <button
-          className="line-clamp-2 rounded-sm text-left transition-colors hover:text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
-          onClick={(event) => {
-            event.stopPropagation();
-            onSelect();
-          }}
-          type="button"
-        >
+        <h3 className="mt-3 line-clamp-2 text-[17px] font-extrabold leading-6 text-[#17212B] [text-wrap:balance] group-hover:text-[#173F3A] sm:text-[18px]">
           {cleanPositionTitle}
-        </button>
-      </h3>
+        </h3>
 
-      {/* Badges / Tags */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0">
-        {badges.map((badge, idx) => (
-          <span
-            className={cn(
-              'rounded-md px-2 py-0.5 text-[11px] font-bold truncate',
-              badge.isMint
-                ? 'bg-[#DDEBE7] text-[#173F3A]'
-                : 'bg-[#FAF7F2] text-slate-600',
-            )}
-            key={`${badge.label}-${idx}`}
-          >
-            {badge.label}
-          </span>
-        ))}
-      </div>
-
-      {/* Metadata & Salary Footer */}
-      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 text-[12px]">
-        <div className="flex items-center gap-1.5 text-slate-500 truncate min-w-0">
-          <span className="truncate">{simpleLocation}</span>
-          <span className="text-slate-300">·</span>
-          <span className="shrink-0">{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
-          <span className="text-slate-300">·</span>
-          <span className="shrink-0">마감 {getDeadlineText(posting)}</span>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {badges.slice(0, 2).map((badge, idx) => (
+            <span
+              className={cn(
+                'rounded-md px-2 py-1 text-[11px] font-bold',
+                badge.isMint ? 'bg-[#DDEBE7] text-[#173F3A]' : 'bg-[#FAF7F2] text-slate-600',
+              )}
+              key={`${badge.label}-${idx}`}
+            >
+              {badge.label}
+            </span>
+          ))}
         </div>
 
-        <span className="shrink-0 font-black text-[13.5px] text-[#F06B4F] ml-2">
-          {simpleSalary}
-        </span>
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-[#E0D9C8]/70 pt-3 text-[12px]">
+          <div className="min-w-0 font-semibold leading-5 text-slate-500">
+            <p className="truncate">{simpleLocation} · {posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</p>
+            <p className="mt-0.5">마감 {getDeadlineText(posting)}</p>
+          </div>
+          <span className="shrink-0 text-[14px] font-black text-[#F06B4F]">{simpleSalary}</span>
+        </div>
       </div>
-    </article>
+      <div
+        aria-hidden="true"
+        className="h-28 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        style={{
+          backgroundImage: "url('/job-card-scenes.png')",
+          backgroundPosition: getPostingPhotoPosition(posting.category),
+          backgroundSize: '200% 200%',
+        }}
+      />
+    </button>
   );
 }
 
 function RecommendedTalentCard({
-  onPropose,
   onSelect,
   selected,
   talent,
@@ -799,33 +857,34 @@ function RecommendedTalentCard({
   const fitTone = getFitScoreTone(talent.matchScore);
 
   return (
-    <article
+    <button
+      type="button"
       aria-current={selected ? 'true' : undefined}
+      aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'w-full max-w-full cursor-pointer overflow-hidden rounded-2xl bg-white p-4 text-left shadow-xs transition duration-200 hover:shadow-md hover:bg-[#FAFDFB]',
-        selected && 'bg-[#F2FAF7] shadow-sm ring-2 ring-[#173F3A]',
+        'group flex min-h-[300px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
+        selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20' : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A]">
-            <UserRound className="size-5" />
+      <div className="flex items-center justify-between gap-3 bg-[#E7F3EF] px-4 py-4 text-[#173F3A] sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 text-[#173F3A] shadow-2xs">
+            <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <h3 className="truncate text-[16px] font-extrabold text-[#17212B]">{talent.name}</h3>
-              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-500">예시 인재</span>
-            </div>
-            <p className="mt-0.5 truncate text-[12px] font-bold text-slate-500">
-              {talent.career} · {talent.location}
-            </p>
+            <p className="truncate text-[20px] font-black leading-tight">{talent.name}</p>
+            <p className="mt-0.5 truncate text-[12px] font-bold opacity-75">{talent.career} · {talent.location}</p>
           </div>
         </div>
+        <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
+      </div>
+
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
           className={cn(
-            'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+            'inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
             fitTone.containerClassName,
             fitTone.scoreClassName,
           )}
@@ -840,19 +899,19 @@ function RecommendedTalentCard({
           />
           <span>{talent.matchScore}점</span>
         </span>
-      </div>
 
-      <p className="mt-3 line-clamp-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
-        {talent.headline}
-      </p>
-      <p className="mt-1.5 line-clamp-1 text-[12px] font-bold text-[#173F3A]">
-        매칭 프로젝트 · {talent.projectTitle}
-      </p>
+        <h3 className="mt-3 line-clamp-2 text-[18px] font-extrabold leading-7 text-[#17212B] [text-wrap:balance]">
+          {talent.headline}
+        </h3>
+        <p className="mt-2 line-clamp-1 text-[12px] font-extrabold text-[#173F3A]">
+          연결 프로젝트 · <span>{talent.projectTitle}</span>
+        </p>
+        <p className="mt-2 line-clamp-1 text-[12px] font-extrabold text-[#173F3A]">대표 경험</p>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {talent.skills.map((skill) => (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {talent.skills.slice(0, 2).map((skill) => (
           <span
-            className="rounded-full bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A] shadow-2xs"
+            className="rounded-md bg-[#F8FCFB] px-2 py-1 text-[11px] font-extrabold text-[#173F3A]"
             key={skill}
           >
             {skill}
@@ -860,28 +919,53 @@ function RecommendedTalentCard({
         ))}
       </div>
 
-      <ul className="mt-3 space-y-1.5 text-[12px] font-semibold leading-5 text-slate-600">
-        {talent.evidence.slice(0, 2).map((item) => (
-          <li className="flex items-start gap-1.5" key={item}>
-            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[#173F3A]" />
-            <span className="line-clamp-1">{item}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-3">
-        <span className="min-w-0 truncate text-[12px] font-extrabold text-slate-500">
+        <p className="mt-auto border-t border-[#E0D9C8]/70 pt-3 text-[12px] font-semibold leading-5 text-slate-500">
           {talent.workType} · {talent.availability}
-        </span>
-        <button
-          className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] px-4 py-1.5 text-[13px] font-extrabold text-white shadow-2xs transition-all duration-200 hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]"
-          disabled
-          onClick={(event) => { event.stopPropagation(); onPropose(); }}
-          type="button"
-        >
-          데모 전용
-        </button>
+        </p>
       </div>
+    </button>
+  );
+}
+
+function RecommendedTalentDetail({ talent, project }: { talent: RecommendedTalent; project?: JobPosting }) {
+  return (
+    <article className="space-y-5 rounded-xl bg-white p-5 sm:p-7">
+      <header className="border-b border-[#E0D9C8]/70 pb-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-[#E7F3EF] text-[#173F3A]">
+              <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[22px] font-black leading-tight text-[#17212B]">{talent.name}</p>
+              <p className="mt-1 text-[14px] font-bold text-[#53606E]">{talent.career} · {talent.location}</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-[#E7F3EF] px-3 py-1.5 text-[13px] font-black text-[#173F3A]">추천 적합도 {talent.matchScore}점</span>
+        </div>
+        <h2 className="mt-4 text-[22px] font-extrabold leading-8 text-[#17212B] [text-wrap:balance]">{talent.headline}</h2>
+      </header>
+
+      <section>
+        <h3 className="text-[16px] font-extrabold text-[#173F3A]">핵심 경험과 역량</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {talent.skills.map((skill) => <span className="rounded-md bg-[#F8FCFB] px-3 py-2 text-[13px] font-extrabold text-[#173F3A]" key={skill}>{skill}</span>)}
+        </div>
+        <ul className="mt-4 grid gap-2.5 text-[14px] font-medium leading-6 text-[#344054]">
+          {talent.evidence.map((item) => (
+            <li className="flex items-start gap-2" key={item}>
+              <CheckCircle2 className="mt-1 size-4 shrink-0 text-[#173F3A]" aria-hidden="true" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-lg bg-[#F8FCFB] p-4">
+        <p className="text-[12px] font-extrabold text-[#173F3A]">매칭 프로젝트</p>
+        <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">{project?.title || talent.projectTitle}</p>
+        <p className="mt-1 text-[13px] font-medium text-[#53606E]">{talent.workType} · {talent.availability}</p>
+      </section>
     </article>
   );
 }
@@ -1523,7 +1607,7 @@ export function JobDatabasePage({
     Boolean(applyingPosting) ||
     Boolean(completedApplication) ||
     isInterviewBypassConfirmOpen ||
-    (isMobile && isMobileDetailOpen);
+    isMobileDetailOpen;
 
   useDocumentScrollLock(isModalOpen);
 
@@ -4092,12 +4176,7 @@ export function JobDatabasePage({
 
       <div
         aria-busy={isLoadingPostings || isFilterTransition ? 'true' : 'false'}
-        className={cn(
-          'grid gap-4',
-          role === 'company' || isMobile || filteredPostings.length === 0
-            ? 'grid-cols-1'
-            : 'lg:grid-cols-[0.9fr_1.1fr]',
-        )}
+        className="grid gap-4"
       >
         {isLoadingPostings && !isFilterTransition ? (
           <div className="col-span-full rounded-2xl border border-[#E0D9C8] bg-white p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center gap-3">
@@ -4166,6 +4245,7 @@ export function JobDatabasePage({
                   아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
                 </p>
               ) : null}
+              <div className={cn('grid gap-3.5', isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5')}>
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
@@ -4178,8 +4258,9 @@ export function JobDatabasePage({
                           trackJobView(project.id, project.companyName, project.title);
                           setSelectedTalentId(talent.id);
                           setSelectedPostingTarget(getPostingSelectionTarget(project));
+                          setIsMobileDetailOpen(true);
                         }}
-                        selected={selectedTalentId === talent.id}
+                        selected={effectiveSelectedTalentId === talent.id}
                         talent={talent}
                       />
                     );
@@ -4195,9 +4276,7 @@ export function JobDatabasePage({
                         activeFocusProjectRef.current = emptyPostingSelection;
                         setIsHomeFocusActive(false);
                         setSelectedPostingTarget(getPostingSelectionTarget(posting));
-                        if (isMobile) {
-                          setIsMobileDetailOpen(true);
-                        }
+                        setIsMobileDetailOpen(true);
                       }}
                       posting={posting}
                       profile={seniorProfile}
@@ -4206,6 +4285,7 @@ export function JobDatabasePage({
                       selected={selectedPosting?.id === posting.id}
                     />
                   ))}
+              </div>
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
@@ -4285,41 +4365,34 @@ export function JobDatabasePage({
               )}
             </section>
 
-            {role === 'senior' && !isMobile && selectedPosting ? (
-              <div
-                ref={detailContainerRef}
-                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 pr-1 shadow-xs transition-all [scrollbar-gutter:stable]"
-              >
-                <DetailPanel
-                  activePrimaryCategory={effectiveSelectedCategory}
-                  experienceCard={interviewCard}
-                  onApply={() => handleApply(selectedPosting)}
-                  posting={selectedPosting}
-                  profile={seniorProfile}
-                  role={role}
-                  useServerScore={isServerSearchActive}
-                />
-              </div>
-            ) : null}
           </>
         )}
       </div>
 
-      {/* Mobile Detail Popup Modal */}
-      {role === 'senior' && isMobile && isMobileDetailOpen && selectedPosting ? (
+      {/* Selected card detail */}
+      {isMobileDetailOpen && ((role === 'senior' && selectedPosting) || (role === 'company' && selectedTalent)) ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none bg-black/60 p-0 sm:p-4 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          aria-modal="true"
+          className={cn(
+            'fixed inset-0 z-50 flex overflow-hidden overscroll-none bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200',
+            isMobile ? 'items-end justify-center p-0' : 'items-center justify-center p-6',
+          )}
           onClick={() => setIsMobileDetailOpen(false)}
+          role="dialog"
         >
           <div
-            className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom duration-300"
+            className={cn(
+              'relative flex flex-col overflow-hidden bg-white shadow-2xl',
+              isMobile
+                ? 'max-h-[88vh] w-full max-w-lg rounded-t-xl animate-in slide-in-from-bottom duration-300'
+                : 'max-h-[calc(100vh-4rem)] w-[min(68vw,72rem)] rounded-xl animate-in fade-in zoom-in-95 duration-200',
+            )}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[#E0D9C8] bg-[#F8FCFB] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-[#E0D9C8] bg-[#F8FCFB] px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
-                  프로젝트 상세 정보
+                  {role === 'senior' ? '기업 공고 상세' : '추천 인재 상세'}
                 </span>
               </div>
               <button
@@ -4332,20 +4405,24 @@ export function JobDatabasePage({
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="overflow-y-auto overscroll-contain p-4">
-              <DetailPanel
-                activePrimaryCategory={effectiveSelectedCategory}
-                experienceCard={interviewCard}
-                onApply={() => {
-                  setIsMobileDetailOpen(false);
-                  handleApply(selectedPosting);
-                }}
-                posting={selectedPosting}
-                profile={seniorProfile}
-                role={role}
-                useServerScore={isServerSearchActive}
-              />
+            <div ref={detailContainerRef} className="overflow-y-auto overscroll-contain p-4 sm:p-5">
+              {role === 'senior' && selectedPosting ? (
+                <DetailPanel
+                  activePrimaryCategory={effectiveSelectedCategory}
+                  experienceCard={interviewCard}
+                  onApply={() => {
+                    setIsMobileDetailOpen(false);
+                    handleApply(selectedPosting);
+                  }}
+                  posting={selectedPosting}
+                  profile={seniorProfile}
+                  role={role}
+                  useServerScore={isServerSearchActive}
+                />
+              ) : null}
+              {role === 'company' && selectedTalent ? (
+                <RecommendedTalentDetail talent={selectedTalent} project={selectedPosting} />
+              ) : null}
             </div>
           </div>
         </div>
