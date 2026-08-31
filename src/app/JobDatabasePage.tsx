@@ -274,29 +274,72 @@ function PostingCategoryVisual({ category }: { category: ProjectCategory }) {
   }
 }
 
-type PostingScoreTone = {
+type PostingHighlightKey = 'fit' | 'deadline' | 'latest' | 'default';
+
+type PostingHighlightTone = {
   headerClassName: string;
+  key: PostingHighlightKey;
   label: string;
-  minScore: number;
 };
 
-const postingScoreTones: PostingScoreTone[] = [
-  { headerClassName: 'bg-[#FFF0F3] text-[#17212B]', label: 'AI 매칭 90점 이상', minScore: 90 },
-  { headerClassName: 'bg-[#FFF2E6] text-[#17212B]', label: 'AI 매칭 80점 이상', minScore: 80 },
-  { headerClassName: 'bg-[#FFF9D8] text-[#17212B]', label: 'AI 매칭 70점 이상', minScore: 70 },
-  { headerClassName: 'bg-[#EEF8E9] text-[#17212B]', label: 'AI 매칭 60점 이상', minScore: 60 },
-  { headerClassName: 'bg-[#EAF8FA] text-[#17212B]', label: 'AI 매칭 50점 이상', minScore: 50 },
-  { headerClassName: 'bg-[#ECF4FF] text-[#17212B]', label: 'AI 매칭 40점 이상', minScore: 40 },
-  { headerClassName: 'bg-[#F4EEFF] text-[#17212B]', label: 'AI 매칭 30점 이상', minScore: 30 },
-  { headerClassName: 'bg-[#F4F5F7] text-[#17212B]', label: 'AI 매칭 0~29점', minScore: 0 },
-];
+const postingHighlightTones: Record<PostingHighlightKey, PostingHighlightTone> = {
+  fit: {
+    headerClassName: 'bg-[#FFF0EC] text-[#B9472D]',
+    key: 'fit',
+    label: '적합도 상위 10%',
+  },
+  deadline: {
+    headerClassName: 'bg-[#F1ECFA] text-[#654A9B]',
+    key: 'deadline',
+    label: '마감 1개월 이내',
+  },
+  latest: {
+    headerClassName: 'bg-[#E7F3EF] text-[#176257]',
+    key: 'latest',
+    label: '최근 1개월 등록',
+  },
+  default: {
+    headerClassName: 'bg-[#EEF3F6] text-[#2E5572]',
+    key: 'default',
+    label: '일반 추천',
+  },
+};
 
-function getPostingScoreTone(score: number) {
-  const fallbackTone = postingScoreTones[postingScoreTones.length - 1];
-  if (!fallbackTone) {
-    throw new Error('Posting score tones must include a fallback tone.');
-  }
-  return postingScoreTones.find((tone) => score >= tone.minScore) ?? fallbackTone;
+function parsePostingDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isWithinNextMonth(value?: string) {
+  const date = parsePostingDate(value);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextMonth = new Date(today);
+  nextMonth.setDate(nextMonth.getDate() + 31);
+  return date.getTime() >= today.getTime() && date.getTime() <= nextMonth.getTime();
+}
+
+function isWithinPreviousMonth(value?: string) {
+  const date = parsePostingDate(value);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const previousMonth = new Date(today);
+  previousMonth.setDate(previousMonth.getDate() - 31);
+  return date.getTime() >= previousMonth.getTime() && date.getTime() <= today.getTime();
+}
+
+function getPostingIdentityKey(posting: JobPosting) {
+  return `${posting.id}::${posting.title}`;
+}
+
+function getPostingHighlightTone(posting: JobPosting, topFitPostingKeys: Set<string>) {
+  if (topFitPostingKeys.has(getPostingIdentityKey(posting))) return postingHighlightTones.fit;
+  if (isWithinNextMonth(posting.deadline)) return postingHighlightTones.deadline;
+  if (isWithinPreviousMonth(posting.postedAt)) return postingHighlightTones.latest;
+  return postingHighlightTones.default;
 }
 
 const postingPhotoPositions = [
@@ -776,6 +819,7 @@ function shouldShowScoreBadge(
 export function PostingCard({
   activePrimaryCategory,
   experienceCard,
+  highlightTone = postingHighlightTones.default,
   onSelect,
   posting,
   profile,
@@ -786,6 +830,7 @@ export function PostingCard({
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
+  highlightTone?: PostingHighlightTone;
   onApply?: (posting: JobPosting) => void;
   onSelect: () => void;
   posting: JobPosting;
@@ -804,7 +849,6 @@ export function PostingCard({
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
   const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
-  const scoreTone = getPostingScoreTone(displayScore);
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
@@ -828,12 +872,12 @@ export function PostingCard({
       className={cn(
         'group relative flex min-h-[300px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[340px]',
         selected
-          ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20'
-          : 'border-[#E0D9C8] hover:border-[#7AA99E]',
+          ? 'border-[#C9D0D8] ring-2 ring-[#173F3A]/15'
+          : 'border-[#D9DEE6] hover:border-[#C9D0D8]',
       )}
       onClick={onSelect}
     >
-      <div className={cn('flex min-h-[5.75rem] items-center px-4 py-3.5 sm:px-5', scoreTone.headerClassName)}>
+      <div className={cn('flex min-h-[5.75rem] items-center px-4 py-3.5 sm:px-5', highlightTone.headerClassName)}>
         <div className="flex min-w-0 items-center gap-3.5">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
             <PostingCategoryVisual category={posting.category} />
@@ -841,7 +885,7 @@ export function PostingCard({
           <div className="min-w-0">
             <p className="text-[24px] font-black leading-tight text-balance [word-break:keep-all] sm:text-[26px]">{posting.companyName}</p>
             <p className="mt-1 text-[13px] font-bold leading-5 opacity-75 [word-break:keep-all]">{posting.industry || categoryLabel}</p>
-            <p className="sr-only">{scoreTone.label}</p>
+            <p className="sr-only">{highlightTone.label}</p>
           </div>
         </div>
       </div>
@@ -898,7 +942,7 @@ export function PostingCard({
       </div>
       <div
         aria-hidden="true"
-        className="mt-auto h-32 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
+        className="mt-auto h-32 shrink-0 border-t border-[#D9DEE6]/80 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
           backgroundPosition: getPostingPhotoPosition(posting, visualIndex),
@@ -928,7 +972,7 @@ function RecommendedTalentCard({
       aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
         'group flex min-h-[250px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[280px]',
-        selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20' : 'border-[#E0D9C8] hover:border-[#7AA99E]',
+        selected ? 'border-[#C9D0D8] ring-2 ring-[#173F3A]/15' : 'border-[#D9DEE6] hover:border-[#C9D0D8]',
       )}
       onClick={onSelect}
     >
@@ -1587,6 +1631,7 @@ export function JobDatabasePage({
       | 'catalogTotal'
       | 'closingSoonTotal'
       | 'page'
+      | 'pageSize'
       | 'partTimeTotal'
       | 'preferredTotal'
       | 'total'
@@ -1979,6 +2024,7 @@ export function JobDatabasePage({
             catalogTotal: result.catalogTotal,
             closingSoonTotal: result.closingSoonTotal,
             page: result.page,
+            pageSize: result.pageSize,
             partTimeTotal: result.partTimeTotal,
             preferredTotal: result.preferredTotal,
             total: result.total + additionalCompanyProjectCount,
@@ -2580,6 +2626,56 @@ export function JobDatabasePage({
         : [],
     [filteredPostings, role],
   );
+  const topFitPostingKeys = useMemo(() => {
+    if (role !== 'senior' || filteredPostings.length === 0) return new Set<string>();
+
+    const totalTopFitBase = isServerSearchActive
+      ? Math.max(serverSearchMeta?.total ?? 0, filteredPostings.length)
+      : filteredPostings.length;
+    const topFitCount = Math.max(1, Math.ceil(totalTopFitBase * 0.1));
+
+    if (isServerSearchActive) {
+      if (sortBy !== 'fit-desc') return new Set<string>();
+
+      const serverPage = Math.max(1, serverSearchMeta?.page ?? currentPage);
+      const serverPageSize = Math.max(1, serverSearchMeta?.pageSize ?? itemsPerPage);
+      const pageStartIndex = (serverPage - 1) * serverPageSize;
+      return new Set(
+        filteredPostings
+          .filter((_, index) => pageStartIndex + index < topFitCount)
+          .map(getPostingIdentityKey),
+      );
+    }
+
+    return new Set(
+      filteredPostings
+        .map((posting) => ({
+          key: getPostingIdentityKey(posting),
+          score: calculatePersonalizedMatch(
+            posting,
+            seniorProfile,
+            effectiveSelectedCategory,
+            interviewCard,
+          ).personalizedScore || posting.seniorFitScore || 0,
+        }))
+        .sort((first, second) => second.score - first.score)
+        .slice(0, topFitCount)
+        .map(({ key }) => key),
+    );
+  }, [
+    currentPage,
+    effectiveSelectedCategory,
+    filteredPostings,
+    interviewCard,
+    isServerSearchActive,
+    itemsPerPage,
+    role,
+    seniorProfile,
+    serverSearchMeta?.page,
+    serverSearchMeta?.pageSize,
+    serverSearchMeta?.total,
+    sortBy,
+  ]);
   const displayedResultCount =
     role === 'company'
       ? companyRecommendedTalents.length
@@ -4327,6 +4423,7 @@ export function JobDatabasePage({
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
+                      highlightTone={getPostingHighlightTone(posting, topFitPostingKeys)}
                       key={`${posting.id}-${posting.title}-${index}`}
                       onApply={() => handleApply(posting)}
                       onSelect={() => {
