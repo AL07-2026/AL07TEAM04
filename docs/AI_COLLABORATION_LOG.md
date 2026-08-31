@@ -16,6 +16,38 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-08-31] AI 경험 카드 개선사항 origin/develop 푸시 및 Firebase 배포 완료
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md` 최근 기록과 작업 규칙 확인.
+  - 현재 브랜치가 `YOO`이고, AI 경험 카드 고도화 변경사항이 커밋 전 상태임을 확인.
+  - Firebase 설정 확인: 기본 프로젝트 `al07team04-bdfcd`, Hosting public 디렉터리 `dist`, API rewrite 대상 `api(asia-northeast3)`.
+- **작업 내용**:
+  1. **커밋 생성**:
+     - AI 경험 카드 Gemini 구조화 고도화, 보완 질문 이어답기, 저장 안정성 보완, 관련 테스트 추가 변경사항을 커밋.
+     - 커밋: `f8a50fa feat: enhance AI experience follow-up cards`
+  2. **origin/develop 푸시**:
+     - `git push origin HEAD:develop` 실행.
+     - `origin/develop`이 `1095925`에서 `f8a50fa`로 업데이트됨.
+  3. **Firebase 배포**:
+     - `firebase deploy` 실행.
+     - Functions `api(asia-northeast3)`, `scheduledJobSync(asia-northeast3)` 업데이트 성공.
+     - Hosting 새 버전 릴리즈 성공.
+- **검증 & 결과**:
+  - 푸시 전 `npm run typecheck` 통과
+  - 푸시 전 관련 `vitest` 14개 통과
+  - 푸시 전 `npm run lint` 통과
+  - 푸시 전 `npm run build` 통과
+  - 푸시 전 `git diff --check` 통과
+  - Firebase 배포 성공
+- **배포 URL**:
+  - Hosting: https://al07team04-bdfcd.web.app
+  - API Function URL: https://api-joljydgaia-du.a.run.app
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 배포 후 운영 URL에서 AI 경험 인터뷰 생성 및 보완 질문 이어답기 플로우를 최종 수동 확인 권장.
+
 ### [2026-08-31] YOO 브랜치에 origin/develop 최신 변경 병합 및 테스트 준비
 - **작업자**: Codex (`YOO` 브랜치)
 - **작업 전 확인**:
