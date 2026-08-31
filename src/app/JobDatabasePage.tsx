@@ -274,19 +274,68 @@ function PostingCategoryVisual({ category }: { category: ProjectCategory }) {
   }
 }
 
-function getPostingVisualTone(category: ProjectCategory) {
-  switch (category) {
-    case 'design-brand':
-      return 'bg-[#F2EEFB] text-[#6755A0]';
-    case 'marketing-sales':
-    case 'growth':
-      return 'bg-[#FFF0E7] text-[#B84F2D]';
-    case 'r-and-d-manufacturing':
-    case 'operations':
-      return 'bg-[#EEF3F6] text-[#3F6178]';
-    default:
-      return 'bg-[#E7F3EF] text-[#1F5A50]';
-  }
+type PostingHighlightKey = 'fit' | 'deadline' | 'latest' | 'default';
+
+type PostingHighlightTone = {
+  headerClassName: string;
+  key: PostingHighlightKey;
+  label: string;
+};
+
+const postingHighlightTones: Record<PostingHighlightKey, PostingHighlightTone> = {
+  fit: {
+    headerClassName: 'bg-[#FFF0EC] text-[#B9472D]',
+    key: 'fit',
+    label: '적합도 상위 10%',
+  },
+  deadline: {
+    headerClassName: 'bg-[#F1ECFA] text-[#654A9B]',
+    key: 'deadline',
+    label: '마감 1개월 이내',
+  },
+  latest: {
+    headerClassName: 'bg-[#E7F3EF] text-[#176257]',
+    key: 'latest',
+    label: '최근 1개월 등록',
+  },
+  default: {
+    headerClassName: 'bg-[#EEF3F6] text-[#2E5572]',
+    key: 'default',
+    label: '일반 추천',
+  },
+};
+
+function parsePostingDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isWithinNextMonth(value?: string) {
+  const date = parsePostingDate(value);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextMonth = new Date(today);
+  nextMonth.setDate(nextMonth.getDate() + 31);
+  return date.getTime() >= today.getTime() && date.getTime() <= nextMonth.getTime();
+}
+
+function isWithinPreviousMonth(value?: string) {
+  const date = parsePostingDate(value);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const previousMonth = new Date(today);
+  previousMonth.setDate(previousMonth.getDate() - 31);
+  return date.getTime() >= previousMonth.getTime() && date.getTime() <= today.getTime();
+}
+
+function getPostingHighlightTone(posting: JobPosting, topFitPostingIds: Set<string>) {
+  if (topFitPostingIds.has(posting.id)) return postingHighlightTones.fit;
+  if (isWithinNextMonth(posting.deadline)) return postingHighlightTones.deadline;
+  if (isWithinPreviousMonth(posting.postedAt)) return postingHighlightTones.latest;
+  return postingHighlightTones.default;
 }
 
 const postingPhotoPositions = [
@@ -766,6 +815,7 @@ function shouldShowScoreBadge(
 export function PostingCard({
   activePrimaryCategory,
   experienceCard,
+  highlightTone = postingHighlightTones.default,
   onSelect,
   posting,
   profile,
@@ -776,6 +826,7 @@ export function PostingCard({
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
+  highlightTone?: PostingHighlightTone;
   onApply?: (posting: JobPosting) => void;
   onSelect: () => void;
   posting: JobPosting;
@@ -833,7 +884,7 @@ export function PostingCard({
       )}
       onClick={onSelect}
     >
-      <div className={cn('flex min-h-[6.5rem] items-center justify-between px-4 py-4 sm:px-5', getPostingVisualTone(posting.category))}>
+      <div className={cn('flex min-h-[6.5rem] items-center justify-between px-4 py-4 sm:px-5', highlightTone.headerClassName)}>
         <div className="flex min-w-0 items-center gap-3.5">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
             <PostingCategoryVisual category={posting.category} />
@@ -841,6 +892,7 @@ export function PostingCard({
           <div className="min-w-0">
             <p className="text-[20px] font-black leading-tight text-balance sm:text-[22px]">{posting.companyName}</p>
             <p className="mt-1 text-[13px] font-bold leading-5 opacity-75">{posting.industry || categoryLabel}</p>
+            <p className="sr-only">{highlightTone.label}</p>
           </div>
         </div>
         <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
@@ -2579,6 +2631,26 @@ export function JobDatabasePage({
         : [],
     [filteredPostings, role],
   );
+  const topFitPostingIds = useMemo(() => {
+    if (role !== 'senior' || filteredPostings.length === 0) return new Set<string>();
+
+    const topFitCount = Math.max(1, Math.ceil(filteredPostings.length * 0.1));
+    return new Set(
+      filteredPostings
+        .map((posting) => ({
+          id: posting.id,
+          score: calculatePersonalizedMatch(
+            posting,
+            seniorProfile,
+            effectiveSelectedCategory,
+            interviewCard,
+          ).personalizedScore || posting.seniorFitScore || 0,
+        }))
+        .sort((first, second) => second.score - first.score)
+        .slice(0, topFitCount)
+        .map(({ id }) => id),
+    );
+  }, [effectiveSelectedCategory, filteredPostings, interviewCard, role, seniorProfile]);
   const displayedResultCount =
     role === 'company'
       ? companyRecommendedTalents.length
@@ -4326,6 +4398,7 @@ export function JobDatabasePage({
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
+                      highlightTone={getPostingHighlightTone(posting, topFitPostingIds)}
                       key={`${posting.id}-${posting.title}-${index}`}
                       onApply={() => handleApply(posting)}
                       onSelect={() => {
