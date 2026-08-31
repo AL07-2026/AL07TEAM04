@@ -371,11 +371,159 @@ const postingPhotoPositions = [
   '100% 100%',
 ] as const;
 
-const postingPhotoSlotOrder = [0, 5, 10, 15, 2, 7, 12, 9, 4, 14, 1, 11, 6, 3, 13, 8] as const;
+const postingPhotoSlotOrder = [5, 14, 4, 0, 2, 7, 15, 8, 10, 11, 6, 1, 12, 3, 13, 9] as const;
 
-export function getPostingPhotoPosition(_posting: JobPosting, visualIndex: number) {
-  const slot = postingPhotoSlotOrder[Math.abs(visualIndex) % postingPhotoSlotOrder.length] ?? 0;
+function includesAny(text: string, keywords: readonly string[]) {
+  return keywords.some((keyword) => text.includes(keyword.toLowerCase()));
+}
+
+function uniquePhotoSlots(slots: readonly number[]) {
+  return [...new Set([...slots, ...postingPhotoSlotOrder])];
+}
+
+export function getPostingPhotoCandidateSlots(posting: JobPosting) {
+  const occupation = getPostingOccupationCategory(posting);
+  const text = [
+    posting.companyName,
+    posting.title,
+    posting.industry,
+    posting.problemStatement,
+    posting.projectGoal,
+    ...(posting.coreResponsibilities || []),
+    ...(posting.requiredSkills || []),
+    ...(posting.qualifications || []),
+    occupation,
+    posting.category,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (
+    includesAny(text, [
+      '연구',
+      'r&d',
+      '임상',
+      '실험',
+      '의료',
+      '바이오',
+      '의약',
+      '약물',
+      '필러',
+      '화장품',
+      '과학',
+      '박사후',
+      '품질',
+      'qc',
+    ])
+  ) {
+    return uniquePhotoSlots([5, 14, 4, 13, 15, 8, 10, 3, 2, 12]);
+  }
+
+  if (
+    includesAny(text, [
+      '기구',
+      '기계',
+      '설계',
+      '제조',
+      '생산',
+      '공정',
+      '반도체',
+      '부품',
+      '수리',
+      '가스설비',
+      '전기기기',
+      '산업용',
+    ])
+  ) {
+    return uniquePhotoSlots([14, 4, 5, 10, 15, 8, 3, 7, 11, 0]);
+  }
+
+  if (
+    includesAny(text, ['교육', '강사', '선생', '교사', '교수', '학원', '어린이집', '강의', '멘토링'])
+  ) {
+    return uniquePhotoSlots([2, 12, 13, 10, 3, 15, 7, 1]);
+  }
+
+  if (
+    includesAny(text, ['개발', '데이터', 'db', 'ai', '소프트웨어', '플랫폼', '시스템', '클라우드', '서버', '보안'])
+  ) {
+    return uniquePhotoSlots([0, 11, 9, 10, 15, 7, 1, 8]);
+  }
+
+  if (includesAny(text, ['디자인', 'ux', 'ui', '브랜딩', '상품기획', 'md', '편집'])) {
+    return uniquePhotoSlots([1, 7, 10, 15, 13, 3, 2, 12]);
+  }
+
+  if (includesAny(text, ['마케팅', '홍보', '영업', '세일즈', '시장', '고객', 'tm', '상담'])) {
+    return uniquePhotoSlots([7, 10, 15, 6, 1, 8, 3, 11]);
+  }
+
+  if (includesAny(text, ['물류', '구매', '자재', 'scm', '운송', '배송', '무역', '수출'])) {
+    return uniquePhotoSlots([6, 15, 10, 3, 8, 7, 1, 11]);
+  }
+
+  if (includesAny(text, ['회계', '세무', '재무', '금융', '보험', '결산'])) {
+    return uniquePhotoSlots([8, 15, 3, 10, 13, 7, 1, 11]);
+  }
+
+  if (includesAny(text, ['인사', '노무', 'hrd', '총무', '법무', '사무', '행정', '경영지원'])) {
+    return uniquePhotoSlots([3, 15, 10, 8, 13, 7, 1, 12]);
+  }
+
+  switch (occupation) {
+    case 'education':
+      return uniquePhotoSlots([2, 12, 13, 10, 3, 15]);
+    case 'research-rd':
+    case 'medical':
+      return uniquePhotoSlots([5, 14, 4, 13, 15, 8]);
+    case 'production':
+    case 'construction-architecture':
+      return uniquePhotoSlots([14, 4, 5, 10, 15, 8]);
+    case 'it-development-data':
+      return uniquePhotoSlots([0, 11, 9, 10, 15, 7]);
+    case 'design':
+    case 'product-planning-md':
+    case 'media-culture-sports':
+      return uniquePhotoSlots([1, 7, 10, 15, 13, 3]);
+    case 'procurement-materials-logistics':
+    case 'driving-transport-delivery':
+    case 'sales-retail-trade':
+      return uniquePhotoSlots([6, 15, 10, 3, 8, 7]);
+    case 'accounting-tax-finance':
+    case 'finance-insurance':
+      return uniquePhotoSlots([8, 15, 3, 10, 13, 7]);
+    default:
+      return uniquePhotoSlots([10, 15, 3, 8, 7, 13]);
+  }
+}
+
+function getPostingPhotoSlot(
+  posting: JobPosting,
+  visualIndex: number,
+  usedSlots: Set<number> = new Set(),
+) {
+  const candidates = getPostingPhotoCandidateSlots(posting);
+  const pageOrdinal = Math.abs(visualIndex) % 6;
+  const rotatedCandidates = [
+    ...candidates.slice(pageOrdinal),
+    ...candidates.slice(0, pageOrdinal),
+  ];
+  return rotatedCandidates.find((slot) => !usedSlots.has(slot)) ?? candidates[0] ?? 0;
+}
+
+export function getPostingPhotoPosition(posting: JobPosting, visualIndex: number) {
+  const slot = getPostingPhotoSlot(posting, visualIndex);
   return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
+}
+
+export function getPostingPhotoPositionsForPage(postings: JobPosting[], pageStartVisualIndex = 0) {
+  const usedSlots = new Set<number>();
+  return postings.map((posting, index) => {
+    const slot = getPostingPhotoSlot(posting, pageStartVisualIndex + index, usedSlots);
+    usedSlots.add(slot);
+    return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
+  });
 }
 
 function getOptionalFormValue(formData: FormData, key: string, fallback: string) {
@@ -774,6 +922,7 @@ export function PostingCard({
   profile,
   role = 'company',
   selected,
+  photoPosition,
   visualIndex = 0,
 }: {
   activePrimaryCategory?: string;
@@ -785,6 +934,7 @@ export function PostingCard({
   profile?: SeniorProfileData | null;
   role?: Role;
   selected: boolean;
+  photoPosition?: string;
   visualIndex?: number;
 }) {
   const matchResult = calculatePersonalizedMatch(
@@ -793,10 +943,12 @@ export function PostingCard({
     activePrimaryCategory,
     experienceCard,
   );
-  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0
-    ? matchResult.personalizedScore
-    : posting.seniorFitScore || 75;
+  const displayScore =
+    posting.seniorFitScore && posting.seniorFitScore > 0
+      ? posting.seniorFitScore
+      : matchResult.personalizedScore > 0
+        ? matchResult.personalizedScore
+        : 75;
   const fitTone = getFitScoreTone(displayScore);
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
   const categoryLabel = getPostingOccupationLabel(posting);
@@ -850,7 +1002,7 @@ export function PostingCard({
         className="mt-auto h-28 shrink-0 border-t border-[#D9DEE6] bg-cover transition-transform duration-200 ease-out group-hover:scale-[1.015] sm:h-32"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
-          backgroundPosition: getPostingPhotoPosition(posting, visualIndex),
+          backgroundPosition: photoPosition ?? getPostingPhotoPosition(posting, visualIndex),
           backgroundSize: '400% 400%',
         }}
       />
@@ -988,10 +1140,12 @@ export function DetailPanel({
     activePrimaryCategory,
     experienceCard,
   );
-  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0
-    ? matchResult.personalizedScore
-    : posting.seniorFitScore || 75;
+  const displayScore =
+    posting.seniorFitScore && posting.seniorFitScore > 0
+      ? posting.seniorFitScore
+      : matchResult.personalizedScore > 0
+        ? matchResult.personalizedScore
+        : 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -2580,6 +2734,18 @@ export function JobDatabasePage({
     const start = (safeCurrentPage - 1) * itemsPerPage;
     return filteredPostings.slice(start, start + itemsPerPage);
   }, [filteredPostings, isServerSearchActive, safeCurrentPage, itemsPerPage]);
+  const paginatedPostingPhotoPositions = useMemo(
+    () =>
+      getPostingPhotoPositionsForPage(
+        paginatedPostings,
+        (safeCurrentPage - 1) * itemsPerPage,
+      ),
+    [paginatedPostings, safeCurrentPage, itemsPerPage],
+  );
+  const companyProjectPhotoPositions = useMemo(
+    () => getPostingPhotoPositionsForPage(postings),
+    [postings],
+  );
   const paginatedRecommendedTalents = useMemo(() => {
     const start = (safeCurrentPage - 1) * itemsPerPage;
     return companyRecommendedTalents.slice(start, start + itemsPerPage);
@@ -3842,6 +4008,7 @@ export function JobDatabasePage({
                       profile={seniorProfile}
                       role={role}
                       selected={selectedCompanyProject?.id === posting.id}
+                      photoPosition={companyProjectPhotoPositions[index]}
                       visualIndex={index}
                     />
                   ))}
@@ -4321,6 +4488,7 @@ export function JobDatabasePage({
                       profile={seniorProfile}
                       role={role}
                       selected={selectedPosting?.id === posting.id}
+                      photoPosition={paginatedPostingPhotoPositions[index]}
                       visualIndex={(safeCurrentPage - 1) * itemsPerPage + index}
                     />
                   ))}
