@@ -230,7 +230,7 @@ export function SiteHeader({
               </button>
             </div>
             <nav className="flex min-h-0 flex-1 flex-col px-4 py-5" aria-label="주요 메뉴">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 {navItems[menuRole].map((item) => {
                   const IconComponent = item.Icon;
                   const selected = item.id === activeNav;
@@ -240,13 +240,13 @@ export function SiteHeader({
                       type="button"
                       onClick={() => moveTo(item.path, item.id)}
                       className={cn(
-                        'flex min-h-12 w-full items-center gap-3 rounded-md px-3 text-left text-[0.98rem] font-extrabold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99]',
+                        'flex min-h-14 w-full items-center gap-3.5 rounded-md px-3.5 text-left text-[1.125rem] font-extrabold leading-snug transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99] sm:min-h-15 sm:text-[1.25rem]',
                         selected
                           ? 'bg-[#EDF6F2] text-[#173F3A]'
                           : 'text-[#334155] hover:bg-[#F7F3EA] hover:text-[#17212B]',
                       )}
                     >
-                      <IconComponent className="size-5 shrink-0 text-[#173F3A]" strokeWidth={1.8} aria-hidden="true" />
+                      <IconComponent className="size-6 shrink-0 text-[#173F3A]" strokeWidth={1.8} aria-hidden="true" />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -256,9 +256,9 @@ export function SiteHeader({
                 <button
                   type="button"
                   onClick={() => void signOutToLanding()}
-                  className="mt-auto flex min-h-12 w-full items-center gap-3 rounded-md border-t border-[#E0D9C8] px-3 pt-4 text-left text-[0.98rem] font-extrabold text-[#C7503B] transition-colors hover:bg-[#FFF0EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99]"
+                  className="mt-auto flex min-h-14 w-full items-center gap-3.5 rounded-md border-t border-[#E0D9C8] px-3.5 pt-4 text-left text-[1.125rem] font-extrabold leading-snug text-[#C7503B] transition-colors hover:bg-[#FFF0EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99] sm:min-h-15 sm:text-[1.25rem]"
                 >
-                  <LogOut className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <LogOut className="size-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
                   <span>로그아웃</span>
                 </button>
               ) : null}
