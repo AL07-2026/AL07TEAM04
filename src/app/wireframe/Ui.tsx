@@ -6,9 +6,8 @@ import {
   FolderKanban,
   Home,
   Inbox,
-  Monitor,
+  Mic,
   Send,
-  Smartphone,
   User,
 } from 'lucide-react';
 import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
@@ -18,7 +17,7 @@ import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
-export type SeniorNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
+export type SeniorNav = 'home' | 'interview' | 'projects' | 'database' | 'proposals' | 'profile';
 export type CompanyNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
 
 export type ViewportMode = 'pc' | 'mobile';
@@ -101,7 +100,7 @@ export function MobilePage({
 }: MobilePageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { mode: viewportMode, setMode: setViewportMode } = useViewportMode();
+  const { mode: viewportMode } = useViewportMode();
 
   const isMobileMode = viewportMode === 'mobile';
 
@@ -139,35 +138,6 @@ export function MobilePage({
                 </button>
               </div>
 
-              {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
-              <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('pc')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    !isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Monitor className="size-3" />
-                  <span>PC</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('mobile')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Smartphone className="size-3" />
-                  <span>모바일</span>
-                </button>
-              </div>
             </header>
 
             {/* Content Container */}
@@ -221,37 +191,6 @@ export function MobilePage({
                 </div>
               </div>
 
-              {/* Viewport Mode Switcher */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
-              </div>
             </header>
 
             {/* Content Container */}
@@ -334,37 +273,6 @@ export function MobilePage({
                 </div>
               ) : null}
 
-              {/* Right Mode Switcher */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
-              </div>
             </header>
 
             {/* Main Content Area (Full Width Responsive) */}
@@ -381,7 +289,7 @@ export function MobilePage({
 const navItems = {
   senior: [
     { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
-    { id: 'home', label: '홈', path: '/senior', Icon: Home },
+    { id: 'interview', label: 'AI 경험 인터뷰', path: '/senior/experience/interview', Icon: Mic },
     { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
     { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
