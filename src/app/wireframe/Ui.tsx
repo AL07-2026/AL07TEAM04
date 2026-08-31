@@ -1,15 +1,20 @@
 import {
   Briefcase,
   Building2,
-  ChevronLeft,
+  ChevronDown,
   ChevronRight,
+  ContactRound,
   FolderKanban,
   Home,
   Inbox,
-  Monitor,
+  LogOut,
+  Mail,
+  Menu,
+  Mic,
+  MessageCircle,
   Send,
-  Smartphone,
-  User,
+  UserRound,
+  X,
 } from 'lucide-react';
 import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -18,10 +23,25 @@ import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
-export type SeniorNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
+export type SeniorNav = 'home' | 'interview' | 'projects' | 'database' | 'proposals' | 'profile';
 export type CompanyNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
 
 export type ViewportMode = 'pc' | 'mobile';
+
+const navItems = {
+  senior: [
+    { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
+    { id: 'interview', label: 'AI 경험 인터뷰', path: '/senior/experience/interview', Icon: Mic },
+    { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
+    { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: ContactRound },
+  ],
+  company: [
+    { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
+    { id: 'home', label: '홈', path: '/company', Icon: Home },
+    { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
+    { id: 'profile', label: '내 정보', path: '/company/profile', Icon: ContactRound },
+  ],
+} as const;
 
 type ViewportContextType = {
   mode: ViewportMode;
@@ -80,6 +100,240 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
   return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
 }
 
+type SiteHeaderProps = {
+  activeNav?: SeniorNav | CompanyNav;
+  role?: Role;
+  showLogout?: boolean;
+  showPageTitle?: boolean;
+  title: string;
+};
+
+export function SiteHeader({
+  activeNav,
+  role,
+  showLogout = true,
+  showPageTitle = true,
+  title,
+}: SiteHeaderProps) {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [expandedSupportMenu, setExpandedSupportMenu] = useState<'community' | 'contact' | null>(null);
+  const menuRole = user?.role ?? role ?? 'senior';
+  const serviceHomePath = menuRole === 'company' ? '/company' : '/senior';
+
+  const moveTo = (path: string, itemId?: string) => {
+    setIsMenuOpen(false);
+    if (!user && (itemId === 'profile' || itemId === 'proposals')) {
+      void navigate('/login');
+      return;
+    }
+    void navigate(path);
+  };
+
+  const moveToLogin = async (targetRole: Role) => {
+    if (user) await signOut();
+    void navigate(`/login?role=${targetRole}`);
+  };
+
+  const signOutToLanding = async () => {
+    setIsMenuOpen(false);
+    setExpandedSupportMenu(null);
+    if (user) await signOut();
+    void navigate('/');
+  };
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 w-full shrink-0 border-b border-[#E0D9C8] bg-white">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-8">
+          <button
+            type="button"
+            onClick={() => void navigate('/')}
+            className="flex min-w-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
+            aria-label="이어잡 첫 화면"
+          >
+            <img src="/logo_text.png" alt="이어잡" className="h-6 w-auto object-contain sm:h-7" />
+          </button>
+
+          <nav className="flex items-center gap-1" aria-label="빠른 이동">
+            <button
+              type="button"
+              onClick={() => void moveToLogin('senior')}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="인재로 로그인"
+              title="인재로 로그인"
+            >
+              <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void moveToLogin('company')}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="기업으로 로그인"
+              title="기업으로 로그인"
+            >
+              <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void navigate(serviceHomePath)}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-label="서비스 홈"
+              title="서비스 홈"
+            >
+              <Home className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            {showLogout ? (
+              <button
+                type="button"
+                onClick={() => void signOutToLanding()}
+                className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#FFF0EC] hover:text-[#C7503B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LogOut className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(true)}
+              className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+              aria-expanded={isMenuOpen}
+              aria-controls="site-navigation-drawer"
+              aria-label="전체 메뉴 열기"
+              title="전체 메뉴"
+            >
+              <Menu className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            </button>
+          </nav>
+          {showPageTitle ? <h1 className="sr-only">{title}</h1> : null}
+        </div>
+      </header>
+
+      {isMenuOpen ? (
+        <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="전체 메뉴">
+          <button
+            type="button"
+            className="absolute inset-0 bg-[#17212B]/25 backdrop-blur-[1px]"
+            onClick={() => setIsMenuOpen(false)}
+            aria-label="전체 메뉴 닫기"
+          />
+          <aside
+            id="site-navigation-drawer"
+            className="relative flex h-full w-[min(22rem,calc(100vw-1.5rem))] flex-col bg-white shadow-[-18px_0_42px_rgba(23,33,43,0.18)]"
+          >
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#E0D9C8] px-5">
+              <img src="/logo_text.png" alt="이어잡" className="h-6 w-auto object-contain" />
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(false)}
+                className="grid size-10 place-items-center rounded-md text-[#173F3A] transition-colors hover:bg-[#EDF6F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.97]"
+                aria-label="전체 메뉴 닫기"
+                title="닫기"
+              >
+                <X className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            </div>
+            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5" aria-label="주요 메뉴">
+              <div className="flex flex-col gap-1.5">
+                {navItems[menuRole].map((item) => {
+                  const IconComponent = item.Icon;
+                  const selected = item.id === activeNav;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => moveTo(item.path, item.id)}
+                      className={cn(
+                        'flex min-h-14 w-full items-center gap-3.5 rounded-md px-3.5 text-left text-[1.125rem] font-extrabold leading-snug transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99] sm:min-h-15 sm:text-[1.25rem]',
+                        selected
+                          ? 'bg-[#EDF6F2] text-[#173F3A]'
+                          : 'text-[#334155] hover:bg-[#F7F3EA] hover:text-[#17212B]',
+                      )}
+                    >
+                      <IconComponent className="size-6 shrink-0 text-[#173F3A]" strokeWidth={1.8} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-5 border-t border-[#E0D9C8]">
+                <button
+                  type="button"
+                  onClick={() => moveTo('/')}
+                  className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[#E0D9C8] px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                >
+                  <span>Brand</span>
+                  <ChevronRight className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <div
+                  className="border-b border-[#E0D9C8]"
+                  onMouseEnter={() => setExpandedSupportMenu('community')}
+                  onMouseLeave={() => setExpandedSupportMenu((current) => (current === 'community' ? null : current))}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSupportMenu('community')}
+                    aria-expanded={expandedSupportMenu === 'community'}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                  >
+                    <span>Community</span>
+                    <ChevronDown
+                      className={cn('size-5 shrink-0 transition-transform', expandedSupportMenu === 'community' && 'rotate-180')}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {expandedSupportMenu === 'community' ? (
+                    <a
+                      href="https://open.kakao.com/o/pCtnwCIi"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mb-3 flex min-h-12 items-center gap-3 rounded-md bg-[#EDF6F2] px-3.5 text-base font-extrabold text-[#173F3A] transition-colors hover:bg-[#DDEBE7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
+                    >
+                      <MessageCircle className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                      카카오톡 오픈채팅방
+                    </a>
+                  ) : null}
+                </div>
+                <div
+                  className="border-b border-[#E0D9C8]"
+                  onMouseEnter={() => setExpandedSupportMenu('contact')}
+                  onMouseLeave={() => setExpandedSupportMenu((current) => (current === 'contact' ? null : current))}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSupportMenu('contact')}
+                    aria-expanded={expandedSupportMenu === 'contact'}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 text-left text-[1.125rem] font-extrabold text-[#334155] transition-colors hover:bg-[#F7F3EA] hover:text-[#17212B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-15 sm:text-[1.25rem]"
+                  >
+                    <span>Contact</span>
+                    <ChevronDown
+                      className={cn('size-5 shrink-0 transition-transform', expandedSupportMenu === 'contact' && 'rotate-180')}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {expandedSupportMenu === 'contact' ? (
+                    <a
+                      href="mailto:phj1120@gmail.com"
+                      className="mb-3 flex min-h-12 items-center gap-3 rounded-md bg-[#FFF0EC] px-3.5 text-base font-extrabold text-[#9E3D2E] transition-colors hover:bg-[#FFE3DC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]"
+                    >
+                      <Mail className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                      이어잡에 컨택하기
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </nav>
+          </aside>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 type MobilePageProps = {
   activeNav?: SeniorNav | CompanyNav;
   backTo?: string;
@@ -92,16 +346,12 @@ type MobilePageProps = {
 
 export function MobilePage({
   activeNav,
-  backTo,
   children,
   contentClassName,
   role,
-  showBack = Boolean(backTo),
   title,
 }: MobilePageProps) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { mode: viewportMode, setMode: setViewportMode } = useViewportMode();
+  const { mode: viewportMode } = useViewportMode();
 
   const isMobileMode = viewportMode === 'mobile';
 
@@ -110,149 +360,20 @@ export function MobilePage({
       {isMobileMode ? (
         <main className="fixed inset-0 sm:static h-full sm:h-dvh sm:max-h-dvh w-full overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
           <section className="mx-auto flex h-full sm:h-[844px] sm:max-h-[calc(100dvh-3rem)] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
-            {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
-            <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
-              <div className="flex items-center gap-2">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA]"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5" />
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => void navigate('/')}
-                  className="flex items-center gap-1.5 rounded-xl hover:opacity-85 transition"
-                >
-                  <img src="/logo_icon.png" alt="이어잡" className="size-5 object-contain" />
-                  <h1 className="text-[17px] font-extrabold tracking-tight text-[#17212B]">
-                    {title}
-                  </h1>
-                </button>
-              </div>
-
-              {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
-              <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('pc')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    !isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Monitor className="size-3" />
-                  <span>PC</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('mobile')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Smartphone className="size-3" />
-                  <span>모바일</span>
-                </button>
-              </div>
-            </header>
+            <SiteHeader activeNav={activeNav} role={role} title={title} />
 
             {/* Content Container */}
             <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-4 py-4', contentClassName)}>
               {children}
             </div>
 
-            {/* Bottom Navigation */}
-            {role && activeNav ? <BottomNav active={activeNav} role={role} forceShow /> : null}
           </section>
         </main>
       ) : !role ? (
         /* Unauthenticated / Login / Signup Screen: Desktop Card Frame Layout */
         <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-10 sm:flex sm:items-center sm:justify-center">
           <section className="mx-auto flex w-full max-w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border min-h-[640px] md:min-h-[740px] lg:min-h-[820px]">
-            {/* Header (Responsive: Desktop PC Top Navbar + View Mode Switcher) */}
-            <header className="flex h-14 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-4 md:px-7 shadow-2xs">
-              <div className="flex items-center gap-3">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA] hover:scale-105 active:scale-95"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
-                  </button>
-                ) : null}
-
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => void navigate('/')}
-                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
-                  >
-                    <img
-                      src="/logo_text.png"
-                      alt="이어잡"
-                      className="hidden md:block h-[21px] w-auto object-contain"
-                    />
-                    <img
-                      src="/logo_icon.png"
-                      alt="이어잡"
-                      className="md:hidden size-[17px] object-contain"
-                    />
-                  </button>
-                  <h1 className="sr-only">{title}</h1>
-                </div>
-              </div>
-
-              {/* Viewport Mode Switcher */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
-              </div>
-            </header>
+            <SiteHeader activeNav={activeNav} role={role} title={title} />
 
             {/* Content Container */}
             <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full', contentClassName)}>{children}</div>
@@ -262,110 +383,7 @@ export function MobilePage({
         /* Logged-In Service Pages: Full Version Responsive Web Layout */
         <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
           <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
-            {/* Top Navbar */}
-            <header className="relative w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
-              <div className="flex items-center gap-4">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
-                  </button>
-                ) : null}
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void navigate('/')}
-                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
-                  >
-                    <img
-                      src="/logo_text.png"
-                      alt="이어잡"
-                      className="hidden md:block h-[22px] w-auto object-contain"
-                    />
-                    <img
-                      src="/logo_icon.png"
-                      alt="이어잡"
-                      className="md:hidden size-[20px] object-contain"
-                    />
-                  </button>
-                  <h1 className="sr-only">{title}</h1>
-                </div>
-              </div>
-
-              {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
-              {role ? (
-                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  {navItems[role].map((item) => {
-                    const selected = item.id === activeNav;
-                    const IconComponent = item.Icon;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          if (!user && (item.id === 'profile' || item.id === 'proposals')) {
-                            void navigate('/login');
-                          } else {
-                            void navigate(item.path);
-                          }
-                        }}
-                        className={cn(
-                          'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
-                          selected
-                            ? 'bg-[#F06B4F] text-white shadow-xs'
-                            : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                        )}
-                      >
-                        <IconComponent
-                          className={cn('size-4 shrink-0', selected ? 'text-white' : 'text-slate-500')}
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {/* Right Mode Switcher */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
-              </div>
-            </header>
+            <SiteHeader activeNav={activeNav} role={role} title={title} />
 
             {/* Main Content Area (Full Width Responsive) */}
             <div className={cn('w-full max-w-7xl mx-auto flex-1 p-6 md:p-8', contentClassName)}>
@@ -375,77 +393,6 @@ export function MobilePage({
         </main>
       )}
     </>
-  );
-}
-
-const navItems = {
-  senior: [
-    { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
-    { id: 'home', label: '홈', path: '/senior', Icon: Home },
-    { id: 'proposals', label: '내 제안', path: '/senior/proposals', Icon: Send },
-    { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
-  ],
-  company: [
-    { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
-    { id: 'home', label: '홈', path: '/company', Icon: Home },
-    { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
-    { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },
-  ],
-} as const;
-
-function BottomNav({
-  active,
-  forceShow,
-  role,
-}: {
-  active: SeniorNav | CompanyNav;
-  forceShow?: boolean;
-  role: Role;
-}) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  return (
-    <nav
-      aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
-      className={cn(
-        'w-full shrink-0 border-t border-[#E0D9C8] bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg z-40',
-        forceShow ? 'flex' : 'flex md:hidden',
-      )}
-    >
-      <div className="flex items-center justify-around w-full">
-        {navItems[role].map((item) => {
-          const selected = item.id === active;
-          const IconComponent = item.Icon;
-          return (
-            <button
-              aria-current={selected ? 'page' : undefined}
-              className={cn(
-                'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition cursor-pointer',
-                selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
-              )}
-              key={item.id}
-              onClick={() => {
-                if (!user && (item.id === 'profile' || item.id === 'proposals')) {
-                  void navigate('/login');
-                } else {
-                  void navigate(item.path);
-                }
-              }}
-              type="button"
-            >
-              <IconComponent
-                className={cn(
-                  'size-5 transition-transform',
-                  selected ? 'scale-110 text-[#F06B4F]' : 'text-slate-400',
-                )}
-              />
-              <span className="whitespace-nowrap">{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
   );
 }
 

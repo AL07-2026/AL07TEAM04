@@ -1,26 +1,22 @@
 import {
   ArrowRight,
   BriefcaseBusiness,
-  Building2,
   CheckCircle2,
   Clock3,
   CreditCard,
   ExternalLink,
   FileText,
   Handshake,
-  Home,
   Info,
   Landmark,
-  LogOut,
   ShieldAlert,
   Sparkles,
-  UserRound,
   X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { useAuth } from '@/lib/authContext';
+import { SiteHeader } from '@/app/wireframe/Ui';
 import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
 
 const features = [
@@ -106,127 +102,12 @@ function KakaoBrowserNotice() {
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
   const [showSubsidyModal, setShowSubsidyModal] = useState(false);
-
-  const homePath = user?.role === 'company' ? '/company' : '/senior';
 
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
       <KakaoBrowserNotice />
-      <header className="sticky top-0 z-50 border-b border-[#e7dfcb] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
-          <button
-            type="button"
-            onClick={() => void navigate('/')}
-            className="inline-flex items-center border-0 bg-transparent p-0 cursor-pointer"
-            aria-label="이어잡 첫 화면"
-          >
-            <img src="/logo_text.png" alt="이어잡" className="h-7 w-auto object-contain" />
-          </button>
-
-          <nav className="ml-auto flex items-center gap-1 sm:gap-2" aria-label="빠른 이동">
-            {user ? (
-              <>
-                <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-1 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-                  {user.role === 'company' ? '🏢 기업 로그인됨' : '👤 인재 로그인됨'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_user_home');
-                    void navigate(homePath);
-                  }}
-                  className="group relative flex h-9 items-center gap-1.5 rounded-full bg-[#173F3A] px-3.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
-                  aria-label="내 홈으로 이동"
-                  title="내 홈으로 이동"
-                >
-                  <Home className="size-4" strokeWidth={2} aria-hidden="true" />
-                  <span>내 홈</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_view_projects');
-                    void navigate('/senior/project-database');
-                  }}
-                  className="group relative grid size-9 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="프로젝트 둘러보기"
-                  title="프로젝트 둘러보기"
-                >
-                  <BriefcaseBusiness className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    프로젝트 둘러보기
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    trackButtonClick('nav_logout');
-                    await signOut();
-                  }}
-                  className="group relative grid size-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="로그아웃"
-                  title="로그아웃"
-                >
-                  <LogOut className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    로그아웃
-                  </span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_login_senior');
-                    void navigate('/login?role=senior');
-                  }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="인재로 로그인"
-                  title="인재로 로그인"
-                >
-                  <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    인재로 로그인
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_login_company');
-                    void navigate('/login?role=company');
-                  }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="기업으로 로그인"
-                  title="기업으로 로그인"
-                >
-                  <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    기업으로 로그인
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_view_projects');
-                    void navigate('/senior/project-database');
-                  }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="프로젝트 보러가기"
-                  title="프로젝트 보러가기"
-                >
-                  <BriefcaseBusiness className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    프로젝트 보러가기
-                  </span>
-                </button>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      <SiteHeader title="이어잡 랜딩" showLogout={false} showPageTitle={false} />
 
       <main>
         <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">

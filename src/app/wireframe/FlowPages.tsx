@@ -1320,7 +1320,7 @@ export function ExperienceSelectionPage() {
 
   return (
     <MobilePage
-      activeNav="projects"
+      activeNav="interview"
       backTo="/senior"
       contentClassName="flex flex-col gap-[18px] px-6 pb-6 pt-7"
       role="senior"
@@ -1793,7 +1793,7 @@ export function ExperienceInterviewPage() {
 
   return (
     <MobilePage
-      activeNav="projects"
+      activeNav="interview"
       backTo={applicationReturn?.path ?? '/senior/experience'}
       contentClassName="project-ui-readable flex flex-col gap-3.5 px-5 pb-6 pt-3"
       role="senior"
@@ -2130,7 +2130,7 @@ export function ExperienceCardPage() {
 
   return (
     <MobilePage
-      activeNav="projects"
+      activeNav="interview"
       backTo="/senior/experience/interview"
       contentClassName="project-ui-readable flex flex-col gap-4 px-5 pb-6 pt-3"
       role="senior"
