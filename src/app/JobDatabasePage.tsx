@@ -173,6 +173,7 @@ export type FilterOption = {
 const MAX_APPLICATION_FILES = 2;
 const MAX_APPLICATION_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_APPLICATION_FILE_EXTENSIONS = ['pdf', 'doc', 'docx'];
+const HOME_FOCUS_POSTING_KEY = 'eojob_home_focus_project';
 
 const categoryFilters: FilterOption[] = [
   { id: all, label: '전체' },
@@ -965,8 +966,12 @@ export function DetailPanel({
           {posting.title}
         </h2>
 
-        <p className="mt-1 text-[13px] font-bold text-[#173F3A]">
-          {posting.companyName} · {posting.companySize} · {analyzed.keyJobFacts.employmentTypeLabel}
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[13px] font-bold text-[#173F3A]">
+          <span>{posting.companyName}</span>
+          <span className="text-[#173F3A]/45">·</span>
+          <span>{posting.companySize}</span>
+          <span className="text-[#173F3A]/45">·</span>
+          <span className="whitespace-nowrap">{analyzed.keyJobFacts.employmentTypeLabel}</span>
         </p>
 
         {activePrimaryCategory === unclassifiedOccupation || activePrimaryCategory === 'unclassified' ? (
@@ -1030,27 +1035,33 @@ export function DetailPanel({
 
       {/* 2. AI 인재 분석: 기업이 원하는 핵심 경험 유형 */}
       <section className="rounded-2xl bg-[#FAFDFB] p-4 sm:p-5 shadow-2xs">
-        <div className="flex items-center justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
-          <div className="flex items-center gap-2 text-[13.5px] font-extrabold text-[#173F3A]">
-            <UserRound className="size-4 text-[#173F3A]" />
-            <span>기업 문제 해결에 필요한 실무 경험 (AI 인재상 분석)</span>
+        <div className="flex items-start justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
+          <div className="flex min-w-0 items-start gap-2 text-[13.5px] font-extrabold leading-5 text-[#173F3A]">
+            <UserRound className="mt-0.5 size-4 shrink-0 text-[#173F3A]" />
+            <span>
+              기업 문제 해결에 필요한 <span className="whitespace-nowrap">실무 경험</span>{' '}
+              (AI 인재상 분석)
+            </span>
           </div>
-          <span className="text-[11px] font-bold text-slate-500 bg-[#FAF7F2] px-2 py-0.5 rounded shadow-2xs">
-            AI 경험 매칭 모델
+          <span className="shrink-0 whitespace-nowrap rounded bg-[#FAF7F2] px-2 py-1 text-[11px] font-bold text-slate-500 shadow-2xs">
+            AI 경험 <span className="whitespace-nowrap">매칭 모델</span>
           </span>
         </div>
 
         {/* Persona Headline */}
         <div className="mt-3.5 rounded-xl bg-[#DDEBE7]/60 p-3.5">
           <p className="text-[12px] font-extrabold text-[#173F3A]">🎯 문제 해결 최적 시니어 페르소나</p>
-          <p className="mt-1 text-[14.5px] font-black leading-snug text-[#17212B]">
+          <p className="mt-1 text-[14.5px] font-black leading-snug text-[#17212B] [word-break:keep-all]">
             {analyzed.talentPersona.headline}
           </p>
         </div>
 
         {/* Required Experiences */}
         <div className="mt-4">
-          <p className="text-[12px] font-extrabold text-[#4B756E]">이 문제 해결을 위해 기업이 가장 높게 평가하는 실무·리딩 경험</p>
+          <p className="max-w-[34rem] text-[12px] font-extrabold leading-5 text-[#4B756E]">
+            이 문제 해결을 위해 기업이 <span className="whitespace-nowrap">가장 높게 평가하는</span>{' '}
+            <span className="whitespace-nowrap">실무·리딩 경험</span>
+          </p>
           <ul className="mt-2 space-y-2">
             {analyzed.talentPersona.experienceHighlights.map((exp, idx) => (
               <li className="flex items-start gap-2 text-[13px] font-semibold text-[#17212B]" key={idx}>
@@ -1078,9 +1089,12 @@ export function DetailPanel({
 
         {/* AI Interview & Proposal Prep Points */}
         <div className="mt-4 rounded-xl bg-[#FFF9F7] p-3.5 shadow-3xs">
-          <p className="text-[12px] font-extrabold text-[#F06B4F] flex items-center gap-1.5">
-            <Sparkles className="size-3.5 text-[#F06B4F]" />
-            <span>AI 인터뷰 & 제안서 작성 시 '문제 해결 경험' 피칭 포인트</span>
+          <p className="flex items-start gap-1.5 text-[12px] font-extrabold leading-5 text-[#F06B4F]">
+            <Sparkles className="mt-0.5 size-3.5 shrink-0 text-[#F06B4F]" />
+            <span className="min-w-0">
+              AI 인터뷰 & 제안서 작성 시
+              <span className="block whitespace-nowrap">'문제 해결 경험' 피칭 포인트</span>
+            </span>
           </p>
           <ul className="mt-2 space-y-1.5 text-[12.5px] font-medium leading-relaxed text-[#17212B]">
             {analyzed.talentPersona.interviewPrepFocus.map((focus, idx) => (
@@ -1248,6 +1262,86 @@ function useDocumentScrollLock(locked: boolean) {
   }, [locked]);
 }
 
+type PostingSelectionTarget = {
+  id: string;
+  title: string;
+};
+
+const emptyPostingSelection: PostingSelectionTarget = { id: '', title: '' };
+
+function getPostingSelectionTarget(posting?: JobPosting): PostingSelectionTarget {
+  return posting ? { id: posting.id, title: posting.title } : emptyPostingSelection;
+}
+
+function getFocusedOrFallbackPostingTarget(
+  projects: JobPosting[],
+  focusProjectId: string,
+  focusProjectTitle = '',
+  currentTarget: PostingSelectionTarget = emptyPostingSelection,
+) {
+  if (focusProjectTitle) {
+    const titledProject = projects.find((posting) => posting.title === focusProjectTitle);
+    if (titledProject) return getPostingSelectionTarget(titledProject);
+    const currentProject = projects.find((posting) =>
+      posting.id === currentTarget.id &&
+      (!currentTarget.title || posting.title === currentTarget.title),
+    );
+    if (currentProject) return getPostingSelectionTarget(currentProject);
+    return getPostingSelectionTarget(projects[0]);
+  }
+  const focusedProject = focusProjectId
+    ? projects.find((posting) => posting.id === focusProjectId)
+    : undefined;
+  if (focusedProject) {
+    return getPostingSelectionTarget(focusedProject);
+  }
+  const currentProject = projects.find((posting) =>
+    posting.id === currentTarget.id &&
+    (!currentTarget.title || posting.title === currentTarget.title),
+  );
+  if (currentProject) {
+    return getPostingSelectionTarget(currentProject);
+  }
+  return getPostingSelectionTarget(projects[0]);
+}
+
+function readHomeFocusedPosting(focusProjectId: string, focusProjectTitle: string) {
+  if (typeof window === 'undefined' || (!focusProjectId && !focusProjectTitle)) return null;
+  try {
+    const raw = sessionStorage.getItem(HOME_FOCUS_POSTING_KEY);
+    if (!raw) return null;
+    const posting = JSON.parse(raw) as Partial<JobPosting>;
+    if (!posting || typeof posting !== 'object') return null;
+    if (focusProjectTitle && posting.title !== focusProjectTitle) return null;
+    if (focusProjectId && posting.id !== focusProjectId) return null;
+    if (!posting.id || !posting.title || !posting.companyName || !posting.category) return null;
+    return posting as JobPosting;
+  } catch {
+    return null;
+  }
+}
+
+function includeHomeFocusedPosting(projects: JobPosting[], focusedPosting: JobPosting | null) {
+  if (!focusedPosting) return projects;
+  const exists = projects.some(
+    (posting) => posting.id === focusedPosting.id && posting.title === focusedPosting.title,
+  );
+  return exists ? projects : [focusedPosting, ...projects];
+}
+
+function prioritizeHomeFocusedPosting(projects: JobPosting[], focusedPosting: JobPosting | null) {
+  if (!focusedPosting) return projects;
+  const focusedIndex = projects.findIndex(
+    (posting) => posting.id === focusedPosting.id && posting.title === focusedPosting.title,
+  );
+  if (focusedIndex <= 0) return projects;
+  return [
+    projects[focusedIndex]!,
+    ...projects.slice(0, focusedIndex),
+    ...projects.slice(focusedIndex + 1),
+  ];
+}
+
 export function JobDatabasePage({ role = 'company', title }: { role?: Role; title?: string }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -1271,6 +1365,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return getDefaultSeniorJobPostings();
   });
 
+  const focusProjectId = searchParams.get('focusProject')?.trim() ?? '';
+  const focusProjectTitle = searchParams.get('focusTitle')?.trim() ?? '';
+  const requestedPage = Math.max(1, Number.parseInt(searchParams.get('page') ?? '1', 10) || 1);
+  const homeFocusedPosting = useMemo(
+    () => readHomeFocusedPosting(focusProjectId, focusProjectTitle),
+    [focusProjectId, focusProjectTitle],
+  );
   const homeRecommendationCategory = normalizeOccupationCategory(searchParams.get('recommendedCategory'));
   const isHomeRecommendationContext = role === 'senior' && Boolean(homeRecommendationCategory);
   const [query, setQuery] = useState('');
@@ -1297,8 +1398,16 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSortDropdownOpen]);
-  const [selectedId, setSelectedId] = useState('');
   const [selectedTalentId, setSelectedTalentId] = useState('');
+  const activeFocusProjectRef = useRef({
+    id: focusProjectId,
+    title: focusProjectTitle,
+  });
+  const [selectedPostingTarget, setSelectedPostingTarget] = useState<PostingSelectionTarget>(
+    emptyPostingSelection,
+  );
+  const [isHomeFocusActive, setIsHomeFocusActive] = useState(Boolean(focusProjectId || focusProjectTitle));
+  const selectedId = selectedPostingTarget.id;
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
     Boolean(searchParams.get('focusProject')),
   );
@@ -1334,7 +1443,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     partTimeTotal: number;
     closingSoonTotal: number;
   } | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(requestedPage);
   const itemsPerPage = 5;
   const detailContainerRef = useRef<HTMLDivElement>(null);
   const focusedViewportIdRef = useRef<string | null>(null);
@@ -1460,29 +1569,35 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       const publicProjects = getPublishedCompanyProjects(registeredProjects);
       if (role === 'senior') {
         setPublishedCompanyProjects(publicProjects);
-      } else {
-        setPostings(visibleUserProjects);
-        setSelectedId((current) =>
-          visibleUserProjects.some((posting) => posting.id === current)
-            ? current
-            : (visibleUserProjects[0]?.id ?? ''),
-        );
       }
+      const sourceProjects = includeHomeFocusedPosting(
+        role === 'senior' ? publicProjects : visibleUserProjects,
+        role === 'senior' ? homeFocusedPosting : null,
+      );
       setWorknetFeedMessage(
         role === 'senior' && worknetFeed.status === 'success' && publicProjects.length === 0
           ? '내 정보의 희망 직종과 일치하는 고용24 공고를 찾지 못했습니다.'
           : (worknetFeed.message ?? ''),
       );
+      setPostings(sourceProjects);
+      setSelectedPostingTarget((current) =>
+        getFocusedOrFallbackPostingTarget(
+          sourceProjects,
+          activeFocusProjectRef.current.id,
+          activeFocusProjectRef.current.title,
+          current,
+        ),
+      );
 
       const resumeState = consumeApplicationResume() ?? getPendingApplicationInterview();
       if (resumeState) {
-        const resumedPosting = (role === 'senior' ? publicProjects : visibleUserProjects).find(
+        const resumedPosting = sourceProjects.find(
           (posting) => posting.id === resumeState.projectId,
         );
         if (resumedPosting) {
           const draft = consumeApplicationDraft(resumedPosting.id);
           setApplyingPosting(resumedPosting);
-          setSelectedId(resumedPosting.id);
+          setSelectedPostingTarget(getPostingSelectionTarget(resumedPosting));
           setApplicationFiles(draft?.files ?? []);
           setApplicantNote(draft?.note ?? '');
           setApplicationError('');
@@ -1504,7 +1619,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           console.warn('Failed to load project database:', error);
           setIsSeniorProfileResolved(true);
           setPostings([]);
-          setSelectedId('');
+          setSelectedPostingTarget(emptyPostingSelection);
           setWorknetFeedStatus('unavailable');
           setWorknetFeedMessage(
             '프로젝트 목록을 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
@@ -1533,7 +1648,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
     };
-  }, [role, user?.uid, worknetReloadKey]);
+  }, [homeFocusedPosting, role, user?.uid, worknetReloadKey]);
 
   useEffect(() => {
     const containFollowUpPickerEnter = (event: globalThis.KeyboardEvent) => {
@@ -1552,6 +1667,46 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   useEffect(() => {
     if (role !== 'senior' || !isSeniorProfileResolved) return undefined;
+
+    const hasUsablePrimaryPreference = Boolean(
+      primaryProfilePreference &&
+        (primaryProfilePreference !== OTHER_OCCUPATION_PREFERENCE ||
+          (seniorProfile?.desiredOccupationText?.trim().length ?? 0) >= 2),
+    );
+    if (selectedCategory === all && !hasUsablePrimaryPreference) {
+      const profileRequiredTimer = window.setTimeout(() => {
+        const visibleCompanyProjects = includeHomeFocusedPosting(
+          publishedCompanyProjects.filter((project) =>
+            matchesPublishedCompanyProject(project, {
+              employmentType: selectedEmploymentType,
+              hiringStage: selectedHiringStage,
+              query,
+              selectedCategory,
+              workType: selectedWorkType,
+            }),
+          ),
+          homeFocusedPosting,
+        );
+        setIsLoadingPostings(false);
+        setPostings(visibleCompanyProjects);
+        setSelectedPostingTarget(
+          getFocusedOrFallbackPostingTarget(
+            visibleCompanyProjects,
+            activeFocusProjectRef.current.id,
+            activeFocusProjectRef.current.title,
+          ),
+        );
+        setServerSearchMeta(null);
+        setPendingResultGeneration(null);
+        setWorknetFeedStatus('profile-required');
+        setWorknetFeedMessage(
+          visibleCompanyProjects.length > 0
+            ? '기업이 공개한 프로젝트를 먼저 보여드립니다. 내 정보에서 1순위 희망 직종을 선택하면 맞춤 공고도 함께 볼 수 있습니다.'
+            : '내 정보에서 1순위 희망 직종을 선택하면 해당 직종의 맞춤 공고를 볼 수 있습니다.',
+        );
+      }, 0);
+      return () => window.clearTimeout(profileRequiredTimer);
+    }
 
     const abortController = new AbortController();
     let active = true;
@@ -1656,7 +1811,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 customFallbackCategories.includes(getPostingOccupationCategory(project)),
               )
             : result.items;
-          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, matchingCatalogProjects);
+          const mergedProjects = includeHomeFocusedPosting(
+            mergeSeniorPostings(matchingCompanyProjects, matchingCatalogProjects),
+            homeFocusedPosting,
+          );
           const catalogProjectIds = new Set(matchingCatalogProjects.map((project) => project.id));
           const additionalCompanyProjectCount = matchingCompanyProjects.filter(
             (project) => !catalogProjectIds.has(project.id),
@@ -1684,10 +1842,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           }
           setPostings(mergedProjects);
           setCurrentPage(result.page);
-          setSelectedId((current) =>
-            mergedProjects.some((posting) => posting.id === current)
-              ? current
-              : (mergedProjects[0]?.id ?? ''),
+          setSelectedPostingTarget((current) =>
+            getFocusedOrFallbackPostingTarget(
+              mergedProjects,
+              activeFocusProjectRef.current.id,
+              activeFocusProjectRef.current.title,
+              current,
+            ),
           );
           setWorknetFeedStatus('success');
           setWorknetFeedMessage(
@@ -1733,16 +1894,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   customFallbackCategories.includes(getPostingOccupationCategory(project)),
                 )
               : fallback.projects;
-            const mergedProjects = mergeSeniorPostings(
-              matchingCompanyProjects,
-              matchingFallbackProjects,
+            const mergedProjects = includeHomeFocusedPosting(
+              mergeSeniorPostings(matchingCompanyProjects, matchingFallbackProjects),
+              homeFocusedPosting,
             );
             setPostings(mergedProjects);
-            setSelectedId(mergedProjects[0]?.id ?? '');
+            setSelectedPostingTarget(
+              getFocusedOrFallbackPostingTarget(
+                mergedProjects,
+                activeFocusProjectRef.current.id,
+                activeFocusProjectRef.current.title,
+              ),
+            );
           } catch {
             if (!active || generation !== resultGenerationRef.current) return;
             setPostings([]);
-            setSelectedId('');
+            setSelectedPostingTarget(emptyPostingSelection);
           }
           setWorknetFeedStatus('unavailable');
           setWorknetFeedMessage(
@@ -1763,6 +1930,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   }, [
     currentPage,
     effectivePrimaryProfileFilter,
+    homeFocusedPosting,
     isSeniorProfileResolved,
     interviewCard,
     primaryProfileCategory,
@@ -2048,7 +2216,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       });
 
       setPostings((prev) => [created, ...prev]);
-      setSelectedId(created.id);
+      setSelectedPostingTarget(getPostingSelectionTarget(created));
       setIsRegisterOpen(false);
       setActionNotice(
         savedToFirestore
@@ -2120,7 +2288,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const filteredPostings = useMemo(() => {
     if (isServerSearchActive) {
       if (sortBy === 'fit-desc' && role === 'senior' && user) {
-        return [...postings].sort((first, second) => {
+        const sortedPostings = [...postings].sort((first, second) => {
           const scoreFirst = calculatePersonalizedMatch(
             first,
             seniorProfile,
@@ -2135,13 +2303,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           ).personalizedScore;
           return scoreSecond - scoreFirst;
         });
+        return prioritizeHomeFocusedPosting(sortedPostings, homeFocusedPosting);
       }
-      return postings;
+      return prioritizeHomeFocusedPosting(postings, homeFocusedPosting);
     }
 
     const normalizedQuery = query.trim().toLowerCase();
 
-    return postings
+    const locallyFilteredPostings = postings
       .filter((posting) => {
         const postingOccupationCategory = getPostingOccupationCategory(posting);
         const hasConfidentOccupation =
@@ -2247,7 +2416,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             : second.seniorFitScore;
         return scoreSecond - scoreFirst;
       });
+    return prioritizeHomeFocusedPosting(locallyFilteredPostings, homeFocusedPosting);
   }, [
+    homeFocusedPosting,
     postings,
     query,
     role,
@@ -2297,10 +2468,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return companyRecommendedTalents.slice(start, start + itemsPerPage);
   }, [companyRecommendedTalents, safeCurrentPage, itemsPerPage]);
 
-  const focusProjectId = searchParams.get('focusProject');
-  const focusedPosting = focusProjectId
-    ? filteredPostings.find((posting) => posting.id === focusProjectId)
-    : undefined;
   const effectiveSelectedTalentId = companyRecommendedTalents.some(
     (talent) => talent.id === selectedTalentId,
   )
@@ -2310,16 +2477,35 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     (talent) => talent.id === effectiveSelectedTalentId,
   );
   const selectedPosting =
-    focusedPosting ??
+    (isHomeFocusActive && homeFocusedPosting
+      ? homeFocusedPosting
+      : undefined) ??
+    (isHomeFocusActive && focusProjectTitle
+      ? filteredPostings.find((posting) => posting.title === focusProjectTitle)
+      : undefined) ??
     filteredPostings.find((posting) => posting.id === selectedTalent?.projectId) ??
-    filteredPostings.find((posting) => posting.id === selectedId) ??
+    filteredPostings.find((posting) =>
+      posting.id === selectedPostingTarget.id &&
+      (!selectedPostingTarget.title || posting.title === selectedPostingTarget.title),
+    ) ??
+    filteredPostings.find((posting) => posting.id === selectedPostingTarget.id) ??
     filteredPostings[0];
   const selectedCompanyProject =
-    postings.find((posting) => posting.id === selectedId) ?? postings[0];
+    postings.find((posting) =>
+      posting.id === selectedPostingTarget.id &&
+      (!selectedPostingTarget.title || posting.title === selectedPostingTarget.title),
+    ) ??
+    postings.find((posting) => posting.id === selectedPostingTarget.id) ??
+    postings[0];
 
   useEffect(() => {
-    if (!focusProjectId || !focusedPosting || focusedViewportIdRef.current === focusProjectId) return;
-    focusedViewportIdRef.current = focusProjectId;
+    const activeFocusProject = activeFocusProjectRef.current;
+    if (
+      !activeFocusProject.id ||
+      selectedPosting?.id !== activeFocusProject.id ||
+      focusedViewportIdRef.current === activeFocusProject.id
+    ) return;
+    focusedViewportIdRef.current = activeFocusProject.id;
     const frame = window.requestAnimationFrame(() => {
       if (detailContainerRef.current) {
         detailContainerRef.current.scrollTop = 0;
@@ -2327,7 +2513,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [focusProjectId, focusedPosting]);
+  }, [selectedPosting?.id]);
+
   const activeFilterCount =
     Number(selectedCategory !== all && selectedCategory !== allDatabase) +
     Number(selectedWorkType !== all) +
@@ -2459,7 +2646,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setPendingResultGeneration(generation);
     setServerSearchMeta(null);
     setPostings([]);
-    setSelectedId('');
+    setSelectedPostingTarget(emptyPostingSelection);
     setIsLoadingPostings(true);
   }
 
@@ -2554,9 +2741,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             : '등록한 프로젝트에 맞는 추천 인재를 검토하세요'}
         </h1>
         <p className="mt-1.5 text-[13px] sm:text-[14px] font-medium leading-relaxed text-[#53606E]">
-          {role === 'senior'
-            ? '내 정보의 1순위 희망 직종을 먼저 적용하고, 경력·핵심 역량과 AI 경험 인터뷰 결과로 추천 순서를 계산합니다.'
-            : '프로젝트 요구조건과 직무 유형을 바탕으로 바로 제안할 수 있는 시니어 인재를 카드로 보여드립니다.'}
+          {role === 'senior' ? (
+            <>
+              내 정보의 1순위 희망 직종을 먼저 적용하고,{' '}
+              <span className="whitespace-nowrap">경력·핵심 역량과</span> AI 경험 인터뷰
+              결과로 추천 순서를 계산합니다.
+            </>
+          ) : (
+            '프로젝트 요구조건과 직무 유형을 바탕으로 바로 제안할 수 있는 시니어 인재를 카드로 보여드립니다.'
+          )}
         </p>
       </section>
 
@@ -2959,7 +3152,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           <div
             aria-labelledby="application-modal-title"
             aria-modal="true"
-            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl md:p-6"
+            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl [word-break:keep-all] md:p-6"
             role="dialog"
           >
             <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/70 pb-4">
@@ -2974,7 +3167,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   프로젝트 지원 준비
                 </h3>
                 <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
-                  AI 인터뷰 결과와 첨부파일을 확인한 뒤 지원서를 제출하세요.
+                  AI 인터뷰 결과와 첨부파일을 확인한 뒤{' '}
+                  <span className="whitespace-nowrap">지원서를</span> 제출하세요.
                 </p>
               </div>
               <button
@@ -2989,21 +3183,24 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
             <div className="mt-4 flex flex-col gap-3.5">
               {/* Target Project Details */}
-              <div className="flex items-start justify-between gap-3 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/45 p-4">
+              <div className="flex flex-col gap-3 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/45 p-4">
                 <div className="min-w-0">
                   <p className="text-[13px] font-extrabold text-[#173F3A]">지원 대상 프로젝트</p>
                   <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">
                     {applyingPosting.title}
                   </p>
-                  <p className="mt-1 text-[14px] font-medium text-slate-600">
-                    {getPostingOccupationLabel(applyingPosting)} · {applyingPosting.location} ·{' '}
-                    {applyingPosting.salaryRange}
+                  <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-medium leading-5 text-slate-600">
+                    <span>{getPostingOccupationLabel(applyingPosting)}</span>
+                    <span className="text-slate-300">·</span>
+                    <span>{applyingPosting.location}</span>
+                    <span className="text-slate-300">·</span>
+                    <span>{applyingPosting.salaryRange}</span>
                   </p>
                 </div>
                 <span
                   aria-label={`적합도 ${applyingPostingFitScore}점, ${applyingPostingFitTone.label}`}
                   className={cn(
-                    'shrink-0 rounded-xl border px-3 py-2 text-center text-[13px] font-black',
+                    'w-fit shrink-0 rounded-xl border px-3 py-2 text-center text-[13px] font-black',
                     applyingPostingFitTone.containerClassName,
                   )}
                 >
@@ -3273,7 +3470,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   {!interviewCard
                     ? 'AI 인터뷰 없이 제출하면 기업 담당자에게 관련 경험 검증이 부족하게 보일 수 있습니다.'
                     : !isInterviewReady
-                      ? `${getPostingOccupationLabel(applyingPosting)} 직무 인터뷰 없이도 제출할 수 있지만, 제출 전 확인이 필요합니다.`
+                      ? '제출 전 확인이 필요합니다.'
                       : '첨부파일을 1개 이상 등록해 주세요.'}
                 </p>
               ) : null}
@@ -3512,7 +3709,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       experienceCard={interviewCard}
                       key={posting.id}
                       onApply={() => handleApply(posting)}
-                      onSelect={() => setSelectedId(posting.id)}
+                      onSelect={() => setSelectedPostingTarget(getPostingSelectionTarget(posting))}
                       posting={posting}
                       profile={seniorProfile}
                       role={role}
@@ -3968,22 +4165,24 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                         onSelect={() => {
                           trackJobView(project.id, project.companyName, project.title);
                           setSelectedTalentId(talent.id);
-                          setSelectedId(project.id);
+                          setSelectedPostingTarget(getPostingSelectionTarget(project));
                         }}
                         selected={selectedTalentId === talent.id}
                         talent={talent}
                       />
                     );
                   })
-                : paginatedPostings.map((posting) => (
+                : paginatedPostings.map((posting, index) => (
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
-                      key={posting.id}
+                      key={`${posting.id}-${posting.title}-${index}`}
                       onApply={() => handleApply(posting)}
                       onSelect={() => {
                         trackJobView(posting.id, posting.companyName, posting.title);
-                        setSelectedId(posting.id);
+                        activeFocusProjectRef.current = emptyPostingSelection;
+                        setIsHomeFocusActive(false);
+                        setSelectedPostingTarget(getPostingSelectionTarget(posting));
                         if (isMobile) {
                           setIsMobileDetailOpen(true);
                         }
@@ -4005,37 +4204,46 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     </span>건 표시
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex w-full flex-nowrap items-center gap-1 sm:w-auto sm:flex-wrap sm:gap-1.5">
                     <button
                       onClick={() => {
+                        activeFocusProjectRef.current = emptyPostingSelection;
+                        setIsHomeFocusActive(false);
                         setCurrentPage((p) => Math.max(1, p - 1));
                         window.scrollTo({ top: 300, behavior: 'smooth' });
                       }}
                       disabled={safeCurrentPage === 1}
                       type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                      className="h-8 shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:px-3"
                     >
                       이전
                     </button>
 
-                    {Array.from({ length: Math.min(7, totalPages) }, (_, idx) => {
+                    {Array.from({ length: Math.min(isMobile ? 5 : 7, totalPages) }, (_, idx) => {
+                      const visiblePageCount = isMobile ? 5 : 7;
+                      const sidePageCount = Math.floor(visiblePageCount / 2);
                       let pageNum = idx + 1;
-                      if (totalPages > 7) {
-                        if (safeCurrentPage > 4 && safeCurrentPage < totalPages - 3) {
-                          pageNum = safeCurrentPage - 3 + idx;
-                        } else if (safeCurrentPage >= totalPages - 3) {
-                          pageNum = totalPages - 6 + idx;
+                      if (totalPages > visiblePageCount) {
+                        if (
+                          safeCurrentPage > sidePageCount + 1 &&
+                          safeCurrentPage < totalPages - sidePageCount
+                        ) {
+                          pageNum = safeCurrentPage - sidePageCount + idx;
+                        } else if (safeCurrentPage >= totalPages - sidePageCount) {
+                          pageNum = totalPages - visiblePageCount + 1 + idx;
                         }
                       }
                       return (
                         <button
                           key={pageNum}
                           onClick={() => {
+                            activeFocusProjectRef.current = emptyPostingSelection;
+                            setIsHomeFocusActive(false);
                             setCurrentPage(pageNum);
                             window.scrollTo({ top: 300, behavior: 'smooth' });
                           }}
                           type="button"
-                          className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
+                          className={`h-8 min-w-[30px] shrink-0 rounded-xl px-2 text-xs font-extrabold transition-all sm:min-w-[32px] ${
                             safeCurrentPage === pageNum
                               ? 'bg-[#173F3A] text-white shadow-xs'
                               : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
@@ -4048,12 +4256,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
                     <button
                       onClick={() => {
+                        activeFocusProjectRef.current = emptyPostingSelection;
+                        setIsHomeFocusActive(false);
                         setCurrentPage((p) => Math.min(totalPages, p + 1));
                         window.scrollTo({ top: 300, behavior: 'smooth' });
                       }}
                       disabled={safeCurrentPage === totalPages}
                       type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                      className="h-8 shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:px-3"
                     >
                       다음
                     </button>
@@ -4065,7 +4275,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             {role === 'senior' && !isMobile && selectedPosting ? (
               <div
                 ref={detailContainerRef}
-                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 pr-1 shadow-xs transition-all"
+                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 pr-1 shadow-xs transition-all [scrollbar-gutter:stable]"
               >
                 <DetailPanel
                   activePrimaryCategory={effectiveSelectedCategory}

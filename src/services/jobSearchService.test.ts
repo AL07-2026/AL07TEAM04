@@ -57,4 +57,41 @@ describe('searchFullJobDatabase', () => {
     expect(result.total).toBe(41);
     expect(result.items[0]?.id).toBe('job-1');
   });
+
+  it('omits all-valued filters so home and project database totals use the same scope', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: 'success',
+          catalogTotal: 65,
+          closingSoonTotal: 0,
+          items: [],
+          page: 1,
+          pageSize: 12,
+          partTimeTotal: 0,
+          preferredTotal: 65,
+          total: 65,
+          totalPages: 6,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    await searchFullJobDatabase({
+      categories: ['service'],
+      desiredCategories: ['service'],
+      employmentType: 'all',
+      hiringStage: 'all',
+      page: 1,
+      pageSize: 12,
+      workType: 'all',
+    });
+
+    const requestUrl = fetchMock.mock.calls[0]?.[0];
+    expect(typeof requestUrl).toBe('string');
+    if (typeof requestUrl !== 'string') throw new Error('Expected a string request URL');
+    expect(requestUrl).not.toContain('employmentType=all');
+    expect(requestUrl).not.toContain('hiringStage=all');
+    expect(requestUrl).not.toContain('workType=all');
+  });
 });

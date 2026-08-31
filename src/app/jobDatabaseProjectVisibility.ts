@@ -120,10 +120,11 @@ export function matchesPublishedCompanyProject(
 }
 
 export function mergeSeniorPostings(companyProjects: JobPosting[], catalogProjects: JobPosting[]) {
-  const seenIds = new Set<string>();
+  const seenKeys = new Set<string>();
   return [...companyProjects, ...catalogProjects].filter((project) => {
-    if (seenIds.has(project.id)) return false;
-    seenIds.add(project.id);
+    const key = `${project.id}::${project.title}`;
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
     return true;
   });
 }

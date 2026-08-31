@@ -145,13 +145,15 @@ export async function searchFullJobDatabase(
   if (options.desiredOccupationText) {
     params.set('desiredOccupationText', options.desiredOccupationText);
   }
-  if (options.employmentType) params.set('employmentType', options.employmentType);
+  if (options.employmentType && options.employmentType !== 'all') {
+    params.set('employmentType', options.employmentType);
+  }
   if (options.experienceCardCategory) {
     params.set('experienceCardCategory', options.experienceCardCategory);
   }
   if (options.experienceCardText) params.set('experienceCardText', options.experienceCardText);
   if (options.experienceYears) params.set('experienceYears', String(options.experienceYears));
-  if (options.hiringStage) params.set('hiringStage', options.hiringStage);
+  if (options.hiringStage && options.hiringStage !== 'all') params.set('hiringStage', options.hiringStage);
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   if (options.profileText) params.set('profileText', options.profileText);
@@ -160,7 +162,7 @@ export async function searchFullJobDatabase(
     params.set('requireDesiredOccupationMatch', 'true');
   }
   if (options.sortBy) params.set('sortBy', options.sortBy);
-  if (options.workType) params.set('workType', options.workType);
+  if (options.workType && options.workType !== 'all') params.set('workType', options.workType);
 
   const cacheKey = params.toString();
   const now = Date.now();
