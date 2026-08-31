@@ -289,20 +289,91 @@ function getPostingVisualTone(category: ProjectCategory) {
   }
 }
 
-function getPostingPhotoPosition(category: ProjectCategory) {
-  switch (category) {
+const postingPhotoPositions = [
+  '0% 0%',
+  '33.333% 0%',
+  '66.667% 0%',
+  '100% 0%',
+  '0% 33.333%',
+  '33.333% 33.333%',
+  '66.667% 33.333%',
+  '100% 33.333%',
+  '0% 66.667%',
+  '33.333% 66.667%',
+  '66.667% 66.667%',
+  '100% 66.667%',
+  '0% 100%',
+  '33.333% 100%',
+  '66.667% 100%',
+  '100% 100%',
+] as const;
+
+function getPostingPhotoSlots(posting: JobPosting) {
+  const occupation = getPostingOccupationCategory(posting);
+
+  switch (occupation) {
+    case 'it-development-data':
+      return [0, 9, 11];
+    case 'design':
+    case 'product-planning-md':
+    case 'media-culture-sports':
+      return [1, 7, 10];
+    case 'education':
+      return [2, 12, 13];
+    case 'hr-labor-hrd':
+    case 'general-legal-office':
+    case 'planning-strategy':
+      return [3, 10, 15];
+    case 'production':
+    case 'research-rd':
+    case 'construction-architecture':
+      return [4, 5, 14];
+    case 'procurement-materials-logistics':
+    case 'driving-transport-delivery':
+    case 'sales-retail-trade':
+      return [6, 7, 15];
+    case 'marketing-pr-research':
+    case 'customer-service-tm':
+    case 'service':
+      return [7, 1, 10];
+    case 'accounting-tax-finance':
+    case 'finance-insurance':
+      return [8, 15, 3];
+    case 'medical':
+    case 'public-welfare':
+      return [5, 3, 12];
+    default:
+      break;
+  }
+
+  switch (posting.category) {
     case 'design-brand':
-      return '100% 0%';
-    case 'r-and-d-manufacturing':
-    case 'operations':
-      return '0% 100%';
+      return [1, 7, 10];
     case 'marketing-sales':
     case 'growth':
+      return [7, 6, 15];
     case 'hr-strategy':
-      return '100% 100%';
+      return [3, 10, 15];
+    case 'r-and-d-manufacturing':
+      return [4, 5, 14];
+    case 'operations':
+      return [10, 6, 15];
+    case 'security':
+      return [9, 11, 0];
+    case 'ai-automation':
+    case 'legacy-modernization':
+      return [11, 0, 10];
+    case 'data-platform':
+    case 'dev-engineering':
     default:
-      return '0% 0%';
+      return [0, 11, 9];
   }
+}
+
+function getPostingPhotoPosition(posting: JobPosting, visualIndex: number) {
+  const slots = getPostingPhotoSlots(posting);
+  const slot = slots[visualIndex % slots.length] ?? 0;
+  return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
 }
 
 function getOptionalFormValue(formData: FormData, key: string, fallback: string) {
@@ -701,6 +772,7 @@ export function PostingCard({
   role = 'company',
   selected,
   useServerScore,
+  visualIndex = 0,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
@@ -711,6 +783,7 @@ export function PostingCard({
   role?: Role;
   useServerScore?: boolean;
   selected: boolean;
+  visualIndex?: number;
 }) {
   const matchResult = calculatePersonalizedMatch(
     posting,
@@ -826,8 +899,8 @@ export function PostingCard({
         className="mt-auto h-36 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-40"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
-          backgroundPosition: getPostingPhotoPosition(posting.category),
-          backgroundSize: '200% 200%',
+          backgroundPosition: getPostingPhotoPosition(posting, visualIndex),
+          backgroundSize: '400% 400%',
         }}
       />
     </button>
@@ -3777,7 +3850,7 @@ export function JobDatabasePage({
             {postings.length > 0 ? (
               <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[0.85fr_1.15fr]">
                 <section className="grid content-start gap-3">
-                  {postings.map((posting) => (
+                  {postings.map((posting, index) => (
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
@@ -3788,6 +3861,7 @@ export function JobDatabasePage({
                       profile={seniorProfile}
                       role={role}
                       selected={selectedCompanyProject?.id === posting.id}
+                      visualIndex={index}
                     />
                   ))}
                 </section>
@@ -4266,6 +4340,7 @@ export function JobDatabasePage({
                       role={role}
                       useServerScore={isServerSearchActive}
                       selected={selectedPosting?.id === posting.id}
+                      visualIndex={(safeCurrentPage - 1) * itemsPerPage + index}
                     />
                   ))}
               </div>
