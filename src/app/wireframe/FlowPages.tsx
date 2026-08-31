@@ -3968,8 +3968,8 @@ export function CompanyProfilePage() {
   }, [user?.uid]);
 
   const companyName = companyProfile?.companyName || '회사명 미입력';
-  const managerName = companyProfile?.managerName || '담당자 정보 미입력';
-  const email = companyProfile?.email || '이메일 정보 미입력';
+  const managerName = companyProfile?.managerName || user?.name || '담당자 정보 미입력';
+  const email = companyProfile?.email || user?.email || '이메일 정보 미입력';
   const companyAddress = companyProfile?.companyAddress || '주소 정보 미입력';
   const phone = companyProfile?.phone || '연락처 정보 미입력';
   const industry = companyProfile?.industry || '산업 정보 미입력';
