@@ -864,12 +864,10 @@ export function PostingCard({
   }
 
   const categoryLabel = getPostingOccupationLabel(posting);
-  if (categoryLabel && badges.length < 3) {
-    badges.push({ isMint: true, label: categoryLabel });
-  }
   if (badges.length === 0) {
     badges.push({ label: hiringStageLabels[posting.hiringStage] || '모집 중' });
   }
+  const secondaryBadges = badges.filter((badge) => badge.label !== categoryLabel);
 
   return (
     <button
@@ -877,25 +875,24 @@ export function PostingCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative flex min-h-[340px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[380px]',
+        'group relative flex min-h-[300px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[340px]',
         selected
           ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20'
           : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      <div className={cn('flex min-h-[6.5rem] items-center justify-between px-4 py-4 sm:px-5', highlightTone.headerClassName)}>
+      <div className={cn('flex min-h-[5.75rem] items-center px-4 py-3.5 sm:px-5', highlightTone.headerClassName)}>
         <div className="flex min-w-0 items-center gap-3.5">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 shadow-2xs">
             <PostingCategoryVisual category={posting.category} />
           </div>
           <div className="min-w-0">
-            <p className="text-[20px] font-black leading-tight text-balance sm:text-[22px]">{posting.companyName}</p>
-            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75">{posting.industry || categoryLabel}</p>
+            <p className="text-[24px] font-black leading-tight text-balance [word-break:keep-all] sm:text-[26px]">{posting.companyName}</p>
+            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75 [word-break:keep-all]">{posting.industry || categoryLabel}</p>
             <p className="sr-only">{highlightTone.label}</p>
           </div>
         </div>
-        <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
       </div>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
@@ -928,27 +925,29 @@ export function PostingCard({
           )}
         </div>
 
-        <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#17212B] text-pretty group-hover:text-[#173F3A] sm:text-[21px] sm:leading-8">
+        <h3 className="mt-3 text-[18px] font-extrabold leading-7 text-[#17212B] text-pretty [word-break:keep-all] group-hover:text-[#173F3A] sm:text-[19px] sm:leading-7">
           {cleanPositionTitle}
         </h3>
 
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {badges.slice(0, 2).map((badge, idx) => (
-            <span
-              className={cn(
-                'rounded-md px-2.5 py-1.5 text-[13px] font-bold leading-5',
-                badge.isMint ? 'bg-[#DDEBE7] text-[#173F3A]' : 'bg-[#FAF7F2] text-slate-600',
-              )}
-              key={`${badge.label}-${idx}`}
-            >
-              {badge.label}
-            </span>
-          ))}
-        </div>
+        {secondaryBadges.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {secondaryBadges.slice(0, 2).map((badge, idx) => (
+              <span
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-[13px] font-bold leading-5',
+                  badge.isMint ? 'bg-[#DDEBE7] text-[#173F3A]' : 'bg-[#FAF7F2] text-slate-600',
+                )}
+                key={`${badge.label}-${idx}`}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div
         aria-hidden="true"
-        className="mt-auto h-36 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-40"
+        className="mt-auto h-32 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
           backgroundPosition: getPostingPhotoPosition(posting, visualIndex),
@@ -977,22 +976,21 @@ function RecommendedTalentCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'group flex min-h-[280px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[310px]',
+        'group flex min-h-[250px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[280px]',
         selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20' : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
     >
-      <div className="flex min-h-[6rem] items-center justify-between gap-3 bg-[#E7F3EF] px-4 py-4 text-[#173F3A] sm:px-5">
+      <div className="flex min-h-[5.75rem] items-center gap-3 bg-[#E7F3EF] px-4 py-3.5 text-[#173F3A] sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 text-[#173F3A] shadow-2xs">
             <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="text-[22px] font-black leading-tight">{talent.name}</p>
-            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75">{talent.career} · {talent.location}</p>
+            <p className="text-[24px] font-black leading-tight [word-break:keep-all] sm:text-[26px]">{talent.name}</p>
+            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75 [word-break:keep-all]">{talent.career} · {talent.location}</p>
           </div>
         </div>
-        <ArrowRight className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" strokeWidth={1.8} aria-hidden="true" />
       </div>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
@@ -1015,7 +1013,7 @@ function RecommendedTalentCard({
           <span>{talent.matchScore}점</span>
         </span>
 
-        <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#17212B] text-pretty sm:text-[21px] sm:leading-8">
+        <h3 className="mt-3 text-[18px] font-extrabold leading-7 text-[#17212B] text-pretty [word-break:keep-all] sm:text-[19px] sm:leading-7">
           {talent.headline}
         </h3>
         <p className="mt-3 text-[13px] font-extrabold leading-5 text-[#173F3A]">대표 경험</p>
