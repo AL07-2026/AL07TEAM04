@@ -326,16 +326,6 @@ export function SiteHeader({
                   ) : null}
                 </div>
               </div>
-              {user ? (
-                <button
-                  type="button"
-                  onClick={() => void signOutToLanding()}
-                  className="mt-auto flex min-h-14 w-full items-center gap-3.5 rounded-md border-t border-[#E0D9C8] px-3.5 pt-4 text-left text-[1.125rem] font-extrabold leading-snug text-[#C7503B] transition-colors hover:bg-[#FFF0EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] active:scale-[0.99] sm:min-h-15 sm:text-[1.25rem]"
-                >
-                  <LogOut className="size-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  <span>로그아웃</span>
-                </button>
-              ) : null}
             </nav>
           </aside>
         </div>

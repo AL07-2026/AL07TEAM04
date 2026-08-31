@@ -407,7 +407,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(screen.getByText('생활용품 제조')).toBeInTheDocument();
   });
 
-  it('로그인한 기업 회원은 상단과 전체 메뉴에서 로그아웃할 수 있다', async () => {
+  it('로그인한 기업 회원은 상단에서 로그아웃할 수 있고 전체 메뉴에는 중복 노출하지 않는다', async () => {
     window.history.pushState({}, '', '/login?role=company');
     render(<App />);
 
@@ -422,8 +422,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     }
     fireEvent.click(within(quickNav).getByRole('button', { name: '전체 메뉴 열기' }));
     const drawer = await screen.findByRole('dialog', { name: '전체 메뉴' });
-    expect(within(drawer).getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
-    fireEvent.click(within(drawer).getByRole('button', { name: '로그아웃' }));
+    expect(within(drawer).queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
+    fireEvent.click(within(quickNav).getByRole('button', { name: '로그아웃' }));
     await waitFor(() => expect(window.location.pathname).toBe('/'));
     expect(window.location.pathname).not.toContain('/senior');
   });
