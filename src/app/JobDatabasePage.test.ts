@@ -35,6 +35,7 @@ import {
   JobDatabasePage,
   PostingCard,
   PostingWorkSummaryContent,
+  getPostingPhotoPosition,
   type FilterOption,
 } from '@/app/JobDatabasePage';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
@@ -72,6 +73,23 @@ const companyProject: JobPosting = {
   seniorFitScore: 90,
   postedAt: '2026-08-19',
 };
+
+describe('추천 카드 사진 배분', () => {
+  it('한 페이지에 보이는 6개 기업 카드 사진은 서로 다른 장면을 사용한다', () => {
+    const positions = Array.from({ length: 6 }, (_, index) =>
+      getPostingPhotoPosition(
+        {
+          ...companyProject,
+          id: `education-project-${index}`,
+          occupationCategory: 'education',
+        },
+        index,
+      ),
+    );
+
+    expect(new Set(positions).size).toBe(6);
+  });
+});
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
   it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {

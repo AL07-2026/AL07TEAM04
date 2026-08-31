@@ -371,71 +371,10 @@ const postingPhotoPositions = [
   '100% 100%',
 ] as const;
 
-function getPostingPhotoSlots(posting: JobPosting) {
-  const occupation = getPostingOccupationCategory(posting);
+const postingPhotoSlotOrder = [0, 5, 10, 15, 2, 7, 12, 9, 4, 14, 1, 11, 6, 3, 13, 8] as const;
 
-  switch (occupation) {
-    case 'it-development-data':
-      return [0, 9, 11];
-    case 'design':
-    case 'product-planning-md':
-    case 'media-culture-sports':
-      return [1, 7, 10];
-    case 'education':
-      return [2, 12, 13];
-    case 'hr-labor-hrd':
-    case 'general-legal-office':
-    case 'planning-strategy':
-      return [3, 10, 15];
-    case 'production':
-    case 'research-rd':
-    case 'construction-architecture':
-      return [4, 5, 14];
-    case 'procurement-materials-logistics':
-    case 'driving-transport-delivery':
-    case 'sales-retail-trade':
-      return [6, 7, 15];
-    case 'marketing-pr-research':
-    case 'customer-service-tm':
-    case 'service':
-      return [7, 1, 10];
-    case 'accounting-tax-finance':
-    case 'finance-insurance':
-      return [8, 15, 3];
-    case 'medical':
-    case 'public-welfare':
-      return [5, 3, 12];
-    default:
-      break;
-  }
-
-  switch (posting.category) {
-    case 'design-brand':
-      return [1, 7, 10];
-    case 'marketing-sales':
-    case 'growth':
-      return [7, 6, 15];
-    case 'hr-strategy':
-      return [3, 10, 15];
-    case 'r-and-d-manufacturing':
-      return [4, 5, 14];
-    case 'operations':
-      return [10, 6, 15];
-    case 'security':
-      return [9, 11, 0];
-    case 'ai-automation':
-    case 'legacy-modernization':
-      return [11, 0, 10];
-    case 'data-platform':
-    case 'dev-engineering':
-    default:
-      return [0, 11, 9];
-  }
-}
-
-function getPostingPhotoPosition(posting: JobPosting, visualIndex: number) {
-  const slots = getPostingPhotoSlots(posting);
-  const slot = slots[visualIndex % slots.length] ?? 0;
+export function getPostingPhotoPosition(_posting: JobPosting, visualIndex: number) {
+  const slot = postingPhotoSlotOrder[Math.abs(visualIndex) % postingPhotoSlotOrder.length] ?? 0;
   return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
 }
 
