@@ -864,9 +864,6 @@ export function PostingCard({
   }
 
   const categoryLabel = getPostingOccupationLabel(posting);
-  if (badges.length === 0) {
-    badges.push({ label: hiringStageLabels[posting.hiringStage] || '모집 중' });
-  }
   const secondaryBadges = badges.filter((badge) => badge.label !== categoryLabel);
 
   return (
