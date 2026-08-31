@@ -69,6 +69,23 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
   });
 
+  it('랜딩 페이지를 제외한 공통 상단바에는 로그인 여부와 관계없이 로그아웃 아이콘을 표시한다', async () => {
+    window.history.pushState({}, '', '/login?role=senior');
+    const { unmount } = render(<App />);
+
+    expect(await screen.findByRole('button', { name: '로그아웃' })).toBeInTheDocument();
+
+    act(() => unmount());
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
+  });
+
   it.each([
     ['프로젝트', '/senior/project-database'],
     ['AI 경험 인터뷰', '/senior/experience/interview'],

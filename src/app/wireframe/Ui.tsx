@@ -184,7 +184,7 @@ export function SiteHeader({
             >
               <Home className="size-5" strokeWidth={1.8} aria-hidden="true" />
             </button>
-            {showLogout && user ? (
+            {showLogout ? (
               <button
                 type="button"
                 onClick={() => void signOutToLanding()}
