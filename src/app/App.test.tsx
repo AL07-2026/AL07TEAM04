@@ -297,7 +297,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
-    expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('김도현')).length).toBeGreaterThan(0);
     expect(window.location.pathname).toBe('/company/project-database');
   });
 

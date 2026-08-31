@@ -724,8 +724,6 @@ export function PostingCard({
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
-  const simpleLocation = formatSimpleLocation(posting.location);
-  const simpleSalary = formatSimpleSalary(posting.salaryRange);
 
   // 2~3 essential badges
   const badges: { isMint?: boolean; label: string }[] = [];
@@ -755,7 +753,7 @@ export function PostingCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative flex min-h-[390px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[430px]',
+        'group relative flex min-h-[340px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[380px]',
         selected
           ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20'
           : 'border-[#E0D9C8] hover:border-[#7AA99E]',
@@ -809,7 +807,7 @@ export function PostingCard({
           {cleanPositionTitle}
         </h3>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-4 flex flex-wrap gap-1.5">
           {badges.slice(0, 2).map((badge, idx) => (
             <span
               className={cn(
@@ -822,21 +820,10 @@ export function PostingCard({
             </span>
           ))}
         </div>
-
-        <div className="mt-auto border-t border-[#E0D9C8]/70 pt-3">
-          <div className="flex flex-wrap gap-x-2 gap-y-1 text-[14px] font-semibold leading-6 text-slate-500">
-            <span>{simpleLocation}</span>
-            <span aria-hidden="true">·</span>
-            <span>{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
-            <span aria-hidden="true">·</span>
-            <span>마감 {getDeadlineText(posting)}</span>
-          </div>
-          <p className="mt-2 text-right text-[17px] font-black leading-6 text-[#F06B4F]">{simpleSalary}</p>
-        </div>
       </div>
       <div
         aria-hidden="true"
-        className="h-32 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-36"
+        className="mt-auto h-36 shrink-0 border-t border-[#E0D9C8]/70 bg-cover transition-transform duration-300 group-hover:scale-[1.02] sm:h-40"
         style={{
           backgroundImage: "url('/job-card-scenes.png')",
           backgroundPosition: getPostingPhotoPosition(posting.category),
@@ -865,7 +852,7 @@ function RecommendedTalentCard({
       aria-current={selected ? 'true' : undefined}
       aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'group flex min-h-[320px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[350px]',
+        'group flex min-h-[280px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[310px]',
         selected ? 'border-[#173F3A] ring-2 ring-[#173F3A]/20' : 'border-[#E0D9C8] hover:border-[#7AA99E]',
       )}
       onClick={onSelect}
@@ -906,25 +893,18 @@ function RecommendedTalentCard({
         <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#17212B] text-pretty sm:text-[21px] sm:leading-8">
           {talent.headline}
         </h3>
-        <p className="mt-2 text-[13px] font-extrabold leading-5 text-[#173F3A]">
-          연결 프로젝트 · <span>{talent.projectTitle}</span>
-        </p>
-        <p className="mt-2 text-[13px] font-extrabold leading-5 text-[#173F3A]">대표 경험</p>
+        <p className="mt-3 text-[13px] font-extrabold leading-5 text-[#173F3A]">대표 경험</p>
 
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {talent.skills.slice(0, 2).map((skill) => (
-          <span
-            className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]"
-            key={skill}
-          >
-            {skill}
-          </span>
-        ))}
-      </div>
-
-        <p className="mt-auto border-t border-[#E0D9C8]/70 pt-3 text-[14px] font-semibold leading-6 text-slate-500">
-          {talent.workType} · {talent.availability}
-        </p>
+          {talent.skills.slice(0, 3).map((skill) => (
+            <span
+              className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]"
+              key={skill}
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
       </div>
     </button>
   );
@@ -4248,7 +4228,7 @@ export function JobDatabasePage({
                   아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
                 </p>
               ) : null}
-              <div className={cn('grid gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3')}>
+              <div className={cn('grid gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3')}>
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
