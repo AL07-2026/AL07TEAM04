@@ -849,18 +849,12 @@ export function PostingCard({
 
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
 
-  // 2~3 essential badges
+  // Keep preview badges to work-location cues only; employment details stay in the detail card.
   const badges: { isMint?: boolean; label: string }[] = [];
   if (posting.workType === 'remote' || posting.title.includes('재택')) {
     badges.push({ isMint: true, label: '재택·원격' });
   } else if (posting.workType === 'hybrid' || posting.title.includes('하이브리드')) {
     badges.push({ isMint: true, label: '하이브리드' });
-  }
-
-  if (posting.employmentType === 'contract' || posting.title.includes('계약직')) {
-    badges.push({ label: '계약직' });
-  } else if (posting.employmentType === 'part-time' || posting.title.includes('시간제')) {
-    badges.push({ label: '시간제' });
   }
 
   const categoryLabel = getPostingOccupationLabel(posting);
