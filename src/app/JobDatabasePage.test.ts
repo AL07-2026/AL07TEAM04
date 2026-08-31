@@ -356,6 +356,48 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
 });
 
 describe('검색 결과 generation transition', () => {
+  it('1순위 기타 직접 입력은 후순위 선호 카테고리로 메인 추천 결과를 조회한다', async () => {
+    const profile = {
+      desiredCategory: 'other',
+      desiredCategory2: 'research-rd',
+      desiredCategory3: 'education',
+      desiredOccupationText: '제약--학술, 약물감시',
+      email: 'senior@example.com',
+      experience: '의약품 학술과 약물감시 업무',
+      field: '제약',
+      period: '12년',
+      phone: '010-0000-0000',
+    };
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch.mockReset().mockResolvedValue({
+      catalogTotal: 13761,
+      closingSoonTotal: 0,
+      items: [{ ...companyProject, id: 'research-posting', occupationCategory: 'research-rd' }],
+      page: 1,
+      pageSize: 6,
+      partTimeTotal: 0,
+      preferredTotal: 287,
+      status: 'success' as const,
+      total: 287,
+      totalPages: 48,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
+    expect(mockedSearch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categories: ['research-rd', 'education'],
+        desiredCategories: ['research-rd', 'education'],
+        desiredOccupationRank: 1,
+        desiredOccupationText: '제약--학술, 약물감시',
+        requireDesiredOccupationMatch: false,
+      }),
+    );
+  });
+
   it('pending 동안 stale count/list/detail을 숨기고 새 snapshot을 함께 commit한다', async () => {
     const profile = {
       desiredCategory: 'accounting-tax-finance',

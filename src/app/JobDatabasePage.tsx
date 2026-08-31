@@ -1869,8 +1869,12 @@ export function JobDatabasePage({
       const customFallbackCategories = isCustomMatchSelected
         ? preferredProfileCategories
         : [];
+      const shouldUseCustomFallbackCategories =
+        isCustomMatchSelected && customFallbackCategories.length > 0;
       let categories: JobOccupationFilter[] = [];
-      if (!isAllDatabaseSelected && !isCustomMatchSelected) {
+      if (shouldUseCustomFallbackCategories) {
+        categories = customFallbackCategories;
+      } else if (!isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -1880,7 +1884,9 @@ export function JobDatabasePage({
         }
       }
       let desiredCategories: OccupationPreference[] = [];
-      if (isAllDatabaseSelected) {
+      if (shouldUseCustomFallbackCategories) {
+        desiredCategories = customFallbackCategories;
+      } else if (isAllDatabaseSelected) {
         desiredCategories = preferredProfilePreferences;
       } else if (!isCustomMatchSelected && selectedOccupationCategory) {
         desiredCategories = [selectedOccupationCategory];
@@ -1927,7 +1933,8 @@ export function JobDatabasePage({
         pageSize: itemsPerPage,
         profileText,
         query,
-        requireDesiredOccupationMatch: isCustomMatchSelected,
+        requireDesiredOccupationMatch:
+          isCustomMatchSelected && !shouldUseCustomFallbackCategories,
         signal: abortController.signal,
         sortBy,
         workType: selectedWorkType,
