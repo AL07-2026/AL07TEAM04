@@ -3698,8 +3698,7 @@ export function JobDatabasePage({
                   const destination = getCompletedApplicationDestination(
                     completedApplication.proposalId,
                   );
-                  setCompletedApplication(null);
-                  void navigate(destination);
+                  window.location.assign(destination);
                 }}
                 type="button"
               >
