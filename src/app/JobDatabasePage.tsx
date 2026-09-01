@@ -1771,10 +1771,9 @@ export function JobDatabasePage({
         .join(' ');
 
       setIsLoadingPostings(true);
-      const companyProjectCategoryFilter = resolveSeniorCategoryFilter(
-        selectedCategory,
-        effectivePrimaryProfileFilter,
-      );
+      const companyProjectCategoryFilter = query.trim()
+        ? allDatabase
+        : resolveSeniorCategoryFilter(selectedCategory, effectivePrimaryProfileFilter);
       void searchFullJobDatabase({
         categories,
         desiredCategories,
@@ -1804,7 +1803,10 @@ export function JobDatabasePage({
       })
         .then((result) => {
           if (!active || generation !== resultGenerationRef.current) return;
-          const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
+          const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(
+            isHomeRecommendationContext,
+            Boolean(query.trim()),
+          ) ? publishedCompanyProjects.filter((project) =>
             matchesPublishedCompanyProject(project, {
               desiredOccupationText: isCustomMatchSelected
                 ? seniorProfile?.desiredOccupationText
@@ -1887,7 +1889,10 @@ export function JobDatabasePage({
             });
             if (!active || generation !== resultGenerationRef.current) return;
             setServerSearchMeta(null);
-            const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
+            const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(
+              isHomeRecommendationContext,
+              Boolean(query.trim()),
+            ) ? publishedCompanyProjects.filter((project) =>
               matchesPublishedCompanyProject(project, {
                 desiredOccupationText: isCustomMatchSelected
                   ? seniorProfile?.desiredOccupationText

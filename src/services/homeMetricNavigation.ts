@@ -50,9 +50,12 @@ export function getRecommendedProjectsDestination(
   return getSeniorProjectDatabaseDestination({ ...options, recommendedCategory });
 }
 
-/** The home metric is catalog-only, while normal discovery keeps company projects visible. */
-export function shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext: boolean) {
-  return !isHomeRecommendationContext;
+/** The home metric is catalog-only until a talent explicitly searches the full database. */
+export function shouldMergePublicProjectsForDiscovery(
+  isHomeRecommendationContext: boolean,
+  hasExplicitSearchQuery = false,
+) {
+  return !isHomeRecommendationContext || hasExplicitSearchQuery;
 }
 
 export function getActiveProposalsDestination() {

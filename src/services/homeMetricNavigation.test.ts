@@ -36,6 +36,7 @@ describe('home metric navigation contracts', () => {
     expect(getRecommendedProjectsDestination()).toBe('/senior/project-database');
     expect(shouldMergePublicProjectsForDiscovery(true)).toBe(false);
     expect(shouldMergePublicProjectsForDiscovery(false)).toBe(true);
+    expect(shouldMergePublicProjectsForDiscovery(true, true)).toBe(true);
   });
 
   it('uses the saved card route or the interview route according to card existence', () => {
