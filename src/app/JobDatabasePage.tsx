@@ -119,6 +119,7 @@ import {
   createProposalFromPosting,
   isUsableProposalResumeFile,
 } from '@/services/proposalService';
+import { getCompletedApplicationDestination } from './jobDatabaseApplicationNavigation';
 import { resolveSeniorProfile, type SeniorProfileData } from '@/services/profileService';
 import {
   clearWorknetFeedCache,
@@ -1495,6 +1496,7 @@ export function JobDatabasePage({
   // Interactive Application Modal State
   const [applyingPosting, setApplyingPosting] = useState<JobPosting | null>(null);
   const [completedApplication, setCompletedApplication] = useState<{
+    proposalId: string;
     posting: JobPosting;
     interviewSummary: string;
     attachedFileNames: string;
@@ -2092,7 +2094,7 @@ export function JobDatabasePage({
     });
     setIsApplying(true);
     try {
-      await createProposalFromPosting(
+      const savedProposal = await createProposalFromPosting(
         applyingPosting,
         attachedFileNames,
         interviewSummary,
@@ -2121,6 +2123,7 @@ export function JobDatabasePage({
         applyingPosting.source === 'public';
 
       setCompletedApplication({
+        proposalId: savedProposal.id,
         posting: applyingPosting,
         interviewSummary,
         attachedFileNames,
@@ -3691,7 +3694,13 @@ export function JobDatabasePage({
             <div className="mt-6 border-t border-[#E0D9C8] pt-4">
               <button
                 className="w-full rounded-2xl bg-[#F7F3EA] py-3.5 text-[15px] font-extrabold text-[#17212B] transition hover:bg-[#EFE9DC]"
-                onClick={() => setCompletedApplication(null)}
+                onClick={() => {
+                  const destination = getCompletedApplicationDestination(
+                    completedApplication.proposalId,
+                  );
+                  setCompletedApplication(null);
+                  void navigate(destination);
+                }}
                 type="button"
               >
                 확인 (이어잡 지원 이력 보기)

@@ -22,6 +22,7 @@ vi.mock('@/services/projectService', () => ({ createProject: mockedCreateProject
 vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
 
 import type { JobPosting } from '@/data/jobPostings';
+import { getCompletedApplicationDestination } from '@/app/jobDatabaseApplicationNavigation';
 import {
   getCompanyOwnedProjects,
   getPublishedCompanyProjects,
@@ -74,6 +75,12 @@ const companyProject: JobPosting = {
 };
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
+  it('지원 성공 확인은 방금 저장한 제안 상세로 이동한다', () => {
+    expect(getCompletedApplicationDestination('proposal-just-created')).toBe(
+      '/senior/proposals/proposal-just-created',
+    );
+  });
+
   it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {
     mockedProjects.mockResolvedValueOnce([]);
     mockedCreateProject.mockResolvedValueOnce({
