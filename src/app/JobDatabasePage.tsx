@@ -115,7 +115,10 @@ import {
   getProfilePrimaryPreference,
 } from '@/services/recommendationEngine';
 import { createProject, fetchProjects } from '@/services/projectService';
-import { createProposalFromPosting } from '@/services/proposalService';
+import {
+  createProposalFromPosting,
+  isUsableProposalResumeFile,
+} from '@/services/proposalService';
 import { resolveSeniorProfile, type SeniorProfileData } from '@/services/profileService';
 import {
   clearWorknetFeedCache,
@@ -171,8 +174,6 @@ export type FilterOption = {
 };
 
 const MAX_APPLICATION_FILES = 2;
-const MAX_APPLICATION_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_APPLICATION_FILE_EXTENSIONS = ['pdf', 'doc', 'docx'];
 const HOME_FOCUS_POSTING_KEY = 'eojob_home_focus_project';
 
 const categoryFilters: FilterOption[] = [
@@ -1512,6 +1513,8 @@ export function JobDatabasePage({
   const [applicationFiles, setApplicationFiles] = useState<File[]>([]);
   const [applicantNote, setApplicantNote] = useState('');
   const [applicationError, setApplicationError] = useState('');
+  const applicationOpenerRef = useRef<HTMLElement | null>(null);
+  const interviewBypassDialogRef = useRef<HTMLDivElement>(null);
   const [interviewCard, setInterviewCard] = useState<StoredExperienceCard | null>(() =>
     readStoredExperienceCard(user?.uid),
   );
@@ -1526,6 +1529,24 @@ export function JobDatabasePage({
     (isMobile && isMobileDetailOpen);
 
   useDocumentScrollLock(isModalOpen);
+
+  useEffect(() => {
+    if (!isInterviewBypassConfirmOpen) return undefined;
+
+    const focusDialog = window.setTimeout(() => interviewBypassDialogRef.current?.focus(), 0);
+    const handleInterviewBypassKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setIsInterviewBypassConfirmOpen(false);
+      window.setTimeout(() => applicationOpenerRef.current?.focus(), 0);
+    };
+
+    document.addEventListener('keydown', handleInterviewBypassKeyDown);
+    return () => {
+      window.clearTimeout(focusDialog);
+      document.removeEventListener('keydown', handleInterviewBypassKeyDown);
+    };
+  }, [isInterviewBypassConfirmOpen]);
 
   const interviewMatch = useMemo(
     () =>
@@ -1974,6 +1995,8 @@ export function JobDatabasePage({
 
   function handleApply(posting: JobPosting) {
     if (role === 'senior') {
+      applicationOpenerRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
       trackJobApply(posting.id, posting.companyName, posting.title, 'start');
       setApplyingPosting(posting);
       setApplicationFiles([]);
@@ -1994,13 +2017,7 @@ export function JobDatabasePage({
     event.target.value = '';
     if (selectedFiles.length === 0) return;
 
-    const validFiles = selectedFiles.filter((file) => {
-      const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-      return (
-        ALLOWED_APPLICATION_FILE_EXTENSIONS.includes(extension) &&
-        file.size <= MAX_APPLICATION_FILE_SIZE
-      );
-    });
+    const validFiles = selectedFiles.filter(isUsableProposalResumeFile);
 
     if (validFiles.length !== selectedFiles.length) {
       setApplicationError('PDF, DOC, DOCX 형식의 10MB 이하 파일만 첨부할 수 있습니다.');
@@ -2030,7 +2047,11 @@ export function JobDatabasePage({
   function handleStartApplicationInterview() {
     if (!applyingPosting) return;
     setIsInterviewBypassConfirmOpen(false);
-    preserveApplicationDraft(applyingPosting.id, applicationFiles, applicantNote);
+    preserveApplicationDraft(
+      applyingPosting.id,
+      applicationFiles.filter(isUsableProposalResumeFile),
+      applicantNote,
+    );
     beginApplicationInterview(applyingPosting.id, window.location.pathname, {
       targetCategory: applyingPosting.category,
       targetTitle: applyingPosting.title,
@@ -2050,7 +2071,9 @@ export function JobDatabasePage({
   }: { allowInterviewMismatch?: boolean } = {}) {
     if (!applyingPosting) return;
 
-    if (applicationFiles.length === 0) {
+    const usableApplicationFiles = applicationFiles.filter(isUsableProposalResumeFile);
+    if (usableApplicationFiles.length !== applicationFiles.length || usableApplicationFiles.length === 0) {
+      setApplicationFiles(usableApplicationFiles);
       setApplicationError('1개 이상의 첨부파일을 확인해 주세요.');
       return;
     }
@@ -2061,7 +2084,7 @@ export function JobDatabasePage({
       return;
     }
 
-    const attachedFileNames = applicationFiles.map((file) => file.name).join(', ');
+    const attachedFileNames = usableApplicationFiles.map((file) => file.name).join(', ');
     const interviewSummary = getApplicationInterviewSummary({
       card: interviewCard,
       isInterviewReady,
@@ -2076,7 +2099,7 @@ export function JobDatabasePage({
         applicantNote,
         user?.uid,
         { email: user?.email, name: user?.name },
-        applicationFiles,
+        usableApplicationFiles,
         seniorProfile?.experienceProfileV1,
         {
           employmentSubsidyTarget: seniorProfile?.employmentSubsidyTarget,
@@ -2126,10 +2149,6 @@ export function JobDatabasePage({
 
   function handleBypassInterview() {
     setIsInterviewBypassConfirmOpen(false);
-    if (applicationFiles.length === 0) {
-      setApplicationError('1개 이상의 첨부파일을 확인해 주세요.');
-      return;
-    }
     void handleConfirmSubmitApplication({ allowInterviewMismatch: true });
   }
 
@@ -3497,7 +3516,9 @@ export function JobDatabasePage({
             aria-labelledby="interview-bypass-confirm-title"
             aria-modal="true"
             className="w-full max-w-md rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-2xl"
+            ref={interviewBypassDialogRef}
             role="dialog"
+            tabIndex={-1}
           >
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FDF0ED] text-[#F06B4F]">

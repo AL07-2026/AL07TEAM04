@@ -92,6 +92,19 @@ describe('AI 인터뷰 경험 카드 흐름', () => {
     expect(getPendingApplicationInterview()).toBeNull();
   });
 
+  it('AI 인터뷰로 이동할 때 실제 첨부 File 객체와 메시지를 보존한다', async () => {
+    const { consumeApplicationDraft, preserveApplicationDraft } = await import('./applicationFlow');
+    const file = new File(['resume'], 'IEOJOB_RESUME_E2E_TEST.pdf', { type: 'application/pdf' });
+
+    preserveApplicationDraft('project-a', [file], '담당자에게 전달할 메시지');
+
+    expect(consumeApplicationDraft('project-a')).toEqual({
+      files: [file],
+      note: '담당자에게 전달할 메시지',
+      projectId: 'project-a',
+    });
+  });
+
   it('부족한 정보가 있으면 보완 질문 큐를 저장하고 다시 읽는다', () => {
     const card = buildExperienceCardFromAnswers(answers, { category: 'operations' });
     const started = beginExperienceFollowUp(card, [

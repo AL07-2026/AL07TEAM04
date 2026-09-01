@@ -70,6 +70,30 @@ export interface UserProposal {
 
 const PROPOSALS_COLLECTION = 'user_proposals';
 const LOCAL_STORAGE_KEY = 'eojob_user_proposals';
+const MAX_RESUME_FILE_SIZE = 10 * 1024 * 1024;
+const RESUME_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx']);
+
+export function isUsableProposalResumeFile(file: File | null | undefined): file is File {
+  if (!file || typeof file.name !== 'string' || typeof file.size !== 'number') return false;
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return (
+    RESUME_FILE_EXTENSIONS.has(extension) &&
+    Number.isFinite(file.size) &&
+    file.size > 0 &&
+    file.size <= MAX_RESUME_FILE_SIZE
+  );
+}
+
+function getResumeContentType(file: File) {
+  const declaredType = typeof file.type === 'string' ? file.type.trim() : '';
+  if (declaredType) return declaredType;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension === 'pdf'
+    ? 'application/pdf'
+    : extension === 'doc'
+      ? 'application/msword'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
 
 function normalizeProposal(source: unknown, documentId?: string): UserProposal | null {
   if (!source || typeof source !== 'object') return null;
@@ -321,13 +345,17 @@ export async function uploadProposalResumeFiles(
   files: File[],
   userId?: string,
 ): Promise<ProposalResumeFile[]> {
+  if (files.some((file) => !isUsableProposalResumeFile(file))) {
+    throw new Error('첨부파일 형식 또는 크기가 올바르지 않습니다.');
+  }
   const uploaded: ProposalResumeFile[] = [];
   try {
     for (const [index, file] of files.entries()) {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const storagePath = `resumes/${userId || 'unknown-user'}/${proposalId}/${Date.now()}-${index}-${safeName}`;
-      await uploadBytes(ref(storage, storagePath), file, { contentType: file.type });
-      uploaded.push({ name: file.name, storagePath, type: file.type || 'application/octet-stream', size: file.size });
+      const contentType = getResumeContentType(file);
+      await uploadBytes(ref(storage, storagePath), file, { contentType });
+      uploaded.push({ name: file.name, storagePath, type: contentType, size: file.size });
     }
     return uploaded;
   } catch (error) {

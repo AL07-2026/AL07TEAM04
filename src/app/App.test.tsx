@@ -116,7 +116,10 @@ describe('Figma v2 통합 화면 라우팅', () => {
       history?: Array<{ answer?: string }>;
     };
     expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
-    expect(screen.getAllByText('평균 응답 시간을 30% 줄였습니다.').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('해온 일')).toBeInTheDocument();
+    expect(screen.getByText('해낸 일')).toBeInTheDocument();
+    expect(screen.getByText('잘하는 점')).toBeInTheDocument();
+    expect(screen.queryByText('문제 (Problem)')).not.toBeInTheDocument();
     fetchMock.mockRestore();
   });
 

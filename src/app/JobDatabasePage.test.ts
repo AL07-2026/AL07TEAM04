@@ -105,7 +105,7 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       target: { value: 'AI 자동화 리드' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Firestore DB에 등록' }));
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
 
     await waitFor(() => expect(mockedCreateProject).toHaveBeenCalledTimes(1));
     expect(mockedCreateProject).toHaveBeenCalledWith(
@@ -178,6 +178,12 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       }),
     ).toBe(true);
     expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
+  });
+
+  it('내부 프로젝트 ID가 카탈로그에서 제목만 정규화되어 돌아와도 한 카드로 유지한다', () => {
+    const catalogMirror = { ...companyProject, title: '운영 프로젝트' };
+
+    expect(mergeSeniorPostings([companyProject], [catalogMirror])).toEqual([companyProject]);
   });
 
   it('외부 공고 ID가 같아도 제목이 다르면 서로 다른 공고로 유지한다', () => {

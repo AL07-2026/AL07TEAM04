@@ -2197,48 +2197,6 @@ export function ExperienceCardPage() {
             </label>
           </div>
 
-          <div className="flex flex-col gap-2 pt-1">
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-                <AlertTriangle className="size-4" />
-              </div>
-              <div className="flex flex-col text-xs">
-                <strong className="font-extrabold text-[#173F3A]">문제 (Problem)</strong>
-                <span className="font-medium text-[#17212B]/80">{experienceCard.problem}</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-                <User className="size-4" />
-              </div>
-              <div className="flex flex-col text-xs">
-                <strong className="font-extrabold text-[#173F3A]">역할 (Role)</strong>
-                <span className="font-medium text-[#17212B]/80">{experienceCard.role}</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-                <Settings className="size-4" />
-              </div>
-              <div className="flex flex-col text-xs">
-                <strong className="font-extrabold text-[#173F3A]">행동 (Action)</strong>
-                <span className="font-medium text-[#17212B]/80">{experienceCard.action}</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl bg-[#FAF7F2] p-3 shadow-2xs">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#DDEBE7] text-[#173F3A]">
-                <BarChart2 className="size-4" />
-              </div>
-              <div className="flex flex-col text-xs">
-                <strong className="font-extrabold text-[#173F3A]">결과 (Result)</strong>
-                <span className="font-medium text-[#17212B]/80">{experienceCard.result}</span>
-              </div>
-            </div>
-          </div>
-
           <ExperienceCardAnalysisPanel
             card={experienceCard}
             onContinueFollowUp={
