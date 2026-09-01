@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
@@ -55,9 +55,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it.each([
-    ['서비스 홈', '/senior'],
     ['인재로 로그인', '/login?role=senior'],
     ['기업으로 로그인', '/login?role=company'],
+    ['프로젝트 보러가기', '/senior/project-database'],
   ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
     window.history.pushState({}, '', '/');
     render(<App />);
@@ -68,63 +68,6 @@ describe('Figma v2 통합 화면 라우팅', () => {
       expect(`${window.location.pathname}${window.location.search}`).toBe(destination);
     });
   });
-
-  it('랜딩 페이지를 제외한 공통 상단바에는 로그인 여부와 관계없이 로그아웃 아이콘을 표시한다', async () => {
-    window.history.pushState({}, '', '/login?role=senior');
-    const { unmount } = render(<App />);
-
-    expect(await screen.findByRole('button', { name: '로그아웃' })).toBeInTheDocument();
-
-    act(() => unmount());
-    window.history.pushState({}, '', '/');
-    render(<App />);
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
-  });
-
-  it.each([
-    ['프로젝트', '/senior/project-database'],
-    ['AI 경험 인터뷰', '/senior/experience/interview'],
-    ['내 제안', '/login'],
-    ['내 정보', '/login'],
-    ['Brand', '/'],
-  ])('전체 메뉴의 %s 항목은 의미에 맞는 화면으로 이동한다', async (label, destination) => {
-    window.history.pushState({}, '', '/');
-    render(<App />);
-
-    fireEvent.click(await screen.findByRole('button', { name: '전체 메뉴 열기' }));
-    expect(await screen.findByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: label }));
-
-    await waitFor(() => {
-      expect(window.location.pathname).toBe(destination);
-    });
-  });
-
-  it('전체 메뉴에서 커뮤니티와 문의 채널을 확인할 수 있다', async () => {
-    window.history.pushState({}, '', '/');
-    render(<App />);
-
-    fireEvent.click(await screen.findByRole('button', { name: '전체 메뉴 열기' }));
-    const drawer = await screen.findByRole('dialog', { name: '전체 메뉴' });
-
-    fireEvent.click(within(drawer).getByRole('button', { name: 'Community' }));
-    expect(within(drawer).getByRole('link', { name: '카카오톡 오픈채팅방' })).toHaveAttribute(
-      'href',
-      'https://open.kakao.com/o/pCtnwCIi',
-    );
-
-    fireEvent.click(within(drawer).getByRole('button', { name: 'Contact' }));
-    expect(within(drawer).getByRole('link', { name: '이어잡에 컨택하기' })).toHaveAttribute(
-      'href',
-      'mailto:phj1120@gmail.com',
-    );
-  });
-
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
     sessionStorage.clear();
@@ -297,7 +240,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
-    expect((await screen.findAllByText('김도현')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
     expect(window.location.pathname).toBe('/company/project-database');
   });
 
@@ -407,23 +350,11 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(screen.getByText('생활용품 제조')).toBeInTheDocument();
   });
 
-  it('로그인한 기업 회원은 상단에서 로그아웃할 수 있고 전체 메뉴에는 중복 노출하지 않는다', async () => {
-    window.history.pushState({}, '', '/login?role=company');
+  it('회사 기본정보 로그아웃은 시니어 경로가 아닌 공개 홈으로 이동한다', async () => {
+    window.history.pushState({}, '', '/company-info');
     render(<App />);
-
-    fireEvent.change(await screen.findByLabelText('이메일'), { target: { value: 'company@example.com' } });
-    fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: '기업으로 로그인 →' }));
-    await waitFor(() => expect(window.location.pathname).toBe('/company'));
-
-    const quickNav = screen.getByRole('navigation', { name: '빠른 이동' });
-    for (const label of ['인재로 로그인', '기업으로 로그인', '서비스 홈', '로그아웃', '전체 메뉴 열기']) {
-      expect(within(quickNav).getByRole('button', { name: label })).toBeInTheDocument();
-    }
-    fireEvent.click(within(quickNav).getByRole('button', { name: '전체 메뉴 열기' }));
-    const drawer = await screen.findByRole('dialog', { name: '전체 메뉴' });
-    expect(within(drawer).queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
-    fireEvent.click(within(quickNav).getByRole('button', { name: '로그아웃' }));
+    expect(await screen.findByRole('heading', { name: '저장된 회사 정보' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
     await waitFor(() => expect(window.location.pathname).toBe('/'));
     expect(window.location.pathname).not.toContain('/senior');
   });

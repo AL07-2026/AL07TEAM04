@@ -35,10 +35,6 @@ import {
   JobDatabasePage,
   PostingCard,
   PostingWorkSummaryContent,
-  getPostingPhotoCandidateSlots,
-  getPostingPhotoPosition,
-  getPostingPhotoPositionsForPage,
-  getPostingSpecificRoleLabel,
   type FilterOption,
 } from '@/app/JobDatabasePage';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
@@ -76,113 +72,6 @@ const companyProject: JobPosting = {
   seniorFitScore: 90,
   postedAt: '2026-08-19',
 };
-
-describe('추천 카드 사진 배분', () => {
-  it('한 페이지에 보이는 6개 기업 카드 사진은 서로 다른 장면을 사용한다', () => {
-    const postings = Array.from({ length: 6 }, (_, index) => ({
-      ...companyProject,
-      id: `education-project-${index}`,
-      occupationCategory: 'education' as const,
-      title: ['영어선생님 구인', '수학선생님 구인', '편집자', '외래강사 모집', '특수교사 구인', '연장반 선생님'][index]!,
-    }));
-    const positions = getPostingPhotoPositionsForPage(postings);
-
-    expect(new Set(positions).size).toBe(6);
-  });
-
-  it('공고 제목과 직군에 맞는 사진 후보를 먼저 고른다', () => {
-    expect(
-      getPostingPhotoCandidateSlots({
-        ...companyProject,
-        companyName: '(주)아쿠아뱅크',
-        occupationCategory: 'research-rd',
-        title: '의료기기 필러 제조 품질팀 QC',
-      })[0],
-    ).toBe(5);
-    expect(
-      getPostingPhotoCandidateSlots({
-        ...companyProject,
-        companyName: '(주)디비케이',
-        occupationCategory: 'research-rd',
-        title: '기구개발 & 기구설계 담당자',
-      })[0],
-    ).toBe(14);
-    expect(
-      getPostingPhotoPosition(
-        {
-          ...companyProject,
-          occupationCategory: 'it-development-data',
-          title: '빅데이터 플랫폼 시스템 아키텍처 개편 총괄',
-        },
-        0,
-      ),
-    ).toBe('0% 0%');
-  });
-});
-
-describe('추천 카드 점수 표시', () => {
-  it('미리보기 카드는 API가 내려준 AI 매칭 점수를 우선 표시한다', () => {
-    render(
-      createElement(PostingCard, {
-        activePrimaryCategory: 'research-rd',
-        onSelect: vi.fn(),
-        posting: {
-          ...companyProject,
-          occupationCategory: 'research-rd',
-          seniorFitScore: 65,
-          title: '기구개발 & 기구설계 담당자',
-        },
-        profile: {
-          desiredCategory: 'research-rd',
-          email: 'senior@example.com',
-          experience: '연구개발과 설계 업무를 오래 수행했습니다.',
-          field: '연구개발',
-          period: '12년',
-          phone: '010-0000-0000',
-        },
-        selected: false,
-      }),
-    );
-
-    expect(screen.getByText('65점')).toBeTruthy();
-  });
-});
-
-describe('추천 카드 직무 라벨 표시', () => {
-  it('미리보기 카드는 대분류 대신 공고의 구체 직무명을 표시한다', () => {
-    const posting: JobPosting = {
-      ...companyProject,
-      industry: '보육 교사',
-      occupationCategory: 'education',
-      title: '연장반 선생님',
-    };
-
-    expect(getPostingSpecificRoleLabel(posting)).toBe('보육 교사');
-
-    render(
-      createElement(PostingCard, {
-        activePrimaryCategory: 'education',
-        onSelect: vi.fn(),
-        posting,
-        selected: false,
-      }),
-    );
-
-    expect(screen.getByText('보육 교사')).toBeTruthy();
-    expect(screen.queryByText('교육')).toBeNull();
-  });
-
-  it('공고 분야가 대분류뿐이면 제목에서 구체 역할을 대신 보여준다', () => {
-    expect(
-      getPostingSpecificRoleLabel({
-        ...companyProject,
-        industry: '교육',
-        occupationCategory: 'education',
-        title: '연장반 선생님',
-      }),
-    ).toBe('연장반 선생님');
-  });
-});
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
   it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {
@@ -412,18 +301,16 @@ describe('공고 실제 업무의 task stack 표현', () => {
 
 describe('선택된 프로젝트 카드의 조용한 강조', () => {
   it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       createElement(PostingCard, {
         onSelect: vi.fn(),
         posting: companyProject,
         selected: false,
       }),
     );
-    const unselected = screen.getByRole('button', {
-      name: `${companyProject.companyName} ${companyProject.title} 상세 보기`,
-    });
+    const unselected = container.querySelector('article')!;
     expect(unselected).not.toHaveAttribute('aria-current');
-    expect(unselected.className).not.toContain('ring-2');
+    expect(unselected.className).not.toContain('inset_3px');
 
     rerender(
       createElement(PostingCard, {
@@ -432,12 +319,10 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
         selected: true,
       }),
     );
-    const selected = screen.getByRole('button', {
-      name: `${companyProject.companyName} ${companyProject.title} 상세 보기`,
-    });
+    const selected = container.querySelector('article')!;
     expect(selected).toHaveAttribute('aria-current', 'true');
-    expect(selected.className).toContain('ring-2');
-    expect(selected).toHaveClass('focus-visible:outline-2');
+    expect(selected.className).toContain('inset_3px');
+    expect(screen.getByRole('button', { name: companyProject.title })).toHaveClass('focus-visible:ring-2');
   });
 });
 
@@ -471,48 +356,6 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
 });
 
 describe('검색 결과 generation transition', () => {
-  it('1순위 기타 직접 입력은 후순위 선호 카테고리로 메인 추천 결과를 조회한다', async () => {
-    const profile = {
-      desiredCategory: 'other',
-      desiredCategory2: 'research-rd',
-      desiredCategory3: 'education',
-      desiredOccupationText: '제약--학술, 약물감시',
-      email: 'senior@example.com',
-      experience: '의약품 학술과 약물감시 업무',
-      field: '제약',
-      period: '12년',
-      phone: '010-0000-0000',
-    };
-    mockedProfile.mockResolvedValue(profile);
-    mockedProjects.mockResolvedValue([]);
-    mockedExperienceCard.mockResolvedValue(null);
-    mockedSearch.mockReset().mockResolvedValue({
-      catalogTotal: 13761,
-      closingSoonTotal: 0,
-      items: [{ ...companyProject, id: 'research-posting', occupationCategory: 'research-rd' }],
-      page: 1,
-      pageSize: 6,
-      partTimeTotal: 0,
-      preferredTotal: 287,
-      status: 'success' as const,
-      total: 287,
-      totalPages: 48,
-    });
-
-    render(createElement(JobDatabasePage, { role: 'senior' }));
-
-    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
-    expect(mockedSearch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        categories: ['research-rd', 'education'],
-        desiredCategories: ['research-rd', 'education'],
-        desiredOccupationRank: 1,
-        desiredOccupationText: '제약--학술, 약물감시',
-        requireDesiredOccupationMatch: false,
-      }),
-    );
-  });
-
   it('pending 동안 stale count/list/detail을 숨기고 새 snapshot을 함께 commit한다', async () => {
     const profile = {
       desiredCategory: 'accounting-tax-finance',

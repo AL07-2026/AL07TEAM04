@@ -52,7 +52,6 @@ export type FullJobSearchResult = {
 };
 
 const SEARCH_CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
-const SEARCH_CLIENT_CACHE_PREFIX = 'eojob_search_v2_';
 const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSearchResult }>();
 
 function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearchResult {
@@ -92,7 +91,7 @@ function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearc
 function readSessionStorageCache(key: string): FullJobSearchResult | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = window.sessionStorage.getItem(`${SEARCH_CLIENT_CACHE_PREFIX}${key}`);
+    const raw = window.sessionStorage.getItem(`eojob_search_${key}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { expiresAt: number; result: FullJobSearchResult };
     if (parsed && parsed.expiresAt > Date.now()) {
@@ -108,7 +107,7 @@ function writeSessionStorageCache(key: string, result: FullJobSearchResult) {
   if (typeof window === 'undefined') return;
   try {
     window.sessionStorage.setItem(
-      `${SEARCH_CLIENT_CACHE_PREFIX}${key}`,
+      `eojob_search_${key}`,
       JSON.stringify({ expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS, result }),
     );
   } catch {

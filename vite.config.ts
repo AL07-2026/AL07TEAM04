@@ -12,13 +12,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      // The local interview helper does not expose the job catalog route.
-      // Proxy job searches to the deployed API so local card previews use the same results as main.
-      '/api/jobs': {
-        target: 'https://al07team04-bdfcd.web.app',
-        changeOrigin: true,
-        secure: true,
-      },
       '/api': 'http://127.0.0.1:8787',
     },
   },

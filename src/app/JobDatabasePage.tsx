@@ -11,32 +11,23 @@ import {
   CircleAlert,
   ClipboardCheck,
   Coins,
-  Code2,
   Copy,
-  Database,
   ExternalLink,
-  Factory,
   FileText,
   Filter,
   Loader2,
   Mail,
   MapPin,
-  Megaphone,
   Mic,
-  Palette,
   Plus,
   RefreshCw,
   Search,
   Send,
-  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
   UserRound,
-  UsersRound,
-  Workflow,
-  Wrench,
   X,
 } from 'lucide-react';
 import {
@@ -204,32 +195,6 @@ function getPostingOccupationLabel(posting: JobPosting) {
   return occupationCategoryLabels[getPostingOccupationCategory(posting)];
 }
 
-const broadOccupationLabelSet = new Set(Object.values(occupationCategoryLabels));
-
-function normalizeCardLabel(value?: string | null) {
-  const trimmed = value?.trim();
-  return trimmed && trimmed !== '상세 공고에서 확인' ? trimmed : '';
-}
-
-export function getPostingSpecificRoleLabel(posting: JobPosting) {
-  const industryLabel = normalizeCardLabel(posting.industry);
-  if (industryLabel && !broadOccupationLabelSet.has(industryLabel)) {
-    return industryLabel;
-  }
-
-  const cleanTitle = normalizeCardLabel(extractCleanPositionTitle(posting.title, posting.companyName));
-  if (cleanTitle) {
-    return cleanTitle;
-  }
-
-  const talentTypeLabel = normalizeCardLabel(posting.recommendedTalentType);
-  if (talentTypeLabel && !broadOccupationLabelSet.has(talentTypeLabel)) {
-    return talentTypeLabel;
-  }
-
-  return getPostingOccupationLabel(posting);
-}
-
 const workTypeFilters: { id: WorkTypeFilter; label: string }[] = [
   { id: all, label: '전체 근무' },
   { id: 'remote', label: '원격' },
@@ -273,285 +238,6 @@ function getRequiredFormValue(formData: FormData, key: string) {
   return ((formData.get(key) as string) || '').trim();
 }
 
-function PostingCategoryVisual({ category }: { category: ProjectCategory }) {
-  const className = 'size-9 sm:size-10';
-
-  switch (category) {
-    case 'design-brand':
-      return <Palette className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'marketing-sales':
-    case 'growth':
-      return <Megaphone className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'hr-strategy':
-      return <UsersRound className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'r-and-d-manufacturing':
-      return <Factory className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'security':
-      return <ShieldCheck className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'ai-automation':
-    case 'legacy-modernization':
-      return <Workflow className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'operations':
-      return <Wrench className={className} strokeWidth={1.8} aria-hidden="true" />;
-    case 'data-platform':
-      return <Database className={className} strokeWidth={1.8} aria-hidden="true" />;
-    default:
-      return <Code2 className={className} strokeWidth={1.8} aria-hidden="true" />;
-  }
-}
-
-type PostingHighlightKey = 'fit' | 'deadline' | 'latest' | 'default';
-
-type PostingHighlightTone = {
-  accentClassName: string;
-  headerClassName: string;
-  iconClassName: string;
-  key: PostingHighlightKey;
-  label: string;
-};
-
-const postingHighlightTones: Record<PostingHighlightKey, PostingHighlightTone> = {
-  fit: {
-    accentClassName: 'bg-[#D65A3D]',
-    headerClassName: 'bg-[#FFF0EC] text-[#993720]',
-    iconClassName: 'text-[#B9472D]',
-    key: 'fit',
-    label: '적합도 상위 10%',
-  },
-  deadline: {
-    accentClassName: 'bg-[#7656AF]',
-    headerClassName: 'bg-[#F1ECFA] text-[#5C438C]',
-    iconClassName: 'text-[#654A9B]',
-    key: 'deadline',
-    label: '마감 1개월 이내',
-  },
-  latest: {
-    accentClassName: 'bg-[#237060]',
-    headerClassName: 'bg-[#E7F3EF] text-[#15594F]',
-    iconClassName: 'text-[#176257]',
-    key: 'latest',
-    label: '최근 1개월 등록',
-  },
-  default: {
-    accentClassName: 'bg-[#315E79]',
-    headerClassName: 'bg-[#EEF3F6] text-[#294D67]',
-    iconClassName: 'text-[#2E5572]',
-    key: 'default',
-    label: '일반 추천',
-  },
-};
-
-function parsePostingDate(value?: string) {
-  if (!value) return null;
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function isWithinNextMonth(value?: string) {
-  const date = parsePostingDate(value);
-  if (!date) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const nextMonth = new Date(today);
-  nextMonth.setDate(nextMonth.getDate() + 31);
-  return date.getTime() >= today.getTime() && date.getTime() <= nextMonth.getTime();
-}
-
-function isWithinPreviousMonth(value?: string) {
-  const date = parsePostingDate(value);
-  if (!date) return false;
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
-  const previousMonth = new Date(today);
-  previousMonth.setDate(previousMonth.getDate() - 31);
-  return date.getTime() >= previousMonth.getTime() && date.getTime() <= today.getTime();
-}
-
-function getPostingIdentityKey(posting: JobPosting) {
-  return `${posting.id}::${posting.title}`;
-}
-
-function getPostingHighlightTone(posting: JobPosting, topFitPostingKeys: Set<string>) {
-  if (topFitPostingKeys.has(getPostingIdentityKey(posting))) return postingHighlightTones.fit;
-  if (isWithinNextMonth(posting.deadline)) return postingHighlightTones.deadline;
-  if (isWithinPreviousMonth(posting.postedAt)) return postingHighlightTones.latest;
-  return postingHighlightTones.default;
-}
-
-const postingPhotoPositions = [
-  '0% 0%',
-  '33.333% 0%',
-  '66.667% 0%',
-  '100% 0%',
-  '0% 33.333%',
-  '33.333% 33.333%',
-  '66.667% 33.333%',
-  '100% 33.333%',
-  '0% 66.667%',
-  '33.333% 66.667%',
-  '66.667% 66.667%',
-  '100% 66.667%',
-  '0% 100%',
-  '33.333% 100%',
-  '66.667% 100%',
-  '100% 100%',
-] as const;
-
-const postingPhotoSlotOrder = [5, 14, 4, 0, 2, 7, 15, 8, 10, 11, 6, 1, 12, 3, 13, 9] as const;
-
-function includesAny(text: string, keywords: readonly string[]) {
-  return keywords.some((keyword) => text.includes(keyword.toLowerCase()));
-}
-
-function uniquePhotoSlots(slots: readonly number[]) {
-  return [...new Set([...slots, ...postingPhotoSlotOrder])];
-}
-
-export function getPostingPhotoCandidateSlots(posting: JobPosting) {
-  const occupation = getPostingOccupationCategory(posting);
-  const text = [
-    posting.companyName,
-    posting.title,
-    posting.industry,
-    posting.problemStatement,
-    posting.projectGoal,
-    ...(posting.coreResponsibilities || []),
-    ...(posting.requiredSkills || []),
-    ...(posting.qualifications || []),
-    occupation,
-    posting.category,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-
-  if (
-    includesAny(text, [
-      '연구',
-      'r&d',
-      '임상',
-      '실험',
-      '의료',
-      '바이오',
-      '의약',
-      '약물',
-      '필러',
-      '화장품',
-      '과학',
-      '박사후',
-      '품질',
-      'qc',
-    ])
-  ) {
-    return uniquePhotoSlots([5, 14, 4, 13, 15, 8, 10, 3, 2, 12]);
-  }
-
-  if (
-    includesAny(text, [
-      '기구',
-      '기계',
-      '설계',
-      '제조',
-      '생산',
-      '공정',
-      '반도체',
-      '부품',
-      '수리',
-      '가스설비',
-      '전기기기',
-      '산업용',
-    ])
-  ) {
-    return uniquePhotoSlots([14, 4, 5, 10, 15, 8, 3, 7, 11, 0]);
-  }
-
-  if (
-    includesAny(text, ['교육', '강사', '선생', '교사', '교수', '학원', '어린이집', '강의', '멘토링'])
-  ) {
-    return uniquePhotoSlots([2, 12, 13, 10, 3, 15, 7, 1]);
-  }
-
-  if (
-    includesAny(text, ['개발', '데이터', 'db', 'ai', '소프트웨어', '플랫폼', '시스템', '클라우드', '서버', '보안'])
-  ) {
-    return uniquePhotoSlots([0, 11, 9, 10, 15, 7, 1, 8]);
-  }
-
-  if (includesAny(text, ['디자인', 'ux', 'ui', '브랜딩', '상품기획', 'md', '편집'])) {
-    return uniquePhotoSlots([1, 7, 10, 15, 13, 3, 2, 12]);
-  }
-
-  if (includesAny(text, ['마케팅', '홍보', '영업', '세일즈', '시장', '고객', 'tm', '상담'])) {
-    return uniquePhotoSlots([7, 10, 15, 6, 1, 8, 3, 11]);
-  }
-
-  if (includesAny(text, ['물류', '구매', '자재', 'scm', '운송', '배송', '무역', '수출'])) {
-    return uniquePhotoSlots([6, 15, 10, 3, 8, 7, 1, 11]);
-  }
-
-  if (includesAny(text, ['회계', '세무', '재무', '금융', '보험', '결산'])) {
-    return uniquePhotoSlots([8, 15, 3, 10, 13, 7, 1, 11]);
-  }
-
-  if (includesAny(text, ['인사', '노무', 'hrd', '총무', '법무', '사무', '행정', '경영지원'])) {
-    return uniquePhotoSlots([3, 15, 10, 8, 13, 7, 1, 12]);
-  }
-
-  switch (occupation) {
-    case 'education':
-      return uniquePhotoSlots([2, 12, 13, 10, 3, 15]);
-    case 'research-rd':
-    case 'medical':
-      return uniquePhotoSlots([5, 14, 4, 13, 15, 8]);
-    case 'production':
-    case 'construction-architecture':
-      return uniquePhotoSlots([14, 4, 5, 10, 15, 8]);
-    case 'it-development-data':
-      return uniquePhotoSlots([0, 11, 9, 10, 15, 7]);
-    case 'design':
-    case 'product-planning-md':
-    case 'media-culture-sports':
-      return uniquePhotoSlots([1, 7, 10, 15, 13, 3]);
-    case 'procurement-materials-logistics':
-    case 'driving-transport-delivery':
-    case 'sales-retail-trade':
-      return uniquePhotoSlots([6, 15, 10, 3, 8, 7]);
-    case 'accounting-tax-finance':
-    case 'finance-insurance':
-      return uniquePhotoSlots([8, 15, 3, 10, 13, 7]);
-    default:
-      return uniquePhotoSlots([10, 15, 3, 8, 7, 13]);
-  }
-}
-
-function getPostingPhotoSlot(
-  posting: JobPosting,
-  visualIndex: number,
-  usedSlots: Set<number> = new Set(),
-) {
-  const candidates = getPostingPhotoCandidateSlots(posting);
-  const pageOrdinal = Math.abs(visualIndex) % 6;
-  const rotatedCandidates = [
-    ...candidates.slice(pageOrdinal),
-    ...candidates.slice(0, pageOrdinal),
-  ];
-  return rotatedCandidates.find((slot) => !usedSlots.has(slot)) ?? candidates[0] ?? 0;
-}
-
-export function getPostingPhotoPosition(posting: JobPosting, visualIndex: number) {
-  const slot = getPostingPhotoSlot(posting, visualIndex);
-  return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
-}
-
-export function getPostingPhotoPositionsForPage(postings: JobPosting[], pageStartVisualIndex = 0) {
-  const usedSlots = new Set<number>();
-  return postings.map((posting, index) => {
-    const slot = getPostingPhotoSlot(posting, pageStartVisualIndex + index, usedSlots);
-    usedSlots.add(slot);
-    return postingPhotoPositions[slot] ?? postingPhotoPositions[0];
-  });
-}
-
 function getOptionalFormValue(formData: FormData, key: string, fallback: string) {
   return getRequiredFormValue(formData, key) || fallback;
 }
@@ -591,13 +277,12 @@ function getApplicationInterviewSummary({
 
 function getRecommendedTalentsForPosting(posting: JobPosting): RecommendedTalent[] {
   const occupationLabel = getPostingOccupationLabel(posting);
-  const specificRoleLabel = getPostingSpecificRoleLabel(posting);
   const primarySkills = [
-    specificRoleLabel,
     ...(posting.requiredSkills ?? []),
     ...(posting.preferredSkills ?? []),
+    occupationLabel,
   ]
-    .filter((skill, index, skills): skill is string => Boolean(skill) && skills.indexOf(skill) === index)
+    .filter(Boolean)
     .slice(0, 4);
   const responsibilities = posting.coreResponsibilities?.length
     ? posting.coreResponsibilities
@@ -612,13 +297,13 @@ function getRecommendedTalentsForPosting(posting: JobPosting): RecommendedTalent
     evidence: [
       responsibilities[index % responsibilities.length] ?? '유사 프로젝트 수행 경험',
       posting.matchingSignals?.[index % Math.max(1, posting.matchingSignals.length)] ??
-        `${specificRoleLabel} 프로젝트 리딩 경험`,
+        `${occupationLabel} 프로젝트 리딩 경험`,
     ].filter(Boolean),
     headline:
       index === 0
-        ? `${specificRoleLabel} 프로젝트를 주도한 시니어`
+        ? `${occupationLabel} 프로젝트를 주도한 시니어`
         : index === 1
-          ? `${specificRoleLabel} 실무 개선 경험 보유`
+          ? `${posting.industry} 실무 개선 경험 보유`
           : `${posting.projectDuration} 단기 과제 해결에 강점`,
     id: `${posting.id}-talent-${index + 1}`,
     location: posting.workType === 'remote' ? '전국 · 원격 가능' : posting.location,
@@ -943,26 +628,22 @@ function shouldShowScoreBadge(
 export function PostingCard({
   activePrimaryCategory,
   experienceCard,
-  highlightTone = postingHighlightTones.default,
   onSelect,
   posting,
   profile,
   role = 'company',
   selected,
-  photoPosition,
-  visualIndex = 0,
+  useServerScore,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
-  highlightTone?: PostingHighlightTone;
   onApply?: (posting: JobPosting) => void;
   onSelect: () => void;
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
+  useServerScore?: boolean;
   selected: boolean;
-  photoPosition?: string;
-  visualIndex?: number;
 }) {
   const matchResult = calculatePersonalizedMatch(
     posting,
@@ -970,77 +651,142 @@ export function PostingCard({
     activePrimaryCategory,
     experienceCard,
   );
-  const displayScore =
-    posting.seniorFitScore && posting.seniorFitScore > 0
-      ? posting.seniorFitScore
-      : matchResult.personalizedScore > 0
-        ? matchResult.personalizedScore
-        : 75;
+  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
+  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
+  const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
+
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
-  const specificRoleLabel = getPostingSpecificRoleLabel(posting);
+  const simpleLocation = formatSimpleLocation(posting.location);
+  const simpleSalary = formatSimpleSalary(posting.salaryRange);
+
+  // 2~3 essential badges
+  const badges: { isMint?: boolean; label: string }[] = [];
+  if (posting.workType === 'remote' || posting.title.includes('재택')) {
+    badges.push({ isMint: true, label: '재택·원격' });
+  } else if (posting.workType === 'hybrid' || posting.title.includes('하이브리드')) {
+    badges.push({ isMint: true, label: '하이브리드' });
+  }
+
+  if (posting.employmentType === 'contract' || posting.title.includes('계약직')) {
+    badges.push({ label: '계약직' });
+  } else if (posting.employmentType === 'part-time' || posting.title.includes('시간제')) {
+    badges.push({ label: '시간제' });
+  }
+
+  const categoryLabel = getPostingOccupationLabel(posting);
+  if (categoryLabel && badges.length < 3) {
+    badges.push({ isMint: true, label: categoryLabel });
+  }
+  if (badges.length === 0) {
+    badges.push({ label: hiringStageLabels[posting.hiringStage] || '모집 중' });
+  }
 
   return (
-    <button
-      type="button"
+    <article
       aria-current={selected ? 'true' : undefined}
-      aria-label={`${posting.companyName} ${cleanPositionTitle} 상세 보기`}
       className={cn(
-        'group relative flex w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-[#FEFDFC] text-left transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(23,63,58,0.12)] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A]',
+        'group relative w-full max-w-full cursor-pointer rounded-2xl p-4 text-left transition-all duration-200 min-w-0',
         selected
-          ? 'border-[#C7CDD5] ring-2 ring-[#173F3A]/15'
-          : 'border-[#C7CDD5] hover:border-[#AAB6B2]',
+          ? 'bg-[#F2FAF7] shadow-[inset_3px_0_0_#173F3A,0_4px_12px_rgba(23,63,58,0.08)]'
+          : 'bg-white shadow-xs hover:bg-[#FAFDFB] hover:shadow-md',
       )}
       onClick={onSelect}
     >
-      <div className={cn('relative flex min-h-[5.5rem] items-center overflow-hidden px-4 pb-3 pt-4 sm:px-5', highlightTone.headerClassName)}>
-        <span className={cn('absolute inset-x-4 top-0 h-1 sm:inset-x-5', highlightTone.accentClassName)} aria-hidden="true" />
-        <div className="flex min-w-0 items-center gap-3.5 pt-1">
-          <div className={cn('grid size-12 shrink-0 place-items-center rounded-lg border border-white/80 bg-white/90', highlightTone.iconClassName)}>
-            <PostingCategoryVisual category={posting.category} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[23px] font-black leading-tight text-balance [word-break:keep-all] sm:text-[25px]">{posting.companyName}</p>
-            <p className="sr-only">{highlightTone.label}</p>
-          </div>
+      {/* Top: Company Name + Category & Top-Right Score/Tag */}
+      <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+        <div className="flex items-center gap-1.5 min-w-0 max-w-[72%]">
+          <span className="truncate text-[13px] font-extrabold text-[#173F3A]">
+            {posting.companyName}
+          </span>
+          {posting.industry ? (
+            <>
+              <span className="text-slate-300 text-[11px]">·</span>
+              <span className="truncate text-[12px] font-medium text-slate-500">
+                {posting.industry}
+              </span>
+            </>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 ml-auto">
+          {showScore ? (
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+                fitTone.containerClassName,
+                fitTone.scoreClassName,
+              )}
+            >
+              <Sparkles
+                className={cn(
+                  'size-3 shrink-0',
+                  displayScore >= 90
+                    ? 'text-[#FEEA00] fill-[#FEEA00]'
+                    : 'text-[#F06B4F] fill-[#F06B4F]',
+                )}
+              />
+              <span>{displayScore}점</span>
+            </span>
+          ) : (
+            <span className="rounded-full bg-[#F8FCFB] px-2.5 py-0.5 text-[11px] font-bold text-[#173F3A] shadow-2xs">
+              검증 공고
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="flex min-h-[9.5rem] flex-1 flex-col p-4 sm:min-h-[10.25rem] sm:p-5">
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className="min-w-0 truncate text-[13px] font-extrabold leading-5 text-[#65748A]"
-            title={specificRoleLabel}
-          >
-            {specificRoleLabel}
-          </span>
-          <span
-            aria-label={`AI 매칭 점수 ${displayScore}점, ${fitTone.label}`}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F3F6FA] px-3 py-1.5 text-[13px] font-black text-[#2C4967]"
-          >
-            <Sparkles className="size-3 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
-            <span>{displayScore}점</span>
-          </span>
-        </div>
-
-        <h3 className="mt-3 text-[17px] font-extrabold leading-6 text-[#17212B] text-pretty [word-break:keep-all] group-hover:text-[#173F3A] sm:text-[18px] sm:leading-7">
+      {/* Title */}
+      <h3 className="mt-1.5 text-[15.5px] font-extrabold leading-snug text-[#17212B] min-w-0 break-keep line-clamp-2 transition-colors group-hover:text-[#173F3A]">
+        <button
+          className="line-clamp-2 rounded-sm text-left transition-colors hover:text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect();
+          }}
+          type="button"
+        >
           {cleanPositionTitle}
-        </h3>
+        </button>
+      </h3>
+
+      {/* Badges / Tags */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0">
+        {badges.map((badge, idx) => (
+          <span
+            className={cn(
+              'rounded-md px-2 py-0.5 text-[11px] font-bold truncate',
+              badge.isMint
+                ? 'bg-[#DDEBE7] text-[#173F3A]'
+                : 'bg-[#FAF7F2] text-slate-600',
+            )}
+            key={`${badge.label}-${idx}`}
+          >
+            {badge.label}
+          </span>
+        ))}
       </div>
-      <div
-        aria-hidden="true"
-        className="mt-auto h-28 shrink-0 border-t border-[#D9DEE6] bg-cover transition-transform duration-200 ease-out group-hover:scale-[1.015] sm:h-32"
-        style={{
-          backgroundImage: "url('/job-card-scenes.png')",
-          backgroundPosition: photoPosition ?? getPostingPhotoPosition(posting, visualIndex),
-          backgroundSize: '400% 400%',
-        }}
-      />
-    </button>
+
+      {/* Metadata & Salary Footer */}
+      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 text-[12px]">
+        <div className="flex items-center gap-1.5 text-slate-500 truncate min-w-0">
+          <span className="truncate">{simpleLocation}</span>
+          <span className="text-slate-300">·</span>
+          <span className="shrink-0">{posting.source === 'worknet' ? posting.experienceYears : posting.projectDuration}</span>
+          <span className="text-slate-300">·</span>
+          <span className="shrink-0">마감 {getDeadlineText(posting)}</span>
+        </div>
+
+        <span className="shrink-0 font-black text-[13.5px] text-[#F06B4F] ml-2">
+          {simpleSalary}
+        </span>
+      </div>
+    </article>
   );
 }
 
 function RecommendedTalentCard({
+  onPropose,
   onSelect,
   selected,
   talent,
@@ -1053,96 +799,89 @@ function RecommendedTalentCard({
   const fitTone = getFitScoreTone(talent.matchScore);
 
   return (
-    <button
-      type="button"
+    <article
       aria-current={selected ? 'true' : undefined}
-      aria-label={`${talent.name} 인재 경험 상세 보기`}
       className={cn(
-        'group flex min-h-[250px] w-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white text-left transition-[border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(23,63,58,0.12)] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173F3A] sm:min-h-[280px]',
-        selected ? 'border-[#C7CDD5] ring-2 ring-[#173F3A]/15' : 'border-[#C7CDD5] hover:border-[#AAB6B2]',
+        'w-full max-w-full cursor-pointer overflow-hidden rounded-2xl bg-white p-4 text-left shadow-xs transition duration-200 hover:shadow-md hover:bg-[#FAFDFB]',
+        selected && 'bg-[#F2FAF7] shadow-sm ring-2 ring-[#173F3A]',
       )}
       onClick={onSelect}
     >
-      <div className="flex min-h-[5.75rem] items-center gap-3 bg-[#E7F3EF] px-4 py-3.5 text-[#173F3A] sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-white/85 text-[#173F3A] shadow-2xs">
-            <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A]">
+            <UserRound className="size-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[24px] font-black leading-tight [word-break:keep-all] sm:text-[26px]">{talent.name}</p>
-            <p className="mt-1 text-[13px] font-bold leading-5 opacity-75 [word-break:keep-all]">{talent.career} · {talent.location}</p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h3 className="truncate text-[16px] font-extrabold text-[#17212B]">{talent.name}</h3>
+              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-500">예시 인재</span>
+            </div>
+            <p className="mt-0.5 truncate text-[12px] font-bold text-slate-500">
+              {talent.career} · {talent.location}
+            </p>
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <span
           aria-label={`추천 적합도 ${talent.matchScore}점, ${fitTone.label}`}
-          className="inline-flex w-fit items-center gap-1 rounded-full bg-[#F3F6FA] px-3 py-1.5 text-[13px] font-black text-[#2C4967]"
+          className={cn(
+            'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-black',
+            fitTone.containerClassName,
+            fitTone.scoreClassName,
+          )}
         >
-          <Sparkles className="size-3 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
+          <Sparkles
+            className={cn(
+              'size-3 shrink-0',
+              talent.matchScore >= 90
+                ? 'text-[#FEEA00] fill-[#FEEA00]'
+                : 'text-[#F06B4F] fill-[#F06B4F]',
+            )}
+          />
           <span>{talent.matchScore}점</span>
         </span>
-
-        <h3 className="mt-3 text-[18px] font-extrabold leading-7 text-[#17212B] text-pretty [word-break:keep-all] sm:text-[19px] sm:leading-7">
-          {talent.headline}
-        </h3>
-        <p className="mt-3 text-[13px] font-extrabold leading-5 text-[#173F3A]">대표 경험</p>
-
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {talent.skills.slice(0, 3).map((skill) => (
-            <span
-              className="rounded-md bg-[#F8FCFB] px-2.5 py-1.5 text-[13px] font-extrabold leading-5 text-[#173F3A]"
-              key={skill}
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
       </div>
-    </button>
-  );
-}
 
-function RecommendedTalentDetail({ talent, project }: { talent: RecommendedTalent; project?: JobPosting }) {
-  return (
-    <article className="space-y-5 rounded-xl bg-white p-5 sm:p-7">
-      <header className="border-b border-[#E0D9C8]/70 pb-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-[#E7F3EF] text-[#173F3A]">
-              <UserRound className="size-7" strokeWidth={1.8} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[22px] font-black leading-tight text-[#17212B]">{talent.name}</p>
-              <p className="mt-1 text-[14px] font-bold text-[#53606E]">{talent.career} · {talent.location}</p>
-            </div>
-          </div>
-          <span className="rounded-full bg-[#E7F3EF] px-3 py-1.5 text-[13px] font-black text-[#173F3A]">추천 적합도 {talent.matchScore}점</span>
-        </div>
-        <h2 className="mt-4 text-[22px] font-extrabold leading-8 text-[#17212B] [text-wrap:balance]">{talent.headline}</h2>
-      </header>
+      <p className="mt-3 line-clamp-2 text-[14px] font-extrabold leading-6 text-[#17212B]">
+        {talent.headline}
+      </p>
+      <p className="mt-1.5 line-clamp-1 text-[12px] font-bold text-[#173F3A]">
+        매칭 프로젝트 · {talent.projectTitle}
+      </p>
 
-      <section>
-        <h3 className="text-[16px] font-extrabold text-[#173F3A]">핵심 경험과 역량</h3>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {talent.skills.map((skill) => <span className="rounded-md bg-[#F8FCFB] px-3 py-2 text-[13px] font-extrabold text-[#173F3A]" key={skill}>{skill}</span>)}
-        </div>
-        <ul className="mt-4 grid gap-2.5 text-[14px] font-medium leading-6 text-[#344054]">
-          {talent.evidence.map((item) => (
-            <li className="flex items-start gap-2" key={item}>
-              <CheckCircle2 className="mt-1 size-4 shrink-0 text-[#173F3A]" aria-hidden="true" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {talent.skills.map((skill) => (
+          <span
+            className="rounded-full bg-[#F8FCFB] px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A] shadow-2xs"
+            key={skill}
+          >
+            {skill}
+          </span>
+        ))}
+      </div>
 
-      <section className="rounded-lg bg-[#F8FCFB] p-4">
-        <p className="text-[12px] font-extrabold text-[#173F3A]">매칭 프로젝트</p>
-        <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">{project?.title || talent.projectTitle}</p>
-        <p className="mt-1 text-[13px] font-medium text-[#53606E]">{talent.workType} · {talent.availability}</p>
-      </section>
+      <ul className="mt-3 space-y-1.5 text-[12px] font-semibold leading-5 text-slate-600">
+        {talent.evidence.slice(0, 2).map((item) => (
+          <li className="flex items-start gap-1.5" key={item}>
+            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[#173F3A]" />
+            <span className="line-clamp-1">{item}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-3">
+        <span className="min-w-0 truncate text-[12px] font-extrabold text-slate-500">
+          {talent.workType} · {talent.availability}
+        </span>
+        <button
+          className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] px-4 py-1.5 text-[13px] font-extrabold text-white shadow-2xs transition-all duration-200 hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]"
+          disabled
+          onClick={(event) => { event.stopPropagation(); onPropose(); }}
+          type="button"
+        >
+          데모 전용
+        </button>
+      </div>
     </article>
   );
 }
@@ -1154,6 +893,7 @@ export function DetailPanel({
   posting,
   profile,
   role,
+  useServerScore,
 }: {
   activePrimaryCategory?: string;
   experienceCard?: StoredExperienceCard | null;
@@ -1161,6 +901,7 @@ export function DetailPanel({
   posting: JobPosting;
   profile?: SeniorProfileData | null;
   role?: Role;
+  useServerScore?: boolean;
 }) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
@@ -1170,12 +911,8 @@ export function DetailPanel({
     activePrimaryCategory,
     experienceCard,
   );
-  const displayScore =
-    posting.seniorFitScore && posting.seniorFitScore > 0
-      ? posting.seniorFitScore
-      : matchResult.personalizedScore > 0
-        ? matchResult.personalizedScore
-        : 75;
+  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
+  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -1207,9 +944,20 @@ export function DetailPanel({
           {showScore ? (
             <span
               aria-label={`시니어 적합도 ${displayScore}점, ${fitTone.label}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F3F6FA] px-2.5 py-1 text-[12px] font-black text-[#2C4967]"
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-black',
+                fitTone.containerClassName,
+                fitTone.scoreClassName,
+              )}
             >
-              <Sparkles className="size-3.5 shrink-0 fill-[#F06B4F] text-[#F06B4F]" />
+              <Sparkles
+                className={cn(
+                  'size-3.5 shrink-0',
+                  displayScore >= 90
+                    ? 'text-[#FEEA00] fill-[#FEEA00]'
+                    : 'text-[#F06B4F] fill-[#F06B4F]',
+                )}
+              />
               <span>{displayScore}점</span>
             </span>
           ) : (
@@ -1698,7 +1446,6 @@ export function JobDatabasePage({
       | 'catalogTotal'
       | 'closingSoonTotal'
       | 'page'
-      | 'pageSize'
       | 'partTimeTotal'
       | 'preferredTotal'
       | 'total'
@@ -1712,7 +1459,7 @@ export function JobDatabasePage({
     closingSoonTotal: number;
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(requestedPage);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
   const detailContainerRef = useRef<HTMLDivElement>(null);
   const focusedViewportIdRef = useRef<string | null>(null);
   const preferredProfileCategories = useMemo(
@@ -1776,7 +1523,7 @@ export function JobDatabasePage({
     Boolean(applyingPosting) ||
     Boolean(completedApplication) ||
     isInterviewBypassConfirmOpen ||
-    isMobileDetailOpen;
+    (isMobile && isMobileDetailOpen);
 
   useDocumentScrollLock(isModalOpen);
 
@@ -1992,12 +1739,10 @@ export function JobDatabasePage({
       const customFallbackCategories = isCustomMatchSelected
         ? preferredProfileCategories
         : [];
-      const shouldUseCustomFallbackCategories =
-        isCustomMatchSelected && customFallbackCategories.length > 0;
       let categories: JobOccupationFilter[] = [];
-      if (shouldUseCustomFallbackCategories) {
+      if (!query.trim() && isCustomMatchSelected && customFallbackCategories.length > 0) {
         categories = customFallbackCategories;
-      } else if (!isAllDatabaseSelected && !isCustomMatchSelected) {
+      } else if (!query.trim() && !isAllDatabaseSelected && !isCustomMatchSelected) {
         if (selectedCategory === unclassifiedOccupation) {
           categories = [unclassifiedOccupation];
         } else if (selectedCategory === all && primaryProfileCategory) {
@@ -2006,16 +1751,11 @@ export function JobDatabasePage({
           categories = [selectedOccupationCategory];
         }
       }
-      let desiredCategories: OccupationPreference[] = [];
-      if (shouldUseCustomFallbackCategories) {
-        desiredCategories = customFallbackCategories;
-      } else if (isAllDatabaseSelected) {
-        desiredCategories = preferredProfilePreferences;
-      } else if (!isCustomMatchSelected && selectedOccupationCategory) {
-        desiredCategories = [selectedOccupationCategory];
-      } else if (!isCustomMatchSelected && selectedCategory === all && primaryProfileCategory) {
-        desiredCategories = [primaryProfileCategory];
-      }
+      const desiredCategories: OccupationPreference[] = query.trim()
+        ? []
+        : isCustomMatchSelected && customFallbackCategories.length > 0
+          ? customFallbackCategories
+          : preferredProfilePreferences;
       const otherOccupationRank =
         preferredProfilePreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
       const shouldUseOtherOccupation =
@@ -2057,9 +1797,9 @@ export function JobDatabasePage({
         profileText,
         query,
         requireDesiredOccupationMatch:
-          isCustomMatchSelected && !shouldUseCustomFallbackCategories,
+          isCustomMatchSelected && customFallbackCategories.length === 0,
         signal: abortController.signal,
-        sortBy,
+        sortBy: !user && sortBy === 'fit-desc' ? 'title-asc' : sortBy,
         workType: selectedWorkType,
       })
         .then((result) => {
@@ -2098,7 +1838,6 @@ export function JobDatabasePage({
             catalogTotal: result.catalogTotal,
             closingSoonTotal: result.closingSoonTotal,
             page: result.page,
-            pageSize: result.pageSize,
             partTimeTotal: result.partTimeTotal,
             preferredTotal: result.preferredTotal,
             total: result.total + additionalCompanyProjectCount,
@@ -2650,6 +2389,9 @@ export function JobDatabasePage({
         if (sortBy === 'latest-desc') {
           return new Date(second.postedAt).getTime() - new Date(first.postedAt).getTime();
         }
+        if (!user) {
+          return first.title.localeCompare(second.title, 'ko');
+        }
         const scoreFirst =
           role === 'senior'
             ? calculatePersonalizedMatch(
@@ -2697,53 +2439,6 @@ export function JobDatabasePage({
         : [],
     [filteredPostings, role],
   );
-  const topFitPostingKeys = useMemo(() => {
-    if (role !== 'senior' || filteredPostings.length === 0) return new Set<string>();
-
-    const topFitCount = 1;
-
-    if (isServerSearchActive) {
-      if (sortBy !== 'fit-desc') return new Set<string>();
-
-      const serverPage = Math.max(1, serverSearchMeta?.page ?? currentPage);
-      const serverPageSize = Math.max(1, serverSearchMeta?.pageSize ?? itemsPerPage);
-      const pageStartIndex = (serverPage - 1) * serverPageSize;
-      return new Set(
-        filteredPostings
-          .filter((_, index) => pageStartIndex + index < topFitCount)
-          .map(getPostingIdentityKey),
-      );
-    }
-
-    return new Set(
-      filteredPostings
-        .map((posting) => ({
-          key: getPostingIdentityKey(posting),
-          score: calculatePersonalizedMatch(
-            posting,
-            seniorProfile,
-            effectiveSelectedCategory,
-            interviewCard,
-          ).personalizedScore || posting.seniorFitScore || 0,
-        }))
-        .sort((first, second) => second.score - first.score)
-        .slice(0, topFitCount)
-        .map(({ key }) => key),
-    );
-  }, [
-    currentPage,
-    effectiveSelectedCategory,
-    filteredPostings,
-    interviewCard,
-    isServerSearchActive,
-    itemsPerPage,
-    role,
-    seniorProfile,
-    serverSearchMeta?.page,
-    serverSearchMeta?.pageSize,
-    serverSearchMeta?.total,
-    sortBy,
-  ]);
   const displayedResultCount =
     role === 'company'
       ? companyRecommendedTalents.length
@@ -2764,18 +2459,6 @@ export function JobDatabasePage({
     const start = (safeCurrentPage - 1) * itemsPerPage;
     return filteredPostings.slice(start, start + itemsPerPage);
   }, [filteredPostings, isServerSearchActive, safeCurrentPage, itemsPerPage]);
-  const paginatedPostingPhotoPositions = useMemo(
-    () =>
-      getPostingPhotoPositionsForPage(
-        paginatedPostings,
-        (safeCurrentPage - 1) * itemsPerPage,
-      ),
-    [paginatedPostings, safeCurrentPage, itemsPerPage],
-  );
-  const companyProjectPhotoPositions = useMemo(
-    () => getPostingPhotoPositionsForPage(postings),
-    [postings],
-  );
   const paginatedRecommendedTalents = useMemo(() => {
     const start = (safeCurrentPage - 1) * itemsPerPage;
     return companyRecommendedTalents.slice(start, start + itemsPerPage);
@@ -4027,7 +3710,7 @@ export function JobDatabasePage({
             {postings.length > 0 ? (
               <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[0.85fr_1.15fr]">
                 <section className="grid content-start gap-3">
-                  {postings.map((posting, index) => (
+                  {postings.map((posting) => (
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
@@ -4038,8 +3721,6 @@ export function JobDatabasePage({
                       profile={seniorProfile}
                       role={role}
                       selected={selectedCompanyProject?.id === posting.id}
-                      photoPosition={companyProjectPhotoPositions[index]}
-                      visualIndex={index}
                     />
                   ))}
                 </section>
@@ -4411,7 +4092,12 @@ export function JobDatabasePage({
 
       <div
         aria-busy={isLoadingPostings || isFilterTransition ? 'true' : 'false'}
-        className="grid gap-4"
+        className={cn(
+          'grid gap-4',
+          role === 'company' || isMobile || filteredPostings.length === 0
+            ? 'grid-cols-1'
+            : 'lg:grid-cols-[0.9fr_1.1fr]',
+        )}
       >
         {isLoadingPostings && !isFilterTransition ? (
           <div className="col-span-full rounded-2xl border border-[#E0D9C8] bg-white p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center gap-3">
@@ -4480,7 +4166,6 @@ export function JobDatabasePage({
                   아래 추천 인재는 기능 시연용 예시이며 실제 등록 인재가 아닙니다.
                 </p>
               ) : null}
-              <div className={cn('mx-auto grid w-full max-w-7xl gap-4 sm:gap-5', isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3')}>
               {role === 'company'
                 ? paginatedRecommendedTalents.map((talent) => {
                     const project = filteredPostings.find((posting) => posting.id === talent.projectId);
@@ -4493,9 +4178,8 @@ export function JobDatabasePage({
                           trackJobView(project.id, project.companyName, project.title);
                           setSelectedTalentId(talent.id);
                           setSelectedPostingTarget(getPostingSelectionTarget(project));
-                          setIsMobileDetailOpen(true);
                         }}
-                        selected={effectiveSelectedTalentId === talent.id}
+                        selected={selectedTalentId === talent.id}
                         talent={talent}
                       />
                     );
@@ -4504,7 +4188,6 @@ export function JobDatabasePage({
                     <PostingCard
                       activePrimaryCategory={effectiveSelectedCategory}
                       experienceCard={interviewCard}
-                      highlightTone={getPostingHighlightTone(posting, topFitPostingKeys)}
                       key={`${posting.id}-${posting.title}-${index}`}
                       onApply={() => handleApply(posting)}
                       onSelect={() => {
@@ -4512,17 +4195,17 @@ export function JobDatabasePage({
                         activeFocusProjectRef.current = emptyPostingSelection;
                         setIsHomeFocusActive(false);
                         setSelectedPostingTarget(getPostingSelectionTarget(posting));
-                        setIsMobileDetailOpen(true);
+                        if (isMobile) {
+                          setIsMobileDetailOpen(true);
+                        }
                       }}
                       posting={posting}
                       profile={seniorProfile}
                       role={role}
+                      useServerScore={isServerSearchActive}
                       selected={selectedPosting?.id === posting.id}
-                      photoPosition={paginatedPostingPhotoPositions[index]}
-                      visualIndex={(safeCurrentPage - 1) * itemsPerPage + index}
                     />
                   ))}
-              </div>
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
@@ -4602,34 +4285,41 @@ export function JobDatabasePage({
               )}
             </section>
 
+            {role === 'senior' && !isMobile && selectedPosting ? (
+              <div
+                ref={detailContainerRef}
+                className="sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-auto rounded-2xl border border-[#E0D9C8] bg-white p-4 pr-1 shadow-xs transition-all [scrollbar-gutter:stable]"
+              >
+                <DetailPanel
+                  activePrimaryCategory={effectiveSelectedCategory}
+                  experienceCard={interviewCard}
+                  onApply={() => handleApply(selectedPosting)}
+                  posting={selectedPosting}
+                  profile={seniorProfile}
+                  role={role}
+                  useServerScore={isServerSearchActive}
+                />
+              </div>
+            ) : null}
           </>
         )}
       </div>
 
-      {/* Selected card detail */}
-      {isMobileDetailOpen && ((role === 'senior' && selectedPosting) || (role === 'company' && selectedTalent)) ? (
+      {/* Mobile Detail Popup Modal */}
+      {role === 'senior' && isMobile && isMobileDetailOpen && selectedPosting ? (
         <div
-          aria-modal="true"
-          className={cn(
-            'fixed inset-0 z-50 flex overflow-hidden overscroll-none bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200',
-            isMobile ? 'items-end justify-center p-0' : 'items-center justify-center p-6',
-          )}
+          className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none bg-black/60 p-0 sm:p-4 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
           onClick={() => setIsMobileDetailOpen(false)}
-          role="dialog"
         >
           <div
-            className={cn(
-              'relative flex flex-col overflow-hidden bg-white shadow-2xl',
-              isMobile
-                ? 'max-h-[88vh] w-full max-w-lg rounded-t-xl animate-in slide-in-from-bottom duration-300'
-                : 'max-h-[calc(100vh-4rem)] w-[min(68vw,72rem)] rounded-xl animate-in fade-in zoom-in-95 duration-200',
-            )}
+            className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#E0D9C8] bg-[#F8FCFB] px-4 py-3 sm:px-5">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#E0D9C8] bg-[#F8FCFB] px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
-                  {role === 'senior' ? '기업 공고 상세' : '추천 인재 상세'}
+                  프로젝트 상세 정보
                 </span>
               </div>
               <button
@@ -4642,23 +4332,20 @@ export function JobDatabasePage({
               </button>
             </div>
 
-            <div ref={detailContainerRef} className="overflow-y-auto overscroll-contain p-4 sm:p-5">
-              {role === 'senior' && selectedPosting ? (
-                <DetailPanel
-                  activePrimaryCategory={effectiveSelectedCategory}
-                  experienceCard={interviewCard}
-                  onApply={() => {
-                    setIsMobileDetailOpen(false);
-                    handleApply(selectedPosting);
-                  }}
-                  posting={selectedPosting}
-                  profile={seniorProfile}
-                  role={role}
-                />
-              ) : null}
-              {role === 'company' && selectedTalent ? (
-                <RecommendedTalentDetail talent={selectedTalent} project={selectedPosting} />
-              ) : null}
+            {/* Modal Content */}
+            <div className="overflow-y-auto overscroll-contain p-4">
+              <DetailPanel
+                activePrimaryCategory={effectiveSelectedCategory}
+                experienceCard={interviewCard}
+                onApply={() => {
+                  setIsMobileDetailOpen(false);
+                  handleApply(selectedPosting);
+                }}
+                posting={selectedPosting}
+                profile={seniorProfile}
+                role={role}
+                useServerScore={isServerSearchActive}
+              />
             </div>
           </div>
         </div>
