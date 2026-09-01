@@ -5,7 +5,7 @@ import type { JobPosting } from '@/data/jobPostings';
 import {
   createStableRecordId,
   readVersionedStorage,
-  removeUndefinedValues,
+  removeDeepUndefinedValues,
   uniqueByKey,
   writeVersionedStorage,
 } from '@/lib/browserStorage';
@@ -386,7 +386,7 @@ export async function saveProposal(
   try {
     await setDoc(
       doc(db, PROPOSALS_COLLECTION, savedLocal.id),
-      removeUndefinedValues({
+      removeDeepUndefinedValues({
         ...proposalData,
         updatedAt: savedLocal.updatedAt,
         createdAt: new Date().toISOString(),
