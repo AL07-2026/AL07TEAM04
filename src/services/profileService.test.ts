@@ -131,4 +131,62 @@ describe('profileService occupation preferences', () => {
     expect(saved.updatedAt).toEqual(expect.any(String));
     expect(getLocalSeniorProfile('senior-1')).toMatchObject(saved);
   });
+
+  it('여러 대표 경험 카드를 최신순으로 저장하고 기존 단일 카드도 호환한다', () => {
+    saveLocalSeniorProfile(
+      {
+        ...validProfile,
+        experienceCardsV1: [
+          {
+            id: 'card-old',
+            workedOn: '기존 업무를 정리했습니다.',
+            accomplished: '기존 성과를 만들었습니다.',
+            strengths: ['정리'],
+            version: 1,
+            confirmedAt: '2026-08-29T00:00:00.000Z',
+          },
+          {
+            id: 'card-new',
+            workedOn: '새 업무를 정리했습니다.',
+            accomplished: '새 성과를 만들었습니다.',
+            strengths: ['개선'],
+            version: 1,
+            confirmedAt: '2026-08-31T00:00:00.000Z',
+          },
+        ],
+      },
+      'senior-1',
+    );
+
+    const profile = getLocalSeniorProfile('senior-1');
+
+    expect(profile?.experienceProfileV1?.id).toBe('card-new');
+    expect(profile?.experienceCardsV1?.map((card) => card.id)).toEqual(['card-new', 'card-old']);
+  });
+
+  it('경험 카드 배열이 비어 있으면 기존 단일 대표 카드로 되살리지 않는다', () => {
+    localStorage.setItem(
+      'eojob_senior_profile:senior-1',
+      JSON.stringify({
+        data: {
+          ...validProfile,
+          experienceProfileV1: {
+            id: 'legacy-card',
+            workedOn: '이전 업무',
+            accomplished: '이전 성과',
+            strengths: ['이전'],
+            version: 1,
+            confirmedAt: '2026-08-29T00:00:00.000Z',
+          },
+          experienceCardsV1: [],
+        },
+        version: 1,
+      }),
+    );
+
+    const profile = getLocalSeniorProfile('senior-1');
+
+    expect(profile?.experienceProfileV1).toBeUndefined();
+    expect(profile?.experienceCardsV1).toEqual([]);
+  });
 });

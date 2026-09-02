@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 import { App } from '@/app/App';
 import { saveLocalCompanyProfile } from '@/services/profileService';
+import * as proposalService from '@/services/proposalService';
 
 type UserRole = 'senior' | 'company';
 
@@ -73,7 +74,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
   it.each([
     ['/company', '회사 홈'],
-    ['/company/projects/new', '프로젝트 등록'],
+    ['/company/projects/new', '신규 프로젝트 등록'],
     ['/company/project-complete', '등록 완료'],
     ['/company/projects', '프로젝트 관리'],
     ['/company/proposals', '받은 제안'],
@@ -162,6 +163,21 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
   it('AI 인터뷰의 실제 답변으로 경험 카드를 생성한다', async () => {
     sessionStorage.clear();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          card: {
+            title: '고객 문의 운영 개선',
+            problem: '고객 문의 기준이 부족해 응답이 지연되었습니다.',
+            role: '서비스 운영 책임자로 개선을 주도했습니다.',
+            action: '문의 유형을 분석하고 처리 절차를 표준화했습니다.',
+            result: '평균 응답 시간을 30% 줄였습니다.',
+            skills: ['문제 해결', '프로세스 개선'],
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
     window.history.pushState({}, '', '/senior/experience/interview');
     render(<App />);
 
@@ -187,10 +203,16 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText('고객 문의 기준이 부족해 광고 운영 문의 응답이 지연되었습니다.'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('평균 응답 시간을 30% 줄였습니다.')).toBeInTheDocument();
+    const requestInit = fetchMock.mock.calls[0]?.[1];
+    const requestBody = JSON.parse(typeof requestInit?.body === 'string' ? requestInit.body : '{}') as {
+      history?: Array<{ answer?: string }>;
+    };
+    expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
+    expect(screen.getByText('해온 일')).toBeInTheDocument();
+    expect(screen.getByText('해낸 일')).toBeInTheDocument();
+    expect(screen.getByText('잘하는 점')).toBeInTheDocument();
+    expect(screen.queryByText('문제 (Problem)')).not.toBeInTheDocument();
+    fetchMock.mockRestore();
   });
 
   it('인재 홈의 AI 경험 인터뷰 CTA는 경험 선택 화면으로 먼저 이동한다', async () => {
@@ -294,28 +316,59 @@ describe('Figma v2 통합 화면 라우팅', () => {
     );
     window.history.pushState({}, '', '/company/projects/new');
     render(<App />);
-    for (const [label, value] of [
-      ['프로젝트 제목', '운영 체계 만들기'],
-      ['프로젝트 내용', '업무 흐름을 정리합니다.'],
-      ['필요 경험', '서비스 운영 5년 이상'],
-      ['진행 조건', '주 2회 · 원격'],
-      ['근무 위치', '서울'],
-      ['보수/급여', '월 300만원'],
-    ] as const)
-      fireEvent.change(screen.getByLabelText(label), { target: { value } });
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록하기' }));
-    expect(await screen.findByRole('heading', { name: '등록 완료' })).toBeInTheDocument();
+    fireEvent.change(await screen.findByLabelText('회사명 *'), {
+      target: { value: '테스트 회사' },
+    });
+    fireEvent.change(screen.getByLabelText('프로젝트 제목 *'), {
+      target: { value: '운영 체계 만들기' },
+    });
+    fireEvent.change(screen.getByLabelText('근무 지역'), { target: { value: '서울' } });
+    fireEvent.change(screen.getByLabelText('필요 경력'), {
+      target: { value: '서비스 운영 5년 이상' },
+    });
+    fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '주 2회 · 원격' } });
+    fireEvent.change(screen.getByLabelText('보수/예산'), { target: { value: '월 300만원' } });
+    fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
+      target: { value: '업무 흐름을 정리합니다.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
+    expect(
+      await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
+    ).toBeInTheDocument();
     expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
-    expect(window.location.pathname).toBe('/company/project-complete');
+    expect(window.location.pathname).toBe('/company/project-database');
   });
 
-  it('받은 제안의 상태와 대화 제안을 확인한다', () => {
+  it('받은 제안의 진행 단계와 연락 상태를 확인한다', async () => {
+    const proposal = {
+      id: '1',
+      projectId: 'project-1',
+      projectOwnerId: 'company-test-uid',
+      userId: 'senior-test-user',
+      projectTitle: '테스트 프로젝트',
+      status: '검토 중',
+      processStage: 'document_review',
+      appliedAt: '2026-08-30',
+      applicantName: '지원자',
+      applicantEmail: 'applicant@example.com',
+    } as proposalService.UserProposal;
+    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
+    const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
+    window.localStorage.clear();
     window.history.pushState({}, '', '/company/proposals/1');
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: '검토 중으로 변경' }));
-    expect(screen.getByText('제안 상태를 검토 중으로 변경했습니다.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '대화 제안하기' }));
-    expect(screen.getByText(/010-1234-5678/)).toBeInTheDocument();
+    await waitFor(() => expect(proposalsSpy).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '2차 면접 단계로 변경' }));
+    await waitFor(() => expect(stageSpy).toHaveBeenCalledWith('1', 'second_interview'));
+    fireEvent.click(screen.getByRole('button', { name: '연락 완료로 표시' }));
+    await waitFor(() => expect(contactSpy).toHaveBeenCalledWith('1', 'contacted'));
+    const activeStageButton = screen.getByRole('button', { name: '2차 면접 단계로 변경' });
+    expect(activeStageButton).toHaveAttribute('aria-pressed', 'true');
+    expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#173F3A]');
+    stageSpy.mockRestore();
+    contactSpy.mockRestore();
+    proposalsSpy.mockRestore();
   });
 
   it('인재 기본정보를 수정하고 정상적으로 저장되는지 확인한다', async () => {
@@ -394,5 +447,14 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(screen.getByText('서울특별시 동대문구 고산자로 515')).toBeInTheDocument();
     expect(screen.getByText('010-5271-3612')).toBeInTheDocument();
     expect(screen.getByText('생활용품 제조')).toBeInTheDocument();
+  });
+
+  it('회사 기본정보 로그아웃은 시니어 경로가 아닌 공개 홈으로 이동한다', async () => {
+    window.history.pushState({}, '', '/company-info');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '저장된 회사 정보' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/'));
+    expect(window.location.pathname).not.toContain('/senior');
   });
 });

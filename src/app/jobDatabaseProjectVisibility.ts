@@ -120,10 +120,26 @@ export function matchesPublishedCompanyProject(
 }
 
 export function mergeSeniorPostings(companyProjects: JobPosting[], catalogProjects: JobPosting[]) {
-  const seenIds = new Set<string>();
-  return [...companyProjects, ...catalogProjects].filter((project) => {
-    if (seenIds.has(project.id)) return false;
-    seenIds.add(project.id);
-    return true;
-  });
+  // Internal projects keep their Firestore document ID as the stable identity.
+  // The catalog can mirror an internal project with a normalized/shortened title,
+  // so title must not turn the same internal project into a second card.
+  const seenCompanyIds = new Set<string>();
+  const seenCatalogKeys = new Set<string>();
+  const merged: JobPosting[] = [];
+
+  for (const project of companyProjects) {
+    if (seenCompanyIds.has(project.id)) continue;
+    seenCompanyIds.add(project.id);
+    merged.push(project);
+  }
+
+  for (const project of catalogProjects) {
+    if (seenCompanyIds.has(project.id)) continue;
+    const key = `${project.id}::${project.title}`;
+    if (seenCatalogKeys.has(key)) continue;
+    seenCatalogKeys.add(key);
+    merged.push(project);
+  }
+
+  return merged;
 }

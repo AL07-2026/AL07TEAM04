@@ -1,14 +1,44 @@
 import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 import type { JobPosting } from '@/data/jobPostings';
 import {
   createStableRecordId,
   readVersionedStorage,
-  removeUndefinedValues,
+  removeDeepUndefinedValues,
   uniqueByKey,
   writeVersionedStorage,
 } from '@/lib/browserStorage';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import type { ExperienceProfileV1 } from './profileService';
+
+export type ProposalProcessStage =
+  | 'document_review'
+  | 'first_interview'
+  | 'second_interview'
+  | 'mission'
+  | 'final_connection';
+
+export const proposalProcessStageLabels: Record<ProposalProcessStage, string> = {
+  document_review: '서류 검토 중',
+  first_interview: '1차 면접',
+  second_interview: '2차 면접',
+  mission: '미션(퀘스트)',
+  final_connection: '최종 연결',
+};
+
+export function getProposalProcessStage(
+  proposal: Pick<UserProposal, 'processStage' | 'status'>,
+): ProposalProcessStage {
+  return proposal.processStage || (proposal.status === '승인' ? 'final_connection' : 'document_review');
+}
+
+export type ProposalResumeFile = {
+  name: string;
+  storagePath: string;
+  type: string;
+  size: number;
+};
 
 export interface UserProposal {
   appliedAt: string;
@@ -27,15 +57,43 @@ export interface UserProposal {
   projectId: string;
   projectTitle: string;
   resumeFileName: string;
+  resumeFiles?: ProposalResumeFile[];
   salaryRange: string;
   seniorFitScore: number;
   status: '검토 중' | '연락 받음' | '승인';
+  processStage?: ProposalProcessStage;
+  contactStatus?: 'not_contacted' | 'contacted';
+  experienceSnapshotV1?: ExperienceProfileV1;
   updatedAt?: string;
   userId?: string;
 }
 
 const PROPOSALS_COLLECTION = 'user_proposals';
 const LOCAL_STORAGE_KEY = 'eojob_user_proposals';
+const MAX_RESUME_FILE_SIZE = 10 * 1024 * 1024;
+const RESUME_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx']);
+
+export function isUsableProposalResumeFile(file: File | null | undefined): file is File {
+  if (!file || typeof file.name !== 'string' || typeof file.size !== 'number') return false;
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return (
+    RESUME_FILE_EXTENSIONS.has(extension) &&
+    Number.isFinite(file.size) &&
+    file.size > 0 &&
+    file.size <= MAX_RESUME_FILE_SIZE
+  );
+}
+
+function getResumeContentType(file: File) {
+  const declaredType = typeof file.type === 'string' ? file.type.trim() : '';
+  if (declaredType) return declaredType;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension === 'pdf'
+    ? 'application/pdf'
+    : extension === 'doc'
+      ? 'application/msword'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
 
 function normalizeProposal(source: unknown, documentId?: string): UserProposal | null {
   if (!source || typeof source !== 'object') return null;
@@ -58,7 +116,19 @@ function normalizeProposal(source: unknown, documentId?: string): UserProposal |
     applicantName: value.applicantName,
     applicantEmail: value.applicantEmail,
     status: value.status === '연락 받음' || value.status === '승인' ? value.status : '검토 중',
+    processStage: isProcessStage(value.processStage)
+      ? value.processStage
+      : value.status === '승인'
+        ? 'final_connection'
+        : 'document_review',
+    contactStatus:
+      value.contactStatus === 'contacted' || value.status === '연락 받음'
+        ? 'contacted'
+        : 'not_contacted',
     resumeFileName: value.resumeFileName || '',
+    resumeFiles: Array.isArray(value.resumeFiles)
+      ? value.resumeFiles.filter((file): file is ProposalResumeFile => isResumeFile(file))
+      : undefined,
     interviewSummary: value.interviewSummary || '',
     coverNote: value.coverNote,
     problemStatement: value.problemStatement,
@@ -66,7 +136,53 @@ function normalizeProposal(source: unknown, documentId?: string): UserProposal |
     employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
     employmentSubsidyProgram: value.employmentSubsidyProgram,
     updatedAt: value.updatedAt,
+    experienceSnapshotV1: normalizeExperienceSnapshot(value.experienceSnapshotV1),
   };
+}
+
+function normalizeExperienceSnapshot(value: unknown): ExperienceProfileV1 | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Partial<ExperienceProfileV1>;
+  const workedOn = typeof source.workedOn === 'string' ? source.workedOn.trim() : '';
+  const accomplished = typeof source.accomplished === 'string' ? source.accomplished.trim() : '';
+  const strengths = Array.isArray(source.strengths)
+    ? source.strengths
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  if (!workedOn && !accomplished && strengths.length === 0) return undefined;
+  return {
+    workedOn,
+    accomplished,
+    strengths,
+    version: 1,
+    generatedAt: typeof source.generatedAt === 'string' ? source.generatedAt : undefined,
+    confirmedAt:
+      typeof source.confirmedAt === 'string' ? source.confirmedAt : new Date(0).toISOString(),
+  };
+}
+
+function isProcessStage(value: unknown): value is ProposalProcessStage {
+  return (
+    value === 'document_review' ||
+    value === 'first_interview' ||
+    value === 'second_interview' ||
+    value === 'mission' ||
+    value === 'final_connection'
+  );
+}
+
+function isResumeFile(value: unknown): value is ProposalResumeFile {
+  if (!value || typeof value !== 'object') return false;
+  const file = value as Partial<ProposalResumeFile>;
+  return (
+    typeof file.name === 'string' &&
+    typeof file.storagePath === 'string' &&
+    typeof file.type === 'string' &&
+    typeof file.size === 'number'
+  );
 }
 
 function proposalIdentity(proposal: Pick<UserProposal, 'projectId' | 'userId'>) {
@@ -172,6 +288,8 @@ export async function createProposalFromPosting(
   coverNote?: string,
   userId?: string,
   applicant?: { email?: string; name?: string },
+  resumeFiles: File[] = [],
+  experienceSnapshotV1?: ExperienceProfileV1,
   subsidyInfo?: { employmentSubsidyProgram?: string; employmentSubsidyTarget?: boolean },
 ): Promise<UserProposal> {
   const proposalData: Omit<UserProposal, 'id'> = {
@@ -187,16 +305,71 @@ export async function createProposalFromPosting(
     applicantName: applicant?.name,
     applicantEmail: applicant?.email,
     status: '검토 중',
+    processStage: 'document_review',
+    contactStatus: 'not_contacted',
     resumeFileName,
     interviewSummary: interviewSummary || posting.recommendedTalentType,
-    coverNote:
-      coverNote || '등록된 시니어 경험과 AI 인터뷰 결과를 바탕으로 프로젝트 지원서를 제출합니다.',
+    coverNote: coverNote?.trim() || undefined,
     problemStatement: posting.problemStatement,
     projectOwnerId: posting.ownerId,
     employmentSubsidyTarget: Boolean(subsidyInfo?.employmentSubsidyTarget),
     employmentSubsidyProgram: subsidyInfo?.employmentSubsidyProgram,
+    experienceSnapshotV1,
   };
-  return saveProposal(proposalData, { requireRemote: Boolean(userId) });
+  const proposalId = createStableRecordId('PROPOSAL', userId || 'guest', posting.id);
+  let uploadedFiles: ProposalResumeFile[] = [];
+  try {
+    if (resumeFiles.length > 0) {
+      uploadedFiles = await uploadProposalResumeFiles(proposalId, resumeFiles, userId);
+    }
+    return await saveProposal(
+      {
+        ...proposalData,
+        resumeFiles: uploadedFiles.length > 0 ? uploadedFiles : undefined,
+        resumeFileName:
+          uploadedFiles.length > 0
+            ? uploadedFiles.map((file) => file.name).join(', ')
+            : resumeFileName,
+      },
+      { requireRemote: Boolean(userId) },
+    );
+  } catch (error) {
+    await cleanupProposalResumeFiles(uploadedFiles);
+    removeLocalProposal(proposalId);
+    throw error;
+  }
+}
+
+export async function uploadProposalResumeFiles(
+  proposalId: string,
+  files: File[],
+  userId?: string,
+): Promise<ProposalResumeFile[]> {
+  if (files.some((file) => !isUsableProposalResumeFile(file))) {
+    throw new Error('첨부파일 형식 또는 크기가 올바르지 않습니다.');
+  }
+  const uploaded: ProposalResumeFile[] = [];
+  try {
+    for (const [index, file] of files.entries()) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const storagePath = `resumes/${userId || 'unknown-user'}/${proposalId}/${Date.now()}-${index}-${safeName}`;
+      const contentType = getResumeContentType(file);
+      await uploadBytes(ref(storage, storagePath), file, { contentType });
+      uploaded.push({ name: file.name, storagePath, type: contentType, size: file.size });
+    }
+    return uploaded;
+  } catch (error) {
+    await cleanupProposalResumeFiles(uploaded);
+    throw error;
+  }
+}
+
+async function cleanupProposalResumeFiles(files: ProposalResumeFile[]) {
+  await Promise.all(files.map((file) => deleteObject(ref(storage, file.storagePath)).catch(() => undefined)));
+}
+
+export async function resolveProposalResumeUrl(storagePath: string): Promise<string> {
+  return getDownloadURL(ref(storage, storagePath));
 }
 
 export async function saveProposal(
@@ -205,12 +378,15 @@ export async function saveProposal(
 ): Promise<UserProposal> {
   const savedLocal = saveLocalProposal(proposalData);
   const userId = proposalData.userId;
-  if (!userId) return savedLocal;
+  if (!userId) {
+    if (options.requireRemote) throw new Error('로그인한 지원자만 지원서를 저장할 수 있습니다.');
+    return savedLocal;
+  }
 
   try {
     await setDoc(
       doc(db, PROPOSALS_COLLECTION, savedLocal.id),
-      removeUndefinedValues({
+      removeDeepUndefinedValues({
         ...proposalData,
         updatedAt: savedLocal.updatedAt,
         createdAt: new Date().toISOString(),
@@ -227,6 +403,13 @@ export async function saveProposal(
   }
 }
 
+function removeLocalProposal(proposalId: string) {
+  writeVersionedStorage(
+    LOCAL_STORAGE_KEY,
+    getAllLocalProposals().filter((proposal) => proposal.id !== proposalId),
+  );
+}
+
 export async function updateProposalStatus(
   proposalId: string,
   status: UserProposal['status'],
@@ -241,5 +424,41 @@ export async function updateProposalStatus(
     await setDoc(doc(db, PROPOSALS_COLLECTION, proposalId), { status, updatedAt }, { merge: true });
   } catch (error) {
     console.warn('Failed to update proposal status in Firestore, using local status:', error);
+  }
+}
+
+export async function updateProposalProcessStage(
+  proposalId: string,
+  processStage: ProposalProcessStage,
+): Promise<void> {
+  const updatedAt = new Date().toISOString();
+  const previousProposals = getAllLocalProposals();
+  const proposals = previousProposals.map((proposal) =>
+    proposal.id === proposalId ? { ...proposal, processStage, updatedAt } : proposal,
+  );
+  writeVersionedStorage(LOCAL_STORAGE_KEY, proposals);
+  try {
+    await setDoc(doc(db, PROPOSALS_COLLECTION, proposalId), { processStage, updatedAt }, { merge: true });
+  } catch (error) {
+    writeVersionedStorage(LOCAL_STORAGE_KEY, previousProposals);
+    throw error;
+  }
+}
+
+export async function updateProposalContactStatus(
+  proposalId: string,
+  contactStatus: 'not_contacted' | 'contacted',
+): Promise<void> {
+  const updatedAt = new Date().toISOString();
+  const previousProposals = getAllLocalProposals();
+  const proposals = previousProposals.map((proposal) =>
+    proposal.id === proposalId ? { ...proposal, contactStatus, updatedAt } : proposal,
+  );
+  writeVersionedStorage(LOCAL_STORAGE_KEY, proposals);
+  try {
+    await setDoc(doc(db, PROPOSALS_COLLECTION, proposalId), { contactStatus, updatedAt }, { merge: true });
+  } catch (error) {
+    writeVersionedStorage(LOCAL_STORAGE_KEY, previousProposals);
+    throw error;
   }
 }

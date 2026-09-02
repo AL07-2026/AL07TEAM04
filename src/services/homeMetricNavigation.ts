@@ -22,15 +22,40 @@ export function getExperienceMetricDestination(hasExperienceCard: boolean) {
   return hasExperienceCard ? '/senior/experience/card' : '/senior/experience/interview';
 }
 
-export function getRecommendedProjectsDestination(recommendedCategory?: string) {
-  return recommendedCategory
-    ? `/senior/projects?recommendedCategory=${encodeURIComponent(recommendedCategory)}`
-    : '/senior/projects';
+type ProjectDatabaseDestinationOptions = {
+  page?: number;
+  projectId?: string;
+  projectTitle?: string;
+};
+
+function getSeniorProjectDatabaseDestination({
+  page,
+  projectId,
+  projectTitle,
+  recommendedCategory,
+}: ProjectDatabaseDestinationOptions & { recommendedCategory?: string }) {
+  const params = new URLSearchParams();
+  if (recommendedCategory) params.set('recommendedCategory', recommendedCategory);
+  if (projectId) params.set('focusProject', projectId);
+  if (projectTitle) params.set('focusTitle', projectTitle);
+  if (page && Number.isFinite(page) && page > 1) params.set('page', String(Math.floor(page)));
+  const queryString = params.toString();
+  return queryString ? `/senior/project-database?${queryString}` : '/senior/project-database';
 }
 
-/** The home metric is catalog-only, while normal discovery keeps company projects visible. */
-export function shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext: boolean) {
-  return !isHomeRecommendationContext;
+export function getRecommendedProjectsDestination(
+  recommendedCategory?: string,
+  options: ProjectDatabaseDestinationOptions = {},
+) {
+  return getSeniorProjectDatabaseDestination({ ...options, recommendedCategory });
+}
+
+/** The home metric is catalog-only until a talent explicitly searches the full database. */
+export function shouldMergePublicProjectsForDiscovery(
+  isHomeRecommendationContext: boolean,
+  hasExplicitSearchQuery = false,
+) {
+  return !isHomeRecommendationContext || hasExplicitSearchQuery;
 }
 
 export function getActiveProposalsDestination() {
@@ -38,5 +63,5 @@ export function getActiveProposalsDestination() {
 }
 
 export function getHighestFitDestination(projectId?: string) {
-  return projectId ? `/senior/projects?focusProject=${encodeURIComponent(projectId)}` : '/senior/projects';
+  return getSeniorProjectDatabaseDestination({ projectId });
 }

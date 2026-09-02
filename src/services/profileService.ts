@@ -1,11 +1,17 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteField, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import {
   OTHER_OCCUPATION_PREFERENCE,
   normalizeOccupationPreferenceValues,
 } from '@/data/occupationCategories';
+import type {
+  ExperienceInferredSkill,
+  ExperienceInformationQuality,
+  ExperienceMissingInformation,
+} from '@/lib/applicationFlow';
 import {
   getScopedStorageKey,
+  removeDeepUndefinedValues,
   readVersionedStorage,
   removeUndefinedValues,
   writeVersionedStorage,
@@ -32,7 +38,28 @@ export type SeniorProfileData = {
   employmentSubsidyTarget?: boolean;
   employmentSubsidyProgram?: string;
   employmentSubsidyDocName?: string;
+  experienceProfileV1?: ExperienceProfileV1;
+  experienceCardsV1?: ExperienceProfileV1[];
   updatedAt?: string;
+};
+
+/** Confirmed public experience only. Unconfirmed interview drafts are session scoped. */
+export type ExperienceProfileV1 = {
+  facts?: string[];
+  id?: string;
+  inferredSkills?: ExperienceInferredSkill[];
+  informationQuality?: ExperienceInformationQuality;
+  jobKeywords?: string[];
+  missingInformation?: ExperienceMissingInformation[];
+  workedOn: string;
+  accomplished: string;
+  recruiterHighlight?: string;
+  strengths: string[];
+  strengthInsight?: string;
+  summary?: string;
+  version: 1;
+  generatedAt?: string;
+  confirmedAt: string;
 };
 
 export type CompanyProfileData = {
@@ -59,6 +86,112 @@ function isLegacyDesiredWorkType(value: string) {
   return /시간제|파트타임|계약직|기간제|정규직|자문·프로젝트|전체 무관/.test(value);
 }
 
+function normalizeExperienceProfile(value: unknown): ExperienceProfileV1 | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const workedOn = stringValue(source.workedOn);
+  const accomplished = stringValue(source.accomplished);
+  const strengths = Array.isArray(source.strengths)
+    ? source.strengths
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  const confirmedAt = stringValue(source.confirmedAt);
+  if (!workedOn && !accomplished && strengths.length === 0) return undefined;
+  return {
+    facts: normalizeStringArray(source.facts, 8),
+    id: stringValue(source.id) || undefined,
+    inferredSkills: normalizeInferredSkills(source.inferredSkills),
+    informationQuality: normalizeInformationQuality(source.informationQuality),
+    jobKeywords: normalizeStringArray(source.jobKeywords, 5),
+    missingInformation: normalizeMissingInformation(source.missingInformation),
+    workedOn,
+    accomplished,
+    recruiterHighlight: stringValue(source.recruiterHighlight) || undefined,
+    strengths,
+    strengthInsight: stringValue(source.strengthInsight) || undefined,
+    summary: stringValue(source.summary) || undefined,
+    version: 1,
+    generatedAt: stringValue(source.generatedAt) || undefined,
+    confirmedAt: confirmedAt || new Date(0).toISOString(),
+  };
+}
+
+function normalizeStringArray(value: unknown, maxLength: number) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = [
+    ...new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, maxLength);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeInferredSkills(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      skill: stringValue(item.skill),
+      reason: stringValue(item.reason),
+    }))
+    .filter((item) => item.skill && item.reason)
+    .slice(0, 6);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeQualityValue(value: unknown) {
+  return value === 'complete' || value === 'weak' || value === 'missing' ? value : undefined;
+}
+
+function normalizeInformationQuality(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const normalized = {
+    problem: normalizeQualityValue(source.problem),
+    role: normalizeQualityValue(source.role),
+    action: normalizeQualityValue(source.action),
+    result: normalizeQualityValue(source.result),
+  };
+  return normalized.problem && normalized.role && normalized.action && normalized.result
+    ? (normalized as ExperienceInformationQuality)
+    : undefined;
+}
+
+function normalizeMissingInformation(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      field: stringValue(item.field),
+      reason: stringValue(item.reason),
+      followUpQuestion: stringValue(item.followUpQuestion),
+    }))
+    .filter((item) => item.field && item.reason && item.followUpQuestion)
+    .slice(0, 4);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeExperienceProfiles(value: unknown): ExperienceProfileV1[] {
+  if (!Array.isArray(value)) return [];
+  const uniqueCards = new Map<string, ExperienceProfileV1>();
+  for (const item of value) {
+    const normalized = normalizeExperienceProfile(item);
+    if (!normalized) continue;
+    const key = normalized.id || normalized.confirmedAt;
+    if (!uniqueCards.has(key)) uniqueCards.set(key, normalized);
+  }
+
+  return Array.from(uniqueCards.values()).sort((first, second) =>
+    second.confirmedAt.localeCompare(first.confirmedAt),
+  );
+}
+
 function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
@@ -79,6 +212,15 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   ]);
   const desiredOccupationText = stringValue(value.desiredOccupationText);
 
+  const experienceProfile = normalizeExperienceProfile(value.experienceProfileV1);
+  const experienceCards = normalizeExperienceProfiles(value.experienceCardsV1);
+  const hasExperienceCardsField = Array.isArray(value.experienceCardsV1);
+  const normalizedExperienceCards = hasExperienceCardsField
+    ? experienceCards
+    : experienceProfile
+      ? [experienceProfile]
+      : undefined;
+
   return {
     desiredCategory: desiredPreferences[0],
     desiredCategory2: desiredPreferences[1],
@@ -98,10 +240,50 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
     employmentSubsidyProgram: stringValue(value.employmentSubsidyProgram) || undefined,
     employmentSubsidyDocName: stringValue(value.employmentSubsidyDocName) || undefined,
+    experienceProfileV1: hasExperienceCardsField
+      ? experienceCards[0]
+      : (normalizedExperienceCards?.[0] ?? experienceProfile),
+    experienceCardsV1: normalizedExperienceCards,
     phone: stringValue(value.phone),
     email,
     updatedAt: stringValue(value.updatedAt) || undefined,
   };
+}
+
+export async function saveSeniorExperienceCards(
+  uid: string,
+  profile: SeniorProfileData,
+  experienceCards: ExperienceProfileV1[],
+): Promise<SeniorProfileData> {
+  const normalized = normalizeSeniorProfile({
+    ...profile,
+    experienceCardsV1: experienceCards,
+    experienceProfileV1: experienceCards[0],
+  });
+  if (!normalized) throw new Error('저장할 인재 프로필 정보가 올바르지 않습니다.');
+
+  const nextProfile: SeniorProfileData = {
+    ...normalized,
+    experienceCardsV1: experienceCards,
+    experienceProfileV1: experienceCards[0],
+  };
+
+  await setDoc(
+    doc(db, SENIOR_PROFILES_COLLECTION, uid),
+    removeDeepUndefinedValues(
+      removeUndefinedValues({
+        ...nextProfile,
+        experienceCardsV1: experienceCards,
+        experienceProfileV1: experienceCards[0] ?? deleteField(),
+        updatedAt: new Date().toISOString(),
+        timestamp: serverTimestamp(),
+      }),
+    ),
+    { merge: true },
+  );
+
+  saveLocalSeniorProfile(nextProfile, uid);
+  return nextProfile;
 }
 
 function normalizeCompanyProfile(source: unknown): CompanyProfileData | null {
@@ -219,10 +401,12 @@ export async function saveSeniorProfile(
   try {
     await setDoc(
       doc(db, SENIOR_PROFILES_COLLECTION, uid),
-      removeUndefinedValues({
-        ...persistedProfile,
-        timestamp: serverTimestamp(),
-      }),
+      removeDeepUndefinedValues(
+        removeUndefinedValues({
+          ...persistedProfile,
+          timestamp: serverTimestamp(),
+        }),
+      ),
       { merge: true },
     );
     saveLocalSeniorProfile(persistedProfile, uid);
@@ -259,14 +443,16 @@ export async function saveCompanyProfile(uid: string, profile: CompanyProfileDat
   try {
     await setDoc(
       doc(db, COMPANY_PROFILES_COLLECTION, uid),
-      removeUndefinedValues({
-        ...normalized,
-        contactEmail: normalized.email,
-        contactPhone: normalized.phone,
-        description: normalized.companyAddress,
-        updatedAt: new Date().toISOString(),
-        timestamp: serverTimestamp(),
-      }),
+      removeDeepUndefinedValues(
+        removeUndefinedValues({
+          ...normalized,
+          contactEmail: normalized.email,
+          contactPhone: normalized.phone,
+          description: normalized.companyAddress,
+          updatedAt: new Date().toISOString(),
+          timestamp: serverTimestamp(),
+        }),
+      ),
       { merge: true },
     );
   } catch (error) {

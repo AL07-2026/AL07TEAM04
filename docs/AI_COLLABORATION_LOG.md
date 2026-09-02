@@ -534,6 +534,101 @@
   - [NEW] `.agents/skills/ecc-build-debugger/SKILL.md`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 
+### [2026-08-31] AI 경험 카드 개선사항 origin/develop 푸시 및 Firebase 배포 완료
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md` 최근 기록과 작업 규칙 확인.
+  - 현재 브랜치가 `YOO`이고, AI 경험 카드 고도화 변경사항이 커밋 전 상태임을 확인.
+  - Firebase 설정 확인: 기본 프로젝트 `al07team04-bdfcd`, Hosting public 디렉터리 `dist`, API rewrite 대상 `api(asia-northeast3)`.
+- **작업 내용**:
+  1. **커밋 생성**:
+     - AI 경험 카드 Gemini 구조화 고도화, 보완 질문 이어답기, 저장 안정성 보완, 관련 테스트 추가 변경사항을 커밋.
+     - 커밋: `f8a50fa feat: enhance AI experience follow-up cards`
+  2. **origin/develop 푸시**:
+     - `git push origin HEAD:develop` 실행.
+     - `origin/develop`이 `1095925`에서 `f8a50fa`로 업데이트됨.
+  3. **Firebase 배포**:
+     - `firebase deploy` 실행.
+     - Functions `api(asia-northeast3)`, `scheduledJobSync(asia-northeast3)` 업데이트 성공.
+     - Hosting 새 버전 릴리즈 성공.
+- **검증 & 결과**:
+  - 푸시 전 `npm run typecheck` 통과
+  - 푸시 전 관련 `vitest` 14개 통과
+  - 푸시 전 `npm run lint` 통과
+  - 푸시 전 `npm run build` 통과
+  - 푸시 전 `git diff --check` 통과
+  - Firebase 배포 성공
+- **배포 URL**:
+  - Hosting: https://al07team04-bdfcd.web.app
+  - API Function URL: https://api-joljydgaia-du.a.run.app
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 배포 후 운영 URL에서 AI 경험 인터뷰 생성 및 보완 질문 이어답기 플로우를 최종 수동 확인 권장.
+
+### [2026-08-31] YOO 브랜치에 origin/develop 최신 변경 병합 및 테스트 준비
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md` 최근 작업 기록 및 작업 규칙 확인.
+  - 현재 브랜치가 `YOO`임을 확인하고, AI 경험 카드 고도화 작업 변경사항이 커밋 전 상태로 남아 있음을 확인.
+- **작업 내용**:
+  1. **작업 변경 임시 보관 후 원격 develop 병합**:
+     - 커밋 전 변경사항을 `git stash push -u -m "codex-ai-experience-follow-up-before-develop-merge"`로 임시 보관.
+     - `git fetch origin develop`로 최신 `origin/develop`(`1095925`)을 가져옴.
+     - `git merge origin/develop`로 `YOO` 브랜치에 최신 develop 변경사항 병합.
+     - `git stash pop`으로 AI 경험 카드 고도화 및 보완 질문 이어답기 작업을 다시 적용.
+  2. **테스트 서버 재시작**:
+     - 기존 API/프론트 개발 서버 세션 종료 후 최신 병합 상태 기준으로 재시작.
+     - API 서버: `http://localhost:8787`
+     - 프론트 서버: `http://localhost:5173/` / 네트워크 `http://192.168.45.123:5173/`
+- **검증 & 결과**:
+  - `npm run typecheck` 통과
+  - `npx vitest run functions/lib/experienceCard.test.mjs src/lib/applicationFlow.test.ts src/services/profileService.test.ts src/app/wireframe/FlowPages.test.tsx src/lib/browserStorage.test.ts` 통과
+  - `npm run lint` 통과
+  - `npm run build` 통과
+  - `git diff --check` 통과
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - `YOO`는 로컬에서 `origin/develop` 최신 변경과 병합 완료.
+  - AI 경험 카드 고도화 관련 변경사항은 아직 커밋 전 상태이므로, 브라우저 수동 테스트 후 커밋 여부 결정 필요.
+
+### [2026-08-31] AI 경험 카드 Gemini 구조화 고도화 및 보완 질문 이어답기 연결
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md`의 기존 AI 경험 인터뷰 관련 기록 및 작업 규칙 확인.
+  - 기존 AI 경험 카드 생성/저장 흐름(`functions/lib/experienceCard.mjs`, `src/app/wireframe/FlowPages.tsx`, `src/lib/applicationFlow.ts`, `src/services/interviewService.ts`, `src/services/profileService.ts`) 확인.
+- **작업 내용**:
+  1. **Gemini 경험 카드 생성 품질 개선**:
+     - 인터뷰 답변을 그대로 복사하지 않고 사실 추출, 정보 품질 평가, 추론, 채용 담당자 관점 재작성 단계를 거치도록 프롬프트를 강화.
+     - 기존 PRAR(`problem`, `role`, `action`, `result`)에 더해 `summary`, `facts`, `inferredSkills`, `strengthInsight`, `recruiterHighlight`, `informationQuality`, `missingInformation` 필드를 생성/정규화하도록 확장.
+  2. **경험 카드 확인 화면 확장**:
+     - 카드 하단에 AI가 발견한 핵심 역량, 경험 분석, 채용 담당자 강조 포인트, 추가 보완 정보와 후속 질문을 표시.
+  3. **보완 질문 이어답기 연결**:
+     - `missingInformation`의 `field`, `reason`, `followUpQuestion`을 세션에 저장하고, 카드 확인 화면의 **추가 질문 이어서 답하기** 버튼으로 인터뷰 화면에 전달.
+     - 보완 인터뷰에서는 부족한 항목만 질문하고, 기존 카드의 PRAR 내용과 추가 답변을 함께 Gemini에 전달해 경험 카드를 다시 생성.
+  4. **저장 안정성 보완**:
+     - 중첩 객체의 `undefined` 값이 Firestore 저장 오류를 만들지 않도록 정리 로직을 적용.
+- **검증 & 결과**:
+  - `npm run typecheck` 통과
+  - `npx vitest run functions/lib/experienceCard.test.mjs src/lib/applicationFlow.test.ts src/services/profileService.test.ts src/app/wireframe/FlowPages.test.tsx src/lib/browserStorage.test.ts` 통과
+  - `npm run lint` 통과
+  - `npm run build` 통과
+  - `git diff --check` 통과
+- **변경 파일**:
+  - [MODIFY] `functions/lib/experienceCard.mjs`
+  - [MODIFY] `functions/lib/experienceCardPrompt.mjs`
+  - [ADD] `functions/lib/experienceCard.test.mjs`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/lib/applicationFlow.ts`
+  - [MODIFY] `src/lib/applicationFlow.test.ts`
+  - [MODIFY] `src/services/interviewService.ts`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 현재 변경사항은 아직 커밋하지 않은 상태.
+  - 실제 브라우저에서 `missingInformation`이 있는 카드 생성 후 **추가 질문 이어서 답하기 → 보완 인터뷰 → 카드 재생성** 흐름을 한 번 수동 확인하면 좋음.
+
 ### [2026-08-29] 랜딩페이지 히어로 헤딩 ("기업의 실무 프로젝트와 / 시니어의 경험을 잇다") 줄간격 3% 축소
 - **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
 - **작업 내용**:

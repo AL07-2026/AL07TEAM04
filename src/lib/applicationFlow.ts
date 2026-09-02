@@ -9,18 +9,50 @@ export const EXPERIENCE_CARD_STORAGE_KEY = 'eojob_experience_card';
 
 const PENDING_APPLICATION_INTERVIEW_KEY = 'eojob_pending_application_interview';
 const PENDING_EXPERIENCE_CARD_KEY = 'eojob_pending_experience_card';
+const PENDING_EXPERIENCE_FOLLOW_UP_KEY = 'eojob_pending_experience_follow_up';
 const RESUME_APPLICATION_KEY = 'eojob_resume_application';
+const EXPERIENCE_PROFILE_DRAFT_KEY = 'eojob_experience_profile_draft';
 
 export type StoredExperienceCard = {
   action: string;
   category?: ProjectCategory;
   completedAt: string;
+  facts?: string[];
+  id?: string;
+  inferredSkills?: ExperienceInferredSkill[];
+  informationQuality?: ExperienceInformationQuality;
+  jobKeywords?: string[];
+  missingInformation?: ExperienceMissingInformation[];
   problem: string;
+  recruiterHighlight?: string;
   result: string;
   role: string;
   targetTitle?: string;
+  strengthInsight?: string;
+  summary?: string;
+  skills?: string[];
   title: string;
   version: 1;
+};
+
+export type ExperienceInformationQualityValue = 'complete' | 'weak' | 'missing';
+
+export type ExperienceInformationQuality = {
+  action: ExperienceInformationQualityValue;
+  problem: ExperienceInformationQualityValue;
+  result: ExperienceInformationQualityValue;
+  role: ExperienceInformationQualityValue;
+};
+
+export type ExperienceInferredSkill = {
+  reason: string;
+  skill: string;
+};
+
+export type ExperienceMissingInformation = {
+  field: string;
+  followUpQuestion: string;
+  reason: string;
 };
 
 export type ExperienceCardInput = Omit<StoredExperienceCard, 'completedAt' | 'version'>;
@@ -30,6 +62,34 @@ export type ExperienceInterviewAnswers = {
   problem: string;
   result: string;
   role: string;
+};
+
+export type ExperienceFollowUpQuestion = {
+  field: keyof ExperienceInterviewAnswers;
+  prompt: string;
+  reason: string;
+};
+
+export type PendingExperienceFollowUp = {
+  baseCard: ExperienceCardInput;
+  questions: ExperienceFollowUpQuestion[];
+  version: 1;
+};
+
+export type ExperienceProfileDraft = {
+  facts?: string[];
+  workedOn: string;
+  accomplished: string;
+  inferredSkills?: ExperienceInferredSkill[];
+  informationQuality?: ExperienceInformationQuality;
+  jobKeywords?: string[];
+  missingInformation?: ExperienceMissingInformation[];
+  recruiterHighlight?: string;
+  strengths: string[];
+  strengthInsight?: string;
+  summary?: string;
+  version: 1;
+  generatedAt: string;
 };
 
 export type ExperienceCardMatch = {
@@ -274,6 +334,217 @@ export function readPendingExperienceCard(): ExperienceCardInput | null {
 
 export function clearPendingExperienceCard() {
   if (isBrowser()) sessionStorage.removeItem(PENDING_EXPERIENCE_CARD_KEY);
+}
+
+function normalizeInterviewField(value: unknown): keyof ExperienceInterviewAnswers | null {
+  return value === 'problem' || value === 'role' || value === 'action' || value === 'result'
+    ? value
+    : null;
+}
+
+function normalizeExperienceFollowUpQuestion(value: unknown): ExperienceFollowUpQuestion | null {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Record<string, unknown>;
+  const field = normalizeInterviewField(source.field);
+  const prompt =
+    typeof source.prompt === 'string' && source.prompt.trim() ? source.prompt.trim() : '';
+  const reason =
+    typeof source.reason === 'string' && source.reason.trim() ? source.reason.trim() : '';
+  if (!field || !prompt) return null;
+  return { field, prompt, reason };
+}
+
+function normalizePendingExperienceFollowUp(value: unknown): PendingExperienceFollowUp | null {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Partial<PendingExperienceFollowUp>;
+  const questions = Array.isArray(source.questions)
+    ? source.questions
+        .map((item) => normalizeExperienceFollowUpQuestion(item))
+        .filter((item): item is ExperienceFollowUpQuestion => Boolean(item))
+    : [];
+  if (
+    source.version !== 1 ||
+    !hasValidExperienceCardFields(source.baseCard ?? null) ||
+    !questions.length
+  ) {
+    return null;
+  }
+  return {
+    baseCard: source.baseCard as ExperienceCardInput,
+    questions: questions.slice(0, 4),
+    version: 1,
+  };
+}
+
+export function beginExperienceFollowUp(
+  card: ExperienceCardInput,
+  missingInformation: ExperienceMissingInformation[],
+) {
+  if (!isBrowser() || !hasValidExperienceCardFields(card)) return false;
+  const questions = missingInformation
+    .map((item) =>
+      normalizeExperienceFollowUpQuestion({
+        field: item.field,
+        prompt: item.followUpQuestion,
+        reason: item.reason,
+      }),
+    )
+    .filter((item): item is ExperienceFollowUpQuestion => Boolean(item))
+    .slice(0, 4);
+  if (!questions.length) return false;
+
+  sessionStorage.setItem(
+    PENDING_EXPERIENCE_FOLLOW_UP_KEY,
+    JSON.stringify({
+      baseCard: card,
+      questions,
+      version: 1,
+    }),
+  );
+  return true;
+}
+
+export function readPendingExperienceFollowUp(): PendingExperienceFollowUp | null {
+  if (!isBrowser()) return null;
+  try {
+    return normalizePendingExperienceFollowUp(
+      JSON.parse(sessionStorage.getItem(PENDING_EXPERIENCE_FOLLOW_UP_KEY) || 'null'),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingExperienceFollowUp() {
+  if (isBrowser()) sessionStorage.removeItem(PENDING_EXPERIENCE_FOLLOW_UP_KEY);
+}
+
+function normalizeExperienceProfileDraft(value: unknown): ExperienceProfileDraft | null {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Partial<ExperienceProfileDraft>;
+  const workedOn = typeof source.workedOn === 'string' ? source.workedOn.trim() : '';
+  const accomplished = typeof source.accomplished === 'string' ? source.accomplished.trim() : '';
+  const strengths = Array.isArray(source.strengths)
+    ? source.strengths
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  if (!workedOn && !accomplished && strengths.length === 0) return null;
+  return {
+    facts: normalizeStringArray(source.facts, 8),
+    workedOn,
+    accomplished,
+    inferredSkills: normalizeInferredSkills(source.inferredSkills),
+    informationQuality: normalizeInformationQuality(source.informationQuality),
+    jobKeywords: normalizeStringArray(source.jobKeywords, 5),
+    missingInformation: normalizeMissingInformation(source.missingInformation),
+    recruiterHighlight:
+      typeof source.recruiterHighlight === 'string' && source.recruiterHighlight.trim()
+        ? source.recruiterHighlight.trim()
+        : undefined,
+    strengths,
+    strengthInsight:
+      typeof source.strengthInsight === 'string' && source.strengthInsight.trim()
+        ? source.strengthInsight.trim()
+        : undefined,
+    summary:
+      typeof source.summary === 'string' && source.summary.trim()
+        ? source.summary.trim()
+        : undefined,
+    version: 1,
+    generatedAt:
+      typeof source.generatedAt === 'string' ? source.generatedAt : new Date().toISOString(),
+  };
+}
+
+function normalizeStringArray(value: unknown, maxLength: number) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = [
+    ...new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, maxLength);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeInferredSkills(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      skill: typeof item.skill === 'string' ? item.skill.trim() : '',
+      reason: typeof item.reason === 'string' ? item.reason.trim() : '',
+    }))
+    .filter((item) => item.skill && item.reason)
+    .slice(0, 6);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeQualityValue(value: unknown) {
+  return value === 'complete' || value === 'weak' || value === 'missing' ? value : undefined;
+}
+
+function normalizeInformationQuality(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const normalized = {
+    problem: normalizeQualityValue(source.problem),
+    role: normalizeQualityValue(source.role),
+    action: normalizeQualityValue(source.action),
+    result: normalizeQualityValue(source.result),
+  };
+  return normalized.problem && normalized.role && normalized.action && normalized.result
+    ? (normalized as ExperienceInformationQuality)
+    : undefined;
+}
+
+function normalizeMissingInformation(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      field: typeof item.field === 'string' ? item.field.trim() : '',
+      reason: typeof item.reason === 'string' ? item.reason.trim() : '',
+      followUpQuestion:
+        typeof item.followUpQuestion === 'string' ? item.followUpQuestion.trim() : '',
+    }))
+    .filter((item) => item.field && item.reason && item.followUpQuestion)
+    .slice(0, 4);
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+export function saveExperienceProfileDraft(draft: ExperienceProfileDraft, ownerId?: string) {
+  if (!isBrowser()) return;
+  const normalized = normalizeExperienceProfileDraft(draft);
+  if (normalized)
+    sessionStorage.setItem(
+      getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId),
+      JSON.stringify(normalized),
+    );
+}
+
+export function readExperienceProfileDraft(ownerId?: string): ExperienceProfileDraft | null {
+  if (!isBrowser()) return null;
+  try {
+    return normalizeExperienceProfileDraft(
+      JSON.parse(
+        sessionStorage.getItem(getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId)) ||
+          'null',
+      ),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function clearExperienceProfileDraft(ownerId?: string) {
+  if (isBrowser())
+    sessionStorage.removeItem(getScopedStorageKey(EXPERIENCE_PROFILE_DRAFT_KEY, ownerId));
 }
 
 function readApplicationReturn(key: string): ApplicationInterviewReturn | null {

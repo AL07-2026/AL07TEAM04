@@ -197,7 +197,7 @@ export function BasicProfilePage() {
       !form.email.trim()
     ) {
       setMessage(
-        '필수 정보(1순위 희망 직종, 경력 분야·기간, 대표 경험, 연락처, 이메일)를 모두 입력해 주세요.',
+        '필수 정보(1순위 희망 직종, 경력 분야·기간, 대표 경험, 연락처·이메일)를 모두 입력해 주세요.',
       );
       return;
     }
@@ -257,25 +257,23 @@ export function BasicProfilePage() {
         {/* Account Header Badge & Logout */}
         {(() => {
           const displayName =
-            user?.name
-              ? user.name
-              : user?.email === 'sehddnr2@gmail.com'
-                ? '이동욱'
-                : '이동욱';
+            user?.name || '지원자';
           return (
-            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF7F2]">
-              <div className="flex items-center gap-3">
-                <div className="size-11 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
+            <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAF7F2]">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="size-11 shrink-0 rounded-full bg-[#173F3A] text-white flex items-center justify-center text-base font-black shadow-xs">
                   {displayName[0] || '이'}
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-extrabold text-[#17212B]">{displayName}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A]">
+                <div className="flex min-w-0 flex-col">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 truncate text-base font-extrabold text-[#17212B]">
+                      {displayName}
+                    </span>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#173F3A]/10 text-[#173F3A] whitespace-nowrap">
                       인재 회원
                     </span>
                   </div>
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="truncate text-xs font-medium text-slate-500">
                     {user?.email || form.email}
                   </span>
                 </div>
@@ -283,9 +281,9 @@ export function BasicProfilePage() {
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-400 hover:from-white hover:to-rose-100 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-rose-300 bg-gradient-to-b from-white via-rose-50 to-rose-100/70 px-3.5 py-1.5 text-xs font-extrabold text-rose-600 shadow-[0_2px_6px_rgba(225,29,72,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400 hover:from-white hover:to-rose-100 active:translate-y-0 active:scale-[0.98] cursor-pointer"
               >
-                <LogOut className="size-3.5" />
+                <LogOut className="size-3.5 shrink-0" />
                 <span>로그아웃</span>
               </button>
             </div>
@@ -582,7 +580,8 @@ export function BasicProfilePage() {
                   희망 직종 선택 (1차 · 2차 · 3차)
                 </label>
                 <p className="text-xs md:text-[13px] font-medium text-slate-500">
-                  희망 직종을 1순위부터 3순위까지 지정하면 프로젝트 DB 추천 순위에 순서대로
+                  희망 직종을 1순위부터 3순위까지 지정하면 프로젝트{' '}
+                  <span className="whitespace-nowrap">DB 추천</span> 순위에 순서대로
                   반영됩니다.
                 </p>
               </div>
@@ -683,7 +682,7 @@ export function BasicProfilePage() {
             <TextAreaField
               label="경력 분야 세부 핵심 강점 및 주력 역량"
               onChange={(e) => update('keySkills')(e.target.value)}
-              placeholder="예: 0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀원 리더십 등 본인의 핵심 강점을 입력해주세요."
+              placeholder="예: 0→1 프로세스 정립, VOC 대용량 분석, SLA 관리, AI 자동화 툴 도입, 팀원 리더십 등 본인의 핵심 강점을 입력해 주세요."
               rows={4}
               value={form.keySkills || ''}
             />
@@ -691,16 +690,19 @@ export function BasicProfilePage() {
             {/* Section 5: 고용촉진장려금 지원 대상 자격 인증 (선택) */}
             <div className="flex flex-col gap-3 rounded-2xl bg-[#FAF7F2] p-4">
               <div className="flex flex-col gap-0.5">
-                <label className="text-sm md:text-base font-extrabold text-[#173F3A] flex items-center gap-2">
+                <label className="flex items-start gap-2 text-sm font-extrabold leading-6 text-[#173F3A] md:items-center md:text-base">
                   <Coins className="size-4 text-[#173F3A] shrink-0" />
-                  <span>고용촉진장려금(연 720만원) 지원 대상자 인증</span>
-                  <span className="rounded-full bg-[#173F3A]/10 px-2 py-0.5 text-[11px] font-extrabold text-[#173F3A]">
+                  <span className="min-w-0">
+                    <span className="block">고용촉진장려금(연 720만원)</span>
+                    <span className="block">지원 대상자 인증</span>
+                  </span>
+                  <span className="ml-auto shrink-0 whitespace-nowrap rounded-full bg-[#173F3A]/10 px-3 py-1 text-[11px] font-extrabold leading-none text-[#173F3A]">
                     선택
                   </span>
                 </label>
                 <p className="text-xs md:text-[13px] font-medium text-slate-500 leading-relaxed">
-                  국민취업지원제도(1단계 수료) 또는 내일배움카드 훈련(3개월 이상)을 이수하셨다면
-                  인증해 주세요. 기업의 채용 우선순위가 크게 상승합니다.
+                  국민취업지원제도(1단계 수료) 또는 내일배움카드 훈련<span className="whitespace-nowrap">(3개월 이상)</span>을 이수하셨다면 인증해 주세요.
+                  <span className="block">기업의 채용 우선순위가 크게 상승합니다.</span>
                 </p>
               </div>
 
@@ -716,8 +718,9 @@ export function BasicProfilePage() {
                   }
                   className="size-4 rounded accent-[#173F3A]"
                 />
-                <span className="text-xs md:text-sm font-extrabold text-[#17212B]">
-                  고용노동부 고용촉진장려금 지원 대상 구직자입니다 (연 최대 720만원 지원)
+                <span className="text-xs md:text-sm font-extrabold text-[#17212B] [word-break:keep-all]">
+                  고용노동부 고용촉진장려금 지원 대상{' '}
+                  <span className="whitespace-nowrap">구직자입니다</span> (연 최대 720만원 지원)
                 </span>
               </label>
 
@@ -768,8 +771,11 @@ export function BasicProfilePage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-white shadow-2xs">
-                  <p className="text-xs font-semibold text-slate-600">
-                    아직 수료하지 않으셨나요? 국민취업지원제도 1단계를 완료하면 기업 지원 대상이 됩니다.
+                  <p className="min-w-0 text-xs font-semibold leading-5 text-slate-600 [word-break:keep-all]">
+                    <span className="block">아직 수료하지 않으셨나요?</span>
+                    <span className="block">
+                      <span className="whitespace-nowrap">국민취업지원제도</span> 1단계를 완료하면 기업 지원 대상이 됩니다.
+                    </span>
                   </p>
                   <a
                     href="https://www.kua.go.kr"
@@ -794,7 +800,7 @@ export function BasicProfilePage() {
             <TextAreaField
               label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
-              placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해주세요."
+              placeholder="과거 회사에서 해결했던 문제, 수율 향상, 리드타임 단축 등 구체적인 해결 성과를 입력해 주세요."
               value={form.solvedExperiences || ''}
             />
 

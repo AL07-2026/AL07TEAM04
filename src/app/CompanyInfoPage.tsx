@@ -88,7 +88,7 @@ export function CompanyInfoPage() {
 
   async function handleLogout() {
     await signOut();
-    void navigate('/senior/project-database', { replace: true });
+    void navigate('/', { replace: true });
   }
 
   const isMobile = mode === 'mobile';
