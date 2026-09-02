@@ -32,12 +32,15 @@
   4. **화면 및 라우팅 보정**:
      - `src/app/JobDatabasePage.tsx`: URL 쿼리 파라미터(`register=1`) 지원 및 `createProposalFromPosting` 파일 첨부 연동 보정.
      - `src/app/App.test.tsx`: 기업 라우트 인증 보호 및 신규 등록 모달 제출 셀렉터 보정.
-- **검증 & 결과**:
+- **검증 & 배포 결과**:
   - `npm run validate` 전체 파이프라인 100% 통과:
     - TypeScript 타입 체크 0 에러
     - ESLint 0 경고/0 에러
     - Vitest 35개 테스트 파일 338개 테스트 전체 통과
     - Vite 프로덕션 빌드 성공
+  - **Firebase 프로덕션 배포 완료**:
+    - Hosting 및 Cloud Functions (`api(asia-northeast3)`) 배포 성공
+    - 운영 URL: `https://al07team04-bdfcd.web.app`
 - **변경 파일**:
   - [MODIFY] `src/app/JobDatabasePage.tsx`
   - [MODIFY] `src/app/App.test.tsx`
