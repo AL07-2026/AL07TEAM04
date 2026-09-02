@@ -1,10 +1,15 @@
-import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
+import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactNode } from 'react';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import { ViewportProvider } from '@/app/wireframe/Ui';
+import {
+  createLoginRedirectPath,
+  LOGIN_REQUIRED_NAVIGATION_STATE,
+} from '@/app/authRequiredNavigation';
+import { InAppBrowserBanner } from '@/components/InAppBrowserBanner';
 import { ErrorBoundaryHarness } from '@/components/ui/ErrorBoundaryHarness';
-import { AuthProvider } from '@/lib/authContext';
+import { AuthProvider, useAuth } from '@/lib/authContext';
 import { trackPageView } from '@/services/analyticsService';
 
 function lazyPage<TModule, TKey extends keyof TModule>(
@@ -75,36 +80,121 @@ function RouteLoadingFallback() {
   );
 }
 
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <RouteLoadingFallback />;
+  if (!user) {
+    return (
+      <Navigate
+        replace
+        state={LOGIN_REQUIRED_NAVIGATION_STATE}
+        to={createLoginRedirectPath(location.pathname + location.search)}
+      />
+    );
+  }
+  return <>{children}</>;
+}
+
 function createAppRouter() {
   return createBrowserRouter([
+    // 공개 경로 (인증 불필요)
     { path: '/', Component: LandingPage },
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
-    { path: '/role', Component: RoleSelectionPage },
-    { path: '/company-info', Component: CompanyInfoPage },
-    { path: '/basic-profile', Component: BasicProfilePage },
-    { path: '/senior', Component: SeniorHomePage },
-    { path: '/senior/experience', Component: ExperienceSelectionPage },
-    { path: '/senior/experience/interview', Component: ExperienceInterviewPage },
-    { path: '/senior/experience/card', Component: ExperienceCardPage },
-    { path: '/senior/projects', Component: ProjectListPage },
-    { path: '/senior/projects/:projectId', Component: ProjectDetailPage },
-    { path: '/senior/projects/:projectId/proposal', Component: ProposalPage },
-    { path: '/senior/proposal-complete', Component: ProposalCompletePage },
-    { path: '/senior/proposals', Component: MyProposalsPage },
-    { path: '/senior/proposals/:proposalId', Component: MyProposalDetailPage },
+    // 채용 공고 목록: 비로그인도 열람 가능 (내부에서 배너로 로그인 유도)
     { path: '/senior/project-database', element: <JobDatabasePage role="senior" /> },
     { path: '/senior/job-database', element: <JobDatabasePage role="senior" /> },
-    { path: '/senior/profile', Component: SeniorProfilePage },
-    { path: '/company', Component: CompanyHomePage },
-    { path: '/company/projects', Component: ProjectManagementPage },
-    { path: '/company/projects/new', Component: ProjectRegisterPage },
-    { path: '/company/project-complete', Component: ProjectCompletePage },
-    { path: '/company/proposals', Component: ReceivedProposalsPage },
-    { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },
-    { path: '/company/project-database', element: <JobDatabasePage role="company" /> },
-    { path: '/company/job-database', element: <JobDatabasePage role="company" /> },
-    { path: '/company/profile', Component: CompanyProfilePage },
+    // 회원가입 플로우 (보호 경로)
+    {
+      path: '/role',
+      element: <ProtectedRoute><RoleSelectionPage /></ProtectedRoute>,
+    },
+    {
+      path: '/company-info',
+      element: <ProtectedRoute><CompanyInfoPage /></ProtectedRoute>,
+    },
+    {
+      path: '/basic-profile',
+      element: <ProtectedRoute><BasicProfilePage /></ProtectedRoute>,
+    },
+    // 시니어 보호 경로
+    { path: '/senior', element: <ProtectedRoute><SeniorHomePage /></ProtectedRoute> },
+    {
+      path: '/senior/experience',
+      element: <ProtectedRoute><ExperienceSelectionPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/experience/interview',
+      element: <ProtectedRoute><ExperienceInterviewPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/experience/card',
+      element: <ProtectedRoute><ExperienceCardPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/projects',
+      element: <ProtectedRoute><ProjectListPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/projects/:projectId',
+      element: <ProtectedRoute><ProjectDetailPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/projects/:projectId/proposal',
+      element: <ProtectedRoute><ProposalPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/proposal-complete',
+      element: <ProtectedRoute><ProposalCompletePage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/proposals',
+      element: <ProtectedRoute><MyProposalsPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/proposals/:proposalId',
+      element: <ProtectedRoute><MyProposalDetailPage /></ProtectedRoute>,
+    },
+    {
+      path: '/senior/profile',
+      element: <ProtectedRoute><SeniorProfilePage /></ProtectedRoute>,
+    },
+    // 기업 보호 경로
+    { path: '/company', element: <ProtectedRoute><CompanyHomePage /></ProtectedRoute> },
+    {
+      path: '/company/projects',
+      element: <ProtectedRoute><ProjectManagementPage /></ProtectedRoute>,
+    },
+    {
+      path: '/company/projects/new',
+      element: <ProtectedRoute><ProjectRegisterPage /></ProtectedRoute>,
+    },
+    {
+      path: '/company/project-complete',
+      element: <ProtectedRoute><ProjectCompletePage /></ProtectedRoute>,
+    },
+    {
+      path: '/company/proposals',
+      element: <ProtectedRoute><ReceivedProposalsPage /></ProtectedRoute>,
+    },
+    {
+      path: '/company/proposals/:proposalId',
+      element: <ProtectedRoute><ReceivedProposalDetailPage /></ProtectedRoute>,
+    },
+    {
+      path: '/company/project-database',
+      element: <ProtectedRoute><JobDatabasePage role="company" /></ProtectedRoute>,
+    },
+    {
+      path: '/company/job-database',
+      element: <ProtectedRoute><JobDatabasePage role="company" /></ProtectedRoute>,
+    },
+    {
+      path: '/company/profile',
+      element: <ProtectedRoute><CompanyProfilePage /></ProtectedRoute>,
+    },
     { path: '*', element: <Navigate replace to="/" /> },
   ]);
 }
@@ -123,6 +213,7 @@ export function App() {
   return (
     <div className="eojob-readable">
       <AuthProvider>
+        <InAppBrowserBanner />
         <ViewportProvider>
           <ErrorBoundaryHarness>
             <Suspense fallback={<RouteLoadingFallback />}>

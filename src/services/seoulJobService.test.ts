@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   fetchSeoulJobFeed,
   transformSeoulJobToPosting,
@@ -34,8 +34,12 @@ describe('seoulJobService', () => {
     expect(transformSeoulJobToPosting({ JO_REQST_NO: 'H123' })).toBeNull();
   });
 
-  it('fetches Seoul job feed without crashing in test environment', async () => {
+  it('does not call the Seoul source API from the browser', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const feed = await fetchSeoulJobFeed();
+
     expect(Array.isArray(feed)).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

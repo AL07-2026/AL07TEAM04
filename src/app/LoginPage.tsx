@@ -1,15 +1,17 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
   BriefcaseBusiness,
   CheckCircle2,
   Home,
+  LogIn,
   LogOut,
   Pause,
   Play,
 } from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
+import { getLoginRequiredMessage } from '@/app/authRequiredNavigation';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
@@ -141,8 +143,30 @@ export function RollingBanner({
   );
 }
 
+function LoginRequiredToast({ message }: { message: string }) {
+  if (!message) return null;
+
+  return (
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className="pointer-events-none fixed left-1/2 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#2E625B] bg-[#173F3A] px-4 py-3 text-white shadow-[0_12px_32px_rgba(23,63,58,0.28)] sm:top-6"
+      role="status"
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/12">
+        <LogIn aria-hidden="true" className="size-[18px]" />
+      </span>
+      <span className="min-w-0">
+        <strong className="block text-[14px] font-extrabold leading-5">로그인이 필요한 서비스입니다</strong>
+        <span className="block text-[13px] font-semibold leading-5 text-white/85">{message}</span>
+      </span>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
   const { user, signIn, signInWithGoogle, signOut } = useAuth();
@@ -167,6 +191,17 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const routeLoginRequiredMessage = getLoginRequiredMessage(location.state);
+  const [dismissedLoginNoticeKey, setDismissedLoginNoticeKey] = useState('');
+  const loginRequiredMessage =
+    dismissedLoginNoticeKey === location.key ? '' : routeLoginRequiredMessage;
+
+  useEffect(() => {
+    if (!routeLoginRequiredMessage) return;
+    const noticeLocationKey = location.key;
+    const timer = window.setTimeout(() => setDismissedLoginNoticeKey(noticeLocationKey), 3600);
+    return () => window.clearTimeout(timer);
+  }, [location.key, routeLoginRequiredMessage]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -178,7 +213,10 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       const userProfile = await signIn(email, password, role);
-      if (userProfile.role === 'company') {
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo && redirectTo.startsWith('/')) {
+        void navigate(redirectTo);
+      } else if (userProfile.role === 'company') {
         void navigate('/company');
       } else {
         void navigate('/senior');
@@ -196,7 +234,10 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       const userProfile = await signInWithGoogle(role);
-      if (userProfile.role === 'company') {
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo && redirectTo.startsWith('/')) {
+        void navigate(redirectTo);
+      } else if (userProfile.role === 'company') {
         void navigate('/company');
       } else {
         void navigate('/senior');
@@ -225,6 +266,7 @@ export function LoginPage() {
         showBack={false}
         title="로그인 정보"
       >
+        <LoginRequiredToast message={loginRequiredMessage} />
         <div className="flex flex-col gap-5 w-full max-w-md mx-auto my-auto rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-sm text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
             <CheckCircle2 className="size-7" />
@@ -282,6 +324,7 @@ export function LoginPage() {
         showBack={false}
         title="경험매칭"
       >
+        <LoginRequiredToast message={loginRequiredMessage} />
         <div className="flex flex-col gap-4 w-full max-w-sm mx-auto my-auto py-2">
           {/* Initial Role Choice Tabs */}
           <div
@@ -477,6 +520,7 @@ export function LoginPage() {
       showBack={false}
       title="경험매칭"
     >
+      <LoginRequiredToast message={loginRequiredMessage} />
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">

@@ -47,12 +47,10 @@ import {
   hiringStageLabels,
 } from '@/data/jobPostings';
 import {
-  getCompanyOwnedProjects,
-  getPublishedCompanyProjects,
-  matchesPublishedCompanyProject,
-  mergeSeniorPostings,
-  resolveSeniorCategoryFilter,
-} from '@/app/jobDatabaseProjectVisibility';
+  createLoginRedirectPath,
+  LOGIN_REQUIRED_NAVIGATION_STATE,
+} from '@/app/authRequiredNavigation';
+import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
 import type {
   EmploymentType,
   HiringStage,
@@ -70,11 +68,8 @@ import { useAuth } from '@/lib/authContext';
 import {
   beginApplicationInterview,
   cancelApplicationInterview,
-  consumeApplicationDraft,
-  consumeApplicationResume,
   evaluateExperienceCardMatch,
   getExperienceCardCategoryLabel,
-  getPendingApplicationInterview,
   preserveApplicationDraft,
   readStoredExperienceCard,
   type StoredExperienceCard,
@@ -82,7 +77,10 @@ import {
 import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { trackButtonClick, trackJobApply, trackJobView } from '@/services/analyticsService';
-import { sendApplicationEmailToManager } from '@/services/emailService';
+import {
+  prepareApplicationEmailToManager,
+  usesExternalApplication,
+} from '@/services/emailService';
 import {
   extractCleanPositionTitle,
   formatSimpleLocation,
@@ -97,9 +95,7 @@ import {
   searchProjectFilterChoices,
 } from '@/services/projectFilterPresentation';
 import {
-  shouldMergePublicProjectsForDiscovery,
-} from '@/services/homeMetricNavigation';
-import {
+  clearJobSearchClientCache,
   searchFullJobDatabase,
   type FullJobSearchResult,
   type JobOccupationFilter,
@@ -118,8 +114,6 @@ import { createProject, fetchProjects } from '@/services/projectService';
 import { createProposalFromPosting } from '@/services/proposalService';
 import { resolveSeniorProfile, type SeniorProfileData } from '@/services/profileService';
 import {
-  clearWorknetFeedCache,
-  fetchWorknetSeniorProjectFeed,
   getDefaultSeniorJobPostings,
   type WorknetProjectFeed,
   type WorknetProjectFeedStatus,
@@ -133,6 +127,8 @@ import type {
 import { MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
 
 const all = 'all';
+const MAX_AUTOMATIC_SEARCH_RETRIES = 2;
+const AUTOMATIC_SEARCH_RETRY_DELAY_MS = 350;
 const allDatabase = 'all_db';
 const customOccupationMatch = 'custom-match';
 const unclassifiedOccupation = 'unclassified';
@@ -629,6 +625,7 @@ export function PostingCard({
   experienceCard,
   onSelect,
   posting,
+  preferServerFitScore = false,
   profile,
   role = 'company',
   selected,
@@ -638,6 +635,7 @@ export function PostingCard({
   onApply?: (posting: JobPosting) => void;
   onSelect: () => void;
   posting: JobPosting;
+  preferServerFitScore?: boolean;
   profile?: SeniorProfileData | null;
   role?: Role;
   selected: boolean;
@@ -648,8 +646,12 @@ export function PostingCard({
     activePrimaryCategory,
     experienceCard,
   );
-  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : (posting.seniorFitScore || 75);
+  const displayScore =
+    preferServerFitScore && Number.isFinite(posting.seniorFitScore)
+      ? posting.seniorFitScore
+      : matchResult.personalizedScore > 0
+        ? matchResult.personalizedScore
+        : (posting.seniorFitScore || 75);
   const fitTone = getFitScoreTone(displayScore);
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -887,6 +889,7 @@ export function DetailPanel({
   experienceCard,
   onApply,
   posting,
+  preferServerFitScore = false,
   profile,
   role,
 }: {
@@ -894,6 +897,7 @@ export function DetailPanel({
   experienceCard?: StoredExperienceCard | null;
   onApply?: () => void;
   posting: JobPosting;
+  preferServerFitScore?: boolean;
   profile?: SeniorProfileData | null;
   role?: Role;
 }) {
@@ -905,8 +909,12 @@ export function DetailPanel({
     activePrimaryCategory,
     experienceCard,
   );
-  const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : (posting.seniorFitScore || 75);
+  const displayScore =
+    preferServerFitScore && Number.isFinite(posting.seniorFitScore)
+      ? posting.seniorFitScore
+      : matchResult.personalizedScore > 0
+        ? matchResult.personalizedScore
+        : (posting.seniorFitScore || 75);
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -1272,7 +1280,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   });
 
   const homeRecommendationCategory = normalizeOccupationCategory(searchParams.get('recommendedCategory'));
-  const isHomeRecommendationContext = role === 'senior' && Boolean(homeRecommendationCategory);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
     () => homeRecommendationCategory ?? all,
@@ -1313,7 +1320,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const resultGenerationRef = useRef(1);
   const [resultGeneration, setResultGeneration] = useState(1);
   const [pendingResultGeneration, setPendingResultGeneration] = useState<number | null>(null);
-  const [publishedCompanyProjects, setPublishedCompanyProjects] = useState<JobPosting[]>([]);
+  const [automaticSearchRetryCount, setAutomaticSearchRetryCount] = useState(0);
+  const automaticSearchRetryTimerRef = useRef<number | null>(null);
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(null);
   const [isSeniorProfileResolved, setIsSeniorProfileResolved] = useState(role !== 'senior');
   const [serverSearchMeta, setServerSearchMeta] = useState<
@@ -1374,10 +1382,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     interviewSummary: string;
     attachedFileNames: string;
     coverNote: string;
-    emailMessage: string;
+    deliveryMethod: 'email-client' | 'external-application' | 'in-app';
     recipientEmail: string;
     mailtoLink: string;
-    isPublicJob: boolean;
     sourceUrl?: string;
   } | null>(null);
   const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
@@ -1421,77 +1428,49 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       ).personalizedScore
     : 0;
   const applyingPostingFitTone = getFitScoreTone(applyingPostingFitScore);
+  const applyingPostingUsesExternalApplication = Boolean(
+    applyingPosting && usesExternalApplication(applyingPosting),
+  );
 
   const hasInitialPostingsRef = useRef(postings.length > 0);
 
   useEffect(() => {
+    let isSubscribed = true;
+
     async function loadDatabaseProjects() {
       if (!hasInitialPostingsRef.current) {
         setIsLoadingPostings(true);
       }
-      const profilePromise =
-        role === 'senior'
-          ? resolveSeniorProfile(user?.uid)
-          : Promise.resolve<SeniorProfileData | null>(null);
-      const worknetFeedPromise =
-        role === 'senior'
-          ? Promise.resolve<WorknetProjectFeed>({ projects: [], status: 'success' })
-          : Promise.resolve<WorknetProjectFeed>({ projects: [], status: 'success' });
-      const interviewCardPromise =
-        role === 'senior'
-          ? getLatestUserExperienceCard(user?.uid)
-          : Promise.resolve<StoredExperienceCard | null>(null);
-      const [registeredProjects, resolvedProfile, worknetFeed, resolvedInterviewCard] = await Promise.all([
-        fetchProjects(),
-        profilePromise,
-        worknetFeedPromise,
-        interviewCardPromise,
-      ]);
-      if (role === 'senior') {
-        setInterviewCard(resolvedInterviewCard);
-      }
-      setSeniorProfile(resolvedProfile);
-      setIsSeniorProfileResolved(true);
-      setWorknetFeedStatus(worknetFeed.status);
-      const visibleUserProjects =
-        role === 'company'
-          ? getCompanyOwnedProjects(registeredProjects, user?.uid)
-          : registeredProjects;
-      const publicProjects = getPublishedCompanyProjects(registeredProjects);
-      if (role === 'senior') {
-        setPublishedCompanyProjects(publicProjects);
-      } else {
-        setPostings(visibleUserProjects);
-        setSelectedId((current) =>
-          visibleUserProjects.some((posting) => posting.id === current)
-            ? current
-            : (visibleUserProjects[0]?.id ?? ''),
-        );
-      }
-      setWorknetFeedMessage(
-        role === 'senior' && worknetFeed.status === 'success' && publicProjects.length === 0
-          ? '내 정보의 희망 직종과 일치하는 고용24 공고를 찾지 못했습니다.'
-          : (worknetFeed.message ?? ''),
-      );
 
-      const resumeState = consumeApplicationResume() ?? getPendingApplicationInterview();
-      if (resumeState) {
-        const resumedPosting = (role === 'senior' ? publicProjects : visibleUserProjects).find(
-          (posting) => posting.id === resumeState.projectId,
-        );
-        if (resumedPosting) {
-          const draft = consumeApplicationDraft(resumedPosting.id);
-          setApplyingPosting(resumedPosting);
-          setSelectedId(resumedPosting.id);
-          setApplicationFiles(draft?.files ?? []);
-          setApplicantNote(draft?.note ?? '');
-          setApplicationError('');
-          setInterviewCard(readStoredExperienceCard(user?.uid));
-        }
+      if (role === 'senior') {
+        const [resolvedProfile, resolvedInterviewCard] = await Promise.all([
+          resolveSeniorProfile(user?.uid),
+          getLatestUserExperienceCard(user?.uid),
+        ]);
+        if (!isSubscribed) return;
+        setInterviewCard(resolvedInterviewCard);
+        setSeniorProfile(resolvedProfile);
+        setIsSeniorProfileResolved(true);
+        setWorknetFeedStatus('success');
+        setWorknetFeedMessage('');
+        return;
       }
+
+      const registeredProjects = await fetchProjects();
+      if (!isSubscribed) return;
+      const visibleUserProjects = getCompanyOwnedProjects(registeredProjects, user?.uid);
+      setPostings(visibleUserProjects);
+      setSelectedId((current) =>
+        visibleUserProjects.some((posting) => posting.id === current)
+          ? current
+          : (visibleUserProjects[0]?.id ?? ''),
+      );
     }
 
-    let isSubscribed = true;
+    if (automaticSearchRetryTimerRef.current !== null) {
+      window.clearTimeout(automaticSearchRetryTimerRef.current);
+      automaticSearchRetryTimerRef.current = null;
+    }
     const safetyTimer = setTimeout(() => {
       if (isSubscribed) {
         setIsLoadingPostings(false);
@@ -1521,7 +1500,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     runDatabaseLoad();
 
     const handleProfileUpdate = () => {
-      clearWorknetFeedCache();
+      clearJobSearchClientCache();
+      setAutomaticSearchRetryCount(0);
       setWorknetReloadKey((prev) => prev + 1);
     };
 
@@ -1530,6 +1510,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return () => {
       isSubscribed = false;
       clearTimeout(safetyTimer);
+      if (automaticSearchRetryTimerRef.current !== null) {
+        window.clearTimeout(automaticSearchRetryTimerRef.current);
+        automaticSearchRetryTimerRef.current = null;
+      }
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
     };
@@ -1590,23 +1574,13 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         preferredProfilePreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
       const shouldUseOtherOccupation =
         otherOccupationRank > 0 && (isCustomMatchSelected || isAllDatabaseSelected);
-      const profileText = [
-        shouldUseOtherOccupation ? seniorProfile?.desiredOccupationText : '',
-        seniorProfile?.field,
-        seniorProfile?.experience,
-        seniorProfile?.solvedExperiences,
-        seniorProfile?.keySkills,
-      ]
-        .filter(Boolean)
-        .join(' ');
-
-      setIsLoadingPostings(true);
-      const companyProjectCategoryFilter = resolveSeniorCategoryFilter(
-        selectedCategory,
-        effectivePrimaryProfileFilter,
-      );
+      if (automaticSearchRetryCount === 0) {
+        setIsLoadingPostings(true);
+      }
       void searchFullJobDatabase({
+        cacheScope: user?.uid ?? 'guest',
         categories,
+        certificationText: seniorProfile?.certifications,
         desiredCategories,
         desiredLocation: seniorProfile?.desiredLocation,
         desiredOccupationRank: shouldUseOtherOccupation
@@ -1617,14 +1591,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         desiredOccupationText: shouldUseOtherOccupation
           ? seniorProfile?.desiredOccupationText
           : undefined,
+        desiredWorkType: seniorProfile?.desiredWorkType,
         employmentType: selectedEmploymentType,
         experienceCardCategory: interviewCard?.category,
         experienceCardText: getExperienceCardRecommendationText(interviewCard),
         experienceYears: Number.parseInt(seniorProfile?.period ?? '', 10) || 0,
         hiringStage: selectedHiringStage,
+        forceRefresh: automaticSearchRetryCount > 0,
         page: currentPage,
         pageSize: itemsPerPage,
-        profileText,
+        profileExperience:
+          seniorProfile?.experience === seniorProfile?.desiredWorkType
+            ? ''
+            : seniorProfile?.experience,
+        profileField: seniorProfile?.field,
+        profileKeySkills: seniorProfile?.keySkills,
+        profileSolvedExperience: seniorProfile?.solvedExperiences,
         query,
         requireDesiredOccupationMatch:
           isCustomMatchSelected && customFallbackCategories.length === 0,
@@ -1634,19 +1616,6 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       })
         .then((result) => {
           if (!active || generation !== resultGenerationRef.current) return;
-          const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
-            matchesPublishedCompanyProject(project, {
-              desiredOccupationText: isCustomMatchSelected
-                ? seniorProfile?.desiredOccupationText
-                : undefined,
-              employmentType: selectedEmploymentType,
-              fallbackOccupationCategories: customFallbackCategories,
-              hiringStage: selectedHiringStage,
-              query,
-              selectedCategory: companyProjectCategoryFilter,
-              workType: selectedWorkType,
-            }),
-          ) : [];
           const matchingCatalogProjects = isCustomMatchSelected
             ? result.items.filter((project) =>
                 doesPostingMatchDesiredOccupationText(
@@ -1656,25 +1625,50 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 customFallbackCategories.includes(getPostingOccupationCategory(project)),
               )
             : result.items;
-          const mergedProjects = mergeSeniorPostings(matchingCompanyProjects, matchingCatalogProjects);
-          const catalogProjectIds = new Set(matchingCatalogProjects.map((project) => project.id));
-          const additionalCompanyProjectCount = matchingCompanyProjects.filter(
-            (project) => !catalogProjectIds.has(project.id),
-          ).length;
-          setServerSearchMeta({
-            catalogTotal: result.catalogTotal,
-            closingSoonTotal: result.closingSoonTotal,
-            page: result.page,
-            partTimeTotal: result.partTimeTotal,
-            preferredTotal: result.preferredTotal,
-            total: result.total + additionalCompanyProjectCount,
-            totalPages: result.totalPages,
-          });
+          const nextPostings = matchingCatalogProjects.slice(0, itemsPerPage);
           const isFirstPreferenceOverviewContext =
             selectedCategory === all ||
             (primaryProfileCategory &&
               normalizeOccupationCategory(selectedCategory) === primaryProfileCategory);
-          if (!query.trim() && isFirstPreferenceOverviewContext) {
+
+          if (result.isFallback) {
+            setServerSearchMeta({
+              catalogTotal: result.catalogTotal,
+              closingSoonTotal: result.closingSoonTotal,
+              page: result.page,
+              partTimeTotal: result.partTimeTotal,
+              preferredTotal: result.preferredTotal,
+              total: result.total,
+              totalPages: result.totalPages,
+            });
+            setWorknetFeedStatus('unavailable');
+            setWorknetFeedMessage(
+              '실시간 채용공고를 다시 연결하고 있습니다. 임시 목록을 먼저 표시합니다.',
+            );
+            if (automaticSearchRetryCount < MAX_AUTOMATIC_SEARCH_RETRIES) {
+              automaticSearchRetryTimerRef.current = window.setTimeout(() => {
+                if (!active) return;
+                setAutomaticSearchRetryCount((count) => count + 1);
+              }, AUTOMATIC_SEARCH_RETRY_DELAY_MS);
+            }
+          } else {
+            setServerSearchMeta({
+              catalogTotal: result.catalogTotal,
+              closingSoonTotal: result.closingSoonTotal,
+              page: result.page,
+              partTimeTotal: result.partTimeTotal,
+              preferredTotal: result.preferredTotal,
+              total: result.total,
+              totalPages: result.totalPages,
+            });
+            setWorknetFeedStatus('success');
+            setWorknetFeedMessage(
+              nextPostings.length === 0
+                ? '전체 데이터베이스에서 조건에 맞는 채용공고를 찾지 못했습니다.'
+                : '',
+            );
+          }
+          if (!result.isFallback && !query.trim() && isFirstPreferenceOverviewContext) {
             setStableOverviewMetrics({
               catalogTotal: result.catalogTotal,
               preferredTotal: result.preferredTotal,
@@ -1682,71 +1676,28 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               closingSoonTotal: result.closingSoonTotal,
             });
           }
-          setPostings(mergedProjects);
+          setPostings(nextPostings);
           setCurrentPage(result.page);
           setSelectedId((current) =>
-            mergedProjects.some((posting) => posting.id === current)
+            nextPostings.some((posting) => posting.id === current)
               ? current
-              : (mergedProjects[0]?.id ?? ''),
-          );
-          setWorknetFeedStatus('success');
-          setWorknetFeedMessage(
-            mergedProjects.length === 0
-              ? '전체 데이터베이스에서 조건에 맞는 채용공고를 찾지 못했습니다.'
-              : '',
+              : (nextPostings[0]?.id ?? ''),
           );
           setPendingResultGeneration(null);
         })
-        .catch(async (error: unknown) => {
+        .catch((error: unknown) => {
           if (
             !active ||
             generation !== resultGenerationRef.current ||
             (error instanceof DOMException && error.name === 'AbortError')
           ) return;
           console.warn('Full job database search failed:', error);
-          try {
-            const fallback = await fetchWorknetSeniorProjectFeed({
-              forceRefresh: true,
-              includeAnyCareer: true,
-            });
-            if (!active || generation !== resultGenerationRef.current) return;
-            setServerSearchMeta(null);
-            const matchingCompanyProjects = shouldMergePublicProjectsForDiscovery(isHomeRecommendationContext) ? publishedCompanyProjects.filter((project) =>
-              matchesPublishedCompanyProject(project, {
-                desiredOccupationText: isCustomMatchSelected
-                  ? seniorProfile?.desiredOccupationText
-                  : undefined,
-                employmentType: selectedEmploymentType,
-                fallbackOccupationCategories: customFallbackCategories,
-                hiringStage: selectedHiringStage,
-                query,
-                selectedCategory: companyProjectCategoryFilter,
-                workType: selectedWorkType,
-              }),
-            ) : [];
-            const matchingFallbackProjects = isCustomMatchSelected
-              ? fallback.projects.filter((project) =>
-                  doesPostingMatchDesiredOccupationText(
-                    project,
-                    seniorProfile?.desiredOccupationText,
-                  ) ||
-                  customFallbackCategories.includes(getPostingOccupationCategory(project)),
-                )
-              : fallback.projects;
-            const mergedProjects = mergeSeniorPostings(
-              matchingCompanyProjects,
-              matchingFallbackProjects,
-            );
-            setPostings(mergedProjects);
-            setSelectedId(mergedProjects[0]?.id ?? '');
-          } catch {
-            if (!active || generation !== resultGenerationRef.current) return;
-            setPostings([]);
-            setSelectedId('');
-          }
+          setServerSearchMeta(null);
+          setPostings([]);
+          setSelectedId('');
           setWorknetFeedStatus('unavailable');
           setWorknetFeedMessage(
-            '전체 데이터베이스 검색 연결이 원활하지 않아 임시 목록을 표시합니다. 잠시 후 다시 시도해 주세요.',
+            '프로젝트 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
           );
           setPendingResultGeneration(null);
         })
@@ -1758,9 +1709,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     return () => {
       active = false;
       window.clearTimeout(timer);
+      if (automaticSearchRetryTimerRef.current !== null) {
+        window.clearTimeout(automaticSearchRetryTimerRef.current);
+        automaticSearchRetryTimerRef.current = null;
+      }
       abortController.abort();
     };
   }, [
+    automaticSearchRetryCount,
     currentPage,
     effectivePrimaryProfileFilter,
     isSeniorProfileResolved,
@@ -1777,10 +1733,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     selectedWorkType,
     seniorProfile,
     sortBy,
-    publishedCompanyProjects,
     resultGeneration,
     worknetReloadKey,
-    isHomeRecommendationContext,
     user,
   ]);
 
@@ -1841,6 +1795,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function handleStartApplicationInterview() {
     if (!applyingPosting) return;
+    if (!user) {
+      void navigate(createLoginRedirectPath('/senior/experience/interview'), {
+        state: LOGIN_REQUIRED_NAVIGATION_STATE,
+      });
+      return;
+    }
     setIsInterviewBypassConfirmOpen(false);
     preserveApplicationDraft(applyingPosting.id, applicationFiles, applicantNote);
     beginApplicationInterview(applyingPosting.id, window.location.pathname, {
@@ -1893,38 +1853,26 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           employmentSubsidyProgram: seniorProfile?.employmentSubsidyProgram,
         },
       );
-      const emailResult = sendApplicationEmailToManager(applyingPosting, {
-        applicantName:
-          user?.name
-            ? user.name
-            : user?.email === 'sehddnr2@gmail.com'
-              ? '이동욱'
-              : '이동욱',
-        applicantEmail: user?.email || 'sehddnr2@gmail.com',
+      const emailResult = await prepareApplicationEmailToManager(applyingPosting, {
+        applicantName: user?.name || user?.email?.split('@')[0] || '지원자',
+        applicantEmail: user?.email || seniorProfile?.email,
         attachedResumeName: attachedFileNames,
         interviewSummary,
         coverNote: applicantNote,
       });
-
-      const isPublicJob =
-        !applyingPosting.contactEmail?.trim() ||
-        applyingPosting.source === 'worknet' ||
-        applyingPosting.source === 'seoul' ||
-        applyingPosting.source === 'public';
 
       setCompletedApplication({
         posting: applyingPosting,
         interviewSummary,
         attachedFileNames,
         coverNote: applicantNote,
-        emailMessage: emailResult.message,
+        deliveryMethod: emailResult.deliveryMethod,
         recipientEmail: emailResult.recipientEmail,
         mailtoLink: emailResult.mailtoLink,
-        isPublicJob,
         sourceUrl: applyingPosting.sourceUrl,
       });
 
-      const text = `✓ [${applyingPosting.companyName}] 지원서 제출 및 이어잡 기록 저장 완료!`;
+      const text = `✓ [${applyingPosting.companyName}] 지원 내용과 이어잡 기록이 저장되었습니다.`;
       setActionNotice(text);
       setIsInterviewBypassConfirmOpen(false);
       setApplyingPosting(null);
@@ -1933,6 +1881,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       setTimeout(() => setActionNotice(''), 7000);
     } catch (err) {
       console.error('Failed to submit proposal:', err);
+      setApplicationError(
+        '기업에 지원 내용을 전달하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.',
+      );
     } finally {
       setIsApplying(false);
     }
@@ -2038,6 +1989,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           requiredSkills: getRequiredFormValue(formData, 'requiredSkills') ? 'source' : 'synthetic',
         },
         seniorFitScore: 95,
+        source: 'internal',
+        sourceProvider: '이어잡 기업 직접 등록',
       });
 
       setPostings((prev) => [created, ...prev]);
@@ -2109,26 +2062,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       : role === 'senior' && selectedCategory === all && effectivePrimaryProfileFilter
       ? effectivePrimaryProfileFilter
       : selectedCategory;
+  const parsePostingDeadline = (d: string) => {
+    const time = new Date(d).getTime();
+    return Number.isFinite(time) ? time : Number.MAX_SAFE_INTEGER;
+  };
+  const parsePostingPostedAt = (d: string) => {
+    const time = new Date(d).getTime();
+    return Number.isFinite(time) ? time : 0;
+  };
+
   const isServerSearchActive = role === 'senior' && serverSearchMeta !== null;
   const filteredPostings = useMemo(() => {
     if (isServerSearchActive) {
-      if (sortBy === 'fit-desc' && role === 'senior' && user) {
-        return [...postings].sort((first, second) => {
-          const scoreFirst = calculatePersonalizedMatch(
-            first,
-            seniorProfile,
-            effectiveSelectedCategory,
-            interviewCard,
-          ).personalizedScore;
-          const scoreSecond = calculatePersonalizedMatch(
-            second,
-            seniorProfile,
-            effectiveSelectedCategory,
-            interviewCard,
-          ).personalizedScore;
-          return scoreSecond - scoreFirst;
-        });
-      }
       return postings;
     }
 
@@ -2212,10 +2157,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           return first.title.localeCompare(second.title, 'ko');
         }
         if (sortBy === 'deadline-asc') {
-          return new Date(first.deadline).getTime() - new Date(second.deadline).getTime();
+          return parsePostingDeadline(first.deadline) - parsePostingDeadline(second.deadline);
         }
         if (sortBy === 'latest-desc') {
-          return new Date(second.postedAt).getTime() - new Date(first.postedAt).getTime();
+          return parsePostingPostedAt(second.postedAt) - parsePostingPostedAt(first.postedAt);
         }
         if (!user) {
           return first.title.localeCompare(second.title, 'ko');
@@ -2238,7 +2183,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 interviewCard,
               ).personalizedScore
             : second.seniorFitScore;
-        return scoreSecond - scoreFirst;
+        return (
+          scoreSecond - scoreFirst ||
+          parsePostingPostedAt(second.postedAt) - parsePostingPostedAt(first.postedAt) ||
+          first.id.localeCompare(second.id)
+        );
       });
   }, [
     postings,
@@ -2431,6 +2380,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const overviewClosingSoonTotal =
     stableOverviewMetrics?.closingSoonTotal ??
     (serverSearchMeta?.closingSoonTotal ?? (role === 'senior' ? 0 : closingSoonPostingsCount));
+  const overviewRecommendedTotal = user
+    ? role === 'senior'
+      ? overviewPreferredTotal
+      : postings.length
+    : 0;
 
   function changeQuery(value: string) {
     beginResultTransition();
@@ -2447,6 +2401,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function beginResultTransition() {
     if (role !== 'senior') return;
+    setAutomaticSearchRetryCount(0);
     const generation = resultGeneration + 1;
     setResultGeneration(generation);
     setPendingResultGeneration(generation);
@@ -2454,6 +2409,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setPostings([]);
     setSelectedId('');
     setIsLoadingPostings(true);
+  }
+
+  function changePage(value: number) {
+    const nextPage = Math.min(totalPages, Math.max(1, value));
+    if (nextPage === safeCurrentPage) return;
+    beginResultTransition();
+    setCurrentPage(nextPage);
+    window.scrollTo({ top: 300, behavior: 'smooth' });
   }
 
   function openCategoryPicker() {
@@ -2948,47 +2911,47 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
       {/* Interactive Application Modal with Resume/Portfolio & AI Interview Verification */}
       {applyingPosting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 p-2.5 backdrop-blur-xs md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-[#10201E]/65 p-2.5 backdrop-blur-xs md:p-5">
           <div
             aria-labelledby="application-modal-title"
             aria-modal="true"
-            className="max-h-[94vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-[#E0D9C8] bg-white p-4 shadow-2xl md:p-6"
+            className="max-h-[94dvh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-[#FBFCFA] shadow-2xl"
             role="dialog"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-[#E0D9C8]/70 pb-4">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#DCE5E1] bg-[#FBFCFA]/95 px-5 py-4 backdrop-blur-sm md:px-7 md:py-5">
               <div className="min-w-0">
-                <span className="inline-flex rounded-md border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 py-1 text-[13px] font-bold text-[#173F3A]">
+                <p className="truncate text-[13px] font-extrabold text-[#4B756E]">
                   {applyingPosting.companyName}
-                </span>
+                </p>
                 <h3
-                  className="mt-2 text-[20px] font-extrabold leading-[1.35] text-[#17212B] md:text-[22px]"
+                  className="mt-1 text-[22px] font-black leading-[1.2] tracking-[-0.02em] text-[#17212B] md:text-[26px]"
                   id="application-modal-title"
                 >
-                  프로젝트 지원 준비
+                  지원 내용을 확인해 주세요
                 </h3>
-                <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
-                  AI 인터뷰 결과와 첨부파일을 확인한 뒤 지원서를 제출하세요.
+                <p className="mt-1.5 text-[14px] font-medium leading-6 text-[#53645F]">
+                  인터뷰 결과와 첨부파일을 확인한 뒤 이어잡 지원 이력을 저장합니다.
                 </p>
               </div>
               <button
                 aria-label="지원 창 닫기"
                 type="button"
                 onClick={handleCloseApplication}
-                className="flex size-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100"
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl text-[#53645F] transition-colors duration-150 hover:bg-[#EAF2EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:bg-[#DDEBE7]"
               >
                 <X className="size-5" />
               </button>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3.5">
+            <div className="flex flex-col gap-4 px-5 py-5 md:px-7 md:py-6">
               {/* Target Project Details */}
-              <div className="flex items-start justify-between gap-3 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/45 p-4">
+              <div className="flex flex-col gap-3 rounded-2xl bg-[#EAF2EF] p-4 sm:flex-row sm:items-start sm:justify-between md:p-5">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-extrabold text-[#173F3A]">지원 대상 프로젝트</p>
-                  <p className="mt-1 text-[16px] font-extrabold leading-6 text-[#17212B]">
+                  <p className="text-[12px] font-extrabold text-[#4B756E]">지원 대상</p>
+                  <p className="mt-1.5 text-[17px] font-black leading-6 text-[#17212B] md:text-[18px]">
                     {applyingPosting.title}
                   </p>
-                  <p className="mt-1 text-[14px] font-medium text-slate-600">
+                  <p className="mt-1.5 text-[13px] font-semibold leading-5 text-[#53645F] md:text-[14px]">
                     {getPostingOccupationLabel(applyingPosting)} · {applyingPosting.location} ·{' '}
                     {applyingPosting.salaryRange}
                   </p>
@@ -2996,7 +2959,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <span
                   aria-label={`적합도 ${applyingPostingFitScore}점, ${applyingPostingFitTone.label}`}
                   className={cn(
-                    'shrink-0 rounded-xl border px-3 py-2 text-center text-[13px] font-black',
+                    'w-fit shrink-0 rounded-xl px-3 py-2 text-center text-[13px] font-black sm:self-center',
                     applyingPostingFitTone.containerClassName,
                   )}
                 >
@@ -3007,17 +2970,17 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               {/* Step 1: AI Experience Interview */}
               <section
                 className={cn(
-                  'rounded-xl border p-4',
+                  'rounded-2xl p-4 md:p-5',
                   interviewCard && isInterviewReady
-                    ? 'border-[#BBD5CE] bg-[#F4FAF8]'
-                    : 'border-[#F06B4F]/35 bg-[#FFF8F6]',
+                    ? 'bg-[#F1F7F5]'
+                    : 'border border-[#F06B4F]/30 bg-[#FFF8F6]',
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-start gap-2.5">
                     <div
                       className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-full',
+                        'flex size-9 shrink-0 items-center justify-center rounded-xl',
                         interviewCard && isInterviewReady
                           ? 'bg-[#DDEBE7] text-[#173F3A]'
                           : 'bg-[#FDF0ED] text-[#F06B4F]',
@@ -3032,8 +2995,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-[16px] font-extrabold text-[#17212B]">
-                        1. AI 경험 인터뷰
+                      <h4 className="text-[17px] font-black text-[#17212B]">
+                        <span className="mr-1 text-[#4B756E]">1</span> AI 경험 인터뷰
                       </h4>
                       <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
                         {!interviewCard
@@ -3045,10 +3008,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   {interviewMatch ? (
                     <span
                       className={cn(
-                        'shrink-0 rounded-full border bg-white px-2.5 py-1 text-[12px] font-extrabold',
+                        'shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[12px] font-extrabold shadow-2xs',
                         isInterviewReady
-                          ? 'border-[#BBD5CE] text-[#059669]'
-                          : 'border-[#F06B4F]/35 text-[#D85A3F]',
+                          ? 'text-[#176B4D]'
+                          : 'text-[#B84B36]',
                       )}
                     >
                       {isInterviewReady
@@ -3064,10 +3027,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <>
                     <div
                       className={cn(
-                        'mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-3.5 py-2.5 text-[13px] font-bold',
+                        'mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-y px-0 py-3 text-[13px] font-bold',
                         isInterviewReady
-                          ? 'border-[#BBD5CE] bg-[#DDEBE7]/50 text-[#173F3A]'
-                          : 'border-[#F06B4F]/25 bg-white text-[#D85A3F]',
+                          ? 'border-[#C9D9D4] text-[#173F3A]'
+                          : 'border-[#F06B4F]/25 text-[#B84B36]',
                       )}
                     >
                       <span>저장 카드: {interviewMatch?.cardCategoryLabel}</span>
@@ -3076,7 +3039,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     </div>
                     <div
                       className={cn(
-                        'mt-3 grid overflow-hidden rounded-xl border border-[#BBD5CE] bg-white',
+                        'mt-1 grid gap-x-6',
                         isMobile ? 'grid-cols-1' : 'grid-cols-2',
                       )}
                     >
@@ -3087,11 +3050,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                         ['결과', interviewCard.result],
                       ].map(([label, value]) => (
                         <div
-                          className="border-b border-[#E0D9C8] p-3.5 last:border-b-0 even:border-l"
+                          className="border-b border-[#C9D9D4] py-3.5 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
                           key={label}
                         >
-                          <p className="text-[12px] font-extrabold text-[#173F3A]">{label}</p>
-                          <p className="mt-1 text-[14px] font-semibold leading-6 text-[#17212B]">
+                          <p className="text-[12px] font-extrabold text-[#4B756E]">{label}</p>
+                          <p className="mt-1 text-[14px] font-semibold leading-6 text-[#24322F]">
                             {value}
                           </p>
                         </div>
@@ -3099,7 +3062,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     </div>
                     <button
                       className={cn(
-                        'mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-white px-4 text-[14px] font-extrabold transition',
+                        'mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-white px-4 text-[14px] font-extrabold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]',
                         isInterviewReady
                           ? 'border-[#BBD5CE] text-[#173F3A] hover:bg-[#DDEBE7]/50'
                           : 'border-[#F06B4F]/35 text-[#D85A3F] hover:bg-[#FFF1ED]',
@@ -3115,7 +3078,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   </>
                 ) : (
                   <button
-                    className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F06B4F] px-4 text-[15px] font-extrabold text-white shadow-sm transition hover:bg-[#D85A3F]"
+                    className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F06B4F] px-4 text-[15px] font-extrabold text-white shadow-sm transition-colors duration-150 hover:bg-[#D85A3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B84B36] focus-visible:ring-offset-2 active:scale-[0.98]"
                     onClick={handleStartApplicationInterview}
                     type="button"
                   >
@@ -3126,22 +3089,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </section>
 
               {/* Step 2: Resume & Portfolio Attachments */}
-              <section className="rounded-xl border border-[#E0D9C8] bg-white p-4">
+              <section className="rounded-2xl bg-white p-4 shadow-xs md:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-[16px] font-extrabold text-[#17212B]">
-                      2. 이력서·포트폴리오 첨부
+                    <h4 className="text-[17px] font-black text-[#17212B]">
+                      <span className="mr-1 text-[#4B756E]">2</span> 이력서·포트폴리오 확인
                     </h4>
-                    <p className="mt-1 text-[13px] font-medium leading-5 text-slate-500">
+                    <p className="mt-1 text-[13px] font-medium leading-5 text-[#61716C]">
                       PDF, DOC, DOCX · 파일당 10MB 이하 · 최대 2개
                     </p>
                   </div>
                   <label
                     className={cn(
-                      'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-[14px] font-extrabold transition',
+                      'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-[14px] font-extrabold transition-colors duration-150 focus-within:ring-2 focus-within:ring-[#173F3A] focus-within:ring-offset-2 active:scale-[0.98]',
                       applicationFiles.length >= MAX_APPLICATION_FILES
-                        ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                        : 'cursor-pointer border-[#BBD5CE] bg-[#DDEBE7]/55 text-[#173F3A] hover:bg-[#DDEBE7]',
+                        ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                        : 'cursor-pointer bg-[#EAF2EF] text-[#173F3A] hover:bg-[#DDEBE7]',
                     )}
                   >
                     <Upload className="size-4" />
@@ -3161,7 +3124,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <div className="mt-3 flex flex-col gap-2">
                     {applicationFiles.map((file, index) => (
                       <div
-                        className="flex min-h-12 items-center gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-3.5 py-2.5"
+                        className="flex min-h-12 items-center gap-3 rounded-xl bg-[#F4F7F5] px-3.5 py-2.5"
                         key={`${file.name}-${file.size}`}
                       >
                         <FileText className="size-[18px] shrink-0 text-[#173F3A]" />
@@ -3175,7 +3138,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                         </div>
                         <button
                           aria-label={`${file.name} 삭제`}
-                          className="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-[#F06B4F]"
+                          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors duration-150 hover:bg-white hover:text-[#B84B36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:bg-[#FDF0ED]"
                           onClick={() => handleRemoveApplicationFile(index)}
                           type="button"
                         >
@@ -3185,8 +3148,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-3 flex min-h-20 items-center justify-center rounded-xl border border-dashed border-[#CFC6B3] bg-[#FAF7F2]/70 px-4 text-center text-[14px] font-semibold text-slate-500">
-                    제출할 이력서 또는 포트폴리오를 1개 이상 추가해 주세요.
+                  <div className="mt-4 flex min-h-24 items-center justify-center rounded-xl border border-dashed border-[#AFC3BD] bg-[#F7FAF8] px-4 text-center text-[14px] font-semibold leading-6 text-[#61716C]">
+                    저장할 이력서 또는 포트폴리오 파일을 1개 이상 선택해 주세요.
                   </div>
                 )}
 
@@ -3201,25 +3164,25 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </section>
 
               {/* Manager Email System Notice */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/60 p-3.5 text-[14px] font-bold leading-6 text-[#173F3A]">
-                <Mail className="mt-0.5 size-[18px] shrink-0 text-[#173F3A]" />
+              <div className="flex items-start gap-3 rounded-2xl bg-[#FFF4EB] p-4 text-[14px] font-bold leading-6 text-[#6F3B2D] md:p-5">
+                <CircleAlert className="mt-0.5 size-[19px] shrink-0 text-[#B84B36]" />
                 <div className="flex flex-col gap-0.5">
-                  <span>
-                    지원 완료 시 기업 채용 담당자 이메일로 실시간 지원서 알림이 자동 전송됩니다.
-                  </span>
-                  <span className="text-[13px] font-medium text-slate-600">
-                    첨부파일, 이어잡 추천 점수, AI 경험 결과가 함께 전달됩니다.
+                  <span>{applyingPostingUsesExternalApplication ? '실제 지원은 공식 채용 페이지에서 완료해야 합니다.' : '저장 후 등록된 기업 담당자 이메일을 확인합니다.'}</span>
+                  <span className="text-[13px] font-medium text-[#7A5146]">
+                    {applyingPostingUsesExternalApplication
+                      ? '이어잡에는 지원 이력과 선택한 파일명이 저장됩니다. 아래 저장 후 원문 접수처에서 파일을 다시 첨부해 주세요.'
+                      : '지원 이력은 기업의 받은 제안에 저장됩니다. 담당자 이메일이 등록된 경우 안전하게 확인한 뒤 메일 작성창을 제공합니다.'}
                   </span>
                 </div>
               </div>
 
               {/* Step 3: Optional Cover Message */}
-              <div className="flex flex-col gap-2">
+              <section className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-xs md:p-5">
                 <label
-                  className="text-[15px] font-extrabold text-[#17212B]"
+                  className="text-[17px] font-black text-[#17212B]"
                   htmlFor="application-note"
                 >
-                  3. 기업 담당자 전달 메시지 (선택)
+                  <span className="mr-1 text-[#4B756E]">3</span> 전달 메시지 <span className="text-[13px] font-bold text-[#72807C]">(선택)</span>
                 </label>
                 <textarea
                   id="application-note"
@@ -3227,14 +3190,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   value={applicantNote}
                   onChange={(e) => setApplicantNote(e.target.value)}
                   placeholder="예: 12년간의 유사 프로젝트 수립 노하우로 빠른 기간 내 성과를 내겠습니다."
-                  className="min-h-24 rounded-xl border border-[#E0D9C8] p-3.5 text-[15px] leading-6 outline-none placeholder:text-slate-400 focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/10"
+                  className="min-h-28 resize-y rounded-xl border border-[#C9D6D2] bg-[#FBFCFA] p-3.5 text-[15px] leading-6 text-[#17212B] outline-none placeholder:text-[#7A8783] focus:border-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/15"
                 />
-              </div>
+              </section>
 
               {/* Action Buttons */}
               <div
                 className={cn(
-                  'gap-2.5 border-t border-[#E0D9C8]/70 pt-4',
+                  'gap-2.5 border-t border-[#DCE5E1] pt-5',
                   isMobile ? 'flex flex-col-reverse' : 'flex items-center justify-end',
                 )}
               >
@@ -3242,7 +3205,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   type="button"
                   onClick={handleCloseApplication}
                   className={cn(
-                    'h-12 rounded-xl border border-[#E0D9C8] px-5 text-[15px] font-bold text-slate-600 transition hover:bg-slate-50',
+                    'h-12 rounded-xl border border-[#C9D6D2] px-5 text-[15px] font-bold text-[#53645F] transition-colors duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:bg-[#EAF2EF]',
                     isMobile && 'w-full',
                   )}
                 >
@@ -3253,20 +3216,28 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   disabled={isApplying}
                   onClick={() => void handleConfirmSubmitApplication()}
                   className={cn(
-                    'inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#12332F] active:scale-[0.99] disabled:cursor-wait disabled:bg-slate-400 disabled:shadow-none',
+                    'inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-6 text-[15px] font-extrabold text-white shadow-md transition-colors duration-150 hover:bg-[#12332F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-wait disabled:bg-slate-400 disabled:shadow-none',
                     isMobile && 'w-full',
                   )}
                 >
                   <Send className="size-4" />
-                  <span>{isApplying ? '지원서 제출 중...' : '최종 지원서 제출하기'}</span>
+                  <span>
+                    {isApplying
+                      ? applyingPostingUsesExternalApplication
+                        ? '지원 내용 저장 중...'
+                        : '기업에 전달 중...'
+                      : applyingPostingUsesExternalApplication
+                        ? '지원 내용 저장하기'
+                        : '기업에 지원 내용 보내기'}
+                  </span>
                 </button>
               </div>
               {!isInterviewReady || applicationFiles.length === 0 ? (
                 <p className="text-right text-[13px] font-semibold text-[#D85A3F]">
                   {!interviewCard
-                    ? 'AI 인터뷰 없이 제출하면 기업 담당자에게 관련 경험 검증이 부족하게 보일 수 있습니다.'
+                    ? 'AI 인터뷰 없이 저장하면 지원 이력에 관련 경험 근거가 포함되지 않습니다.'
                     : !isInterviewReady
-                      ? `${getPostingOccupationLabel(applyingPosting)} 직무 인터뷰 없이도 제출할 수 있지만, 제출 전 확인이 필요합니다.`
+                      ? `${getPostingOccupationLabel(applyingPosting)} 직무 인터뷰 없이도 저장할 수 있지만, 저장 전 확인이 필요합니다.`
                       : '첨부파일을 1개 이상 등록해 주세요.'}
                 </p>
               ) : null}
@@ -3346,25 +3317,25 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       )}
 
       {completedApplication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-[#E0D9C8] bg-white p-6 shadow-2xl md:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-[#10201E]/65 p-4 backdrop-blur-xs">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl bg-[#FBFCFA] p-6 shadow-2xl md:p-7">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#2E7D32]">
                   <CheckCircle className="size-7" />
                 </div>
                 <div>
-                  <span className="inline-block rounded-full bg-[#173F3A]/10 px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
-                    제출 완료
+                  <span className="inline-block rounded-lg bg-[#173F3A]/10 px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
+                    이어잡 저장 완료
                   </span>
                   <h3 className="mt-1 text-[20px] font-extrabold text-[#17212B]">
-                    프로젝트 지원이 접수되었습니다!
+                    지원 내용이 저장되었습니다
                   </h3>
                 </div>
               </div>
               <button
                 aria-label="닫기"
-                className="flex size-9 items-center justify-center rounded-full text-slate-400 hover:bg-[#F7F3EA] hover:text-[#17212B]"
+                className="flex size-11 items-center justify-center rounded-xl text-slate-500 transition-colors duration-150 hover:bg-[#EAF2EF] hover:text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:bg-[#DDEBE7]"
                 onClick={() => setCompletedApplication(null)}
                 type="button"
               >
@@ -3372,7 +3343,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </button>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-[#E0D9C8] bg-[#FAF7F2] p-4">
+            <div className="mt-5 rounded-2xl bg-[#EAF2EF] p-4">
               <p className="text-[12px] font-extrabold text-slate-500">지원 대상 기업 / 공고</p>
               <h4 className="mt-1 text-[16px] font-extrabold text-[#17212B]">
                 {completedApplication.posting.title}
@@ -3382,21 +3353,21 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               </p>
             </div>
 
-            {completedApplication.isPublicJob ? (
+            {completedApplication.deliveryMethod === 'external-application' ? (
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] p-4">
-                  <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
-                    <Building2 className="size-4 text-[#173F3A]" />
-                    <span>공식 채용 포털 지원 연동</span>
+                <div className="rounded-2xl bg-[#FFF4EB] p-4">
+                  <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#8A4938]">
+                    <CircleAlert className="size-4 text-[#B84B36]" />
+                    <span>아직 실제 접수 전입니다</span>
                   </div>
-                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-600">
-                    이어잡 DB에 지원 기록 저장이 완료되었습니다. 채용 담당자에게 접수하기 위해 **AI 경험 요약을 복사**한 후 **공식 원문 접수처로 이동**하세요.
+                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
+                    이어잡 지원 이력만 저장되었습니다. AI 경험 요약을 복사한 뒤 공식 채용 페이지에서 파일을 다시 첨부하고 지원을 완료해 주세요.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-2.5 pt-2">
                   <button
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#173F3A] py-3.5 px-4 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#21544E] active:scale-[0.99]"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 py-3 text-[15px] font-extrabold text-white shadow-md transition-colors duration-150 hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
                     onClick={() => {
                       const textToCopy = `[이음잡 40+ AI 경험 인터뷰 검증 요약]\n지원 공고: ${completedApplication.posting.title} (${completedApplication.posting.companyName})\n\n■ AI 검증 역량 분석:\n${completedApplication.interviewSummary}\n\n■ 한 줄 지원 소신:\n"${completedApplication.coverNote || '10년 이상 실무 노하우를 발휘하겠습니다.'}"`;
                       void navigator.clipboard.writeText(textToCopy);
@@ -3406,7 +3377,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     type="button"
                   >
                     <Copy className="size-4 shrink-0" />
-                    <span>AI 경험 검증 요약 원클릭 복사하기</span>
+                    <span>AI 경험 요약 복사하기</span>
                   </button>
 
                   {copiedSummaryToast && (
@@ -3417,7 +3388,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
                   {completedApplication.sourceUrl ? (
                     <button
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#173F3A] bg-white py-3.5 px-4 text-[15px] font-extrabold text-[#173F3A] transition hover:bg-[#F4F9F8] active:scale-[0.99]"
+                      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#173F3A] bg-white px-4 py-3 text-[15px] font-extrabold text-[#173F3A] transition-colors duration-150 hover:bg-[#F4F9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
                       onClick={() => {
                         window.open(completedApplication.sourceUrl, '_blank');
                       }}
@@ -3429,37 +3400,50 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   ) : null}
                 </div>
               </div>
-            ) : (
+            ) : completedApplication.deliveryMethod === 'email-client' ? (
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-[#BBD5CE] bg-[#F4F9F8] p-4">
+                <div className="rounded-2xl bg-[#FFF4EB] p-4">
                   <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
                     <Mail className="size-4 text-[#173F3A]" />
-                    <span>기업 담당자 직통 전달 완료</span>
+                    <span>기업 지원 이력 저장 완료</span>
                   </div>
-                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-600">
-                    기업 채용 담당자({completedApplication.recipientEmail})의 메일함 및 기업 전용 지원서 관리 대시보드로 성공적으로 지원서가 전송되었습니다.
+                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
+                    이어잡 기업 화면에서 지원 이력을 확인할 수 있습니다. 담당자 이메일({completedApplication.recipientEmail})은 아직 발송되지 않았으므로 아래에서 메일 작성창을 열어 직접 보내 주세요.
+                  </p>
+                  <p className="mt-2 text-[12px] font-bold leading-5 text-[#8A4938]">
+                    선택한 파일은 자동 첨부되지 않습니다. 메일 작성창에서 다시 첨부해 주세요.
                   </p>
                 </div>
 
                 <a
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#173F3A] py-3.5 px-4 text-[15px] font-extrabold text-white shadow-md transition hover:bg-[#21544E] active:scale-[0.99]"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 py-3 text-[15px] font-extrabold text-white shadow-md transition-colors duration-150 hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
                   href={completedApplication.mailtoLink}
                   rel="noreferrer"
                   target="_blank"
                 >
                   <Mail className="size-4 shrink-0" />
-                  <span>✉️ 담당자 지원 이메일 작성 창 실행</span>
+                  <span>담당자에게 이메일 작성하기</span>
                 </a>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-2xl bg-[#FFF4EB] p-4">
+                <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
+                  <Mail className="size-4 text-[#173F3A]" />
+                  <span>기업 받은 제안에 저장됨</span>
+                </div>
+                <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
+                  해당 기업의 담당자 이메일을 확인하지 못해 메일 작성창은 제공하지 않았습니다. 지원 이력은 등록 기업 계정의 받은 제안 화면에서 확인할 수 있습니다.
+                </p>
               </div>
             )}
 
             <div className="mt-6 border-t border-[#E0D9C8] pt-4">
               <button
-                className="w-full rounded-2xl bg-[#F7F3EA] py-3.5 text-[15px] font-extrabold text-[#17212B] transition hover:bg-[#EFE9DC]"
+                className="min-h-12 w-full rounded-xl bg-[#EAF2EF] px-4 py-3 text-[15px] font-extrabold text-[#173F3A] transition-colors duration-150 hover:bg-[#DDEBE7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
                 onClick={() => setCompletedApplication(null)}
                 type="button"
               >
-                확인 (이어잡 지원 이력 보기)
+                닫기
               </button>
             </div>
           </div>
@@ -3509,6 +3493,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       onApply={() => handleApply(posting)}
                       onSelect={() => setSelectedId(posting.id)}
                       posting={posting}
+                      preferServerFitScore={isServerSearchActive && worknetFeedStatus === 'success'}
                       profile={seniorProfile}
                       role={role}
                       selected={selectedCompanyProject?.id === posting.id}
@@ -3523,6 +3508,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       experienceCard={interviewCard}
                       onApply={() => handleApply(selectedCompanyProject)}
                       posting={selectedCompanyProject}
+                      preferServerFitScore={isServerSearchActive && worknetFeedStatus === 'success'}
                       profile={seniorProfile}
                       role={role}
                     />
@@ -3567,11 +3553,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               : '맞춤 희망 조건 부합 기준'
           }
           label="추천 건수"
-          value={
-            role === 'senior'
-              ? `${overviewPreferredTotal.toLocaleString()}건`
-              : `${postings.length}건`
-          }
+          value={`${overviewRecommendedTotal.toLocaleString()}건`}
         />
         <DatabaseMetric
           caption={role === 'senior' ? '시간제·파트타임·유연근무 기준' : '현재 지원 접수 가능'}
@@ -3899,7 +3881,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 : '추천 인재를 불러오는 중입니다...'}
             </p>
             <p className="text-xs font-medium text-slate-500">
-              {role === 'senior' ? '1페이지(5개 공고)를 빠르게 구성하고 있습니다.' : '등록 프로젝트와 매칭 기준을 동기화 중입니다.'}
+              {role === 'senior'
+                ? `${safeCurrentPage}페이지(${itemsPerPage}개 공고)를 빠르게 구성하고 있습니다.`
+                : '등록 프로젝트와 매칭 기준을 동기화 중입니다.'}
             </p>
           </div>
         ) : isFilterTransition ? (
@@ -3984,6 +3968,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                         }
                       }}
                       posting={posting}
+                      preferServerFitScore={isServerSearchActive && worknetFeedStatus === 'success'}
                       profile={seniorProfile}
                       role={role}
                       selected={selectedPosting?.id === posting.id}
@@ -4002,10 +3987,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
                   <div className="flex flex-wrap items-center gap-1.5">
                     <button
-                      onClick={() => {
-                        setCurrentPage((p) => Math.max(1, p - 1));
-                        window.scrollTo({ top: 300, behavior: 'smooth' });
-                      }}
+                      onClick={() => changePage(safeCurrentPage - 1)}
                       disabled={safeCurrentPage === 1}
                       type="button"
                       className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
@@ -4025,10 +4007,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       return (
                         <button
                           key={pageNum}
-                          onClick={() => {
-                            setCurrentPage(pageNum);
-                            window.scrollTo({ top: 300, behavior: 'smooth' });
-                          }}
+                          onClick={() => changePage(pageNum)}
                           type="button"
                           className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
                             safeCurrentPage === pageNum
@@ -4042,10 +4021,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     })}
 
                     <button
-                      onClick={() => {
-                        setCurrentPage((p) => Math.min(totalPages, p + 1));
-                        window.scrollTo({ top: 300, behavior: 'smooth' });
-                      }}
+                      onClick={() => changePage(safeCurrentPage + 1)}
                       disabled={safeCurrentPage === totalPages}
                       type="button"
                       className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
@@ -4067,6 +4043,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   experienceCard={interviewCard}
                   onApply={() => handleApply(selectedPosting)}
                   posting={selectedPosting}
+                  preferServerFitScore={isServerSearchActive && worknetFeedStatus === 'success'}
                   profile={seniorProfile}
                   role={role}
                 />
@@ -4113,6 +4090,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   handleApply(selectedPosting);
                 }}
                 posting={selectedPosting}
+                preferServerFitScore={isServerSearchActive && worknetFeedStatus === 'success'}
                 profile={seniorProfile}
                 role={role}
               />

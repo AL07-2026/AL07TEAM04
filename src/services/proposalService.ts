@@ -196,10 +196,13 @@ export async function createProposalFromPosting(
     employmentSubsidyTarget: Boolean(subsidyInfo?.employmentSubsidyTarget),
     employmentSubsidyProgram: subsidyInfo?.employmentSubsidyProgram,
   };
-  return saveProposal(proposalData);
+  return saveProposal(proposalData, { requireRemote: Boolean(userId) });
 }
 
-export async function saveProposal(proposalData: Omit<UserProposal, 'id'>): Promise<UserProposal> {
+export async function saveProposal(
+  proposalData: Omit<UserProposal, 'id'>,
+  options: { requireRemote?: boolean } = {},
+): Promise<UserProposal> {
   const savedLocal = saveLocalProposal(proposalData);
   const userId = proposalData.userId;
   if (!userId) return savedLocal;
@@ -216,6 +219,9 @@ export async function saveProposal(proposalData: Omit<UserProposal, 'id'>): Prom
     );
     return savedLocal;
   } catch (error) {
+    if (options.requireRemote) {
+      throw new Error('기업에 지원 내용을 전달하지 못했습니다.', { cause: error });
+    }
     console.warn('Failed to save proposal to Firestore, using local storage:', error);
     return savedLocal;
   }

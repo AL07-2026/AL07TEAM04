@@ -2,10 +2,12 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   GoogleAuthProvider,
+  getRedirectResult,
   onAuthStateChanged,
   sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
@@ -14,6 +16,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { auth, db } from '@/lib/firebase';
+import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
 
 export type UserRole = 'senior' | 'company';
 
@@ -81,6 +84,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    // 모바일 리디렉션 로그인(signInWithRedirect) 결과 수신 처리 (브라우저 환경)
+    if (typeof window !== 'undefined' && auth) {
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (!isMounted || !result?.user) return;
+          const googleUser = result.user;
+          const targetRole: UserRole =
+            (typeof sessionStorage !== 'undefined' &&
+              (sessionStorage.getItem('eojob_oauth_target_role') as UserRole)) ||
+            'senior';
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem('eojob_oauth_target_role');
+          }
+
+          const computedName =
+            googleUser.displayName ||
+            (googleUser.email === 'sehddnr2@gmail.com'
+              ? '이동욱'
+              : googleUser.email?.split('@')[0] || '이동욱');
+          const profile: UserProfile = {
+            uid: googleUser.uid,
+            email: googleUser.email || '',
+            name: computedName,
+            role: targetRole,
+            createdAt: new Date().toISOString(),
+          };
+
+          try {
+            await setDoc(
+              doc(db, 'users', googleUser.uid),
+              {
+                uid: googleUser.uid,
+                email: googleUser.email,
+                name: profile.name,
+                role: targetRole,
+                createdAt: profile.createdAt,
+              },
+              { merge: true },
+            );
+          } catch (fsErr) {
+            console.warn('Firestore setDoc failed during Google redirect sign in:', fsErr);
+          }
+          saveUserLocal(profile);
+        })
+        .catch((err: unknown) => {
+          const authErr = err as { code?: string };
+          if (authErr?.code !== 'auth/operation-not-supported-in-this-environment') {
+            console.warn('getRedirectResult check error (expected if not redirected):', err);
+          }
+        });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
       void (async () => {
         if (isLoggingOutRef.current) {
@@ -123,7 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signUp = async (
@@ -396,9 +456,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
     setLoading(true);
     setError(null);
+
+    // 1. 카카오톡/인앱 브라우저 환경 감지 시: 구글 403 정책 회피를 위해 기본 외부 브라우저(Chrome/Safari)로 즉시 전환
+    if (typeof window !== 'undefined' && isInAppBrowser()) {
+      const opened = openInExternalBrowser(window.location.href);
+      if (opened && isKakaoTalk()) {
+        const msg = '카카오톡 보안 정책으로 인해 크롬/사파리 브라우저로 전환하여 구글 로그인을 진행합니다.';
+        setError(msg);
+        setLoading(false);
+        // 외부 브라우저 호출 후 리턴 대기
+        return new Promise(() => {});
+      }
+    }
+
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      let result;
+      try {
+        result = await signInWithPopup(auth, provider);
+      } catch (popupErr: unknown) {
+        const pErr = popupErr as { code?: string };
+        // 팝업이 차단된 모바일 환경인 경우 signInWithRedirect로 안전하게 폴백
+        if (pErr?.code === 'auth/popup-blocked') {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('eojob_oauth_target_role', targetRole);
+          }
+          await signInWithRedirect(auth, provider);
+          return new Promise(() => {});
+        }
+        throw popupErr;
+      }
+
       const googleUser = result.user;
       const computedName =
         googleUser.displayName ||

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createWorknetJobSearchParams,
   deriveWorknetHiringStage,
-  fetchWorknetXml,
+  fetchWorknetSeniorProjectFeed,
   parseWorknetJobXml,
   transformWorknetToSeniorProject,
 } from '@/services/worknetService';
@@ -128,26 +128,13 @@ describe('worknetService', () => {
     expect(params.get('maxCareerM')).toBe('180');
   });
 
-  it('브라우저 외부 프록시 대신 같은 출처의 서버 API를 한 번 호출한다', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(officialXmlFixture, {
-        status: 200,
-        headers: { 'Content-Type': 'application/xml' },
-      }),
-    );
+  it('브라우저에서는 고용24 원천 API나 프록시를 직접 호출하지 않는다', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal('fetch', fetchMock);
 
-    const params = createWorknetJobSearchParams('approved-key', {
-      keywords: ['개발자'],
-      maxCareerMonths: 180,
-    });
-    await expect(fetchWorknetXml(params)).resolves.toContain('<wantedRoot>');
+    const feed = await fetchWorknetSeniorProjectFeed({ forceRefresh: true });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const firstCall = fetchMock.mock.calls[0];
-    expect(typeof firstCall?.[0]).toBe('string');
-    if (typeof firstCall?.[0] !== 'string') throw new Error('요청 URL이 문자열이 아닙니다.');
-    expect(firstCall[0]).toMatch(/^\/api\/worknet\/jobs\?/);
-    expect(firstCall?.[1]?.signal).toBeInstanceOf(AbortSignal);
+    expect(feed.projects.length).toBeGreaterThan(0);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

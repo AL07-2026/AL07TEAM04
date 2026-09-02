@@ -6,6 +6,7 @@ import { containsUtf8Replacement } from './httpEncoding.mjs';
 import { deduplicateJobCatalog } from './jobDeduplication.mjs';
 
 const GLOBAL_COLLECTION = 'global_job_postings';
+const PROJECTS_COLLECTION = 'projects';
 const CATALOG_CACHE_TTL_MS = 30 * 60 * 1000;
 const SEARCH_RESULT_CACHE_TTL_MS = 10 * 60 * 1000;
 const MAX_SEARCH_RESULT_CACHE_ENTRIES = 500;
@@ -51,28 +52,8 @@ const legacyProjectCategoryMap = {
 };
 const projectCategoryIds = new Set(Object.keys(legacyProjectCategoryMap));
 
-const solvedKeywords = [
-  '프로세스',
-  '운영',
-  '자동화',
-  '개선',
-  '영업',
-  '품질',
-  '아키텍처',
-  '전환',
-  '데이터',
-  '인사',
-  '컴플라이언스',
-  '리드',
-  '구축',
-  '표준화',
-  '디자인',
-  '개발',
-  '전략',
-  'b2b',
-  'cs',
-];
 const recommendationStopWords = new Set([
+  '경력',
   '경험',
   '결과',
   '문제',
@@ -80,14 +61,102 @@ const recommendationStopWords = new Set([
   '역할',
   '실행',
   '진행',
+  '관련',
   '프로젝트',
   '채용',
   '공고',
   '담당',
+  '위한',
   '통해',
+  '통한',
   '위해',
   '대한',
+  '지원',
+  '있습니다',
+  '합니다',
 ]);
+const specialtyGenericTokens = new Set([
+  ...recommendationStopWords,
+  '경력',
+  '관련',
+  '다수',
+  '디자인',
+  '설계',
+  '개발',
+  '기획',
+  '관리',
+  '운영',
+  '전략',
+  '자료',
+  '고도화',
+  '서비스',
+  '프로세스',
+  '구축',
+  '표준화',
+  '개선',
+  '전문',
+  '분야',
+  '핵심',
+  '강점',
+  '총괄',
+  '수립',
+  '제작',
+  '품질',
+  '활용',
+  '기반',
+  '리드',
+  '디렉터',
+  '전문가',
+  '성과',
+  '사례',
+]);
+const specialtyAliasTokens = new Set([
+  'ux',
+  'ui',
+  'uxui',
+  'ux디자인',
+  'ui디자인',
+  '브랜드',
+  '브랜딩',
+  '리브랜딩',
+  '아이덴티티',
+  '시각',
+  '시각관련',
+  '그래픽',
+  '비주얼',
+  '영상',
+  '모션',
+  '비디오',
+  '인테리어',
+  '실내',
+  '런칭',
+  '론칭',
+  '출시',
+  'cad',
+  '캐드',
+]);
+const specialtyConceptPatterns = [
+  ['ux', /\bux\b|사용자\s*경험|프로덕트\s*디자|product\s*design/i],
+  ['ui', /\bui\b|사용자\s*인터페이스|프로덕트\s*디자|product\s*design/i],
+  ['branding', /브랜[드딩]|리브랜딩|아이덴티티|\b(?:bi|ci)\b/i],
+  ['design-system', /디자인\s*시스템|design\s*system/i],
+  ['service-launch', /(?:서비스|제품)\s*(?:런칭|론칭|출시)|\blaunch/i],
+  ['visual-design', /시각|그래픽|비주얼|편집\s*디자인/i],
+  ['motion-video', /영상|모션|비디오|영화|드라마|포스터/i],
+  ['interior-space', /인테리어|실내|공간\s*디자인|가구\s*설계/i],
+  ['cad-drawing', /\bcad\b|캐드|3d\s*도면/i],
+];
+const specialtyConceptLabels = {
+  ux: 'UX',
+  ui: 'UI',
+  branding: '브랜딩',
+  'design-system': '디자인 시스템',
+  'service-launch': '서비스 런칭',
+  'visual-design': '시각 디자인',
+  'motion-video': '영상 디자인',
+  'interior-space': '인테리어',
+  'cad-drawing': 'CAD 도면',
+};
 
 let catalogCache = null;
 let catalogLoadPromise = null;
@@ -218,27 +287,99 @@ function occupationMatchText(posting) {
     .toLowerCase();
 }
 
+function primaryFitEvidenceText(posting) {
+  return [posting.title, posting.industry]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function detailFitEvidenceText(posting) {
+  return [
+    ...asStringArray(posting.coreResponsibilities),
+    ...asStringArray(posting.requiredSkills),
+    ...asStringArray(posting.qualifications),
+    ...asStringArray(posting.preferredSkills),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
 function tokenizeRecommendationText(value) {
   return new Set(
     asString(value)
       .toLowerCase()
-      .split(/[^0-9a-zA-Z가-힣+#]+/)
+      .split(/[^0-9a-zA-Z가-힣+#.]+/)
       .map((token) => token.trim())
       .filter((token) => token.length >= 2 && !recommendationStopWords.has(token)),
   );
 }
 
+function getSpecialtyTokens(value) {
+  const normalized = asString(value).toLowerCase();
+  const tokens = [...tokenizeRecommendationText(normalized)].filter(
+    (token) => !specialtyGenericTokens.has(token) && !specialtyAliasTokens.has(token),
+  );
+  for (const [concept, pattern] of specialtyConceptPatterns) {
+    if (pattern.test(normalized)) tokens.push(concept);
+  }
+  return new Set(tokens);
+}
+
+function formatSpecialtyTokens(tokens) {
+  return tokens.map((token) => specialtyConceptLabels[token] || token);
+}
+
 function createFitContext(options) {
+  const structuredProfileText = [
+    options.profileField,
+    options.profileExperience,
+    options.profileKeySkills,
+    options.profileSolvedExperience,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const profileContextText = structuredProfileText || options.profileText;
+  const profileFieldText = options.profileField || options.profileText;
   return {
+    certificationTokens: tokenizeRecommendationText(options.certificationText),
     desiredOccupationCompact: asString(options.desiredOccupationText)
       .toLowerCase()
       .replace(/[^0-9a-zA-Z가-힣+#]+/g, ''),
     desiredOccupationTokens: tokenizeRecommendationText(options.desiredOccupationText),
     experienceOccupationCategory: legacyProjectCategoryMap[options.experienceCardCategory],
     experienceTokens: tokenizeRecommendationText(options.experienceCardText),
-    profileText: options.profileText.toLowerCase(),
-    profileTokens: tokenizeRecommendationText(options.profileText),
+    profileFieldTokens: getSpecialtyTokens(profileFieldText),
+    profileSpecialtyTokens: getSpecialtyTokens(profileContextText),
   };
+}
+
+function matchesDesiredWorkType(posting, desiredWorkType) {
+  const preference = asString(desiredWorkType);
+  if (!preference || preference.includes('전체 무관')) return null;
+  const workText = [
+    posting.employmentType,
+    posting.title,
+    posting.workSchedule,
+    posting.projectDuration,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (/시간제|파트타임|오전|오후/.test(preference)) {
+    return matchesEmploymentType(posting, 'part-time') || /시간제|파트타임|오전|오후/.test(workText);
+  }
+  if (/계약직|기간제/.test(preference)) {
+    return posting.employmentType === 'contract' || /계약직|기간제/.test(workText);
+  }
+  if (/정규직/.test(preference)) {
+    return posting.employmentType === 'full-time' || /정규직/.test(workText);
+  }
+  if (/자문|프로젝트/.test(preference)) {
+    return ['contract', 'project'].includes(posting.employmentType) || /자문|프로젝트/.test(workText);
+  }
+  return null;
 }
 
 function matchesDesiredOccupationText(entry, context) {
@@ -259,7 +400,13 @@ function matchesDesiredOccupationText(entry, context) {
 }
 
 function calculateFitMatch(entry, options, context) {
-  const { occupationCategory, posting, searchText: postingText } = entry;
+  const {
+    detailFitEvidenceText: postingDetailText,
+    fitEvidenceText: postingEvidenceText,
+    occupationCategory,
+    posting,
+    primaryFitEvidenceText: postingPrimaryText,
+  } = entry;
   let categoryPriority = options.desiredCategories.indexOf(occupationCategory);
   const desiredOccupationMatch = matchesDesiredOccupationText(entry, context);
   const desiredOccupationPriority =
@@ -270,79 +417,98 @@ function calculateFitMatch(entry, options, context) {
     desiredOccupationPriority >= 0 &&
     (categoryPriority < 0 || desiredOccupationPriority < categoryPriority);
   if (directOccupationMatchApplied) categoryPriority = desiredOccupationPriority;
-  const postingTokens = tokenizeRecommendationText(postingText);
-  const sharedProfileTokens = [...context.profileTokens].filter((token) => postingTokens.has(token));
-  const matchingKeywords = solvedKeywords.filter(
-    (keyword) => context.profileText.includes(keyword) && postingText.includes(keyword),
+  const postingTokens = tokenizeRecommendationText(postingEvidenceText);
+  const primarySpecialtyTokens = getSpecialtyTokens(postingPrimaryText);
+  const detailSpecialtyTokens = getSpecialtyTokens(postingDetailText);
+  const sharedPrimaryFieldTokens = [...context.profileFieldTokens].filter((token) =>
+    primarySpecialtyTokens.has(token),
   );
-
-  const specialtyDomainStopWords = new Set([
-    '디자인',
-    '설계',
-    '개발',
-    '기획',
-    '관리',
-    '운영',
-    '전략',
-    '자료',
-    '고도화',
-    '서비스',
-    '프로세스',
-    '구축',
-    '표준화',
-    '개선',
-    '전문',
-    '분야',
-    '핵심',
-    '강점',
-    '경험',
-    '경력',
-    '업무',
-    '프로젝트',
-    '채용',
-    '지원',
+  const sharedPrimaryFieldTokenSet = new Set(sharedPrimaryFieldTokens);
+  const sharedDetailFieldTokens = [...context.profileFieldTokens].filter(
+    (token) => detailSpecialtyTokens.has(token) && !sharedPrimaryFieldTokenSet.has(token),
+  );
+  const sharedFieldTokenSet = new Set([
+    ...sharedPrimaryFieldTokens,
+    ...sharedDetailFieldTokens,
   ]);
-
-  const domainSpecificProfileTokens = sharedProfileTokens.filter(
-    (token) => !specialtyDomainStopWords.has(token),
+  const sharedPrimaryEvidenceTokens = [...context.profileSpecialtyTokens].filter(
+    (token) => primarySpecialtyTokens.has(token) && !sharedFieldTokenSet.has(token),
   );
-  const domainSpecificKeywords = matchingKeywords.filter(
-    (keyword) => !specialtyDomainStopWords.has(keyword),
+  const sharedPrimaryEvidenceTokenSet = new Set(sharedPrimaryEvidenceTokens);
+  const sharedDetailEvidenceTokens = [...context.profileSpecialtyTokens].filter(
+    (token) =>
+      detailSpecialtyTokens.has(token) &&
+      !sharedFieldTokenSet.has(token) &&
+      !sharedPrimaryEvidenceTokenSet.has(token),
   );
 
-  const hasStrongSubSpecialtyMatch =
-    domainSpecificProfileTokens.length >= 2 ||
-    (domainSpecificProfileTokens.length >= 1 && domainSpecificKeywords.length >= 1);
-
-  let score = categoryPriority === 0 ? (hasStrongSubSpecialtyMatch ? 88 : 78) : categoryPriority === 1 ? (hasStrongSubSpecialtyMatch ? 74 : 66) : categoryPriority === 2 ? (hasStrongSubSpecialtyMatch ? 60 : 54) : 28;
+  const isSpecificCategoryActive =
+    options.categories.length > 0 &&
+    !options.categories.includes(UNCLASSIFIED_OCCUPATION_FILTER);
+  const effectiveCategoryPriority =
+    isSpecificCategoryActive && categoryPriority >= 0 ? 0 : categoryPriority;
+  let score =
+    effectiveCategoryPriority === 0
+      ? 52
+      : effectiveCategoryPriority === 1
+        ? 40
+        : effectiveCategoryPriority === 2
+          ? 30
+          : 20;
   const reasons = [];
   if (directOccupationMatchApplied) {
     reasons.push(
       `내 정보의 ${options.desiredOccupationRank}순위 기타 희망 직종 ‘${options.desiredOccupationText}’과 공고 내용이 일치합니다.`,
     );
+  } else if (isSpecificCategoryActive) {
+    if (categoryPriority >= 0) {
+      reasons.push('선택한 직종과 공고 내용이 일치합니다.');
+    } else {
+      reasons.push('선택한 직종과 다른 직종 공고입니다.');
+    }
   } else if (categoryPriority === 0) reasons.push('1순위 희망 직종과 일치합니다.');
   else if (categoryPriority === 1) reasons.push('2순위 희망 직종과 일치합니다.');
   else if (categoryPriority === 2) reasons.push('3순위 희망 직종과 일치합니다.');
 
-  if (matchingKeywords.length >= 3) {
-    score += 6;
-    reasons.push(`핵심 역량 ${matchingKeywords.slice(0, 3).join(', ')}이 공고와 일치합니다.`);
-  } else if (matchingKeywords.length > 0) {
-    score += 3;
-    reasons.push(`경력 키워드 ${matchingKeywords.join(', ')}가 공고와 연결됩니다.`);
+  if (sharedPrimaryFieldTokens.length > 0) {
+    score += Math.min(24, sharedPrimaryFieldTokens.length * 8);
+    const fieldCoverage =
+      context.profileFieldTokens.size > 0
+        ? sharedPrimaryFieldTokens.length / context.profileFieldTokens.size
+        : 0;
+    if (fieldCoverage >= 0.75) score += 8;
+    else if (fieldCoverage >= 0.5) score += 4;
+    reasons.push(
+      `내 정보의 ${formatSpecialtyTokens(sharedPrimaryFieldTokens.slice(0, 3)).join(', ')} 전문 분야가 공고 제목·업종과 일치합니다.`,
+    );
+  }
+  if (sharedDetailFieldTokens.length > 0) {
+    score += Math.min(6, sharedDetailFieldTokens.length * 2);
+    reasons.push(
+      `상세 업무 일부에서 ${formatSpecialtyTokens(sharedDetailFieldTokens.slice(0, 3)).join(', ')} 연관 요소를 확인했습니다.`,
+    );
+  }
+  if (sharedPrimaryEvidenceTokens.length > 0) {
+    score += Math.min(15, sharedPrimaryEvidenceTokens.length * 5);
+    reasons.push(
+      `세부 경력의 ${formatSpecialtyTokens(sharedPrimaryEvidenceTokens.slice(0, 3)).join(', ')} 맥락이 공고 제목·업종과 일치합니다.`,
+    );
+  }
+  if (sharedDetailEvidenceTokens.length > 0) {
+    score += Math.min(6, sharedDetailEvidenceTokens.length * 2);
+    reasons.push(
+      `상세 업무에서 세부 경력의 ${formatSpecialtyTokens(sharedDetailEvidenceTokens.slice(0, 3)).join(', ')} 연관성을 확인했습니다.`,
+    );
   }
 
-  if (sharedProfileTokens.length >= 3) {
-    score += 6;
+  const matchedCertificationTokens = [...context.certificationTokens].filter((token) =>
+    postingTokens.has(token),
+  );
+  if (matchedCertificationTokens.length > 0) {
+    score += Math.min(4, matchedCertificationTokens.length + 2);
     reasons.push(
-      `내 정보의 ${sharedProfileTokens.slice(0, 3).join(', ')} 전문 분야가 공고와 밀접하게 일치합니다.`,
+      `보유 자격증 ${matchedCertificationTokens.slice(0, 2).join(', ')}이 공고 조건과 일치합니다.`,
     );
-  } else if (sharedProfileTokens.length === 2) {
-    score += 4;
-    reasons.push(`내 정보의 ${sharedProfileTokens.join(', ')} 전문 분야가 공고와 일치합니다.`);
-  } else if (sharedProfileTokens.length === 1) {
-    score += 2;
-    reasons.push(`내 정보의 ${sharedProfileTokens[0]} 관련 경험을 반영했습니다.`);
   }
 
   let experienceRecommendationApplied = false;
@@ -369,7 +535,15 @@ function calculateFitMatch(entry, options, context) {
     }
   }
 
-  if (options.experienceYears >= 10) score += 2;
+  if (options.experienceYears >= 10) score += 1;
+
+  const desiredWorkTypeMatch = matchesDesiredWorkType(posting, options.desiredWorkType);
+  if (desiredWorkTypeMatch === true) {
+    score += 3;
+    reasons.push(`원하는 근무 형태 ‘${options.desiredWorkType}’와 공고 조건이 일치합니다.`);
+  } else if (desiredWorkTypeMatch === false) {
+    score -= 2;
+  }
 
   if (options.desiredLocation && !['전국', '전체'].includes(options.desiredLocation)) {
     const locationKeyword = options.desiredLocation.replace(/(특별시|광역시|특별자치도|도|시)$/, '');
@@ -381,18 +555,14 @@ function calculateFitMatch(entry, options, context) {
   }
 
   let finalScore = score;
-  if (categoryPriority < 0) {
+  if (effectiveCategoryPriority < 0) {
     finalScore = Math.min(45, Math.max(15, finalScore));
-  } else if (categoryPriority === 0) {
-    if (hasStrongSubSpecialtyMatch) {
-      finalScore = Math.min(98, Math.max(90, finalScore));
-    } else {
-      finalScore = Math.min(85, Math.max(75, finalScore));
-    }
-  } else if (categoryPriority === 1) {
-    finalScore = Math.min(84, Math.max(65, finalScore));
-  } else if (categoryPriority === 2) {
-    finalScore = Math.min(72, Math.max(50, finalScore));
+  } else if (effectiveCategoryPriority === 0) {
+    finalScore = Math.min(98, Math.max(15, finalScore));
+  } else if (effectiveCategoryPriority === 1) {
+    finalScore = Math.min(90, Math.max(15, finalScore));
+  } else if (effectiveCategoryPriority === 2) {
+    finalScore = Math.min(82, Math.max(15, finalScore));
   }
 
   return {
@@ -420,11 +590,13 @@ export function normalizeJobSearchOptions(raw = {}) {
     );
 
   return {
+    certificationText: asString(raw.certificationText).slice(0, 500),
     categories: [...new Set(categories)],
     desiredCategories: [...new Set(desiredCategories)],
     desiredLocation: asString(raw.desiredLocation).slice(0, 50),
     desiredOccupationRank: positiveInteger(raw.desiredOccupationRank, 0, 3),
     desiredOccupationText: asString(raw.desiredOccupationText).slice(0, 120),
+    desiredWorkType: asString(raw.desiredWorkType).slice(0, 120),
     employmentType: asString(raw.employmentType),
     experienceCardCategory: projectCategoryIds.has(asString(raw.experienceCardCategory))
       ? asString(raw.experienceCardCategory)
@@ -434,10 +606,14 @@ export function normalizeJobSearchOptions(raw = {}) {
     hiringStage: asString(raw.hiringStage),
     page: positiveInteger(raw.page, 1, 100_000),
     pageSize: positiveInteger(raw.pageSize, 12, MAX_PAGE_SIZE),
+    profileExperience: asString(raw.profileExperience).slice(0, 2000),
+    profileField: asString(raw.profileField).slice(0, 500),
+    profileKeySkills: asString(raw.profileKeySkills).slice(0, 2000),
+    profileSolvedExperience: asString(raw.profileSolvedExperience).slice(0, 2000),
     profileText: asString(raw.profileText).slice(0, 2000),
     query: asString(raw.q).toLowerCase().slice(0, 120),
     requireDesiredOccupationMatch: asString(raw.requireDesiredOccupationMatch) === 'true',
-    sortBy: ['fit-desc', 'deadline-asc', 'latest-desc'].includes(raw.sortBy)
+    sortBy: ['fit-desc', 'deadline-asc', 'latest-desc', 'title-asc', 'alphabetical-asc'].includes(raw.sortBy)
       ? raw.sortBy
       : 'fit-desc',
     workType: asString(raw.workType),
@@ -610,13 +786,18 @@ export function prepareJobCatalog(postings, now = new Date()) {
         occupationClassificationMargin: occupationClassification.margin,
         occupationClassificationStatus: occupationCategory ? 'classified' : 'ambiguous',
       };
+      const primaryEvidenceText = primaryFitEvidenceText(normalizedPosting);
+      const detailEvidenceText = detailFitEvidenceText(normalizedPosting);
       return {
+        detailFitEvidenceText: detailEvidenceText,
+        fitEvidenceText: `${primaryEvidenceText} ${detailEvidenceText}`.trim(),
         occupationCategory,
         occupationMatchText: occupationMatchText(normalizedPosting),
         deadlineTime: parseDateValue(posting.deadline, Number.MAX_SAFE_INTEGER),
         isPartTime: matchesEmploymentType(normalizedPosting, 'part-time'),
         postedAtTime: parseDateValue(posting.postedAt, 0),
         posting: normalizedPosting,
+        primaryFitEvidenceText: primaryEvidenceText,
         searchText: searchableText(normalizedPosting),
       };
     });
@@ -646,13 +827,30 @@ export function prepareJobCatalog(postings, now = new Date()) {
   };
 }
 
+export function prepareCombinedJobCatalog(
+  accumulatedPostings,
+  registeredProjects,
+  now = new Date(),
+) {
+  const publishedProjects = registeredProjects.filter(
+    (posting) => !posting?.hiringStage || posting.hiringStage === 'open',
+  );
+  return prepareJobCatalog([...publishedProjects, ...accumulatedPostings], now);
+}
+
 function hasPersonalizedFitRanking(options) {
   return Boolean(
-    options.desiredCategories.length > 0 ||
+    options.certificationText ||
+      options.desiredCategories.length > 0 ||
       options.desiredOccupationText ||
+      options.desiredWorkType ||
       options.desiredLocation ||
       options.experienceCardCategory ||
       options.experienceCardText ||
+      options.profileExperience ||
+      options.profileField ||
+      options.profileKeySkills ||
+      options.profileSolvedExperience ||
       options.profileText,
   );
 }
@@ -737,7 +935,7 @@ function filterPreparedJobCatalog(catalog, options) {
           comparePreparedEntries(
             first,
             second,
-            options.sortBy === 'deadline-asc' ? 'deadline-asc' : 'latest-desc',
+            options.sortBy,
           ),
         )
         .map((entry) => ({ entry, fitMatch: null }));
@@ -756,6 +954,7 @@ function filterPreparedJobCatalog(catalog, options) {
       return (
         {
           ...entry.posting,
+          contactEmail: undefined,
           experienceRecommendationApplied: resolvedFitMatch.experienceRecommendationApplied,
           recommendationReasons: resolvedFitMatch.reasons,
           seniorFitScore: resolvedFitMatch.score,
@@ -787,12 +986,14 @@ async function loadJobCatalog() {
   if (catalogCache && catalogCache.expiresAt > now) return catalogCache.catalog;
   if (catalogLoadPromise) return catalogLoadPromise;
 
-  catalogLoadPromise = adminDb
-    .collection(GLOBAL_COLLECTION)
-    .get()
-    .then((snapshot) => {
-      const postings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      const catalog = prepareJobCatalog(postings);
+  catalogLoadPromise = Promise.all([
+    adminDb.collection(GLOBAL_COLLECTION).get(),
+    adminDb.collection(PROJECTS_COLLECTION).get(),
+  ])
+    .then(([jobSnapshot, projectSnapshot]) => {
+      const accumulatedPostings = jobSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const registeredProjects = projectSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const catalog = prepareCombinedJobCatalog(accumulatedPostings, registeredProjects);
       catalogCache = { catalog, expiresAt: Date.now() + CATALOG_CACHE_TTL_MS };
       searchResultCache.clear();
       return catalog;

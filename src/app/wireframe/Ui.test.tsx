@@ -1,8 +1,77 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SummaryCard } from '@/app/wireframe/Ui';
+import {
+  BrandLogo,
+  SummaryCard,
+  useViewportMode,
+  ViewportProvider,
+} from '@/app/wireframe/Ui';
 import { ExperienceSummaryCard } from '@/app/wireframe/FlowPages';
+
+function ViewportModeHarness() {
+  const { mode, setMode } = useViewportMode();
+  return (
+    <div>
+      <output aria-label="현재 화면 모드">{mode}</output>
+      <button onClick={() => setMode('pc')} type="button">
+        PC 화면
+      </button>
+      <button onClick={() => setMode('mobile')} type="button">
+        모바일 화면
+      </button>
+    </div>
+  );
+}
+
+describe('화면 모드 수동 전환', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280, writable: true });
+  });
+
+  it('PC 창을 줄여도 자동으로 모바일 모드로 바뀌지 않는다', () => {
+    window.innerWidth = 520;
+    render(
+      <ViewportProvider>
+        <ViewportModeHarness />
+      </ViewportProvider>,
+    );
+
+    expect(screen.getByLabelText('현재 화면 모드')).toHaveTextContent('pc');
+    window.innerWidth = 360;
+    fireEvent(window, new Event('resize'));
+    expect(screen.getByLabelText('현재 화면 모드')).toHaveTextContent('pc');
+  });
+
+  it('모바일 버튼을 누른 경우에만 모드를 바꾸고 선택을 저장한다', () => {
+    render(
+      <ViewportProvider>
+        <ViewportModeHarness />
+      </ViewportProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '모바일 화면' }));
+
+    expect(screen.getByLabelText('현재 화면 모드')).toHaveTextContent('mobile');
+    expect(localStorage.getItem('eojob_viewport_mode')).toBe('mobile');
+  });
+});
+
+describe('BrandLogo', () => {
+  it('전체 로고와 아이콘 로고에 같은 28px 높이를 적용한다', () => {
+    render(
+      <>
+        <BrandLogo />
+        <BrandLogo variant="icon" />
+      </>,
+    );
+
+    screen.getAllByRole('img', { name: '이어잡' }).forEach((logo) => {
+      expect(logo).toHaveClass('h-7');
+    });
+  });
+});
 
 describe('SummaryCard', () => {
   it('renders an interactive metric as an accessible native button', () => {

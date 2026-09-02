@@ -19,6 +19,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { BrandLogo } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
 
@@ -63,7 +64,7 @@ export function LandingPage() {
             className="inline-flex items-center border-0 bg-transparent p-0 cursor-pointer"
             aria-label="이어잡 첫 화면"
           >
-            <img src="/logo_text.png" alt="이어잡" className="h-7 w-auto object-contain" />
+            <BrandLogo />
           </button>
 
           <nav className="ml-auto flex items-center gap-1 sm:gap-2" aria-label="빠른 이동">
@@ -170,8 +171,8 @@ export function LandingPage() {
       </header>
 
       <main>
-        <section className="bg-white px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18">
-          <div className="mx-auto max-w-6xl">
+        <section className="bg-white pb-16 pt-14 sm:pb-20 sm:pt-18">
+          <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
             <div className="pt-2 text-left">
               <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
@@ -186,7 +187,7 @@ export function LandingPage() {
                 Experience Meets Opportunity
               </h2>
 
-              <h1 className="mt-10 text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
+              <h1 className="mt-10 max-w-4xl text-balance text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
                 <span className="text-[#173f3a]">기업</span>의{' '}
                 <span className="text-[#173f3a]">실무</span> 프로젝트와
                 <br />
@@ -194,7 +195,7 @@ export function LandingPage() {
                 <span className="text-[#173f3a]">경험</span>을 잇다
               </h1>
 
-              <p className="mt-6 max-w-5xl text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
+              <p className="mt-6 max-w-4xl text-pretty text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
                 <span className="block">
                   경험을 잇고, 일을 잇고, 세대를 잇다.&nbsp;이어잡입니다.
                 </span>
@@ -209,7 +210,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-lg shadow-[0_14px_36px_rgba(23,63,58,0.14)]">
+            <div className="mt-10 w-full overflow-hidden rounded-lg shadow-[0_14px_36px_rgba(23,63,58,0.14)]">
               <video
                 className="aspect-video w-full object-cover"
                 src="/eojob-landing-hero.mp4"
@@ -226,8 +227,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-white px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="service-features-title">
-          <div className="mx-auto max-w-6xl">
+        <section className="bg-white py-16 sm:py-20" aria-labelledby="service-features-title">
+          <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
             <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡의 서비스 특징
@@ -272,8 +273,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-[#FBE3DC] bg-[#FFF5F2] px-5 py-11 sm:px-8">
-          <div className="mx-auto flex max-w-6xl flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+        <section className="border-y border-[#FBE3DC] bg-[#FFF5F2] py-11">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-3 sm:gap-4">
               <span className="grid size-11 shrink-0 place-items-center text-[#F06B4F] sm:size-12">
                 <Sparkles
@@ -322,8 +323,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-white px-5 py-14 sm:px-8 sm:py-18">
-          <div className="mx-auto max-w-6xl px-5 py-9 text-center sm:px-10 sm:py-12">
+        <section className="bg-white py-14 sm:py-18">
+          <div className="mx-auto w-full max-w-6xl px-5 py-9 text-center sm:px-8 sm:py-12">
             <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212B] sm:text-[1.875rem]">
               지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
@@ -487,8 +488,8 @@ export function LandingPage() {
         </div>
       )}
 
-      <footer className="bg-white px-5 py-7 sm:px-8 border-t border-[#e7dfcb]">
-        <p className="mx-auto max-w-6xl text-right text-[0.875rem] font-semibold text-[#667085]">
+      <footer className="border-t border-[#e7dfcb] bg-white py-7">
+        <p className="mx-auto w-full max-w-6xl px-5 text-right text-[0.875rem] font-semibold text-[#667085] sm:px-8">
           © 2026 이어잡 IEO Job. All rights reserved.
         </p>
       </footer>

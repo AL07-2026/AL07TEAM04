@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   filterAndPaginateJobPostings,
   filterAndPaginatePreparedJobCatalog,
+  prepareCombinedJobCatalog,
   prepareJobCatalog,
 } from './jobSearch.mjs';
 
@@ -31,6 +32,46 @@ function posting(id, overrides = {}) {
 }
 
 describe('full Firestore job database search', () => {
+  it('공개 기업 프로젝트와 누적 채용공고를 서버에서 한 번만 합쳐 중복 제거한다', () => {
+    const sharedPosting = posting('global-shared', {
+      companyName: '같은 기업',
+      title: '서비스 전략 프로젝트',
+    });
+    const catalog = prepareCombinedJobCatalog(
+      [sharedPosting],
+      [
+        { ...sharedPosting, id: 'project-shared', ownerId: 'company-1' },
+        posting('project-only', { companyName: '직접 등록 기업', title: '운영 혁신 프로젝트' }),
+        posting('closed-project', { hiringStage: 'closing', title: '마감 프로젝트' }),
+      ],
+      now,
+    );
+    const result = filterAndPaginatePreparedJobCatalog(catalog, { page: 1, pageSize: 5 });
+
+    expect(result.items.map((item) => item.title)).toEqual(
+      expect.arrayContaining(['서비스 전략 프로젝트', '운영 혁신 프로젝트']),
+    );
+    expect(result.items.filter((item) => item.title === '서비스 전략 프로젝트')).toHaveLength(1);
+    expect(result.items.some((item) => item.title === '마감 프로젝트')).toBe(false);
+    expect(result.catalogTotal).toBe(2);
+  });
+
+  it('공개 공고 검색 응답에는 기업 담당자 이메일을 노출하지 않는다', () => {
+    const result = filterAndPaginateJobPostings(
+      [
+        posting('private-contact', {
+          contactEmail: 'manager@company.co.kr',
+          ownerId: 'company-owner',
+          source: 'internal',
+        }),
+      ],
+      {},
+      now,
+    );
+
+    expect(result.items[0]?.contactEmail).toBeUndefined();
+  });
+
   it('does not generate a category template when a public posting has no source-backed problem statement', () => {
     const result = filterAndPaginateJobPostings(
       [
@@ -265,6 +306,52 @@ describe('full Firestore job database search', () => {
     expect(result.items[0]?.seniorFitScore).toBeGreaterThan(result.items[1]?.seniorFitScore);
   });
 
+  it('uses certifications and desired work type as detailed tie-breakers after occupation priority', () => {
+    const result = filterAndPaginateJobPostings(
+      [
+        posting('generic-developer', {
+          title: '백엔드 개발자',
+          industry: '소프트웨어 개발',
+          occupationCategory: 'it-development-data',
+          employmentType: 'full-time',
+        }),
+        posting('certified-part-time-developer', {
+          title: '시간제 백엔드 개발자',
+          industry: '소프트웨어 개발',
+          occupationCategory: 'it-development-data',
+          employmentType: 'part-time',
+          qualifications: ['정보처리기사 자격증'],
+        }),
+        posting('service-second-choice', {
+          title: '서비스 운영 관리자',
+          occupationCategory: 'service',
+          employmentType: 'part-time',
+        }),
+      ],
+      {
+        certificationText: '정보처리기사',
+        desiredCategories: 'it-development-data,service',
+        desiredWorkType: '시간제·파트타임 (오전/오후)',
+        sortBy: 'fit-desc',
+      },
+      now,
+    );
+
+    expect(result.items.map((item) => item.id)).toEqual([
+      'certified-part-time-developer',
+      'generic-developer',
+      'service-second-choice',
+    ]);
+    expect(result.items[0]?.recommendationReasons).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('정보처리기사'),
+        expect.stringContaining('근무 형태'),
+      ]),
+    );
+    expect(result.items[0]?.seniorFitScore).toBeGreaterThan(result.items[1]?.seniorFitScore);
+    expect(result.items[1]?.seniorFitScore).toBeGreaterThan(result.items[2]?.seniorFitScore);
+  });
+
   it('prioritizes UX/UI and branding postings when those specialties are saved in the profile', () => {
     const result = filterAndPaginateJobPostings(
       [
@@ -300,6 +387,59 @@ describe('full Firestore job database search', () => {
     expect(
       result.items[0]?.recommendationReasons.some((reason) => reason.includes('전문 분야')),
     ).toBe(true);
+  });
+
+  it('does not award high fit scores to unrelated design specialties from a broad category match alone', () => {
+    const result = filterAndPaginateJobPostings(
+      [
+        posting('ux-ui-director', {
+          title: 'UX/UI 디자인 시스템 총괄 디렉터',
+          industry: '디자인/글로벌 브랜딩',
+          category: 'design-brand',
+          occupationCategory: 'design',
+          requiredSkills: ['UX/UI', '브랜딩', '디자인 시스템'],
+        }),
+        posting('video-poster-designer', {
+          title: '영화 드라마 광고 포스터 그래픽 영상 디자이너',
+          industry: '영상 디자인',
+          category: 'design-brand',
+          occupationCategory: 'design',
+          coreResponsibilities: [
+            '영화·드라마·OTT 홍보영상 모션그래픽과 VFX·CG를 제작하며 타이틀, 모니터 UI/UX, 자막 효과를 일부 다룹니다.',
+          ],
+        }),
+        posting('interior-designer', {
+          title: '인테리어 디자이너',
+          industry: '실내 인테리어',
+          category: 'design-brand',
+          occupationCategory: 'design',
+        }),
+      ],
+      {
+        categories: 'design',
+        desiredCategories: 'design,marketing-pr-research,planning-strategy',
+        experienceYears: 12,
+        profileField: 'UX/UI 및 브랜딩',
+        profileKeySkills:
+          '다수 브랜딩 시각관련 자료 고도화 UX/UI디자인 설계 및 서비스 런칭',
+        profileSolvedExperience:
+          '다수 브랜딩 시각관련 자료 고도화 UX/UI디자인 설계 및 서비스 런칭',
+        profileText:
+          'UX/UI 및 브랜딩 다수 브랜딩 시각관련 자료 고도화 UX/UI디자인 설계 및 서비스 런칭',
+        sortBy: 'fit-desc',
+      },
+      now,
+    );
+
+    const scores = Object.fromEntries(
+      result.items.map((item) => [item.id, item.seniorFitScore]),
+    );
+    expect(result.items[0]?.id).toBe('ux-ui-director');
+    expect(scores).toMatchObject({
+      'interior-designer': 53,
+      'ux-ui-director': 85,
+      'video-poster-designer': 62,
+    });
   });
 
   it('excludes expired postings before calculating totals', () => {
@@ -373,5 +513,75 @@ describe('full Firestore job database search', () => {
 
     expect(result.items.map((item) => item.id)).toEqual(['healthy']);
     expect(result.catalogTotal).toBe(1);
+  });
+
+  it('correctly sorts by title-asc across pages in alphabetical order', () => {
+    const postingsList = [
+      posting('job-e', { title: '마케팅 기획자' }),
+      posting('job-a', { title: '가구 디자이너' }),
+      posting('job-c', { title: '데이터 분석가' }),
+      posting('job-b', { title: '네트워크 관리자' }),
+      posting('job-d', { title: '로봇 엔지니어' }),
+    ];
+
+    const page1 = filterAndPaginateJobPostings(
+      postingsList,
+      { page: 1, pageSize: 2, sortBy: 'title-asc' },
+      now,
+    );
+    const page2 = filterAndPaginateJobPostings(
+      postingsList,
+      { page: 2, pageSize: 2, sortBy: 'title-asc' },
+      now,
+    );
+    const page3 = filterAndPaginateJobPostings(
+      postingsList,
+      { page: 3, pageSize: 2, sortBy: 'title-asc' },
+      now,
+    );
+
+    expect(page1.items.map((i) => i.title)).toEqual(['가구 디자이너', '네트워크 관리자']);
+    expect(page2.items.map((i) => i.title)).toEqual(['데이터 분석가', '로봇 엔지니어']);
+    expect(page3.items.map((i) => i.title)).toEqual(['마케팅 기획자']);
+    expect(page1.totalPages).toBe(3);
+    expect(page1.total).toBe(5);
+  });
+
+  it('maintains consistent fit-desc scores across consecutive pages for active category', () => {
+    const postingsList = [
+      posting('cs-1', { title: '고객상담 1', occupationCategory: 'customer-service-tm', industry: '고객상담' }),
+      posting('cs-2', { title: '고객상담 2', occupationCategory: 'customer-service-tm', industry: '고객상담' }),
+      posting('cs-3', { title: '고객상담 3', occupationCategory: 'customer-service-tm', industry: '고객상담' }),
+      posting('cs-4', { title: '고객상담 4', occupationCategory: 'customer-service-tm', industry: '고객상담' }),
+    ];
+
+    const page1 = filterAndPaginateJobPostings(
+      postingsList,
+      {
+        categories: 'customer-service-tm',
+        desiredCategories: 'customer-service-tm',
+        page: 1,
+        pageSize: 2,
+        sortBy: 'fit-desc',
+      },
+      now,
+    );
+    const page2 = filterAndPaginateJobPostings(
+      postingsList,
+      {
+        categories: 'customer-service-tm',
+        desiredCategories: 'customer-service-tm',
+        page: 2,
+        pageSize: 2,
+        sortBy: 'fit-desc',
+      },
+      now,
+    );
+
+    expect(page1.items).toHaveLength(2);
+    expect(page2.items).toHaveLength(2);
+    const page1MinScore = Math.min(...page1.items.map((i) => i.seniorFitScore));
+    const page2MaxScore = Math.max(...page2.items.map((i) => i.seniorFitScore));
+    expect(page1MinScore).toBeGreaterThanOrEqual(page2MaxScore);
   });
 });

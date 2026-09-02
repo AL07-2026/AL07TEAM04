@@ -8,7 +8,6 @@ import { defineConfig } from 'vitest/config';
 const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  envPrefix: ['VITE_', 'WORKNET_JOB_API_KEY'],
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {

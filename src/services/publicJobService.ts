@@ -12,14 +12,6 @@ import {
   occupationToProjectCategory,
 } from '@/data/occupationCategories';
 
-const PUBLIC_JOB_PROXY_ENDPOINT = '/api/public/jobs';
-const PUBLIC_REQUEST_TIMEOUT_MS = 8_000;
-
-export const PUBLIC_JOB_API_KEY =
-  (import.meta.env.VITE_PUBLIC_JOB_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.PUBLIC_JOB_API_KEY as string | undefined)?.trim() ??
-  'sample';
-
 export type PublicJobRaw = {
   acbgCondNmLst?: string;
   aplyQlfcCn?: string;
@@ -39,12 +31,6 @@ export type PublicJobRaw = {
   srcUrl?: string;
   workRgnNmLst?: string;
   workRgnNms?: string;
-};
-
-type PublicApiResponse = {
-  result?: PublicJobRaw[];
-  resultCode?: string;
-  resultMsg?: string;
 };
 
 export function transformPublicJobToPosting(raw: PublicJobRaw): JobPosting | null {
@@ -139,28 +125,8 @@ function normalizePublicDate(value?: string) {
   return match ? `${match[1]}-${match[2]}-${match[3]}` : value;
 }
 
-export async function fetchPublicJobFeed(): Promise<JobPosting[]> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PUBLIC_REQUEST_TIMEOUT_MS);
-
-  try {
-    const proxyUrl = `${PUBLIC_JOB_PROXY_ENDPOINT}?authKey=${encodeURIComponent(PUBLIC_JOB_API_KEY)}&numOfRows=500&_v=max`;
-    const response = await fetch(proxyUrl, { signal: controller.signal });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data = (await response.json()) as PublicApiResponse;
-    const rows: PublicJobRaw[] = data.result || [];
-
-    return rows
-      .map((raw) => transformPublicJobToPosting(raw))
-      .filter((posting): posting is JobPosting => posting !== null);
-  } catch (error) {
-    console.warn('Public Job API fetch skipped/failed, fallback gracefully:', error);
-    return [];
-  } finally {
-    clearTimeout(timeoutId);
-  }
+export function fetchPublicJobFeed(): Promise<JobPosting[]> {
+  // Source APIs are synchronized by the backend scheduler only. Keeping this
+  // compatibility function prevents future callers from restoring browser calls.
+  return Promise.resolve([]);
 }

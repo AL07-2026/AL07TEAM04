@@ -10,8 +10,11 @@ const GLOBAL_COLLECTION = 'global_job_postings';
 const SYNC_STATE_COLLECTION = 'job_sync_metadata';
 const SYNC_STATE_DOCUMENT = 'global_accumulator';
 const SEOUL_WINDOW_SIZE = 1000;
+const WORKNET_PAGE_SIZE = 100;
 const PUBLIC_PAGE_SIZE = 500;
 const JOB_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const WORKNET_JOB_ENDPOINT =
+  'https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do';
 
 function fetchUrlText(urlStr, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
@@ -468,6 +471,142 @@ function normalizeListValue(value, fallback = '') {
   return String(value || '').trim() || fallback;
 }
 
+function decodeXmlText(value = '') {
+  return String(value)
+    .replace(/^<!\[CDATA\[([\s\S]*)\]\]>$/, '$1')
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([\da-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
+function readXmlTag(block, tagName) {
+  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = block.match(new RegExp(`<${escapedTag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`, 'i'));
+  return match ? decodeXmlText(match[1]) : '';
+}
+
+export function parseWorknetRows(xml = '') {
+  const source = String(xml || '');
+  const apiError = readXmlTag(source, 'error') || readXmlTag(source, 'message');
+  if (apiError) return { error: apiError, rows: [] };
+
+  const itemPatterns = [
+    /<wanted\b[^>]*>[\s\S]*?<\/wanted>/gi,
+    /<wantedItem\b[^>]*>[\s\S]*?<\/wantedItem>/gi,
+    /<item\b[^>]*>[\s\S]*?<\/item>/gi,
+  ];
+  const itemBlocks = itemPatterns.map((pattern) => source.match(pattern) || []).find((items) => items.length > 0) || [];
+  const fields = [
+    'wantedAuthNo',
+    'company',
+    'indTpNm',
+    'title',
+    'salTpNm',
+    'sal',
+    'minSal',
+    'maxSal',
+    'region',
+    'addresses',
+    'holidayTpNm',
+    'minEdubg',
+    'maxEdubg',
+    'career',
+    'regDt',
+    'closeDt',
+    'infoSvc',
+    'wantedInfoUrl',
+    'wantedMobileInfoUrl',
+    'empTpCd',
+    'jobsCd',
+  ];
+
+  return {
+    rows: itemBlocks.map((block) =>
+      Object.fromEntries(fields.map((field) => [field, readXmlTag(block, field)])),
+    ),
+  };
+}
+
+export function transformWorknetRow(row, nowStr, now) {
+  const sourceId = String(row.wantedAuthNo || '').trim();
+  const rawTitle = String(row.title || '').trim();
+  if (!sourceId || !rawTitle) return null;
+
+  const rawCompany = String(row.company || '기업명 미제공').trim();
+  const { companyName, title } = normalizeCompanyAndTitle(rawCompany, rawTitle);
+  const industry = String(row.indTpNm || '업종 정보 미제공').trim();
+  const classification = classifyOccupationCategoryFromJobText(title, industry, row.jobsCd);
+  const occupationCategory = classification.isConfident ? classification.category : null;
+  const category = occupationCategory
+    ? occupationToProjectCategory[occupationCategory] || 'operations'
+    : 'operations';
+  const deadline = normalizeDate(row.closeDt);
+  if (isExpiredDeadline(deadline, now)) return null;
+  const postedAt = normalizeDate(row.regDt) || nowStr.slice(0, 10);
+  const career = String(row.career || '경력 정보 미제공').trim();
+  const salaryRange = String(
+    row.sal ||
+      (row.minSal && row.maxSal ? `${row.minSal}~${row.maxSal}` : row.minSal || row.maxSal) ||
+      '임금 정보 미제공',
+  ).trim();
+  const sourceUrl = String(row.wantedInfoUrl || row.wantedMobileInfoUrl || '').trim();
+
+  return {
+    id: createStableDocumentId('WORKNET', sourceId, companyName, title),
+    companyName,
+    industry,
+    companySize: '고용24 공식 채용 공고',
+    title,
+    category,
+    occupationCategory,
+    occupationClassificationConfidence: classification.confidence,
+    occupationClassificationMargin: classification.margin,
+    occupationClassificationStatus: occupationCategory ? 'classified' : 'ambiguous',
+    seniority: 'senior',
+    employmentType: detectEmploymentTypeFromJobText(title, `${industry} ${career}`, row.empTpCd),
+    hiringStage: deriveHiringStage(deadline, now),
+    workType: detectWorkTypeFromJobText(title, `${industry} ${row.holidayTpNm || ''}`),
+    location: String(row.region || row.addresses || '근무 지역 미제공').trim(),
+    experienceYears: career,
+    salaryRange: [row.salTpNm, salaryRange].filter(Boolean).join(' ').trim(),
+    deadline: deadline || '채용 시 마감',
+    projectDuration: '상세 공고에서 확인',
+    collaborationTargets: ['부서 실무진', '사업 담당자'],
+    coreResponsibilities: [],
+    qualifications: [career, [row.minEdubg, row.maxEdubg].filter(Boolean).join('~')].filter(Boolean),
+    benefits: [String(row.holidayTpNm || '공고 원문 확인').trim()],
+    problemStatement: '',
+    projectGoal: '',
+    successMetrics: [],
+    requiredSkills: [industry, title],
+    preferredSkills: [],
+    matchingSignals: [career, row.region, industry].filter(Boolean),
+    recommendedTalentType: `${industry} 분야 실무 경험을 보유한 시니어 인재`,
+    matchingScoreCriteria: ['직무 연관성', '경력 정보', '근무 지역'],
+    interviewFocus: ['관련 실무 경험 및 주요 성과'],
+    sourceDetailProvenance: {
+      coreResponsibilities: 'unknown',
+      problemStatement: 'unknown',
+      projectGoal: 'unknown',
+      requiredSkills: 'synthetic',
+    },
+    seniorFitScore: 80,
+    postedAt,
+    source: 'worknet',
+    sourceUrl,
+    sourceProvider: String(row.infoSvc || '고용24').trim(),
+    workSchedule: String(row.holidayTpNm || '공고 원문 확인').trim(),
+    deadlineLabel: String(row.closeDt || '채용 시 마감').trim(),
+    registeredLabel: String(row.regDt || postedAt).trim(),
+    updatedAt: nowStr,
+  };
+}
+
 function createStableDocumentId(prefix, sourceId, companyName, title) {
   const normalizedSourceId = String(sourceId || '').trim();
   if (normalizedSourceId) return sanitizeId(`${prefix}-${normalizedSourceId}`);
@@ -480,6 +619,44 @@ function createStableDocumentId(prefix, sourceId, companyName, title) {
 
 function getSyncStateRef() {
   return adminDb.collection(SYNC_STATE_COLLECTION).doc(SYNC_STATE_DOCUMENT);
+}
+
+export function getKstDateKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+export function shouldStartDailyJobSync(lastAttemptDate, now = new Date()) {
+  return String(lastAttemptDate || '') !== getKstDateKey(now);
+}
+
+async function claimDailyJobSync(now = new Date()) {
+  const stateRef = getSyncStateRef();
+  const dateKey = getKstDateKey(now);
+  const claimed = await adminDb.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(stateRef);
+    const state = snapshot.exists ? snapshot.data() || {} : {};
+    if (!shouldStartDailyJobSync(state.lastSourceSyncAttemptDate, now)) return false;
+
+    transaction.set(
+      stateRef,
+      {
+        lastSourceSyncAttemptAt: now.toISOString(),
+        lastSourceSyncAttemptDate: dateKey,
+      },
+      { merge: true },
+    );
+    return true;
+  });
+
+  return { claimed, dateKey };
 }
 
 async function getSyncState() {
@@ -750,6 +927,8 @@ export async function getAccumulatedStats() {
         publicNextPage: syncState.publicNextPage || 2,
         publicTotalAvailable: syncState.publicTotalAvailable || null,
         lastCompletedAt: syncState.lastCompletedAt || null,
+        lastSourceSyncAttemptAt: syncState.lastSourceSyncAttemptAt || null,
+        lastSourceSyncAttemptDate: syncState.lastSourceSyncAttemptDate || null,
         lastDeduplicationAt: syncState.lastDeduplicationAt || null,
         lastCleanup: syncState.sourceProgress?.cleanup || null,
       },
@@ -761,7 +940,21 @@ export async function getAccumulatedStats() {
 }
 
 export async function runBackendJobSync() {
-  const nowStr = new Date().toISOString();
+  const now = new Date();
+  const nowStr = now.toISOString();
+  const dailyClaim = await claimDailyJobSync(now);
+  if (!dailyClaim.claimed) {
+    console.log(`Daily source sync skipped: ${dailyClaim.dateKey} was already claimed.`);
+    return {
+      ...(await getAccumulatedStats()),
+      reason: 'already-synced-today',
+      skipped: true,
+      sourceProgress: {},
+      syncedThisRun: 0,
+      updatedAt: nowStr,
+    };
+  }
+
   let newCount = 0;
 
   // 0. Sync Curated Senior Seed Postings (including Design Bridge Studio WN-DSN-02)
@@ -829,48 +1022,61 @@ export async function runBackendJobSync() {
   const statePatch = {};
   const sourceProgress = {};
 
-  // 1. Always refresh the newest Seoul window and rotate through one older window.
+  // 1. Fetch the newest Worknet page exactly once per daily sync.
+  try {
+    const worknetApiKey = String(process.env.WORKNET_JOB_API_KEY || '').trim();
+    if (!worknetApiKey) throw new Error('WORKNET_JOB_API_KEY is not configured');
+
+    const params = new URLSearchParams({
+      authKey: worknetApiKey,
+      callTp: 'L',
+      returnType: 'XML',
+      startPage: '1',
+      display: String(WORKNET_PAGE_SIZE),
+      sortOrderBy: 'DESC',
+    });
+    const xml = await fetchUrlText(`${WORKNET_JOB_ENDPOINT}?${params.toString()}`, 12000);
+    const parsed = parseWorknetRows(xml);
+    if (parsed.error) throw new Error(parsed.error);
+
+    const postings = deduplicatePostings(
+      parsed.rows.map((row) => transformWorknetRow(row, nowStr, now)).filter(Boolean),
+    );
+    const syncedCount = await upsertPostings(postings);
+    newCount += syncedCount;
+    sourceProgress.worknet = {
+      requestedPages: [1],
+      received: parsed.rows.length,
+      activeUpserts: syncedCount,
+    };
+  } catch (err) {
+    console.warn('Backend Worknet Job sync notice:', err?.message || err);
+    sourceProgress.worknet = { error: err?.message || String(err) };
+  }
+
+  // 2. Fetch the newest Seoul window exactly once per daily sync.
   try {
     const seoulApiKey = String(process.env.SEOUL_JOB_API_KEY || '').trim();
     if (!seoulApiKey) throw new Error('SEOUL_JOB_API_KEY is not configured');
 
-    const configuredStart = Number(syncState.seoulNextStartIndex) || SEOUL_WINDOW_SIZE + 1;
-    const rotatingStart = Math.max(SEOUL_WINDOW_SIZE + 1, configuredStart);
-    const ranges = [
-      [1, SEOUL_WINDOW_SIZE],
-      [rotatingStart, rotatingStart + SEOUL_WINDOW_SIZE - 1],
-    ];
-    const responses = await Promise.all(
-      ranges.map(async ([start, end]) => {
-        const url = `http://openapi.seoul.go.kr:8088/${encodeURIComponent(seoulApiKey)}/json/GetJobInfo/${start}/${end}/`;
-        return JSON.parse(await fetchUrlText(url, 12000));
-      }),
-    );
-
-    const rows = [];
-    let totalAvailable = 0;
-    for (const response of responses) {
-      const payload = response?.GetJobInfo || response?.GetSeniorJobInfo;
-      totalAvailable = Math.max(totalAvailable, Number(payload?.list_total_count) || 0);
-      rows.push(...(payload?.row || []));
-    }
+    const start = 1;
+    const end = SEOUL_WINDOW_SIZE;
+    const url = `http://openapi.seoul.go.kr:8088/${encodeURIComponent(seoulApiKey)}/json/GetJobInfo/${start}/${end}/`;
+    const response = JSON.parse(await fetchUrlText(url, 12000));
+    const payload = response?.GetJobInfo || response?.GetSeniorJobInfo;
+    const rows = payload?.row || [];
+    const totalAvailable = Number(payload?.list_total_count) || 0;
 
     const postings = deduplicatePostings(
-      rows
-        .map((row) => transformSeoulRow(row, nowStr, new Date(nowStr)))
-        .filter(Boolean),
+      rows.map((row) => transformSeoulRow(row, nowStr, now)).filter(Boolean),
     );
     const syncedCount = await upsertPostings(postings);
     newCount += syncedCount;
 
-    const rotatingEnd = rotatingStart + SEOUL_WINDOW_SIZE - 1;
-    statePatch.seoulNextStartIndex =
-      totalAvailable > SEOUL_WINDOW_SIZE && rotatingEnd < totalAvailable
-        ? rotatingEnd + 1
-        : SEOUL_WINDOW_SIZE + 1;
+    statePatch.seoulNextStartIndex = SEOUL_WINDOW_SIZE + 1;
     statePatch.seoulTotalAvailable = totalAvailable;
     sourceProgress.seoul = {
-      requestedRanges: ranges.map(([start, end]) => `${start}-${end}`),
+      requestedRanges: [`${start}-${end}`],
       received: rows.length,
       activeUpserts: syncedCount,
       totalAvailable,
@@ -881,7 +1087,7 @@ export async function runBackendJobSync() {
     sourceProgress.seoul = { error: err?.message || String(err) };
   }
 
-  // 2. Always refresh public page 1 and rotate through one older page.
+  // 3. Always refresh public page 1 and rotate through one older page.
   try {
     const publicApiKey = String(process.env.PUBLIC_JOB_API_KEY || '').trim();
     if (!publicApiKey) throw new Error('PUBLIC_JOB_API_KEY is not configured');
@@ -951,7 +1157,7 @@ export async function runBackendJobSync() {
     console.warn('Failed to save job sync cursor:', error?.message || error);
   }
 
-  // 3. Trigger incremental delta AI analysis on newly synced/un-analyzed postings
+  // 4. Trigger incremental delta AI analysis on newly synced/un-analyzed postings
   let aiAnalysisResult = null;
   try {
     const recentSnapshot = await adminDb

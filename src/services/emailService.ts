@@ -1,10 +1,12 @@
 import type { JobPosting } from '@/data/jobPostings';
+import { auth } from '@/lib/firebase';
 
 export interface EmailDispatchResult {
+  deliveryMethod: 'email-client' | 'external-application' | 'in-app';
+  emailSent: false;
   mailtoLink: string;
   message: string;
   recipientEmail: string;
-  success: boolean;
 }
 
 export interface ApplicantPayload {
@@ -15,72 +17,118 @@ export interface ApplicantPayload {
   interviewSummary?: string;
 }
 
-const DEFAULT_RECEIVER_EMAIL =
-  (import.meta.env.VITE_JOB_APPLICATION_RECEIVER_EMAIL as string | undefined)?.trim() ||
-  (import.meta.env.VITE_MANAGER_EMAIL as string | undefined)?.trim() ||
-  'sehddnr2@gmail.com';
+type ApplicationContactResponse = {
+  managerName?: string;
+  recipientEmail?: string;
+};
 
-export function sendApplicationEmailToManager(
-  posting: JobPosting,
-  applicant: ApplicantPayload,
-): EmailDispatchResult {
-  const hasCustomContactEmail = Boolean(posting.contactEmail?.trim());
-  const managerEmail = posting.contactEmail?.trim() || DEFAULT_RECEIVER_EMAIL;
-  const isPublicJob =
-    !hasCustomContactEmail ||
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+export function usesExternalApplication(posting: JobPosting): boolean {
+  if (
     posting.source === 'worknet' ||
     posting.source === 'seoul' ||
-    posting.source === 'public';
+    posting.source === 'public'
+  ) {
+    return true;
+  }
+  return !posting.ownerId && posting.source !== 'internal';
+}
 
+async function resolveRegisteredProjectEmail(posting: JobPosting): Promise<string> {
+  const directEmail = posting.contactEmail?.trim() || '';
+  if (isValidEmail(directEmail)) return directEmail;
+  if (!posting.ownerId) return '';
+
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return '';
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch('/api/applications/contact', {
+      body: JSON.stringify({ projectId: posting.id }),
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    });
+    if (!response.ok) return '';
+
+    const payload = (await response.json()) as ApplicationContactResponse;
+    const resolvedEmail = payload.recipientEmail?.trim() || '';
+    return isValidEmail(resolvedEmail) ? resolvedEmail : '';
+  } catch {
+    return '';
+  }
+}
+
+function createMailtoLink(
+  posting: JobPosting,
+  applicant: ApplicantPayload,
+  managerEmail: string,
+): string {
   const subject = encodeURIComponent(
-    `[이음잡 40+ 지원] ${applicant.applicantName || '김시니어'} 님의 '${posting.title}' (${posting.companyName}) 지원서`,
+    `[이어잡 지원] ${applicant.applicantName || '지원자'}님의 '${posting.title}' (${posting.companyName}) 지원서`,
   );
-
   const bodyText = `안녕하세요, ${posting.companyName} 채용 매칭 담당자님.
 
-이음잡(EoJob) 40+ 시니어 전문 매칭 플랫폼을 통해 우수 시니어 인재의 프로젝트 지원서가 실제 접수되었습니다.
+이어잡에 저장된 프로젝트 지원 내용을 전달드립니다.
 
 ■ 지원 프로젝트: ${posting.title}
 ■ 지원 대상 기업: ${posting.companyName}
 ■ 시니어 적합도 점수: ${posting.seniorFitScore}점 (40+ 전문 역량 검증)
-${posting.sourceUrl ? `■ 고용24 공고 원문 URL: ${posting.sourceUrl}\n` : ''}
-[ 지원자 정보 ]
-- 성함: ${applicant.applicantName || '김시니어 (40+ 전문가)'}
-- 이메일: ${applicant.applicantEmail || 'senior@example.com'}
-- 첨부 이력서/포트폴리오: ${applicant.attachedResumeName || '2026_김시니어_경험이력서_포트폴리오.pdf'}
+${posting.sourceUrl ? `■ 공고 원문 URL: ${posting.sourceUrl}\n` : ''}
+[지원자 정보]
+- 성함: ${applicant.applicantName || '미입력'}
+- 이메일: ${applicant.applicantEmail || '미입력'}
+- 첨부 예정 이력서/포트폴리오: ${applicant.attachedResumeName || '미입력'}
 
-[ AI 경험 인터뷰 검증 요약 ]
-${applicant.interviewSummary || '해당 직무 10년+ 노하우 보유, 현장 프로세스 표준화 및 부서 간 프로젝트 해결 주도 가능'}
+[AI 경험 인터뷰 검증 요약]
+${applicant.interviewSummary || '등록된 AI 경험 인터뷰 요약이 없습니다.'}
 
-[ 전달 메시지 ]
-"${applicant.coverNote || '기업의 해결 프로젝트에 10년 이상의 실무 노하우를 발휘하여 단기간 내 가시적 성과를 내겠습니다.'}"
+[전달 메시지]
+"${applicant.coverNote || '별도로 입력한 전달 메시지가 없습니다.'}"
 
 --------------------------------------------------
-이 메일은 이음잡(EoJob) 실시간 공고 매칭 파이프라인에서 자동 발송되었습니다.
-제출된 지원서 내역을 확인하시고 지원자 및 기업 매칭 인터뷰를 진행하세요.`;
+이 내용은 이어잡에서 작성되었으며, 지원자가 이메일 앱에서 직접 발송합니다.
+첨부파일 원본은 메일 작성창에서 다시 첨부해야 합니다.`;
 
-  const body = encodeURIComponent(bodyText);
-  const mailtoLink = `mailto:${managerEmail}?subject=${subject}&body=${body}`;
+  return `mailto:${managerEmail}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+}
 
-  console.log(`[EmailService] Application notification email generated for: ${managerEmail}`, {
-    posting,
-    applicant,
-  });
+export async function prepareApplicationEmailToManager(
+  posting: JobPosting,
+  applicant: ApplicantPayload,
+): Promise<EmailDispatchResult> {
+  if (usesExternalApplication(posting)) {
+    return {
+      deliveryMethod: 'external-application',
+      emailSent: false,
+      mailtoLink: '',
+      message: '이어잡 지원 이력이 저장되었습니다. 실제 접수는 공식 채용 페이지에서 완료해야 합니다.',
+      recipientEmail:
+        posting.contactEmail?.trim() || posting.sourceProvider || '공식 채용 접수처',
+    };
+  }
 
-  const recipientEmail = hasCustomContactEmail
-    ? managerEmail
-    : posting.sourceProvider || '공식 채용 접수처';
-
-  const message = hasCustomContactEmail
-    ? `기업 채용 담당자(${managerEmail})에게 지원서가 전달되었습니다!`
-    : isPublicJob
-      ? `공식 채용 포털 지원 연동 및 이어잡 지원서 저장이 완료되었습니다!`
-      : `매칭 담당자(${managerEmail})에게 지원 안내가 전달되었습니다!`;
+  const managerEmail = await resolveRegisteredProjectEmail(posting);
+  if (!managerEmail) {
+    return {
+      deliveryMethod: 'in-app',
+      emailSent: false,
+      mailtoLink: '',
+      message: '기업 받은 제안 화면에 지원 이력을 저장했습니다. 담당자 이메일은 확인하지 못했습니다.',
+      recipientEmail: '이어잡 기업 담당자',
+    };
+  }
 
   return {
-    success: true,
-    recipientEmail,
-    message,
-    mailtoLink,
+    deliveryMethod: 'email-client',
+    emailSent: false,
+    mailtoLink: createMailtoLink(posting, applicant, managerEmail),
+    message: `이어잡 지원 이력이 저장되었습니다. ${managerEmail} 메일은 작성창에서 직접 보내야 합니다.`,
+    recipientEmail: managerEmail,
   };
 }

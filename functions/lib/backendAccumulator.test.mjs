@@ -3,14 +3,64 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyOccupationCategoryFromJobText,
   detectOccupationCategoryFromJobText,
+  getKstDateKey,
+  parseWorknetRows,
+  shouldStartDailyJobSync,
   transformPublicRow,
   transformSeoulRow,
+  transformWorknetRow,
 } from './backendAccumulator.mjs';
 
 const now = new Date('2026-08-18T01:00:00+09:00');
 const nowStr = now.toISOString();
 
+const worknetXmlFixture = `<?xml version="1.0" encoding="UTF-8"?>
+<wantedRoot>
+  <wanted>
+    <wantedAuthNo>K120032608140001</wantedAuthNo>
+    <company>테스트 주식회사</company>
+    <indTpNm>소프트웨어 개발업</indTpNm>
+    <title>서비스 운영 시스템 개발자</title>
+    <salTpNm>연봉</salTpNm>
+    <sal>5,000만원 이상</sal>
+    <region>서울 강남구</region>
+    <career>경력 10년 이상</career>
+    <regDt>20260814</regDt>
+    <closeDt>20260920</closeDt>
+    <infoSvc>WORKNET</infoSvc>
+    <wantedInfoUrl>https://www.work24.go.kr/example</wantedInfoUrl>
+    <empTpCd>10</empTpCd>
+    <jobsCd>133200</jobsCd>
+  </wanted>
+</wantedRoot>`;
+
 describe('backend accumulator source mappings', () => {
+  it('uses the Asia/Seoul calendar day for the once-daily sync guard', () => {
+    const beforeMidnight = new Date('2026-09-01T14:59:59.000Z');
+    const afterMidnight = new Date('2026-09-01T15:00:00.000Z');
+
+    expect(getKstDateKey(beforeMidnight)).toBe('2026-09-01');
+    expect(getKstDateKey(afterMidnight)).toBe('2026-09-02');
+    expect(shouldStartDailyJobSync('2026-09-01', beforeMidnight)).toBe(false);
+    expect(shouldStartDailyJobSync('2026-09-01', afterMidnight)).toBe(true);
+  });
+
+  it('parses and stores one daily Worknet source page on the backend', () => {
+    const parsed = parseWorknetRows(worknetXmlFixture);
+    const posting = transformWorknetRow(parsed.rows[0], nowStr, now);
+
+    expect(parsed.error).toBeUndefined();
+    expect(parsed.rows).toHaveLength(1);
+    expect(posting).toMatchObject({
+      id: 'WORKNET-K120032608140001',
+      companyName: '테스트 주식회사',
+      title: '서비스 운영 시스템 개발자',
+      occupationCategory: 'it-development-data',
+      source: 'worknet',
+      sourceUrl: 'https://www.work24.go.kr/example',
+    });
+  });
+
   it('uses the current Seoul API identifier fields for stable document ids', () => {
     const posting = transformSeoulRow(
       {

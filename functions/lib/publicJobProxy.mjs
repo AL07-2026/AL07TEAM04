@@ -4,7 +4,6 @@ import { decodeUtf8Chunks } from './httpEncoding.mjs';
 
 const PUBLIC_JOB_ENDPOINT_BASE = 'https://apis.data.go.kr/1051000/recruitment/list';
 const PUBLIC_UPSTREAM_TIMEOUT_MS = 5_000;
-const DEFAULT_PUBLIC_JOB_KEY = '5d90af036c291ee245e146a6ae231979cd3141d18887c1b6e94752a729e38f88';
 
 function httpGetJson(urlStr, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
@@ -37,7 +36,8 @@ function httpGetJson(urlStr, timeoutMs = 5000) {
 }
 
 export function createPublicJobUpstreamUrl(query = {}, configuredApiKey = '') {
-  const apiKey = (configuredApiKey || query.authKey || '').trim() || DEFAULT_PUBLIC_JOB_KEY;
+  const apiKey = (configuredApiKey || query.authKey || '').trim();
+  if (!apiKey) throw new Error('PUBLIC_JOB_API_KEY is not configured');
   const pageNo = Number(query.pageNo) || 1;
   const numOfRows = Number(query.numOfRows) || 500;
 

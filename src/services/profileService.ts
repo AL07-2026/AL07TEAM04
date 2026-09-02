@@ -11,6 +11,7 @@ import {
   writeVersionedStorage,
 } from '@/lib/browserStorage';
 import { db } from '@/lib/firebase';
+import { clearJobSearchClientCache } from './jobSearchService';
 import { clearWorknetFeedCache } from './worknetService';
 
 export type SeniorProfileData = {
@@ -54,12 +55,21 @@ function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+function isLegacyDesiredWorkType(value: string) {
+  return /시간제|파트타임|계약직|기간제|정규직|자문·프로젝트|전체 무관/.test(value);
+}
+
 function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
   const field = stringValue(value.field);
-  const desiredWorkType = stringValue(value.desiredWorkType) || stringValue(value.experience) || '시간제·파트타임 (오전/오후)';
-  const experience = desiredWorkType;
+  const rawExperience = stringValue(value.experience);
+  const desiredWorkType =
+    stringValue(value.desiredWorkType) ||
+    (isLegacyDesiredWorkType(rawExperience)
+      ? rawExperience
+      : '시간제·파트타임 (오전/오후)');
+  const experience = rawExperience === desiredWorkType ? '' : rawExperience;
   const email = stringValue(value.email);
   if (!field || !email) return null;
   const desiredPreferences = normalizeOccupationPreferenceValues([
@@ -119,24 +129,30 @@ function readScopedProfile<T>(
   normalize: (source: unknown) => T | null,
 ) {
   const scopedKey = getScopedStorageKey(baseKey, ownerId);
-  const scopedData = normalize(readVersionedStorage<unknown>(scopedKey));
-  if (scopedData) return scopedData;
-  if (ownerId) {
-    const fallbackKey = getScopedStorageKey(baseKey, undefined);
-    return normalize(readVersionedStorage<unknown>(fallbackKey));
-  }
-  return null;
+  return normalize(readVersionedStorage<unknown>(scopedKey));
+}
+
+function removeScopedProfile(baseKey: string, ownerId: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(getScopedStorageKey(baseKey, ownerId));
 }
 
 export function getLocalSeniorProfile(ownerId?: string) {
   return readScopedProfile(SENIOR_PROFILE_STORAGE_KEY, ownerId, normalizeSeniorProfile);
 }
 
-export function saveLocalSeniorProfile(profile: SeniorProfileData, ownerId?: string) {
+function cacheLocalSeniorProfile(profile: SeniorProfileData, ownerId?: string) {
   const normalized = normalizeSeniorProfile(profile);
   if (!normalized) throw new Error('저장할 인재 프로필 정보가 올바르지 않습니다.');
-  clearWorknetFeedCache();
+  const current = getLocalSeniorProfile(ownerId);
+  if (JSON.stringify(current) === JSON.stringify(normalized)) return;
   writeVersionedStorage(getScopedStorageKey(SENIOR_PROFILE_STORAGE_KEY, ownerId), normalized);
+}
+
+export function saveLocalSeniorProfile(profile: SeniorProfileData, ownerId?: string) {
+  clearWorknetFeedCache();
+  clearJobSearchClientCache();
+  cacheLocalSeniorProfile(profile, ownerId);
 }
 
 export function getLocalCompanyProfile(ownerId?: string) {
@@ -149,40 +165,68 @@ export function saveLocalCompanyProfile(profile: CompanyProfileData, ownerId?: s
   writeVersionedStorage(getScopedStorageKey(COMPANY_PROFILE_STORAGE_KEY, ownerId), normalized);
 }
 
-export async function getSeniorProfile(uid: string): Promise<SeniorProfileData | null> {
+type RemoteProfileResult<T> =
+  | { profile: T | null; status: 'resolved' }
+  | { status: 'unavailable' };
+
+async function readRemoteProfile<T>(
+  collectionName: string,
+  uid: string,
+  normalize: (source: unknown) => T | null,
+): Promise<RemoteProfileResult<T>> {
   try {
-    const snapshot = await getDoc(doc(db, SENIOR_PROFILES_COLLECTION, uid));
-    return snapshot.exists() ? normalizeSeniorProfile(snapshot.data()) : null;
+    const snapshot = await getDoc(doc(db, collectionName, uid));
+    return {
+      profile: snapshot.exists() ? normalize(snapshot.data()) : null,
+      status: 'resolved',
+    };
   } catch (error) {
-    console.warn(`getSeniorProfile(${uid}) failed:`, error);
-    return null;
+    console.warn(`readRemoteProfile(${collectionName}/${uid}) failed:`, error);
+    return { status: 'unavailable' };
   }
+}
+
+export async function getSeniorProfile(uid: string): Promise<SeniorProfileData | null> {
+  const result = await readRemoteProfile(SENIOR_PROFILES_COLLECTION, uid, normalizeSeniorProfile);
+  return result.status === 'resolved' ? result.profile : null;
 }
 
 export async function resolveSeniorProfile(uid?: string): Promise<SeniorProfileData | null> {
   const localProfile = getLocalSeniorProfile(uid);
-  if (localProfile) return localProfile;
-  if (!uid) return null;
+  if (!uid) return localProfile;
 
-  const remoteProfile = await getSeniorProfile(uid);
-  if (remoteProfile) saveLocalSeniorProfile(remoteProfile, uid);
-  return remoteProfile;
+  const result = await readRemoteProfile(SENIOR_PROFILES_COLLECTION, uid, normalizeSeniorProfile);
+  if (result.status === 'unavailable') return localProfile;
+  if (result.profile) {
+    cacheLocalSeniorProfile(result.profile, uid);
+  } else {
+    removeScopedProfile(SENIOR_PROFILE_STORAGE_KEY, uid);
+  }
+  return result.profile;
 }
 
-export async function saveSeniorProfile(uid: string, profile: SeniorProfileData): Promise<void> {
+export async function saveSeniorProfile(
+  uid: string,
+  profile: SeniorProfileData,
+): Promise<SeniorProfileData> {
   const normalized = normalizeSeniorProfile(profile);
   if (!normalized) throw new Error('저장할 인재 프로필 정보가 올바르지 않습니다.');
+  const persistedProfile: SeniorProfileData = {
+    ...normalized,
+    updatedAt: new Date().toISOString(),
+  };
 
   try {
     await setDoc(
       doc(db, SENIOR_PROFILES_COLLECTION, uid),
       removeUndefinedValues({
-        ...normalized,
-        updatedAt: new Date().toISOString(),
+        ...persistedProfile,
         timestamp: serverTimestamp(),
       }),
       { merge: true },
     );
+    saveLocalSeniorProfile(persistedProfile, uid);
+    return persistedProfile;
   } catch (error) {
     console.error(`saveSeniorProfile(${uid}) failed:`, error);
     throw error;
@@ -190,23 +234,22 @@ export async function saveSeniorProfile(uid: string, profile: SeniorProfileData)
 }
 
 export async function getCompanyProfile(uid: string): Promise<CompanyProfileData | null> {
-  try {
-    const snapshot = await getDoc(doc(db, COMPANY_PROFILES_COLLECTION, uid));
-    return snapshot.exists() ? normalizeCompanyProfile(snapshot.data()) : null;
-  } catch (error) {
-    console.warn(`getCompanyProfile(${uid}) failed:`, error);
-    return null;
-  }
+  const result = await readRemoteProfile(COMPANY_PROFILES_COLLECTION, uid, normalizeCompanyProfile);
+  return result.status === 'resolved' ? result.profile : null;
 }
 
 export async function resolveCompanyProfile(uid?: string): Promise<CompanyProfileData | null> {
   const localProfile = getLocalCompanyProfile(uid);
-  if (localProfile) return localProfile;
-  if (!uid) return null;
+  if (!uid) return localProfile;
 
-  const remoteProfile = await getCompanyProfile(uid);
-  if (remoteProfile) saveLocalCompanyProfile(remoteProfile, uid);
-  return remoteProfile;
+  const result = await readRemoteProfile(COMPANY_PROFILES_COLLECTION, uid, normalizeCompanyProfile);
+  if (result.status === 'unavailable') return localProfile;
+  if (result.profile) {
+    saveLocalCompanyProfile(result.profile, uid);
+  } else {
+    removeScopedProfile(COMPANY_PROFILE_STORAGE_KEY, uid);
+  }
+  return result.profile;
 }
 
 export async function saveCompanyProfile(uid: string, profile: CompanyProfileData): Promise<void> {

@@ -8,16 +8,16 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { generateGeminiConnectionTest, getGeminiLogDetails } from './lib/gemini.mjs';
 import { generateExperienceCard } from './lib/experienceCard.mjs';
 import { generateNextInterviewQuestion } from './lib/interviewQuestion.mjs';
-import { proxyWorknetJobs } from './lib/worknetProxy.mjs';
-import { proxySeoulJobs } from './lib/seoulJobProxy.mjs';
-import { proxyPublicJobs } from './lib/publicJobProxy.mjs';
 import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator.mjs';
 import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
+import { handleApplicationContact } from './lib/applicationContact.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
 const jobSearchWarmupUrl =
   'https://al07team04-bdfcd.web.app/api/jobs/search?page=1&pageSize=12&sortBy=fit-desc';
+const retiredSourceRouteCacheControl =
+  'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400';
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -108,6 +108,31 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+// Older tabs used these browser-facing source routes and retried the upstream APIs
+// directly when a route disappeared. Keep cacheable empty responses during the
+// migration so every source is contacted only by the once-daily scheduled sync.
+app.get('/api/worknet/jobs', (_req, res) => {
+  res.set('Cache-Control', retiredSourceRouteCacheControl);
+  res.type('application/xml');
+  return res
+    .status(200)
+    .send('<?xml version="1.0" encoding="UTF-8"?><wantedRoot><total>0</total></wantedRoot>');
+});
+
+app.get('/api/seoul/jobs', (_req, res) => {
+  res.set('Cache-Control', retiredSourceRouteCacheControl);
+  return res.status(200).json({ GetJobInfo: { list_total_count: 0, row: [] } });
+});
+
+app.get('/api/public/jobs', (_req, res) => {
+  res.set('Cache-Control', retiredSourceRouteCacheControl);
+  return res.status(200).json({ result: [], totalCount: 0 });
+});
+
+app.post('/api/applications/contact', (req, res) => {
+  return handleApplicationContact(req, res);
+});
+
 app.get('/api/jobs/stats', async (_req, res) => {
   const stats = await getAccumulatedStats();
   const latestUpdatedTime = stats.latestUpdatedAt
@@ -120,31 +145,15 @@ app.get('/api/jobs/stats', async (_req, res) => {
 
 app.get('/api/jobs/search', async (req, res) => {
   try {
-    res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    // Keep personalized results in the user's browser only. This also protects
+    // the function from older open tabs that repeatedly request an identical URL.
+    res.set('Cache-Control', 'private, max-age=600, stale-while-revalidate=600');
     const result = await searchAccumulatedJobPostings(req.query);
     return res.json({ status: 'success', ...result });
   } catch (error) {
     logError('Full job database search failed:', error);
     return sendClientError(res, 500, '전체 채용공고를 검색하는 중 문제가 발생했습니다.');
   }
-});
-
-app.get('/api/jobs/sync', async (_req, res) => {
-  const result = await runBackendJobSync();
-  clearJobCatalogCache();
-  return res.json({ status: 'success', ...result });
-});
-
-app.get('/api/worknet/jobs', (req, res) => {
-  return proxyWorknetJobs(req, res, process.env.WORKNET_JOB_API_KEY);
-});
-
-app.get('/api/seoul/jobs', (req, res) => {
-  return proxySeoulJobs(req, res, process.env.SEOUL_JOB_API_KEY);
-});
-
-app.get('/api/public/jobs', (req, res) => {
-  return proxyPublicJobs(req, res, process.env.PUBLIC_JOB_API_KEY);
 });
 
 app.get('/api/ai/test', async (_req, res) => {
@@ -286,6 +295,7 @@ export const scheduledJobSync = onSchedule(
     const result = await runBackendJobSync();
     clearJobCatalogCache();
     console.log('Scheduled Job Sync completed:', result);
+    if (result.skipped) return;
     try {
       const warmupResponse = await fetch(jobSearchWarmupUrl, {
         headers: { Accept: 'application/json' },

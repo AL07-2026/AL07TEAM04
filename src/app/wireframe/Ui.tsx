@@ -11,10 +11,9 @@ import {
   Smartphone,
   User,
 } from 'lucide-react';
-import { createContext, useContext, useEffect, type ReactNode, useState } from 'react';
+import { createContext, useContext, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
 export type Role = 'senior' | 'company';
@@ -39,36 +38,11 @@ export const useViewportMode = () => useContext(ViewportContext);
 export function ViewportProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ViewportMode>(() => {
     if (typeof window !== 'undefined') {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      const isMobileUA =
-        /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
-          userAgent,
-        );
-      const isSmallScreen = window.innerWidth < 768;
-      if (isMobileUA || isSmallScreen) {
-        return 'mobile';
-      }
       const saved = localStorage.getItem('eojob_viewport_mode');
       if (saved === 'pc' || saved === 'mobile') return saved;
     }
     return 'pc';
   });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleResize = () => {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      const isMobileUA =
-        /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
-          userAgent,
-        );
-      if (isMobileUA || window.innerWidth < 768) {
-        setModeState('mobile');
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const setMode = (newMode: ViewportMode) => {
     setModeState(newMode);
@@ -78,6 +52,70 @@ export function ViewportProvider({ children }: { children: ReactNode }) {
   };
 
   return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
+}
+
+export function BrandLogo({
+  className,
+  variant = 'full',
+}: {
+  className?: string;
+  variant?: 'full' | 'icon';
+}) {
+  return (
+    <img
+      alt="이어잡"
+      className={cn('h-7 object-contain', variant === 'icon' ? 'w-7' : 'w-auto', className)}
+      src={variant === 'icon' ? '/logo_icon.png' : '/logo_text.png'}
+    />
+  );
+}
+
+function ViewportModeSwitcher({ compact = false }: { compact?: boolean }) {
+  const { mode, setMode } = useViewportMode();
+
+  return (
+    <div
+      aria-label="화면 보기 방식"
+      className={cn(
+        'flex items-center rounded-full border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs',
+        compact ? 'gap-0.5 p-0.5' : 'gap-1 p-1',
+      )}
+      role="group"
+    >
+      <button
+        aria-label="PC 화면으로 보기"
+        aria-pressed={mode === 'pc'}
+        className={cn(
+          'flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full font-extrabold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
+          compact ? 'px-2.5 text-[11px]' : 'px-3 text-xs',
+          mode === 'pc'
+            ? 'bg-[#17212B] text-white shadow-2xs'
+            : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+        )}
+        onClick={() => setMode('pc')}
+        type="button"
+      >
+        <Monitor aria-hidden="true" className={compact ? 'size-3' : 'size-3.5'} />
+        <span className={compact ? undefined : 'hidden sm:inline'}>{compact ? 'PC' : 'PC 웹'}</span>
+      </button>
+      <button
+        aria-label="모바일 화면으로 보기"
+        aria-pressed={mode === 'mobile'}
+        className={cn(
+          'flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full font-extrabold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
+          compact ? 'px-2.5 text-[11px]' : 'px-3 text-xs',
+          mode === 'mobile'
+            ? 'bg-[#17212B] text-white shadow-2xs'
+            : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+        )}
+        onClick={() => setMode('mobile')}
+        type="button"
+      >
+        <Smartphone aria-hidden="true" className={compact ? 'size-3' : 'size-3.5'} />
+        <span className={compact ? undefined : 'hidden sm:inline'}>모바일</span>
+      </button>
+    </div>
+  );
 }
 
 type MobilePageProps = {
@@ -100,8 +138,7 @@ export function MobilePage({
   title,
 }: MobilePageProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { mode: viewportMode, setMode: setViewportMode } = useViewportMode();
+  const { mode: viewportMode } = useViewportMode();
 
   const isMobileMode = viewportMode === 'mobile';
 
@@ -132,7 +169,7 @@ export function MobilePage({
                   onClick={() => void navigate('/')}
                   className="flex items-center gap-1.5 rounded-xl hover:opacity-85 transition"
                 >
-                  <img src="/logo_icon.png" alt="이어잡" className="size-5 object-contain" />
+                  <BrandLogo variant="icon" />
                   <h1 className="text-[17px] font-extrabold tracking-tight text-[#17212B]">
                     {title}
                   </h1>
@@ -140,33 +177,8 @@ export function MobilePage({
               </div>
 
               {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
-              <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-0.5 rounded-full border border-[#E0D9C8]">
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('pc')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    !isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Monitor className="size-3" />
-                  <span>PC</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewportMode('mobile')}
-                  className={cn(
-                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition',
-                    isMobileMode
-                      ? 'bg-[#17212B] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                  )}
-                >
-                  <Smartphone className="size-3" />
-                  <span>모바일</span>
-                </button>
+              <div className="hidden sm:block">
+                <ViewportModeSwitcher compact />
               </div>
             </header>
 
@@ -206,16 +218,8 @@ export function MobilePage({
                     onClick={() => void navigate('/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
-                    <img
-                      src="/logo_text.png"
-                      alt="이어잡"
-                      className="hidden md:block h-[21px] w-auto object-contain"
-                    />
-                    <img
-                      src="/logo_icon.png"
-                      alt="이어잡"
-                      className="md:hidden size-[17px] object-contain"
-                    />
+                    <BrandLogo className="hidden md:block" />
+                    <BrandLogo className="md:hidden" variant="icon" />
                   </button>
                   <h1 className="sr-only">{title}</h1>
                 </div>
@@ -223,34 +227,7 @@ export function MobilePage({
 
               {/* Viewport Mode Switcher */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
+                <ViewportModeSwitcher />
               </div>
             </header>
 
@@ -285,16 +262,8 @@ export function MobilePage({
                     onClick={() => void navigate('/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
-                    <img
-                      src="/logo_text.png"
-                      alt="이어잡"
-                      className="hidden md:block h-[22px] w-auto object-contain"
-                    />
-                    <img
-                      src="/logo_icon.png"
-                      alt="이어잡"
-                      className="md:hidden size-[20px] object-contain"
-                    />
+                    <BrandLogo className="hidden md:block" />
+                    <BrandLogo className="md:hidden" variant="icon" />
                   </button>
                   <h1 className="sr-only">{title}</h1>
                 </div>
@@ -310,13 +279,7 @@ export function MobilePage({
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => {
-                          if (!user && (item.id === 'profile' || item.id === 'proposals')) {
-                            void navigate('/login');
-                          } else {
-                            void navigate(item.path);
-                          }
-                        }}
+                        onClick={() => void navigate(item.path)}
                         className={cn(
                           'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
                           selected
@@ -336,34 +299,7 @@ export function MobilePage({
 
               {/* Right Mode Switcher */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 bg-[#FAF7F2] p-1 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('pc')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      !isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Monitor className="size-3.5" />
-                    <span className="hidden sm:inline">PC 웹</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewportMode('mobile')}
-                    className={cn(
-                      'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all',
-                      isMobileMode
-                        ? 'bg-[#17212B] text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                    )}
-                  >
-                    <Smartphone className="size-3.5" />
-                    <span className="hidden sm:inline">모바일</span>
-                  </button>
-                </div>
+                <ViewportModeSwitcher />
               </div>
             </header>
 
@@ -403,7 +339,6 @@ function BottomNav({
   role: Role;
 }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   return (
     <nav
@@ -425,13 +360,7 @@ function BottomNav({
                 selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
               )}
               key={item.id}
-              onClick={() => {
-                if (!user && (item.id === 'profile' || item.id === 'proposals')) {
-                  void navigate('/login');
-                } else {
-                  void navigate(item.path);
-                }
-              }}
+              onClick={() => void navigate(item.path)}
               type="button"
             >
               <IconComponent
@@ -453,13 +382,13 @@ export function StepProgressBar({ current, total }: { current: number; total: nu
   const percentage = Math.min(100, Math.max(0, (current / total) * 100));
   return (
     <div className="flex flex-col items-center gap-1.5 py-1">
-      <div className="flex items-center gap-1.5">
-        <span className="text-[12px] font-extrabold tracking-wide text-[#17212B]">경험 등록</span>
-        <span className="rounded-full border border-[#BBD5CE] bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
+      <div className="flex items-center gap-2">
+        <span className="text-[12px] font-black tracking-wide text-[#17212B]">경험 등록</span>
+        <span className="rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-[11px] font-black text-[#173F3A] shadow-2xs">
           {current}/{total} 단계
         </span>
       </div>
-      <div className="h-2 w-40 overflow-hidden rounded-full bg-[#E5DFC9]">
+      <div className="h-1.5 w-40 overflow-hidden rounded-full bg-[#DDEBE7]/70">
         <div
           className="h-full rounded-full bg-gradient-to-r from-[#173F3A] to-[#F06B4F] transition-all duration-300"
           style={{ width: `${percentage}%` }}

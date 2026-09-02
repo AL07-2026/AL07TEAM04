@@ -19,7 +19,7 @@ import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import {
   getLocalSeniorProfile,
-  getSeniorProfile,
+  resolveSeniorProfile,
   saveLocalSeniorProfile,
   saveSeniorProfile,
   type SeniorProfileData,
@@ -39,7 +39,7 @@ function createEmptyProfile(email = ''): ProfileForm {
     keySkills: '',
     period: '',
     certifications: '',
-    experience: '시간제·파트타임 (오전/오후)',
+    experience: '',
     solvedExperiences: '',
     phone: '',
     email,
@@ -141,11 +141,10 @@ export function BasicProfilePage() {
   useEffect(() => {
     if (!user?.uid) return;
     void (async () => {
-      const data = await getSeniorProfile(user.uid);
+      const data = await resolveSeniorProfile(user.uid);
       if (data) {
         const loadedForm: ProfileForm = { ...data, email: data.email || user.email || '' };
         setForm(loadedForm);
-        saveLocalSeniorProfile(loadedForm, user.uid);
         setIsEditing(false);
         return;
       }
@@ -212,20 +211,19 @@ export function BasicProfilePage() {
         : undefined,
     };
     setForm(normalizedForm);
-    saveLocalSeniorProfile(normalizedForm, user?.uid);
-    window.dispatchEvent(new Event('eojob_senior_profile_updated'));
     if (user?.uid) {
       try {
-        await saveSeniorProfile(user.uid, normalizedForm);
+        const savedProfile = await saveSeniorProfile(user.uid, normalizedForm);
+        setForm(savedProfile);
       } catch (err) {
         console.error('Failed to save senior profile to Firestore:', err);
-        setIsEditing(false);
-        setMessage(
-          '기기에는 저장했지만 서버 저장을 확인하지 못했습니다. 연결 후 다시 저장해 주세요.',
-        );
+        setMessage('서버에 저장하지 못했습니다. 연결 상태를 확인한 뒤 다시 저장해 주세요.');
         return;
       }
+    } else {
+      saveLocalSeniorProfile(normalizedForm);
     }
+    window.dispatchEvent(new Event('eojob_senior_profile_updated'));
     setIsEditing(false);
     setMessage('✓ 프로필 정보가 성공적으로 저장되었습니다.');
   }
@@ -388,7 +386,11 @@ export function BasicProfilePage() {
                   strong={false}
                   value={form.solvedExperiences || form.experience}
                 />
-                <ProfileInfoRow label="대표 경험" strong={false} value={form.experience} />
+                <ProfileInfoRow
+                  label="대표 경험"
+                  strong={false}
+                  value={form.experience || '미입력'}
+                />
                 <ProfileInfoRow label="연락처" value={form.phone} />
                 <ProfileInfoRow label="이메일" value={form.email} />
               </dl>
@@ -480,10 +482,19 @@ export function BasicProfilePage() {
 
                 <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    대표 경험 및 담당 업무
+                  </span>
+                  <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
+                    {form.experience || '미입력'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                     해결했던 핵심 문제 및 성과 사례
                   </span>
                   <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
-                    {form.solvedExperiences || form.experience}
+                    {form.solvedExperiences || '미입력'}
                   </p>
                 </div>
 
@@ -772,7 +783,14 @@ export function BasicProfilePage() {
               )}
             </div>
 
-            {/* Section 5: 해결했던 핵심 문제 및 성과 사례 */}
+            {/* Section 5: 대표 경험 및 해결했던 핵심 문제 */}
+            <TextAreaField
+              label="대표 경험 및 담당 업무 (매칭 핵심 데이터)"
+              onChange={(e) => update('experience')(e.target.value)}
+              placeholder="예: 12년간 B2B 서비스 운영을 총괄하며 고객지원 조직과 운영 지표를 관리했습니다."
+              value={form.experience || ''}
+            />
+
             <TextAreaField
               label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
@@ -791,7 +809,7 @@ export function BasicProfilePage() {
                 className="w-full rounded-2xl border-0 bg-[#FAF7F2] px-4 py-3.5 text-sm font-bold text-[#17212B] outline-none focus:bg-white focus:ring-2 focus:ring-[#173F3A]/20 shadow-2xs transition-all"
                 onChange={(e) => {
                   const val = e.target.value;
-                  setForm((prev) => ({ ...prev, desiredWorkType: val, experience: val }));
+                  setForm((prev) => ({ ...prev, desiredWorkType: val }));
                 }}
                 value={form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
               >

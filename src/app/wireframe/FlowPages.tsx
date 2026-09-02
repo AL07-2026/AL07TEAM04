@@ -28,6 +28,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
+import {
+  createLoginRedirectPath,
+  LOGIN_REQUIRED_NAVIGATION_STATE,
+} from '@/app/authRequiredNavigation';
 import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
 import { analyzeJobPostingForDetail } from '@/services/aiJobDetailAnalyzer';
 import {
@@ -80,7 +84,6 @@ import {
   getLocalSeniorProfile,
   resolveCompanyProfile,
   resolveSeniorProfile,
-  saveLocalSeniorProfile,
   type CompanyProfileData,
   type SeniorProfileData,
 } from '@/services/profileService';
@@ -579,9 +582,9 @@ export function SeniorHomePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
   const { user } = useAuth();
+  const userId = user?.uid;
   const isMobile = mode === 'mobile';
 
-  const initialLocalProfile = useMemo(() => getLocalSeniorProfile(user?.uid), [user?.uid]);
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
 
   const [activeProposalsCount, setActiveProposalsCount] = useState<number>(0);
@@ -591,10 +594,20 @@ export function SeniorHomePage() {
   const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
-  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(initialLocalProfile);
+  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(null);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   const hasLoadedRef = useRef(false);
+
+  function handleStartExperienceInterview() {
+    if (!user) {
+      void navigate(createLoginRedirectPath('/senior/experience'), {
+        state: LOGIN_REQUIRED_NAVIGATION_STATE,
+      });
+      return;
+    }
+    void navigate('/senior/experience');
+  }
 
   useEffect(() => {
     async function loadAndRankProjects() {
@@ -602,9 +615,9 @@ export function SeniorHomePage() {
         setIsLoadingRecommendations(true);
       }
       const [profile, proposals, experienceCard, rawCompanyProjects] = await Promise.all([
-        resolveSeniorProfile(user?.uid),
-        getUserProposals(user?.uid),
-        getLatestUserExperienceCard(user?.uid),
+        resolveSeniorProfile(userId),
+        getUserProposals(userId),
+        getLatestUserExperienceCard(userId),
         fetchProjects().catch(() => []),
       ]);
       setRecommendationProfile(profile);
@@ -618,7 +631,7 @@ export function SeniorHomePage() {
       const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
       const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
 
-      if (!user) {
+      if (!userId) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHighestFitProject(null);
@@ -650,7 +663,9 @@ export function SeniorHomePage() {
         );
 
         const result = await searchFullJobDatabase({
+          cacheScope: userId,
           categories: primaryCategory ? [primaryCategory] : undefined,
+          certificationText: profile?.certifications,
           desiredCategories: preferredPreferences,
           desiredLocation: profile?.desiredLocation,
           desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
@@ -660,9 +675,12 @@ export function SeniorHomePage() {
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
           page: 1,
           pageSize: 20,
-          profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
-            .filter(Boolean)
-            .join(' '),
+          profileExperience:
+            profile?.experience === profile?.desiredWorkType ? '' : profile?.experience,
+          profileField: profile?.field,
+          profileKeySkills: profile?.keySkills,
+          profileSolvedExperience: profile?.solvedExperiences,
+          desiredWorkType: profile?.desiredWorkType,
           sortBy: 'fit-desc',
         });
 
@@ -743,14 +761,12 @@ export function SeniorHomePage() {
     window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
     window.addEventListener('eojob_experience_card_updated', handleProfileUpdate);
     window.addEventListener('eojob_feed_revalidated', handleProfileUpdate);
-    window.addEventListener('storage', handleProfileUpdate);
     return () => {
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
       window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
-      window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [recommendationReloadKey, user, user?.uid]);
+  }, [recommendationReloadKey, userId]);
 
   const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
   const recommendationPrimaryLabel = recommendationPrimaryCategory
@@ -794,7 +810,7 @@ export function SeniorHomePage() {
 
       {/* AI Experience Interview Banner */}
       <button
-        onClick={() => void navigate('/senior/experience')}
+        onClick={handleStartExperienceInterview}
         type="button"
         className="group w-full rounded-2xl bg-white p-4 md:p-6 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
       >
@@ -1036,7 +1052,6 @@ function buildExperienceInterviewPath(selectedOptions: string[]) {
 
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [selected, setSelected] = useState(['운영 효율화', '마케팅/영업']);
 
   function toggle(option: string) {
@@ -1050,13 +1065,6 @@ export function ExperienceSelectionPage() {
   }
 
   function handleProceed(targetUrl: string) {
-    if (selected.length > 0) {
-      const profile = getLocalSeniorProfile(user?.uid);
-      if (profile) {
-        saveLocalSeniorProfile({ ...profile, field: selected.join(', ') }, user?.uid);
-        window.dispatchEvent(new Event('eojob_senior_profile_updated'));
-      }
-    }
     void navigate(
       targetUrl === '/senior/experience/interview'
         ? buildExperienceInterviewPath(selected)
@@ -1093,7 +1101,7 @@ export function ExperienceSelectionPage() {
           </Chip>
         ))}
       </div>
-      <div className="flex h-20 flex-col rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
+      <div className="flex h-20 flex-col rounded-2xl bg-white p-4 shadow-xs">
         <strong className="text-[13px] font-extrabold text-[#17212B]">
           선택 {selected.length}개
         </strong>
@@ -1459,7 +1467,7 @@ export function ExperienceInterviewPage() {
       <StepProgressBar current={1} total={3} />
 
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
-        <p className="text-xl font-extrabold tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
+        <p className="text-xl font-black tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
         <p className="text-xs font-medium text-slate-500">
           {applicationReturn?.targetTitle
             ? `“${applicationReturn.targetTitle}” 지원에 맞는 경험을 확인합니다.`
@@ -1467,21 +1475,21 @@ export function ExperienceInterviewPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/55 px-3.5 py-3">
+      <div className="flex items-center justify-between rounded-2xl bg-[#DDEBE7]/60 px-4 py-3 shadow-2xs">
         <div className="min-w-0">
           <p className="text-[11px] font-extrabold text-[#173F3A]">인터뷰 기준 직종</p>
-          <p className="mt-0.5 truncate text-[14px] font-extrabold text-[#17212B]">
+          <p className="mt-0.5 truncate text-[14px] font-black text-[#17212B]">
             {targetCategoryLabel}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#173F3A] shadow-2xs">
           질문 {Math.min(questionIndex + 1, interviewQuestions.length)}/{interviewQuestions.length}
         </span>
       </div>
 
       <div
         ref={messagesScrollRef}
-        className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs"
+        className="flex min-h-[220px] flex-col gap-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-xs"
       >
         {messages.map((msg) => (
           <div
@@ -1494,17 +1502,17 @@ export function ExperienceInterviewPage() {
               </div>
             )}
             <div
-              className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed font-medium ${
+              className={`max-w-[84%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed font-medium ${
                 msg.sender === 'user'
                   ? 'rounded-tr-xs bg-[#173F3A] text-white shadow-xs'
-                  : 'rounded-tl-xs border border-[#BBD5CE] bg-[#DDEBE7]/70 text-[#17212B]'
+                  : 'rounded-tl-xs bg-[#DDEBE7]/80 text-[#173F3A] shadow-2xs'
               }`}
             >
               {editingAnswer?.messageId === msg.id ? (
                 <div className="flex flex-col gap-2">
                   <textarea
                     aria-label="수정할 인터뷰 답변"
-                    className="min-h-20 w-full resize-none rounded-xl border border-white/30 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none focus:border-[#F06B4F]"
+                    className="min-h-20 w-full resize-none rounded-xl border-0 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none ring-2 ring-[#F06B4F]"
                     value={editingAnswer.text}
                     onChange={(event) =>
                       setEditingAnswer((current) =>
@@ -1515,7 +1523,7 @@ export function ExperienceInterviewPage() {
                   <div className="flex justify-end gap-1.5">
                     <button
                       aria-label="답변 수정 취소"
-                      className="flex size-8 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+                      className="flex size-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
                       onClick={() => setEditingAnswer(null)}
                       type="button"
                     >
@@ -1533,15 +1541,13 @@ export function ExperienceInterviewPage() {
                   </div>
                 </div>
               ) : (
-                <>
-                  <p>{msg.text}</p>
-                </>
+                <p>{msg.text}</p>
               )}
             </div>
             {msg.answerField && editingAnswer?.messageId !== msg.id ? (
               <button
                 aria-label="답변 수정"
-                className="order-first mt-1 flex h-8 shrink-0 items-center gap-1 rounded-full border border-[#D4CBB8] bg-white px-2.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs transition hover:border-[#173F3A] hover:bg-[#F4FAF8]"
+                className="order-first mt-1 flex h-7 shrink-0 items-center gap-1 rounded-full bg-[#FAF7F2] px-2.5 text-[11px] font-bold text-[#173F3A] shadow-2xs transition hover:bg-[#EAF3F0]"
                 onClick={() => startEditingAnswer(msg)}
                 type="button"
               >
@@ -1553,12 +1559,12 @@ export function ExperienceInterviewPage() {
         ))}
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-2.5 pt-1">
+      <div className="flex flex-col items-center justify-center gap-3 pt-1">
         {/* Voice Graphic with Waveform indicator */}
         <div className="relative flex items-center justify-center">
           {isRecording && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <AudioLines className="size-24 text-[#F06B4F] opacity-70 animate-pulse" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <AudioLines className="size-24 animate-pulse text-[#F06B4F] opacity-70" />
             </div>
           )}
           <button
@@ -1567,7 +1573,7 @@ export function ExperienceInterviewPage() {
             disabled={isTranscribing || interviewComplete}
             type="button"
             className={cn(
-              'group relative flex size-20 flex-col items-center justify-center gap-1 rounded-full text-white shadow-xl transition-all active:scale-95 hover:scale-105',
+              'group relative flex size-20 flex-col items-center justify-center gap-1.5 rounded-full text-white shadow-lg transition-all active:scale-95 hover:scale-105',
               interviewComplete
                 ? 'cursor-not-allowed bg-slate-300 shadow-none'
                 : isTranscribing
@@ -1577,16 +1583,12 @@ export function ExperienceInterviewPage() {
                     : 'bg-[#F06B4F] shadow-[#F06B4F]/25 hover:bg-[#E05A3E]',
             )}
           >
-            <div
-              className={`flex size-8 items-center justify-center rounded-full bg-white/20 ${isRecording ? 'animate-ping' : ''}`}
-            >
-              {isRecording ? (
-                <AudioLines className="size-4 text-white" />
-              ) : (
-                <Mic className="size-4 text-white" />
-              )}
-            </div>
-            <span className="text-[10px] font-extrabold tracking-tight">
+            {isRecording ? (
+              <AudioLines className="size-5.5 animate-pulse text-white" />
+            ) : (
+              <Mic className="size-5.5 text-white" />
+            )}
+            <span className="text-[11px] font-black tracking-tight">
               {interviewComplete
                 ? '답변 완료'
                 : isTranscribing
@@ -1598,8 +1600,8 @@ export function ExperienceInterviewPage() {
           </button>
         </div>
 
-        <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-center shadow-xs">
-          <span className="text-[11px] font-extrabold text-[#173F3A]">
+        <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-2xl bg-[#FAF7F2] px-4 py-2.5 text-center shadow-2xs">
+          <span className="text-[11.5px] font-bold text-[#173F3A]">
             {isTranscribing
               ? transcribingVoiceNotice
               : isRecording
@@ -1625,31 +1627,31 @@ export function ExperienceInterviewPage() {
 
         <form
           onSubmit={handleTextSubmit}
-          className="flex w-full flex-col gap-2 rounded-xl border border-[#E0D9C8] bg-white p-3 shadow-xs"
+          className="flex w-full flex-col gap-2.5 rounded-2xl bg-white p-4 shadow-xs"
         >
           <label
-            className="text-[12px] font-extrabold text-[#173F3A]"
+            className="text-[12px] font-bold text-[#173F3A]"
             htmlFor="interview-text-answer"
           >
             직접 입력하기
           </label>
           <div className="flex items-stretch gap-2">
-          <textarea
-            aria-label="현재 인터뷰 답변"
-            disabled={interviewComplete || isRecording || isTranscribing}
-            id="interview-text-answer"
-            placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
-            value={inputText}
-            onChange={(e) => handleAnswerTextChange(e.target.value)}
-            className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
-          />
-          <button
-            disabled={interviewComplete || isRecording || isTranscribing}
-            type="submit"
-            className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-          >
-            입력
-          </button>
+            <textarea
+              aria-label="현재 인터뷰 답변"
+              disabled={interviewComplete || isRecording || isTranscribing}
+              id="interview-text-answer"
+              placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
+              value={inputText}
+              onChange={(e) => handleAnswerTextChange(e.target.value)}
+              className="min-h-11 flex-1 resize-none rounded-xl border-0 bg-[#FAF7F2] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#17212B] outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-[#173F3A]/20"
+            />
+            <button
+              disabled={interviewComplete || isRecording || isTranscribing}
+              type="submit"
+              className="flex min-h-11 items-center justify-center rounded-xl bg-[#DDEBE7] px-4 text-xs font-bold text-[#173F3A] shadow-2xs transition-colors hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              입력
+            </button>
           </div>
         </form>
 
@@ -2697,6 +2699,8 @@ export function ProjectRegisterPage() {
           requiredSkills: 'unknown',
         },
         seniorFitScore: 90,
+        source: 'internal',
+        sourceProvider: '이어잡 기업 직접 등록',
       });
       let attachmentSync = attachments.length === 0 ? 'none' : 'local';
       if (savedToFirestore && attachments.length > 0) {
@@ -3240,13 +3244,39 @@ export function SeniorProfilePage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const seniorProfile = getLocalSeniorProfile(user?.uid);
+  const [resolvedSeniorProfile, setResolvedSeniorProfile] = useState<{
+    ownerId: string;
+    profile: SeniorProfileData | null;
+  } | null>(null);
+  const seniorProfile =
+    resolvedSeniorProfile && resolvedSeniorProfile.ownerId === user?.uid
+      ? resolvedSeniorProfile.profile
+      : null;
 
   useEffect(() => {
     if (!user && import.meta.env.MODE !== 'test') {
       void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    let active = true;
+    const ownerId = user.uid;
+
+    const loadProfile = () => {
+      void resolveSeniorProfile(ownerId).then((profile) => {
+        if (active) setResolvedSeniorProfile({ ownerId, profile });
+      });
+    };
+
+    loadProfile();
+    window.addEventListener('eojob_senior_profile_updated', loadProfile);
+    return () => {
+      active = false;
+      window.removeEventListener('eojob_senior_profile_updated', loadProfile);
+    };
+  }, [user?.uid]);
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
