@@ -16,6 +16,43 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-02] develop 원격 변경사항 안전 통합 및 사용자 최신 기능·랜딩페이지 100% 보존
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 배경**:
+  - `origin/develop`에 추가된 타 작업자의 기능(AI 경험 카드 확장, 지원서 첨부파일 처리, 스토리지 정규화 등)을 안전하게 병합하되,
+  - 사용자가 최근 배포한 핵심 기능(이메일 보안 인증, 세부 경력 기반 추천 점수 계산, 수동 뷰포트 전환기, Firestore 우선 프로필 등)과 **랜딩 페이지(`LandingPage.tsx`, `LandingPage.test.tsx`)를 100% 보존**하면서 무결점으로 통합 완료.
+- **주요 해결 및 통합 내역**:
+  1. **랜딩 페이지 100% 보존**: `LandingPage.tsx` 및 `LandingPage.test.tsx`의 전역 인앱 브라우저 탈출 배너, 디자인 레일, 접근성 검증 로직 완벽 유지.
+  2. **이메일 및 제안 서비스 통합**:
+     - `src/services/emailService.ts`: 기업 담당자 이메일 보안 조회(`prepareApplicationEmailToManager`) 및 외부 접수 분기 보존.
+     - `src/services/proposalService.ts`: develop의 이력서 파일 업로드(`uploadProposalResumeFiles`)와 사용자의 Firestore 필수 저장/에러 핸들링 로직 융합.
+  3. **프로필 및 검색 서비스 통합**:
+     - `src/services/profileService.ts`: develop의 다중 경험 카드 정규화와 사용자의 레거시 근무형태 분리 및 Firestore 우선 로직 융합.
+     - `src/services/jobSearchService.ts`: UID 캐시 격리, 강제 새로고침, `!== 'all'` 필터 생략 로직 융합.
+  4. **화면 및 라우팅 보정**:
+     - `src/app/JobDatabasePage.tsx`: URL 쿼리 파라미터(`register=1`) 지원 및 `createProposalFromPosting` 파일 첨부 연동 보정.
+     - `src/app/App.test.tsx`: 기업 라우트 인증 보호 및 신규 등록 모달 제출 셀렉터 보정.
+- **검증 & 결과**:
+  - `npm run validate` 전체 파이프라인 100% 통과:
+    - TypeScript 타입 체크 0 에러
+    - ESLint 0 경고/0 에러
+    - Vitest 35개 테스트 파일 338개 테스트 전체 통과
+    - Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/services/proposalService.ts`
+  - [MODIFY] `src/services/proposalService.test.ts`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.test.tsx`
+  - [MODIFY] `src/lib/browserStorage.ts`
+  - [MODIFY] `src/lib/browserStorage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
 ### [2026-09-02] 이어잡(EOJOB) 컬러 시스템 가이드라인 문서화 (`docs/COLOR_SYSTEM.md`)
 - **작업자**: Antigravity (Gemini)
 - **작업 내용**:

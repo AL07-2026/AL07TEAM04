@@ -303,6 +303,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     saveLocalCompanyProfile(
       {
         companyName: '테스트 회사',
@@ -331,7 +332,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
       target: { value: '업무 흐름을 정리합니다.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Firestore DB에 등록$/ }));
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
@@ -340,6 +341,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it('받은 제안의 진행 단계와 연락 상태를 확인한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     const proposal = {
       id: '1',
       projectId: 'project-1',

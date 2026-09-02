@@ -1309,7 +1309,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
     Boolean(searchParams.get('focusProject')),
   );
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(() => searchParams.get('register') === '1');
   const [isCompanyProjectModalOpen, setIsCompanyProjectModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
@@ -1848,6 +1848,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         applicantNote,
         user?.uid,
         { email: user?.email, name: user?.name },
+        applicationFiles,
+        seniorProfile?.experienceProfileV1,
         {
           employmentSubsidyTarget: seniorProfile?.employmentSubsidyTarget,
           employmentSubsidyProgram: seniorProfile?.employmentSubsidyProgram,
