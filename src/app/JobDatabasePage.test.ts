@@ -112,7 +112,7 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       target: { value: 'AI 자동화 리드' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 저장' }));
 
     await waitFor(() => expect(mockedCreateProject).toHaveBeenCalledTimes(1));
     expect(mockedCreateProject).toHaveBeenCalledWith(

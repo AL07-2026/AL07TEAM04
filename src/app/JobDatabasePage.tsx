@@ -3151,20 +3151,20 @@ export function JobDatabasePage({
                 </label>
               </section>
 
-              <div className="mt-2 flex items-center justify-end gap-2">
+              <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-end gap-2 border-t border-[#E0D9C8]/70 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 backdrop-blur md:static md:mx-0 md:border-t-0 md:bg-transparent md:p-0 md:pt-0">
                 <button
                   type="button"
                   onClick={() => setIsRegisterOpen(false)}
-                  className="h-10 rounded-xl border border-[#E0D9C8] px-4 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="h-11 rounded-xl border border-[#E0D9C8] px-4 text-sm font-bold text-slate-600 hover:bg-slate-50"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="h-10 rounded-xl bg-[#173F3A] px-5 text-xs font-extrabold text-white shadow-xs hover:bg-[#21544E]"
+                  className="h-11 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white shadow-xs hover:bg-[#21544E] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? '등록 중...' : '프로젝트 등록'}
+                  {isSubmitting ? '저장 중...' : '프로젝트 저장'}
                 </button>
               </div>
             </form>
