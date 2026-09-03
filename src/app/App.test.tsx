@@ -195,7 +195,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
   });
 
-  it('프로젝트 제안을 작성하고 완료 화면으로 이동한다', async () => {
+  it('비로그인 상태에서 프로젝트 제안 제출은 로그인으로 유도한다', async () => {
     window.history.pushState({}, '', '/senior/projects/1/proposal');
     render(<App />);
     fireEvent.change(screen.getByLabelText('한 줄 소개'), {
@@ -206,8 +206,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
     fireEvent.change(screen.getByLabelText('시작 가능일'), { target: { value: '8월 20일' } });
     fireEvent.click(screen.getByRole('button', { name: '제안 보내기' }));
-    expect(await screen.findByRole('heading', { name: '제안 완료' })).toBeInTheDocument();
-    expect(window.location.pathname).toBe('/senior/proposal-complete');
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+    expect(window.location.search).toBe('?role=senior');
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
@@ -243,7 +244,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
-    expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
+    expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
     expect(window.location.pathname).toBe('/company/project-database');
   });
 

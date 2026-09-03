@@ -40,6 +40,7 @@ import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
 import { analyzeJobPostingForDetail } from '@/services/aiJobDetailAnalyzer';
 import {
   categoryLabels,
+  type EmploymentType,
   type JobPosting,
   type ProjectAttachment,
   type ProjectCategory,
@@ -119,6 +120,7 @@ import {
   type ProposalProcessStage,
   updateProposalContactStatus,
   updateProposalProcessStage,
+  updateProposalStatus,
   resolveProposalResumeUrl,
 } from '@/services/proposalService';
 import type { ExperienceProfileV1 } from '@/services/profileService';
@@ -2407,6 +2409,10 @@ export function ProposalPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!intro.trim() || !method.trim() || !date.trim() || isSending) return;
+    if (!user?.uid) {
+      void navigate('/login?role=senior');
+      return;
+    }
     setIsSending(true);
     setSendError('');
 
@@ -2619,7 +2625,7 @@ export function MyProposalsPage() {
       title="내 제안"
     >
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
-        {['전체', '진행 중', '검토 중', '연락 받음'].map((item) => (
+        {['전체', '진행 중', '검토 중', '연락 받음', '취소됨'].map((item) => (
           <Chip key={item} onClick={() => setFilter(item)} selected={filter === item}>
             {item}
           </Chip>
@@ -2737,13 +2743,29 @@ export function MyProposalDetailPage() {
   const { user } = useAuth();
   const [cancelled, setCancelled] = useState(false);
   const [proposal, setProposal] = useState<UserProposal | null>(null);
+  const [cancelError, setCancelError] = useState('');
   const seniorProfile = getLocalSeniorProfile(user?.uid);
 
   useEffect(() => {
     void getUserProposals(user?.uid).then((proposals) => {
-      setProposal(proposals.find((item) => item.id === proposalId) ?? null);
+      const selectedProposal = proposals.find((item) => item.id === proposalId) ?? null;
+      setProposal(selectedProposal);
+      setCancelled(selectedProposal?.status === '취소됨');
     });
   }, [proposalId, user?.uid]);
+
+  async function handleCancelProposal() {
+    if (!proposal || !user?.uid || cancelled) return;
+    setCancelError('');
+    try {
+      await updateProposalStatus(proposal.id, '취소됨', { requireRemote: true });
+      setProposal((current) => (current ? { ...current, status: '취소됨' } : current));
+      setCancelled(true);
+    } catch (error) {
+      console.error('Failed to cancel proposal:', error);
+      setCancelError('제안을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  }
 
   return (
     <MobilePage
@@ -2789,7 +2811,8 @@ export function MyProposalDetailPage() {
           <ActionButton onClick={() => void navigate('/senior/projects')}>
             프로젝트 보기
           </ActionButton>
-          <ActionButton disabled={cancelled} onClick={() => setCancelled(true)} secondary>
+          {cancelError ? <p className="text-xs font-semibold text-[#D85A3F]">{cancelError}</p> : null}
+          <ActionButton disabled={cancelled} onClick={() => void handleCancelProposal()} secondary>
             {cancelled ? '취소한 제안입니다' : '제안 취소'}
           </ActionButton>
         </>
@@ -2905,7 +2928,7 @@ export function CompanyHomePage() {
           caption="지원서 검토 및 대화 상태"
           label="후속 진행"
           role="company"
-          value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중').length}건`}
+          value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중' && proposal.status !== '취소됨').length}건`}
         />
       </div>
 
@@ -3003,6 +3026,7 @@ export function ProjectRegisterPage() {
     terms: '',
     location: '',
     salaryRange: '',
+    employmentType: 'project' as EmploymentType,
   });
   const [attachments, setAttachments] = useState<
     Array<{ id: string; file: File; previewUrl?: string }>
@@ -3117,27 +3141,27 @@ export function ProjectRegisterPage() {
         title: form.title.trim(),
         category: 'operations',
         seniority: 'lead',
-        employmentType: 'project',
+        employmentType: form.employmentType,
         hiringStage: 'open',
         workType,
         location: form.location.trim(),
         experienceYears: form.experience.trim(),
         salaryRange: form.salaryRange.trim(),
         attachments: attachmentMetadata,
-        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        deadline: '',
         projectDuration: form.terms.trim(),
-        collaborationTargets: ['기업 담당자', '프로젝트 실무팀'],
+        collaborationTargets: [],
         coreResponsibilities: [form.body.trim()],
         qualifications: [form.experience.trim()],
         benefits: [form.terms.trim()],
         problemStatement: form.body.trim(),
         projectGoal: form.title.trim(),
-        successMetrics: ['프로젝트 목표 달성 및 결과 보고'],
+        successMetrics: [],
         requiredSkills: [form.experience.trim()],
         preferredSkills: [],
         matchingSignals: [form.experience.trim(), form.terms.trim()],
         recommendedTalentType: `${form.experience.trim()} 경험을 보유한 시니어 전문가`,
-        matchingScoreCriteria: ['관련 경험', '진행 조건', '근무 위치'],
+        matchingScoreCriteria: [],
         interviewFocus: [form.body.trim(), form.experience.trim()],
         sourceDetailProvenance: {
           coreResponsibilities: 'source',
@@ -3154,7 +3178,7 @@ export function ProjectRegisterPage() {
             project.id,
             attachments.map((attachment) => attachment.file),
           );
-          await updateProject(project.id, { attachments: uploadedAttachments });
+          await updateProject(project.id, { attachments: uploadedAttachments }, effectiveUid);
           attachmentSync = 'uploaded';
         } catch (attachmentUploadError) {
           console.warn('Project attachment upload failed:', attachmentUploadError);
@@ -3210,6 +3234,21 @@ export function ProjectRegisterPage() {
           placeholder="예: 주 2회 · 원격 · 3개월"
           value={form.terms}
         />
+        <label className="flex flex-col gap-1 text-xs font-bold text-[#17212B]">
+          <span>고용 형태</span>
+          <select
+            aria-label="고용 형태"
+            className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
+            onChange={(event) => update('employmentType')(event.target.value)}
+            value={form.employmentType}
+          >
+            <option value="project">프로젝트</option>
+            <option value="advisory">자문</option>
+            <option value="contract">계약직</option>
+            <option value="part-time">시간제</option>
+            <option value="full-time">정규직</option>
+          </select>
+        </label>
         <Field
           label="근무 위치"
           onChange={(e) => update('location')(e.target.value)}
