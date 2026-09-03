@@ -77,7 +77,7 @@ import { getFitScoreTone } from '@/lib/fitScoreTone';
 import { cn } from '@/lib/utils';
 import { trackButtonClick, trackJobApply, trackJobView } from '@/services/analyticsService';
 import {
-  prepareApplicationEmailToManager,
+  sendApplicationToManager,
   usesExternalApplication,
 } from '@/services/emailService';
 import {
@@ -1382,9 +1382,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     interviewSummary: string;
     attachedFileNames: string;
     coverNote: string;
-    deliveryMethod: 'email-client' | 'external-application' | 'in-app';
+    deliveryMethod: 'server-email' | 'external-application' | 'in-app';
+    emailSent: boolean;
     recipientEmail: string;
-    mailtoLink: string;
     sourceUrl?: string;
   } | null>(null);
   const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
@@ -1859,13 +1859,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           employmentSubsidyProgram: seniorProfile?.employmentSubsidyProgram,
         },
       );
-      const emailResult = await prepareApplicationEmailToManager(applyingPosting, {
-        applicantName: user?.name || user?.email?.split('@')[0] || '지원자',
-        applicantEmail: user?.email || seniorProfile?.email,
-        attachedResumeName: attachedFileNames,
-        interviewSummary,
-        coverNote: applicantNote,
-      });
+      const emailResult = await sendApplicationToManager(applyingPosting);
 
       setCompletedApplication({
         posting: applyingPosting,
@@ -1873,8 +1867,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         attachedFileNames,
         coverNote: applicantNote,
         deliveryMethod: emailResult.deliveryMethod,
+        emailSent: emailResult.emailSent,
         recipientEmail: emailResult.recipientEmail,
-        mailtoLink: emailResult.mailtoLink,
         sourceUrl: applyingPosting.sourceUrl,
       });
 
@@ -3245,11 +3239,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <div className="flex items-start gap-3 rounded-2xl bg-[#FFF4EB] p-4 text-[14px] font-bold leading-6 text-[#6F3B2D] md:p-5">
                 <CircleAlert className="mt-0.5 size-[19px] shrink-0 text-[#B84B36]" />
                 <div className="flex flex-col gap-0.5">
-                  <span>{applyingPostingUsesExternalApplication ? '실제 지원은 공식 채용 페이지에서 완료해야 합니다.' : '저장 후 등록된 기업 담당자 이메일을 확인합니다.'}</span>
+                  <span>{applyingPostingUsesExternalApplication ? '실제 지원은 공식 채용 페이지에서 완료해야 합니다.' : '지원 완료 시 담당자에게 이메일이 자동 발송됩니다.'}</span>
                   <span className="text-[13px] font-medium text-[#7A5146]">
                     {applyingPostingUsesExternalApplication
                       ? '이어잡에는 지원 이력과 선택한 파일명이 저장됩니다. 아래 저장 후 원문 접수처에서 파일을 다시 첨부해 주세요.'
-                      : '지원 이력은 기업의 받은 제안에 저장됩니다. 담당자 이메일이 등록된 경우 안전하게 확인한 뒤 메일 작성창을 제공합니다.'}
+                      : '지원 이력은 기업의 받은 제안에 저장되고, 등록된 담당자 이메일로 이력서와 AI 경험 요약이 함께 전송됩니다.'}
                   </span>
                 </div>
               </div>
@@ -3478,39 +3472,26 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   ) : null}
                 </div>
               </div>
-            ) : completedApplication.deliveryMethod === 'email-client' ? (
+            ) : completedApplication.deliveryMethod === 'server-email' ? (
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl bg-[#FFF4EB] p-4">
+                <div className="rounded-2xl bg-[#E8F5E9] p-4">
                   <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
-                    <Mail className="size-4 text-[#173F3A]" />
-                    <span>기업 지원 이력 저장 완료</span>
+                    <CheckCircle2 className="size-4 text-[#2E7D32]" />
+                    <span>기업 지원 및 이메일 전송 완료</span>
                   </div>
-                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
-                    이어잡 기업 화면에서 지원 이력을 확인할 수 있습니다. 담당자 이메일({completedApplication.recipientEmail})은 아직 발송되지 않았으므로 아래에서 메일 작성창을 열어 직접 보내 주세요.
-                  </p>
-                  <p className="mt-2 text-[12px] font-bold leading-5 text-[#8A4938]">
-                    선택한 파일은 자동 첨부되지 않습니다. 메일 작성창에서 다시 첨부해 주세요.
+                  <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#315E50]">
+                    지원 이력이 기업의 받은 제안에 저장되었고, 담당자({completedApplication.recipientEmail})에게 이력서와 AI 경험 요약이 자동 전송되었습니다.
                   </p>
                 </div>
-
-                <a
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 py-3 text-[15px] font-extrabold text-white shadow-md transition-colors duration-150 hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
-                  href={completedApplication.mailtoLink}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <Mail className="size-4 shrink-0" />
-                  <span>담당자에게 이메일 작성하기</span>
-                </a>
               </div>
             ) : (
               <div className="mt-4 rounded-2xl bg-[#FFF4EB] p-4">
                 <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#173F3A]">
                   <Mail className="size-4 text-[#173F3A]" />
-                  <span>기업 받은 제안에 저장됨</span>
+                  <span>지원 저장 완료 · 이메일 알림 실패</span>
                 </div>
                 <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
-                  해당 기업의 담당자 이메일을 확인하지 못해 메일 작성창은 제공하지 않았습니다. 지원 이력은 등록 기업 계정의 받은 제안 화면에서 확인할 수 있습니다.
+                  지원 이력은 등록 기업 계정의 받은 제안에 정상 저장되었지만, 담당자 이메일 알림은 발송하지 못했습니다. 운영자가 발송 설정을 확인해야 합니다.
                 </p>
               </div>
             )}

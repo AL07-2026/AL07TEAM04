@@ -11,6 +11,7 @@ import { generateNextInterviewQuestion } from './lib/interviewQuestion.mjs';
 import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator.mjs';
 import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
 import { handleApplicationContact } from './lib/applicationContact.mjs';
+import { handleApplicationEmail } from './lib/applicationEmail.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
@@ -131,6 +132,10 @@ app.get('/api/public/jobs', (_req, res) => {
 
 app.post('/api/applications/contact', (req, res) => {
   return handleApplicationContact(req, res);
+});
+
+app.post('/api/applications/send', (req, res) => {
+  return handleApplicationEmail(req, res);
 });
 
 app.get('/api/jobs/stats', async (_req, res) => {
@@ -277,7 +282,12 @@ export const api = onRequest(
     region: 'asia-northeast3',
     timeoutSeconds: 120,
     memory: '1GiB',
-    secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY'],
+    secrets: [
+      'APPLICATION_FROM_EMAIL',
+      'ASSEMBLYAI_API_KEY',
+      'GEMINI_API_KEY',
+      'RESEND_API_KEY',
+    ],
   },
   app,
 );

@@ -252,7 +252,7 @@ describe('프로젝트 첫 진입 안정성', () => {
     fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
 
     expect(
-      screen.getByText('저장 후 등록된 기업 담당자 이메일을 확인합니다.'),
+      screen.getByText('지원 완료 시 담당자에게 이메일이 자동 발송됩니다.'),
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: '기업에 지원 내용 보내기' })).toBeTruthy();
     expect(screen.queryByText('실제 지원은 공식 채용 페이지에서 완료해야 합니다.')).toBeNull();
