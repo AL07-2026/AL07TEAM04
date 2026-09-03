@@ -3228,7 +3228,7 @@ export function ProjectRegisterPage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="px-6 pb-[calc(8rem+2.5cm+env(safe-area-inset-bottom))] pt-5"
+      contentClassName="px-6 pb-[18px] pt-5"
       role="company"
       showBack={false}
       title="프로젝트 등록"
@@ -3360,11 +3360,9 @@ export function ProjectRegisterPage() {
             </p>
           ) : null}
         </section>
-        <div className="-mx-1 mt-3 rounded-2xl bg-[#F7F3EA]/95 px-1 pb-[calc(2.5cm+env(safe-area-inset-bottom))] pt-2">
-          <ActionButton disabled={!complete || isSaving} role="company" type="submit">
-            {isSaving ? '프로젝트 등록 중...' : '프로젝트 등록'}
-          </ActionButton>
-        </div>
+        <ActionButton disabled={!complete || isSaving} role="company" type="submit">
+          {isSaving ? '프로젝트 저장 중...' : '프로젝트 등록하기'}
+        </ActionButton>
         {saveError ? (
           <p aria-live="polite" className="text-sm font-bold text-rose-700">
             {saveError}
