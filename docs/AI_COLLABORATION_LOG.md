@@ -3585,3 +3585,11 @@
 - **검증**: targeted 43 tests PASS, `npm run validate` PASS (typecheck/lint/전체 293 tests/build), `git diff --check` PASS. push/PR/deploy 없음.
 - **변경 파일**: `src/app/JobDatabasePage.tsx`, `src/app/JobDatabasePage.test.ts`, `src/app/App.test.tsx`, `src/app/jobDatabaseProjectVisibility.ts`, `src/app/wireframe/FlowPages.tsx`, `src/data/jobPostings.ts`, `src/services/projectService.ts`, `src/services/projectService.test.ts`, `src/services/proposalService.ts`, `src/services/proposalService.test.ts`, `src/services/dataPersistence.test.ts`
 - **다음 작업**: CDI 로컬 diff 검토 후 사용자 지시에 따라 진행합니다.
+
+### [2026-09-03] CDI #47/#50 잔여 결함 최소 수정
+
+- **작업자**: Codex
+- **작업 내용**: 비로그인 프로젝트 상세/직접 제안 라우트의 즉시 로그인 유도와 기업 상세의 취소 제안 상태 우선 표시·단계/연락 후속 액션 차단을 반영했습니다.
+- **검증**: targeted 3 tests PASS, `npm.cmd run validate` PASS (typecheck/lint/전체 295 tests/build), `git diff --check` PASS. push/PR/deploy 없음.
+- **변경 파일**: `src/app/wireframe/FlowPages.tsx`, `src/app/App.test.tsx`, `docs/AI_COLLABORATION_LOG.md`
+- **다음 작업**: 사용자에게 로컬 검증 결과 전달 후 중지합니다.

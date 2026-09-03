@@ -2258,6 +2258,7 @@ export function ProjectListPage() {
 export function ProjectDetailPage() {
   const navigate = useNavigate();
   const { projectId = '1' } = useParams();
+  const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [project, setProject] = useState<JobPosting | null>(null);
@@ -2282,6 +2283,10 @@ export function ProjectDetailPage() {
       ]
     : ['주 2회', '원격', '3개월'];
   const proposalPath = `/senior/projects/${projectId}/proposal`;
+  function handleProposalEntry() {
+    void navigate(user?.uid ? proposalPath : '/login?role=senior');
+  }
+
   return (
     <MobilePage
       activeNav="projects"
@@ -2359,10 +2364,10 @@ export function ProjectDetailPage() {
       </div>
 
       {!isMobile ? (
-        <ActionButton onClick={() => void navigate(proposalPath)}>제안하기</ActionButton>
+        <ActionButton onClick={handleProposalEntry}>제안하기</ActionButton>
       ) : (
         <div className="sticky bottom-0 z-10 -mx-4 border-y border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm">
-          <ActionButton onClick={() => void navigate(proposalPath)}>
+          <ActionButton onClick={handleProposalEntry}>
             이 프로젝트에 제안하기
           </ActionButton>
         </div>
@@ -2406,6 +2411,12 @@ export function ProposalPage() {
     void fetchProjectById(projectId).then(setProject);
   }, [projectId]);
 
+  useEffect(() => {
+    if (!user?.uid) {
+      void navigate('/login?role=senior', { replace: true });
+    }
+  }, [navigate, user?.uid]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!intro.trim() || !method.trim() || !date.trim() || isSending) return;
@@ -2444,6 +2455,22 @@ export function ProposalPage() {
       setIsSending(false);
     }
   }
+
+  if (!user?.uid) {
+    return (
+      <MobilePage
+        activeNav="projects"
+        backTo="/senior/projects"
+        role="senior"
+        title="로그인 필요"
+      >
+        <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
+          제안하려면 먼저 로그인해 주세요.
+        </div>
+      </MobilePage>
+    );
+  }
+
   return (
     <MobilePage
       activeNav="projects"
@@ -3784,7 +3811,7 @@ export function ReceivedProposalDetailPage() {
   const matchTone = getFitScoreTone(matchScore);
 
   async function changeProcessStage(nextStage: ProposalProcessStage) {
-    if (!proposal || nextStage === processStage) return;
+    if (!proposal || proposal.status === '취소됨' || nextStage === processStage) return;
     const previousStage = processStage;
     setProcessStage(nextStage);
     setMessage(`${proposalProcessStageLabels[nextStage]} 단계로 변경했습니다.`);
@@ -3865,7 +3892,9 @@ export function ReceivedProposalDetailPage() {
       >
         {!isMobile ? (
           <div className="col-span-2 flex items-start justify-between">
-            <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
+            <StatusBadge>
+              {proposal.status === '취소됨' ? '취소됨' : proposalProcessStageLabels[processStage]}
+            </StatusBadge>
             {renderProfileActions()}
           </div>
         ) : null}
@@ -3903,7 +3932,9 @@ export function ReceivedProposalDetailPage() {
             )}
           >
             <div className={isMobile ? 'flex' : 'hidden'}>
-              <StatusBadge>{proposalProcessStageLabels[processStage]}</StatusBadge>
+              <StatusBadge>
+                {proposal.status === '취소됨' ? '취소됨' : proposalProcessStageLabels[processStage]}
+              </StatusBadge>
             </div>
             <span
               aria-label={`AI 매칭 적합도 ${matchScore}점, ${matchTone.label}`}
@@ -3987,16 +4018,22 @@ export function ReceivedProposalDetailPage() {
         <div className="mb-2 flex items-center justify-between gap-2">
           <strong className="text-sm font-extrabold text-[#17212B]">이 지원은 지금</strong>
           <span className="text-xs font-bold text-[#173F3A]">
-            {proposalProcessStageLabels[processStage]}
+            {proposal.status === '취소됨' ? '취소됨' : proposalProcessStageLabels[processStage]}
           </span>
         </div>
         <p className="mb-3 text-xs font-medium text-slate-600">
-          {proposalStageHelper[processStage]}
+          {proposal.status === '취소됨'
+            ? '취소된 제안은 채용 진행 단계를 변경할 수 없습니다.'
+            : proposalStageHelper[processStage]}
         </p>
-        <ProposalProgress
-          current={processStage}
-          onSelect={(stage) => void changeProcessStage(stage)}
-        />
+        {proposal.status === '취소됨' ? (
+          <p className="text-xs font-semibold text-slate-500">후속 진행 액션을 사용할 수 없습니다.</p>
+        ) : (
+          <ProposalProgress
+            current={processStage}
+            onSelect={(stage) => void changeProcessStage(stage)}
+          />
+        )}
       </section>
 
       <section className="flex items-center justify-between gap-3 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] p-3.5">
@@ -4018,7 +4055,7 @@ export function ReceivedProposalDetailPage() {
             )}
           </p>
         </div>
-        {contactStatus !== 'contacted' ? (
+        {proposal.status !== '취소됨' && contactStatus !== 'contacted' ? (
           <button
             className="min-h-11 rounded-xl border border-[#F06B4F]/45 bg-white px-3 text-xs font-extrabold text-[#C85039] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
             onClick={() => {
