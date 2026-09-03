@@ -19,7 +19,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/senior/experience/card', '인터뷰 결과를 먼저 만들어 주세요'],
     ['/senior/projects', '프로젝트 목록'],
     ['/senior/projects/1', '프로젝트 상세'],
-    ['/senior/projects/1/proposal', '제안하기'],
+    ['/senior/projects/1/proposal', '경험매칭'],
     ['/senior/proposal-complete', '제안 완료'],
     ['/senior/proposals', '내 제안'],
     ['/senior/proposals/1', '내 제안 상세'],
@@ -195,19 +195,22 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
   });
 
-  it('프로젝트 제안을 작성하고 완료 화면으로 이동한다', async () => {
+  it('비로그인 상태에서 프로젝트 제안 작성 화면에 진입하지 않고 로그인으로 유도한다', async () => {
     window.history.pushState({}, '', '/senior/projects/1/proposal');
     render(<App />);
-    fireEvent.change(screen.getByLabelText('한 줄 소개'), {
-      target: { value: '운영 경험이 있습니다.' },
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+    expect(window.location.search).toBe('?role=senior');
+  });
+
+  it('비로그인 상태에서 프로젝트 상세의 제안하기도 로그인으로 유도한다', async () => {
+    window.history.pushState({}, '', '/senior/projects/1');
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: '제안하기' }));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/login');
+      expect(window.location.search).toBe('?role=senior');
     });
-    fireEvent.change(screen.getByLabelText('진행 방법'), {
-      target: { value: '현황 확인 후 기준을 정리합니다.' },
-    });
-    fireEvent.change(screen.getByLabelText('시작 가능일'), { target: { value: '8월 20일' } });
-    fireEvent.click(screen.getByRole('button', { name: '제안 보내기' }));
-    expect(await screen.findByRole('heading', { name: '제안 완료' })).toBeInTheDocument();
-    expect(window.location.pathname).toBe('/senior/proposal-complete');
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
@@ -243,7 +246,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
-    expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
+    expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
     expect(window.location.pathname).toBe('/company/project-database');
   });
 
@@ -274,6 +278,37 @@ describe('Figma v2 통합 화면 라우팅', () => {
     const activeStageButton = screen.getByRole('button', { name: '2차 면접 단계로 변경' });
     expect(activeStageButton).toHaveAttribute('aria-pressed', 'true');
     expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#173F3A]');
+    stageSpy.mockRestore();
+    contactSpy.mockRestore();
+    proposalsSpy.mockRestore();
+  });
+
+  it('취소된 받은 제안은 상태를 표시하고 후속 액션을 막는다', async () => {
+    const proposal = {
+      id: 'cancelled-1',
+      projectId: 'project-1',
+      projectOwnerId: 'company-test-uid',
+      userId: 'senior-test-user',
+      projectTitle: '취소 테스트 프로젝트',
+      status: '취소됨',
+      processStage: 'second_interview',
+      appliedAt: '2026-08-30',
+      applicantName: '지원자',
+      applicantEmail: 'applicant@example.com',
+    } as proposalService.UserProposal;
+    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
+    const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
+    window.localStorage.clear();
+    window.history.pushState({}, '', '/company/proposals/cancelled-1');
+    render(<App />);
+
+    expect((await screen.findAllByText('취소됨')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /단계로 변경/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '연락 완료로 표시' })).not.toBeInTheDocument();
+    expect(stageSpy).not.toHaveBeenCalled();
+    expect(contactSpy).not.toHaveBeenCalled();
+
     stageSpy.mockRestore();
     contactSpy.mockRestore();
     proposalsSpy.mockRestore();

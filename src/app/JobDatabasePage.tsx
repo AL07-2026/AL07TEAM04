@@ -42,7 +42,6 @@ import {
 import { useNavigate, useSearchParams } from 'react-router';
 
 import {
-  categoryLabels,
   databaseSummary,
   hiringStageLabels,
 } from '@/data/jobPostings';
@@ -114,7 +113,7 @@ import {
   getProfilePrimaryCategory,
   getProfilePrimaryPreference,
 } from '@/services/recommendationEngine';
-import { createProject, fetchProjects } from '@/services/projectService';
+import { createProject, deleteProject, fetchProjects, updateProject } from '@/services/projectService';
 import {
   createProposalFromPosting,
   isUsableProposalResumeFile,
@@ -244,7 +243,7 @@ function getOptionalFormValue(formData: FormData, key: string, fallback: string)
   return getRequiredFormValue(formData, key) || fallback;
 }
 
-function getListFormValue(formData: FormData, key: string, fallback: string[]) {
+function getListFormValue(formData: FormData, key: string, fallback: string[] = []) {
   const value = getRequiredFormValue(formData, key);
   if (!value) return fallback;
 
@@ -1603,7 +1602,10 @@ export function JobDatabasePage({
       setWorknetFeedStatus(worknetFeed.status);
       const visibleUserProjects =
         role === 'company'
-          ? getCompanyOwnedProjects(registeredProjects, user?.uid)
+          ? getCompanyOwnedProjects(
+              registeredProjects,
+              user?.uid || (import.meta.env.MODE === 'test' ? 'company-test-uid' : undefined),
+            )
           : registeredProjects;
       const publicProjects = getPublishedCompanyProjects(registeredProjects);
       if (role === 'senior') {
@@ -1998,6 +2000,10 @@ export function JobDatabasePage({
 
   function handleApply(posting: JobPosting) {
     if (role === 'senior') {
+      if (!user?.uid) {
+        void navigate('/login?role=senior');
+        return;
+      }
       applicationOpenerRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       trackJobApply(posting.id, posting.companyName, posting.title, 'start');
@@ -2168,61 +2174,38 @@ export function JobDatabasePage({
     const title = getRequiredFormValue(formData, 'title');
     const companyName = getRequiredFormValue(formData, 'companyName');
     const problemStatement = getRequiredFormValue(formData, 'problemStatement');
-    const projectGoal = getOptionalFormValue(formData, 'projectGoal', title);
+    const projectGoal = getOptionalFormValue(formData, 'projectGoal', '');
     const category = (formData.get('category') as ProjectCategory) || 'operations';
-    const industry = getOptionalFormValue(formData, 'industry', 'IT / SW');
-    const companySize = getOptionalFormValue(formData, 'companySize', '50-100명');
-    const location = getOptionalFormValue(formData, 'location', '서울 강남');
-    const projectDuration = getOptionalFormValue(formData, 'projectDuration', '3개월');
-    const salaryRange = getOptionalFormValue(formData, 'salaryRange', '월 600만-900만');
-    const deadline =
-      getRequiredFormValue(formData, 'deadline') ||
-      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] ||
-      '2026-09-30';
+    const industry = getOptionalFormValue(formData, 'industry', '협의/미등록');
+    const companySize = getOptionalFormValue(formData, 'companySize', '협의/미등록');
+    const location = getOptionalFormValue(formData, 'location', '협의/미등록');
+    const projectDuration = getOptionalFormValue(formData, 'projectDuration', '협의/미등록');
+    const salaryRange = getOptionalFormValue(formData, 'salaryRange', '협의/미등록');
+    const deadline = getRequiredFormValue(formData, 'deadline');
     const employmentType = (formData.get('employmentType') as EmploymentType) || 'project';
     const workType = (formData.get('workType') as WorkType) || 'hybrid';
-    const experienceYears = getOptionalFormValue(formData, 'experienceYears', '10년 이상');
-    const coreResponsibilities = getListFormValue(formData, 'coreResponsibilities', [
-      problemStatement,
-      projectGoal,
-    ]);
-    const qualifications = getListFormValue(formData, 'qualifications', [
-      `관련 영역 ${experienceYears} 경력`,
-      '프로젝트 주도 경험',
-    ]);
-    const benefits = getListFormValue(formData, 'benefits', ['재택/하이브리드 근무', '자율 근태']);
-    const requiredSkills = getListFormValue(formData, 'requiredSkills', [
-      '전략 수립',
-      '프로세스 개선',
-    ]);
-    const preferredSkills = getListFormValue(formData, 'preferredSkills', ['동종 산업 리딩 경험']);
-    const matchingSignals = getListFormValue(formData, 'matchingSignals', ['유사 문제 해결 경험']);
+    const experienceYears = getOptionalFormValue(formData, 'experienceYears', '협의/미등록');
+    const coreResponsibilities = getListFormValue(formData, 'coreResponsibilities');
+    const qualifications = getListFormValue(formData, 'qualifications');
+    const benefits = getListFormValue(formData, 'benefits');
+    const requiredSkills = getListFormValue(formData, 'requiredSkills');
+    const preferredSkills = getListFormValue(formData, 'preferredSkills');
+    const matchingSignals = getListFormValue(formData, 'matchingSignals');
     const recommendedTalentType = getOptionalFormValue(
       formData,
       'recommendedTalentType',
-      `${categoryLabels[category]} ${experienceYears} 경험을 가진 시니어`,
+      '관련 경험을 보유한 시니어 전문가',
     );
-    const matchingScoreCriteria = getListFormValue(formData, 'matchingScoreCriteria', [
-      '직무 연관성',
-      '문제 해결 경험',
-      '협업 적합도',
-    ]);
-    const interviewFocus = getListFormValue(formData, 'interviewFocus', [
-      '프로젝트 목표 및 성공 경험',
-      '핵심 문제 해결 접근 방식',
-    ]);
-    const successMetrics = getListFormValue(formData, 'successMetrics', ['목표 KPI 100% 달성']);
-    const collaborationTargets = getListFormValue(formData, 'collaborationTargets', [
-      '기업 담당자',
-      '프로젝트 실무팀',
-    ]);
+    const matchingScoreCriteria = getListFormValue(formData, 'matchingScoreCriteria');
+    const interviewFocus = getListFormValue(formData, 'interviewFocus');
+    const successMetrics = getListFormValue(formData, 'successMetrics');
+    const collaborationTargets = getListFormValue(formData, 'collaborationTargets');
 
     if (!title || !companyName || !problemStatement) return;
 
     setIsSubmitting(true);
     try {
-      const { project: created, savedToFirestore } = await createProject({
-        ownerId: effectiveUid,
+      const projectFields = {
         companyName,
         industry,
         companySize,
@@ -2230,7 +2213,8 @@ export function JobDatabasePage({
         category,
         seniority: 'lead',
         employmentType,
-        hiringStage: 'open',
+        hiringStage: editingProject?.hiringStage ?? 'open',
+        isPublic: editingProject?.isPublic ?? true,
         workType,
         location,
         experienceYears,
@@ -2256,18 +2240,33 @@ export function JobDatabasePage({
           projectGoal: getRequiredFormValue(formData, 'projectGoal') ? 'source' : 'synthetic',
           requiredSkills: getRequiredFormValue(formData, 'requiredSkills') ? 'source' : 'synthetic',
         },
-        seniorFitScore: 95,
-      });
+        seniorFitScore: editingProject?.seniorFitScore ?? 95,
+      } satisfies Partial<Omit<JobPosting, 'id'>>;
 
-      setPostings((prev) => [created, ...prev]);
-      setSelectedPostingTarget(getPostingSelectionTarget(created));
+      if (editingProject) {
+        if (editingProject.ownerId !== effectiveUid) {
+          throw new Error('본인 소유 프로젝트만 수정할 수 있습니다.');
+        }
+        await updateProject(editingProject.id, projectFields, effectiveUid);
+        const updated = { ...editingProject, ...projectFields };
+        setPostings((prev) => prev.map((project) => (project.id === updated.id ? updated : project)));
+        setSelectedPostingTarget(getPostingSelectionTarget(updated));
+        setActionNotice('프로젝트 정보가 수정되었습니다.');
+      } else {
+        const { project: created, savedToFirestore } = await createProject({
+          ownerId: effectiveUid,
+          ...projectFields,
+        });
+        setPostings((prev) => [created, ...prev]);
+        setSelectedPostingTarget(getPostingSelectionTarget(created));
+        setActionNotice(
+          savedToFirestore
+            ? '프로젝트가 데이터베이스에 등록되었습니다.'
+            : '프로젝트를 기기에 저장했습니다. 서버 연결 후 다시 동기화해 주세요.',
+        );
+      }
       setEditingProject(null);
       setIsRegisterOpen(false);
-      setActionNotice(
-        savedToFirestore
-          ? '프로젝트가 데이터베이스에 등록되었습니다.'
-          : '프로젝트를 기기에 저장했습니다. 서버 연결 후 다시 동기화해 주세요.',
-      );
       setTimeout(() => setActionNotice(''), 7000);
     } catch (err) {
       console.error('Failed to create project in Firestore:', err);
@@ -2278,6 +2277,48 @@ export function JobDatabasePage({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function openNewProjectForm() {
+    setEditingProject(null);
+    setIsRegisterOpen(true);
+  }
+
+  function openEditProject(project: JobPosting) {
+    if (role !== 'company' || !user?.uid || project.ownerId !== user.uid) return;
+    setEditingProject(project);
+    setIsCompanyProjectModalOpen(false);
+    setIsRegisterOpen(true);
+  }
+
+  async function changeOwnedProject(project: JobPosting, updates: Partial<Omit<JobPosting, 'id'>>) {
+    if (role !== 'company' || !user?.uid || project.ownerId !== user.uid) return;
+    try {
+      await updateProject(project.id, updates, user.uid);
+      const updated = { ...project, ...updates };
+      setPostings((prev) => prev.map((item) => (item.id === project.id ? updated : item)));
+      setSelectedPostingTarget(getPostingSelectionTarget(updated));
+      setActionNotice('프로젝트 상태가 변경되었습니다.');
+    } catch (error) {
+      console.error('Failed to update owned project:', error);
+      setActionNotice('프로젝트 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+    setTimeout(() => setActionNotice(''), 7000);
+  }
+
+  async function handleDeleteOwnedProject(project: JobPosting) {
+    if (role !== 'company' || !user?.uid || project.ownerId !== user.uid) return;
+    if (typeof window !== 'undefined' && !window.confirm('이 프로젝트를 삭제할까요?')) return;
+    try {
+      await deleteProject(project.id, user.uid);
+      setPostings((prev) => prev.filter((item) => item.id !== project.id));
+      if (selectedPostingTarget.id === project.id) setSelectedPostingTarget(emptyPostingSelection);
+      setActionNotice('프로젝트가 삭제되었습니다.');
+    } catch (error) {
+      console.error('Failed to delete owned project:', error);
+      setActionNotice('프로젝트를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+    setTimeout(() => setActionNotice(''), 7000);
   }
 
   const seniorCategoryFilters = useMemo<FilterOption[]>(() => {
@@ -2751,7 +2792,7 @@ export function JobDatabasePage({
           </div>
           {role === 'company' && (
             <button
-              onClick={() => setIsRegisterOpen(true)}
+              onClick={openNewProjectForm}
               type="button"
               className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] px-3.5 py-2 text-xs font-extrabold text-white border border-[#173F3A] shadow-[0_3px_8px_rgba(23,63,58,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_5px_14px_rgba(23,63,58,0.35)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer"
             >
@@ -2907,6 +2948,7 @@ export function JobDatabasePage({
               </button>
             </div>
             <form
+              key={editingProject?.id ?? 'new-project'}
               onSubmit={handleRegisterProject}
               className="mt-4 flex min-w-0 flex-col gap-3.5 [&_input]:min-w-0 [&_input]:w-full [&_label]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
             >
@@ -2915,6 +2957,7 @@ export function JobDatabasePage({
                   <span>회사명 *</span>
                   <input
                     name="companyName"
+                    defaultValue={editingProject?.companyName ?? ''}
                     required
                     placeholder="회사명을 입력하세요"
                     className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
@@ -2924,6 +2967,7 @@ export function JobDatabasePage({
                   <span>회사 규모</span>
                   <input
                     name="companySize"
+                    defaultValue={editingProject?.companySize ?? ''}
                     placeholder="예: 50-100명"
                     className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -2932,6 +2976,7 @@ export function JobDatabasePage({
                   <span>프로젝트 제목 *</span>
                   <input
                     name="title"
+                    defaultValue={editingProject?.title ?? ''}
                     required
                     placeholder="예: 서비스 프로세스 자동화 구축"
                     className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
@@ -2941,6 +2986,7 @@ export function JobDatabasePage({
                   <span>산업/직무 분야</span>
                   <input
                     name="industry"
+                    defaultValue={editingProject?.industry ?? ''}
                     placeholder="예: IT / SW"
                     className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -2949,6 +2995,7 @@ export function JobDatabasePage({
                   <span>프로젝트 카테고리</span>
                   <select
                     name="category"
+                    defaultValue={editingProject?.category ?? 'operations'}
                     className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                   >
                     <option value="dev-engineering">개발/엔지니어링</option>
@@ -2972,6 +3019,7 @@ export function JobDatabasePage({
                   <span>근무 지역</span>
                   <input
                     name="location"
+                    defaultValue={editingProject?.location ?? ''}
                     placeholder="예: 서울 강남"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -2980,6 +3028,7 @@ export function JobDatabasePage({
                   <span>근무 방식</span>
                   <select
                     name="workType"
+                    defaultValue={editingProject?.workType ?? 'hybrid'}
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   >
                     <option value="hybrid">하이브리드</option>
@@ -2991,6 +3040,7 @@ export function JobDatabasePage({
                   <span>고용 형태</span>
                   <select
                     name="employmentType"
+                    defaultValue={editingProject?.employmentType ?? 'project'}
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   >
                     <option value="project">프로젝트</option>
@@ -3004,6 +3054,7 @@ export function JobDatabasePage({
                   <span>필요 경력</span>
                   <input
                     name="experienceYears"
+                    defaultValue={editingProject?.experienceYears ?? ''}
                     placeholder="예: 10년 이상"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -3012,6 +3063,7 @@ export function JobDatabasePage({
                   <span>프로젝트 기간</span>
                   <input
                     name="projectDuration"
+                    defaultValue={editingProject?.projectDuration ?? ''}
                     placeholder="예: 3개월"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -3020,6 +3072,7 @@ export function JobDatabasePage({
                   <span>보수/예산</span>
                   <input
                     name="salaryRange"
+                    defaultValue={editingProject?.salaryRange ?? ''}
                     placeholder="예: 월 600만-900만"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -3028,6 +3081,7 @@ export function JobDatabasePage({
                   <span>마감일</span>
                   <input
                     name="deadline"
+                    defaultValue={editingProject?.deadline ?? ''}
                     type="date"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -3036,6 +3090,7 @@ export function JobDatabasePage({
                   <span>협업 대상</span>
                   <input
                     name="collaborationTargets"
+                    defaultValue={editingProject?.collaborationTargets.join('\n') ?? ''}
                     placeholder="예: 개발팀, 운영팀, 담당 임원"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
@@ -3046,6 +3101,7 @@ export function JobDatabasePage({
                 <span>해결해야 할 문제 (Problem Statement) *</span>
                 <textarea
                   name="problemStatement"
+                  defaultValue={editingProject?.problemStatement ?? ''}
                   required
                   rows={3}
                   placeholder="기업이 겪고 있는 핵심 문제와 요구사항을 입력해 주세요."
@@ -3056,6 +3112,7 @@ export function JobDatabasePage({
                 <span>프로젝트 목표 (Project Goal)</span>
                 <input
                   name="projectGoal"
+                  defaultValue={editingProject?.projectGoal ?? ''}
                   placeholder="예: 작업 시간 40% 절감 및 표준 가이드 작성"
                   className="h-10 rounded-xl border border-[#E0D9C8] px-3 text-xs outline-none focus:border-[#173F3A]"
                 />
@@ -3064,6 +3121,7 @@ export function JobDatabasePage({
                 <span>실제로 하는 일</span>
                 <textarea
                   name="coreResponsibilities"
+                  defaultValue={editingProject?.coreResponsibilities.join('\n') ?? ''}
                   rows={3}
                   placeholder={'예: 업무 자동화 요구사항 정리\n기존 프로세스 진단\n운영 매뉴얼 작성'}
                   className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3075,6 +3133,7 @@ export function JobDatabasePage({
                   <span>자격 요건</span>
                   <textarea
                     name="qualifications"
+                    defaultValue={editingProject?.qualifications.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 관련 영역 10년 이상 경력\n프로젝트 주도 경험'}
                     className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3084,6 +3143,7 @@ export function JobDatabasePage({
                   <span>복지 / 근무 조건</span>
                   <textarea
                     name="benefits"
+                    defaultValue={editingProject?.benefits.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 재택/하이브리드 근무\n자율 근태'}
                     className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3093,6 +3153,7 @@ export function JobDatabasePage({
                   <span>필수 역량</span>
                   <textarea
                     name="requiredSkills"
+                    defaultValue={editingProject?.requiredSkills.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 전략 수립\n프로세스 개선'}
                     className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3102,6 +3163,7 @@ export function JobDatabasePage({
                   <span>우대 역량</span>
                   <textarea
                     name="preferredSkills"
+                    defaultValue={editingProject?.preferredSkills.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 동종 산업 리딩 경험\nAI 자동화 도입 경험'}
                     className="rounded-xl border border-[#E0D9C8] p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3115,6 +3177,7 @@ export function JobDatabasePage({
                   <span>추천 인재 유형</span>
                   <textarea
                     name="recommendedTalentType"
+                    defaultValue={editingProject?.recommendedTalentType ?? ''}
                     rows={2}
                     placeholder="예: 10년+ 총괄 경험을 가진 시니어 리드"
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3124,6 +3187,7 @@ export function JobDatabasePage({
                   <span>매칭 근거</span>
                   <textarea
                     name="matchingSignals"
+                    defaultValue={editingProject?.matchingSignals.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 유사 문제 해결 경험\n운영 자동화 프로젝트 경험'}
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3133,6 +3197,7 @@ export function JobDatabasePage({
                   <span>매칭 점수 산정 기준</span>
                   <textarea
                     name="matchingScoreCriteria"
+                    defaultValue={editingProject?.matchingScoreCriteria.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 직무 연관성\n문제 해결 경험\n협업 적합도'}
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3142,6 +3207,7 @@ export function JobDatabasePage({
                   <span>AI 인터뷰 확인 포인트</span>
                   <textarea
                     name="interviewFocus"
+                    defaultValue={editingProject?.interviewFocus.join('\n') ?? ''}
                     rows={3}
                     placeholder={'예: 프로젝트 목표 및 성공 경험\n핵심 문제 해결 접근 방식'}
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3151,6 +3217,7 @@ export function JobDatabasePage({
                   <span>성과 목표</span>
                   <textarea
                     name="successMetrics"
+                    defaultValue={editingProject?.successMetrics.join('\n') ?? ''}
                     rows={2}
                     placeholder="예: 목표 KPI 100% 달성, 업무 처리 시간 40% 단축"
                     className="rounded-xl border border-[#E0D9C8] bg-white p-3 text-xs outline-none focus:border-[#173F3A]"
@@ -3755,17 +3822,64 @@ export function JobDatabasePage({
               <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[0.85fr_1.15fr]">
                 <section className="grid content-start gap-3">
                   {postings.map((posting) => (
-                    <PostingCard
-                      activePrimaryCategory={effectiveSelectedCategory}
-                      experienceCard={interviewCard}
-                      key={posting.id}
-                      onApply={() => handleApply(posting)}
-                      onSelect={() => setSelectedPostingTarget(getPostingSelectionTarget(posting))}
-                      posting={posting}
-                      profile={seniorProfile}
-                      role={role}
-                      selected={selectedCompanyProject?.id === posting.id}
-                    />
+                    <div className="grid gap-2" key={posting.id}>
+                      <PostingCard
+                        activePrimaryCategory={effectiveSelectedCategory}
+                        experienceCard={interviewCard}
+                        onApply={() => handleApply(posting)}
+                        onSelect={() => setSelectedPostingTarget(getPostingSelectionTarget(posting))}
+                        posting={posting}
+                        profile={seniorProfile}
+                        role={role}
+                        selected={selectedCompanyProject?.id === posting.id}
+                      />
+                      {role === 'company' && posting.ownerId === user?.uid ? (
+                        <div className="flex flex-wrap gap-1.5 px-1">
+                          <button
+                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openEditProject(posting);
+                            }}
+                            type="button"
+                          >
+                            프로젝트 수정
+                          </button>
+                          <button
+                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void changeOwnedProject(posting, {
+                                hiringStage: posting.hiringStage === 'closed' ? 'open' : 'closed',
+                              });
+                            }}
+                            type="button"
+                          >
+                            {posting.hiringStage === 'closed' ? '모집 다시 열기' : '모집 마감'}
+                          </button>
+                          <button
+                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void changeOwnedProject(posting, { isPublic: posting.isPublic === false });
+                            }}
+                            type="button"
+                          >
+                            {posting.isPublic === false ? '다시 공개' : '비공개'}
+                          </button>
+                          <button
+                            className="rounded-lg border border-[#F06B4F]/40 px-2.5 py-1.5 text-[11px] font-bold text-[#D85A3F] hover:bg-[#FFF8F6]"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleDeleteOwnedProject(posting);
+                            }}
+                            type="button"
+                          >
+                            프로젝트 삭제
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   ))}
                 </section>
 
@@ -3790,7 +3904,7 @@ export function JobDatabasePage({
                   className="inline-flex h-10 items-center justify-center rounded-xl bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-xs hover:bg-[#21544E]"
                   onClick={() => {
                     setIsCompanyProjectModalOpen(false);
-                    setIsRegisterOpen(true);
+                    openNewProjectForm();
                   }}
                   type="button"
                 >

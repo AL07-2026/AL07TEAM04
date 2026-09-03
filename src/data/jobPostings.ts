@@ -16,7 +16,7 @@ export type ProjectCategory =
 export type WorkType = 'remote' | 'hybrid' | 'onsite';
 export type Seniority = 'senior' | 'lead' | 'principal';
 export type EmploymentType = 'full-time' | 'contract' | 'part-time' | 'advisory' | 'project';
-export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing';
+export type HiringStage = 'open' | 'screening' | 'interviewing' | 'closing' | 'closed';
 export type PostingDetailProvenance = 'source' | 'synthetic' | 'unknown';
 export type PostingDetailProvenanceMap = Partial<
   Record<'coreResponsibilities' | 'problemStatement' | 'projectGoal' | 'requiredSkills', PostingDetailProvenance>
@@ -45,6 +45,7 @@ export type JobPosting = {
   seniority: Seniority;
   employmentType: EmploymentType;
   hiringStage: HiringStage;
+  isPublic?: boolean;
   workType: WorkType;
   location: string;
   experienceYears: string;
@@ -133,6 +134,7 @@ export const hiringStageLabels: Record<HiringStage, string> = {
   screening: '지원서 검토 중',
   interviewing: '담당자 인터뷰 중',
   closing: '마감 임박',
+  closed: '모집 마감',
 };
 
 export const jobPostings: JobPosting[] = [];
