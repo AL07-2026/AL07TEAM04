@@ -16,6 +16,28 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-03] 인재 데이터 표시 정합성 수정 Firebase 배포 완료
+- **작업자**: Codex (`develop` 브랜치)
+- **작업 전 확인**:
+  - 로컬 `develop` 브랜치가 `origin/develop` 최신 커밋 `4b1392c`와 일치함을 확인.
+  - Firebase 기본 프로젝트 `al07team04-bdfcd`, Hosting public 디렉터리 `dist`, API rewrite 대상 `api(asia-northeast3)` 확인.
+- **작업 내용**:
+  1. **Firebase 배포**:
+     - `firebase deploy` 실행.
+     - Functions `api(asia-northeast3)`, `scheduledJobSync(asia-northeast3)` 업데이트 성공.
+     - Hosting 새 버전 릴리즈 성공.
+- **검증 & 결과**:
+  - 배포 전 `npm run validate` 통과 상태에서 진행.
+  - Firebase 배포 성공.
+- **배포 URL**:
+  - Hosting: https://al07team04-bdfcd.web.app
+  - API Function URL: https://api-joljydgaia-du.a.run.app
+- **변경 파일**:
+  - [MODIFY] `.firebase/hosting.ZGlzdA.cache`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 운영 URL에서 인재 홈의 저장된 경험 정보, 이력서 첨부 유지, 프로젝트 점수 표시 정합성 플로우를 최종 수동 확인 권장.
+
 ### [2026-09-03] 인재 홈/프로젝트/내정보 데이터 표시 정합성 보완
 - **작업자**: Codex (`YOO` 브랜치)
 - **작업 전 확인**:
