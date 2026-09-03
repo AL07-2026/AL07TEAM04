@@ -3151,7 +3151,7 @@ export function JobDatabasePage({
                 </label>
               </section>
 
-              <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-end gap-2 border-t border-[#E0D9C8]/70 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-3 backdrop-blur md:static md:mx-0 md:border-t-0 md:bg-transparent md:p-0 md:pt-0">
+              <div className="-mx-4 mt-4 flex items-center justify-end gap-2 border-t border-[#E0D9C8]/70 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-3 md:mx-0 md:border-t-0 md:bg-transparent md:p-0 md:pt-0">
                 <button
                   type="button"
                   onClick={() => setIsRegisterOpen(false)}
