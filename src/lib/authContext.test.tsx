@@ -1,10 +1,22 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+type MockFirebaseUser = {
+  email?: string;
+  uid: string;
+};
+
+type MockAuthStateCallback = (user: MockFirebaseUser | null) => void;
+
 const authMocks = vi.hoisted(() => ({
   auth: { currentUser: null as { uid: string } | null },
   deleteUser: vi.fn(() => Promise.resolve(undefined)),
-  onAuthStateChanged: vi.fn(),
+  onAuthStateChanged: vi.fn(
+    (_auth: unknown, callback: MockAuthStateCallback) => {
+      callback(null);
+      return vi.fn();
+    },
+  ),
   signInWithPopup: vi.fn(),
 }));
 

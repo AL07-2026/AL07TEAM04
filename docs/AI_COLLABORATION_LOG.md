@@ -36,7 +36,7 @@
   - `npm run typecheck` 통과
   - `npm run lint` 통과
   - `npx vitest run src/app/App.test.tsx src/app/wireframe/FlowPages.test.tsx` 통과
-  - `npm run validate` 통과: 테스트 31개 파일 / 291개 테스트 통과, Vite 프로덕션 빌드 성공
+  - `npm run validate` 통과: 테스트 33개 파일 / 301개 테스트 통과, Vite 프로덕션 빌드 성공
 - **변경 파일**:
   - [MODIFY] `src/app/App.test.tsx`
   - [MODIFY] `src/app/BasicProfilePage.tsx`
@@ -45,13 +45,14 @@
   - [MODIFY] `src/app/wireframe/FlowPages.tsx`
   - [MODIFY] `src/lib/applicationFlow.test.ts`
   - [MODIFY] `src/lib/applicationFlow.ts`
+  - [MODIFY] `src/lib/authContext.test.tsx`
   - [MODIFY] `src/services/interviewService.ts`
   - [MODIFY] `src/services/profileService.test.ts`
   - [MODIFY] `src/services/profileService.ts`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **미해결/전달 사항**:
   - 로컬 개발 API 서버에는 `/api/jobs/search` 라우트가 없어 Vite 콘솔에 fallback 404 경고가 표시될 수 있음. Firebase Functions 운영 API에는 해당 라우트가 구현되어 있음.
-  - 병합 후 `origin/develop` 및 테스트용 `origin/YOO`에 동일 변경사항을 반영할 예정.
+  - 병합 후 `origin/develop` 및 테스트용 `origin/YOO`에 동일 변경사항을 반영.
 
 ### [2026-08-31] AI 경험 카드 개선사항 origin/develop 푸시 및 Firebase 배포 완료
 - **작업자**: Codex (`YOO` 브랜치)
