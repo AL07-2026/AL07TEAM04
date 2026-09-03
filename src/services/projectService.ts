@@ -25,6 +25,7 @@ import {
 } from '@/data/jobPostings';
 import {
   createStableRecordId,
+  getStoredUserId,
   readVersionedStorage,
   removeUndefinedValues,
   uniqueByKey,
@@ -38,8 +39,20 @@ const LOCAL_PROJECTS_KEY = 'eojob_projects';
 const categories = new Set<ProjectCategory>(Object.keys(categoryLabels) as ProjectCategory[]);
 const workTypes = new Set<WorkType>(['remote', 'hybrid', 'onsite']);
 const seniorities = new Set<Seniority>(['senior', 'lead', 'principal']);
-const employmentTypes = new Set<EmploymentType>(['full-time', 'contract', 'advisory', 'project']);
-const hiringStages = new Set<HiringStage>(['open', 'screening', 'interviewing', 'closing']);
+const employmentTypes = new Set<EmploymentType>([
+  'full-time',
+  'contract',
+  'part-time',
+  'advisory',
+  'project',
+]);
+const hiringStages = new Set<HiringStage>([
+  'open',
+  'screening',
+  'interviewing',
+  'closing',
+  'closed',
+]);
 const postingSources = new Set<NonNullable<JobPosting['source']>>([
   'internal',
   'worknet',
@@ -128,7 +141,7 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
   const ownerId = stringValue(value.ownerId) || undefined;
   const coreResponsibilities = stringArray(value.coreResponsibilities);
   const problemStatement = stringValue(value.problemStatement, title);
-  const projectGoal = stringValue(value.projectGoal, title);
+  const projectGoal = stringValue(value.projectGoal);
   const requiredSkills = stringArray(value.requiredSkills);
   return {
     id,
@@ -147,19 +160,20 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
     hiringStage: hiringStages.has(value.hiringStage as HiringStage)
       ? (value.hiringStage as HiringStage)
       : 'open',
+    isPublic: typeof value.isPublic === 'boolean' ? value.isPublic : undefined,
     workType: workTypes.has(value.workType as WorkType) ? (value.workType as WorkType) : 'hybrid',
-    location: stringValue(value.location, '근무 위치 협의'),
-    experienceYears: stringValue(value.experienceYears, '경력 협의'),
-    salaryRange: stringValue(value.salaryRange, '보상 협의'),
+    location: stringValue(value.location, '협의/미등록'),
+    experienceYears: stringValue(value.experienceYears, '협의/미등록'),
+    salaryRange: stringValue(value.salaryRange, '협의/미등록'),
     attachments: attachments(value.attachments),
-    deadline: stringValue(value.deadline, postedAt),
-    projectDuration: stringValue(value.projectDuration, '기간 협의'),
+    deadline: stringValue(value.deadline),
+    projectDuration: stringValue(value.projectDuration, '협의/미등록'),
     collaborationTargets: stringArray(value.collaborationTargets),
     coreResponsibilities,
     qualifications: stringArray(value.qualifications),
     benefits: stringArray(value.benefits),
     problemStatement,
-    projectGoal,
+    projectGoal: stringValue(value.projectGoal),
     successMetrics: stringArray(value.successMetrics),
     requiredSkills,
     preferredSkills: stringArray(value.preferredSkills),
@@ -318,11 +332,12 @@ export async function uploadProjectAttachments(
 export async function updateProject(
   id: string,
   updates: Partial<Omit<JobPosting, 'id'>>,
+  actorId?: string,
 ): Promise<void> {
   const current = getLocalProjects().find((project) => project.id === id);
-  if (current) {
-    const updated = normalizeProject(id, { ...current, ...updates });
-    if (updated) upsertLocalProject(updated);
+  const effectiveActorId = actorId || getStoredUserId();
+  if (!current?.ownerId || !effectiveActorId || current.ownerId !== effectiveActorId) {
+    throw new Error('본인 소유 프로젝트만 수정할 수 있습니다.');
   }
 
   try {
@@ -330,16 +345,24 @@ export async function updateProject(
       doc(db, PROJECTS_COLLECTION, id),
       removeUndefinedValues({ ...updates, updatedAt: serverTimestamp() }),
     );
+    const updated = normalizeProject(id, { ...current, ...updates });
+    if (updated) upsertLocalProject(updated);
   } catch (error) {
     console.error(`Firestore updateProject(${id}) failed:`, error);
     throw error;
   }
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  saveLocalProjects(getLocalProjects().filter((project) => project.id !== id));
+export async function deleteProject(id: string, actorId?: string): Promise<void> {
+  const current = getLocalProjects().find((project) => project.id === id);
+  const effectiveActorId = actorId || getStoredUserId();
+  if (!current?.ownerId || !effectiveActorId || current.ownerId !== effectiveActorId) {
+    throw new Error('본인 소유 프로젝트만 삭제할 수 있습니다.');
+  }
+
   try {
     await deleteDoc(doc(db, PROJECTS_COLLECTION, id));
+    saveLocalProjects(getLocalProjects().filter((project) => project.id !== id));
   } catch (error) {
     console.error(`Firestore deleteProject(${id}) failed:`, error);
     throw error;

@@ -167,13 +167,11 @@ export function MobilePage({
                 <button
                   type="button"
                   onClick={() => void navigate('/')}
-                  className="flex items-center gap-1.5 rounded-xl hover:opacity-85 transition"
+                  className="flex items-center rounded-xl hover:opacity-85 transition"
                 >
-                  <BrandLogo variant="icon" />
-                  <h1 className="text-[17px] font-extrabold tracking-tight text-[#17212B]">
-                    {title}
-                  </h1>
+                  <img src="/logo_text.png" alt="이어잡" className="h-[18px] w-auto object-contain" />
                 </button>
+                <h1 className="sr-only">{title}</h1>
               </div>
 
               {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}

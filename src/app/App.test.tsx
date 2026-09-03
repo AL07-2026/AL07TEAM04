@@ -2,7 +2,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
-import { saveLocalCompanyProfile } from '@/services/profileService';
+import * as profileService from '@/services/profileService';
+import { saveLocalCompanyProfile, saveLocalSeniorProfile } from '@/services/profileService';
 import * as proposalService from '@/services/proposalService';
 
 type UserRole = 'senior' | 'company';
@@ -225,6 +226,41 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(window.location.pathname).toBe('/senior/experience');
   });
 
+  it('경험 카드 확인 화면은 저장된 프로필 경험카드를 빈 상태 대신 보여준다', async () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    saveLocalSeniorProfile({
+      email: 'senior@example.com',
+      experience: '12년',
+      field: 'IT개발·데이터',
+      period: '12년',
+      phone: '010-0000-0000',
+      experienceCardsV1: [
+        {
+          id: 'profile-card-1',
+          workedOn: '고객 문의 운영 기준 정비',
+          accomplished: '평균 응답 시간을 30% 줄였습니다.',
+          strengths: ['프로세스 개선', '운영 자동화'],
+          version: 1,
+          confirmedAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+    }, mockAuthState.user?.uid);
+    const savedProfile = profileService.getLocalSeniorProfile(mockAuthState.user?.uid);
+    const resolveProfileSpy = vi
+      .spyOn(profileService, 'resolveSeniorProfile')
+      .mockResolvedValue(savedProfile);
+    window.history.pushState({}, '', '/senior/experience/card');
+
+    render(<App />);
+
+    expect(await screen.findByText('저장된 경험 카드')).toBeInTheDocument();
+    expect(screen.getByText('고객 문의 운영 기준 정비')).toBeInTheDocument();
+    expect(screen.queryByText('저장된 인터뷰 결과가 없습니다')).not.toBeInTheDocument();
+    resolveProfileSpy.mockRestore();
+    window.localStorage.clear();
+  });
+
   it('경험 선택 화면에서 고른 분야를 AI 인터뷰 기준에 반영한다', async () => {
     window.history.pushState({}, '', '/senior/experience');
     render(<App />);
@@ -287,19 +323,26 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByRole('heading', { name: '경험 정보 수정' })).toBeInTheDocument();
   });
 
-  it('프로젝트 제안을 작성하고 완료 화면으로 이동한다', async () => {
+  it('비로그인 상태에서 프로젝트 제안 작성 화면에 진입하지 않고 로그인으로 유도한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
     window.history.pushState({}, '', '/senior/projects/1/proposal');
     render(<App />);
-    fireEvent.change(screen.getByLabelText('한 줄 소개'), {
-      target: { value: '운영 경험이 있습니다.' },
-    });
-    fireEvent.change(screen.getByLabelText('진행 방법'), {
-      target: { value: '현황 확인 후 기준을 정리합니다.' },
-    });
-    fireEvent.change(screen.getByLabelText('시작 가능일'), { target: { value: '8월 20일' } });
-    fireEvent.click(screen.getByRole('button', { name: '제안 보내기' }));
-    expect(await screen.findByRole('heading', { name: '제안 완료' })).toBeInTheDocument();
-    expect(window.location.pathname).toBe('/senior/proposal-complete');
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+    expect(window.location.search).toBe(
+      `?redirect=${encodeURIComponent('/senior/projects/1/proposal')}`,
+    );
+  });
+
+  it('비로그인 상태에서 프로젝트 상세에 진입하면 로그인으로 유도한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
+    window.history.pushState({}, '', '/senior/projects/1');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+    expect(window.location.search).toBe(
+      `?redirect=${encodeURIComponent('/senior/projects/1')}`,
+    );
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
@@ -332,11 +375,12 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
       target: { value: '업무 흐름을 정리합니다.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /^Firestore DB에 등록$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^프로젝트 등록$/ }));
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();
-    expect(await screen.findByText('운영 체계 만들기')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
+    expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
     expect(window.location.pathname).toBe('/company/project-database');
   });
 
@@ -368,6 +412,37 @@ describe('Figma v2 통합 화면 라우팅', () => {
     const activeStageButton = screen.getByRole('button', { name: '2차 면접 단계로 변경' });
     expect(activeStageButton).toHaveAttribute('aria-pressed', 'true');
     expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#173F3A]');
+    stageSpy.mockRestore();
+    contactSpy.mockRestore();
+    proposalsSpy.mockRestore();
+  });
+
+  it('취소된 받은 제안은 상태를 표시하고 후속 액션을 막는다', async () => {
+    const proposal = {
+      id: 'cancelled-1',
+      projectId: 'project-1',
+      projectOwnerId: 'company-test-uid',
+      userId: 'senior-test-user',
+      projectTitle: '취소 테스트 프로젝트',
+      status: '취소됨',
+      processStage: 'second_interview',
+      appliedAt: '2026-08-30',
+      applicantName: '지원자',
+      applicantEmail: 'applicant@example.com',
+    } as proposalService.UserProposal;
+    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
+    const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
+    window.localStorage.clear();
+    window.history.pushState({}, '', '/company/proposals/cancelled-1');
+    render(<App />);
+
+    expect((await screen.findAllByText('취소됨')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /단계로 변경/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '연락 완료로 표시' })).not.toBeInTheDocument();
+    expect(stageSpy).not.toHaveBeenCalled();
+    expect(contactSpy).not.toHaveBeenCalled();
+
     stageSpy.mockRestore();
     contactSpy.mockRestore();
     proposalsSpy.mockRestore();

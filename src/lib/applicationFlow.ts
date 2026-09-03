@@ -315,6 +315,17 @@ export function cacheStoredExperienceCard(card: StoredExperienceCard, ownerId?: 
   window.dispatchEvent(new CustomEvent('eojob_experience_card_updated'));
 }
 
+export function clearStoredExperienceCard(ownerId?: string) {
+  if (!isBrowser()) return;
+  const scopedKey = getScopedStorageKey(EXPERIENCE_CARD_STORAGE_KEY, ownerId);
+  const hadStoredCard =
+    localStorage.getItem(scopedKey) !== null ||
+    localStorage.getItem(EXPERIENCE_CARD_STORAGE_KEY) !== null;
+  localStorage.removeItem(scopedKey);
+  localStorage.removeItem(EXPERIENCE_CARD_STORAGE_KEY);
+  if (hadStoredCard) window.dispatchEvent(new CustomEvent('eojob_experience_card_updated'));
+}
+
 export function savePendingExperienceCard(card: ExperienceCardInput) {
   if (!isBrowser() || !hasValidExperienceCardFields(card)) return;
   sessionStorage.setItem(PENDING_EXPERIENCE_CARD_KEY, JSON.stringify(card));

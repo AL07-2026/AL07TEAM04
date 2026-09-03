@@ -52,6 +52,27 @@ describe('profileService occupation preferences', () => {
     });
   });
 
+  it('프로필에 저장된 이력서 파일 메타데이터를 다시 읽을 때 보존한다', () => {
+    saveLocalSeniorProfile(
+      {
+        ...validProfile,
+        resumeFile: {
+          name: 'senior-resume.docx',
+          size: 1024,
+          storagePath: 'resumes/senior-1/profile/123-senior-resume.docx',
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          uploadedAt: '2026-09-03T00:00:00.000Z',
+        },
+      },
+      'senior-1',
+    );
+
+    expect(getLocalSeniorProfile('senior-1')?.resumeFile).toMatchObject({
+      name: 'senior-resume.docx',
+      storagePath: 'resumes/senior-1/profile/123-senior-resume.docx',
+    });
+  });
+
   it('기존 프로젝트 분류값을 읽을 때 새 21개 직종으로 변환하고 중복 순위를 제거한다', () => {
     localStorage.setItem(
       'eojob_senior_profile:senior-1',

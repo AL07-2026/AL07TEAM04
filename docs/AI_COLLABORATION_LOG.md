@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-03] origin/develop 최신 14개 커밋 안전 통합
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **작업 배경**: 팀원이 `develop` 브랜치에 추가한 프로젝트·지원 관리, 로그인, 이력서·프로필 동기화, 모바일 프로젝트 등록 변경을 현재 작업에 통합.
+- **통합 원칙**:
+  1. 랜딩 페이지(`src/app/LandingPage.tsx`)와 최근 외부 채용 API 호출 안정화 파일(`functions/index.mjs`, `functions/lib/backendAccumulator.mjs`, `src/services/worknetService.ts`)은 변경하지 않음.
+  2. 비로그인 공고 조회·추천 0건 표시, 서버 적합도 점수, 첫 로딩 중복 방지 동작을 보존.
+  3. `develop`의 프로젝트 생성·수정·삭제·마감·공개 변경과 이력서/경험카드 서버 동기화를 기존 흐름과 통합.
+- **검증 결과**:
+  - `npm run validate` 통과
+  - TypeScript 0 오류, ESLint 0 경고/오류
+  - Vitest 37개 파일, 353개 테스트 전체 통과
+  - Vite 프로덕션 빌드 성공
+- **배포 여부**: 이 작업은 로컬 브랜치 최신화까지만 수행했으며 배포하지 않음.
+
 ### [2026-09-02] develop 원격 변경사항 안전 통합 및 사용자 최신 기능·랜딩페이지 100% 보존
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 배경**:
@@ -573,6 +587,65 @@
   - [NEW] `.agents/skills/ecc-tdd-workflow/SKILL.md`
   - [NEW] `.agents/skills/ecc-build-debugger/SKILL.md`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+### [2026-09-03] 인재 데이터 표시 정합성 수정 Firebase 배포 완료
+- **작업자**: Codex (`develop` 브랜치)
+- **작업 전 확인**:
+  - 로컬 `develop` 브랜치가 `origin/develop` 최신 커밋 `4b1392c`와 일치함을 확인.
+  - Firebase 기본 프로젝트 `al07team04-bdfcd`, Hosting public 디렉터리 `dist`, API rewrite 대상 `api(asia-northeast3)` 확인.
+- **작업 내용**:
+  1. **Firebase 배포**:
+     - `firebase deploy` 실행.
+     - Functions `api(asia-northeast3)`, `scheduledJobSync(asia-northeast3)` 업데이트 성공.
+     - Hosting 새 버전 릴리즈 성공.
+- **검증 & 결과**:
+  - 배포 전 `npm run validate` 통과 상태에서 진행.
+  - Firebase 배포 성공.
+- **배포 URL**:
+  - Hosting: https://al07team04-bdfcd.web.app
+  - API Function URL: https://api-joljydgaia-du.a.run.app
+- **변경 파일**:
+  - [MODIFY] `.firebase/hosting.ZGlzdA.cache`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 운영 URL에서 인재 홈의 저장된 경험 정보, 이력서 첨부 유지, 프로젝트 점수 표시 정합성 플로우를 최종 수동 확인 권장.
+
+### [2026-09-03] 인재 홈/프로젝트/내정보 데이터 표시 정합성 보완
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md` 최근 작업 기록 및 작업 규칙 확인.
+  - 현재 브랜치가 `YOO`이고, `origin/develop` 최신 반영 후 인재 홈/프로젝트/내정보 화면의 데이터 정합성 이슈 수정 중임을 확인.
+- **작업 내용**:
+  1. **저장된 경험 정보 카운트 정합성 보완**:
+     - 로그인 사용자 기준 원격 경험 카드 조회 결과가 비어 있으면 오래된 로컬 저장 카드가 홈 카운트에 남지 않도록 정리.
+     - 경험 카드 삭제 시 마지막 카드가 삭제되면 로컬 저장 카드도 함께 정리.
+  2. **저장된 경험 카드 확인 화면 보완**:
+     - `/senior/experience/card` 화면이 인터뷰 직후 임시 draft에만 의존하지 않고, 프로필의 `experienceCardsV1` 및 원격 경험 카드를 fallback으로 읽어 저장된 경험카드를 표시하도록 수정.
+  3. **추천 프로젝트 점수 표시 기준 통일**:
+     - 홈과 프로젝트 목록/상세가 동일한 개인화 점수 계산 로직을 사용하도록 보완.
+  4. **이력서 첨부 유지 및 저장 권한 오류 보완**:
+     - 인재 프로필에 이력서 메타데이터를 저장하고, 기존 이력서는 새 파일 저장 시 교체되어 1개만 유지되도록 수정.
+     - Firebase Storage 규칙에 맞는 `resumes/{uid}/profile/...` 경로로 업로드하도록 변경.
+- **검증 & 결과**:
+  - `npm run typecheck` 통과
+  - `npm run lint` 통과
+  - `npx vitest run src/app/App.test.tsx src/app/wireframe/FlowPages.test.tsx` 통과
+  - `npm run validate` 통과: 테스트 33개 파일 / 301개 테스트 통과, Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/lib/applicationFlow.test.ts`
+  - [MODIFY] `src/lib/applicationFlow.ts`
+  - [MODIFY] `src/lib/authContext.test.tsx`
+  - [MODIFY] `src/services/interviewService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 로컬 개발 API 서버에는 `/api/jobs/search` 라우트가 없어 Vite 콘솔에 fallback 404 경고가 표시될 수 있음. Firebase Functions 운영 API에는 해당 라우트가 구현되어 있음.
+  - 병합 후 `origin/develop` 및 테스트용 `origin/YOO`에 동일 변경사항을 반영.
 
 ### [2026-08-31] AI 경험 카드 개선사항 origin/develop 푸시 및 Firebase 배포 완료
 - **작업자**: Codex (`YOO` 브랜치)
@@ -4157,3 +4230,18 @@
   - 운영 상태·채용 검색·세 호환 경로의 200/빈 응답/24시간 캐시 및 새 번들 적용 확인.
   - 배포 후 예약 함수 로그에 추가 실행 없음 확인. 새 일일 잠금 메타데이터는 다음 00:00 KST 실행부터 기록됨.
 - **배포 상태**: Firebase Hosting, `api`, `scheduledJobSync` 운영 배포 완료 (`https://al07team04-bdfcd.web.app`).
+### [2026-09-03] CDI #47~#50 최소 수정 및 로컬 검증
+
+- **작업자**: Codex
+- **작업 내용**: 비로그인 지원 진입/저장 차단, 프로젝트 입력값·`part-time` 보존, 소유자 프로젝트 관리(수정·마감·비공개·삭제), 제안 취소 원격·로컬 persistence를 최소 범위로 반영했습니다.
+- **검증**: targeted 43 tests PASS, `npm run validate` PASS (typecheck/lint/전체 293 tests/build), `git diff --check` PASS. push/PR/deploy 없음.
+- **변경 파일**: `src/app/JobDatabasePage.tsx`, `src/app/JobDatabasePage.test.ts`, `src/app/App.test.tsx`, `src/app/jobDatabaseProjectVisibility.ts`, `src/app/wireframe/FlowPages.tsx`, `src/data/jobPostings.ts`, `src/services/projectService.ts`, `src/services/projectService.test.ts`, `src/services/proposalService.ts`, `src/services/proposalService.test.ts`, `src/services/dataPersistence.test.ts`
+- **다음 작업**: CDI 로컬 diff 검토 후 사용자 지시에 따라 진행합니다.
+
+### [2026-09-03] CDI #47/#50 잔여 결함 최소 수정
+
+- **작업자**: Codex
+- **작업 내용**: 비로그인 프로젝트 상세/직접 제안 라우트의 즉시 로그인 유도와 기업 상세의 취소 제안 상태 우선 표시·단계/연락 후속 액션 차단을 반영했습니다.
+- **검증**: targeted 3 tests PASS, `npm.cmd run validate` PASS (typecheck/lint/전체 295 tests/build), `git diff --check` PASS. push/PR/deploy 없음.
+- **변경 파일**: `src/app/wireframe/FlowPages.tsx`, `src/app/App.test.tsx`, `docs/AI_COLLABORATION_LOG.md`
+- **다음 작업**: 사용자에게 로컬 검증 결과 전달 후 중지합니다.

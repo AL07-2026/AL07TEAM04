@@ -11,11 +11,23 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+} from 'firebase/firestore';
+import { deleteObject, ref } from 'firebase/storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
 
 export type UserRole = 'senior' | 'company';
@@ -45,6 +57,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
+const USER_ROOT_COLLECTIONS = ['users', 'senior_profiles', 'company_profiles', 'companies'] as const;
+const USER_QUERY_COLLECTIONS = [
+  { collectionName: 'experience_cards', field: 'uid' },
+  { collectionName: 'projects', field: 'ownerId' },
+  { collectionName: 'user_proposals', field: 'userId' },
+  { collectionName: 'user_proposals', field: 'projectOwnerId' },
+] as const;
 
 function canUseDemoAuth(email = '') {
   return (
@@ -53,6 +72,96 @@ function canUseDemoAuth(email = '') {
     email.endsWith('@example.com') ||
     email.includes('test')
   );
+}
+
+function collectStoragePaths(value: unknown, paths: Set<string>) {
+  if (!value || typeof value !== 'object') return;
+
+  Object.entries(value as Record<string, unknown>).forEach(([key, fieldValue]) => {
+    if (key === 'storagePath' && typeof fieldValue === 'string' && fieldValue.trim()) {
+      paths.add(fieldValue.trim());
+      return;
+    }
+
+    if (Array.isArray(fieldValue)) {
+      fieldValue.forEach((item) => collectStoragePaths(item, paths));
+      return;
+    }
+
+    collectStoragePaths(fieldValue, paths);
+  });
+}
+
+async function getUserScopedDocuments(uid: string) {
+  const documents = new Map<string, QueryDocumentSnapshot<DocumentData>>();
+
+  for (const { collectionName, field } of USER_QUERY_COLLECTIONS) {
+    const snapshot = await getDocs(
+      query(collection(db, collectionName), where(field, '==', uid)),
+    );
+
+    snapshot.docs.forEach((documentSnapshot) => {
+      if (!documents.has(documentSnapshot.ref.path)) {
+        documents.set(documentSnapshot.ref.path, documentSnapshot);
+      }
+    });
+  }
+
+  return [...documents.values()];
+}
+
+async function deleteUserRemoteData(uid: string) {
+  const storagePaths = new Set<string>();
+  const scopedDocuments = await getUserScopedDocuments(uid);
+
+  scopedDocuments.forEach((documentSnapshot) => {
+    collectStoragePaths(documentSnapshot.data(), storagePaths);
+  });
+
+  await Promise.all([
+    ...USER_ROOT_COLLECTIONS.map((collectionName) => deleteDoc(doc(db, collectionName, uid))),
+    deleteDoc(doc(db, 'experience_cards', uid)),
+    ...scopedDocuments.map((documentSnapshot) => deleteDoc(documentSnapshot.ref)),
+  ]);
+
+  await Promise.all(
+    [...storagePaths].map((storagePath) =>
+      deleteObject(ref(storage, storagePath)).catch((error) => {
+        console.warn(`Storage cleanup failed for ${storagePath}:`, error);
+      }),
+    ),
+  );
+}
+
+function clearDeletedUserLocalData(uid?: string) {
+  if (typeof window === 'undefined') return;
+
+  [
+    CURRENT_USER_STORAGE_KEY,
+    `v1_${CURRENT_USER_STORAGE_KEY}`,
+    'eojob_current_user',
+    'v1_eojob_current_user',
+    'eojob_senior_profile',
+    'eojob_company_profile',
+    'eojob_experience_card',
+    'eojob_projects',
+    'eojob_user_proposals',
+    'eojob_resume_application',
+    'eojob_pending_application_interview',
+    'eojob_pending_experience_card',
+    'eojob_pending_experience_follow_up',
+    'eojob_experience_profile_draft',
+  ].forEach((key) => localStorage.removeItem(key));
+
+  if (uid) {
+    [
+      `eojob_senior_profile:${uid}`,
+      `eojob_company_profile:${uid}`,
+      `eojob_experience_card:${uid}`,
+    ].forEach((key) => localStorage.removeItem(key));
+  }
+
+  sessionStorage.clear();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -435,12 +544,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (uid) {
       try {
-        await deleteDoc(doc(db, 'users', uid));
-        await deleteDoc(doc(db, 'senior_profiles', uid));
-        await deleteDoc(doc(db, 'companies', uid));
-        await deleteDoc(doc(db, 'experience_cards', uid));
+        await deleteUserRemoteData(uid);
       } catch (err) {
         console.warn('Firestore deletion during account delete:', err);
+        isLoggingOutRef.current = false;
+        const msg = '회원 데이터를 모두 삭제하지 못했습니다. 네트워크 확인 후 다시 시도해 주세요.';
+        setError(msg);
+        throw new Error(msg, { cause: err });
       }
     }
 
@@ -459,6 +569,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    clearDeletedUserLocalData(uid);
     saveUserLocal(null);
     setUser(null);
     if (typeof window !== 'undefined') {
@@ -512,23 +623,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (googleUser.email === 'sehddnr2@gmail.com'
           ? '이동욱'
           : googleUser.email?.split('@')[0] || '이동욱');
+      const now = new Date().toISOString();
+      let profileRole = targetRole;
+      let profileName = computedName;
+      let createdAt = now;
+      let canPersistRole = true;
+
+      try {
+        const userSnapshot = await getDoc(doc(db, 'users', googleUser.uid));
+        if (userSnapshot.exists()) {
+          const data = userSnapshot.data() as Partial<UserProfile>;
+          if (data.role === 'senior' || data.role === 'company') {
+            profileRole = data.role;
+          }
+          if (data.name) profileName = data.name;
+          if (data.createdAt) createdAt = data.createdAt;
+        }
+      } catch (fsErr) {
+        console.warn('Firestore getDoc failed during Google sign in:', fsErr);
+        canPersistRole = false;
+      }
+
       const profile: UserProfile = {
         uid: googleUser.uid,
         email: googleUser.email || '',
-        name: computedName,
-        role: targetRole,
-        createdAt: new Date().toISOString(),
+        name: profileName,
+        role: profileRole,
+        createdAt,
       };
       try {
+        const userDocument: Record<string, unknown> = {
+          uid: googleUser.uid,
+          email: googleUser.email,
+          name: profile.name,
+          createdAt: profile.createdAt,
+          lastLoginAt: now,
+        };
+        if (canPersistRole) {
+          userDocument.role = profileRole;
+        }
+
         await setDoc(
           doc(db, 'users', googleUser.uid),
-          {
-            uid: googleUser.uid,
-            email: googleUser.email,
-            name: profile.name,
-            role: targetRole,
-            createdAt: profile.createdAt,
-          },
+          userDocument,
           { merge: true },
         );
       } catch (fsErr) {

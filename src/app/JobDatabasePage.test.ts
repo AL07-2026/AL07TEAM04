@@ -6,6 +6,9 @@ import { waitFor } from '@testing-library/react';
 const {
   mockAuthState,
   mockedCreateProject,
+  mockedDeleteProject,
+  mockedUpdateProject,
+  mockedNavigate,
   mockedSearch,
   mockedProfile,
   mockedProjects,
@@ -17,6 +20,9 @@ const {
   return {
     mockAuthState,
     mockedCreateProject: vi.fn(),
+    mockedDeleteProject: vi.fn(),
+    mockedUpdateProject: vi.fn(),
+    mockedNavigate: vi.fn(),
     mockedSearch: vi.fn(),
     mockedProfile: vi.fn(),
     mockedProjects: vi.fn(),
@@ -25,13 +31,18 @@ const {
 });
 
 vi.mock('react-router', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockedNavigate,
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: mockAuthState.user }) }));
 vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
 vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
-vi.mock('@/services/projectService', () => ({ createProject: mockedCreateProject, fetchProjects: mockedProjects }));
+vi.mock('@/services/projectService', () => ({
+  createProject: mockedCreateProject,
+  deleteProject: mockedDeleteProject,
+  fetchProjects: mockedProjects,
+  updateProject: mockedUpdateProject,
+}));
 vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
 
 import type { JobPosting } from '@/data/jobPostings';
@@ -51,9 +62,11 @@ import {
   type FilterOption,
 } from '@/app/JobDatabasePage';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
+import { getCompletedApplicationDestination } from '@/app/jobDatabaseApplicationNavigation';
 
 beforeEach(() => {
   mockAuthState.user = { uid: 'senior-test-user' };
+  mockedNavigate.mockReset();
 });
 
 const companyProject: JobPosting = {
@@ -113,6 +126,38 @@ describe('비로그인 추천 건수', () => {
 
     await screen.findByRole('button', { name: '비로그인 추천 테스트' });
     expect(screen.getByText('추천 건수').parentElement).toHaveTextContent('0건');
+  });
+});
+
+describe('지원 접근 및 완료 경로', () => {
+  it('비로그인 시니어는 지원 모달 대신 로그인 화면으로 이동한다', async () => {
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+    mockedSearch.mockResolvedValueOnce({
+      catalogTotal: 1,
+      closingSoonTotal: 0,
+      items: [companyProject],
+      page: 1,
+      pageSize: 5,
+      partTimeTotal: 0,
+      preferredTotal: 1,
+      status: 'success',
+      total: 1,
+      totalPages: 1,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
+
+    expect(mockedNavigate).toHaveBeenCalledWith('/login?role=senior');
+    expect(screen.queryByRole('heading', { name: '지원 내용을 확인해 주세요' })).toBeNull();
+  });
+
+  it('지원 성공 확인은 방금 저장한 제안 상세로 이동한다', () => {
+    expect(getCompletedApplicationDestination('proposal-just-created')).toBe(
+      '/senior/proposals/proposal-just-created',
+    );
   });
 });
 
@@ -338,7 +383,7 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       target: { value: 'AI 자동화 리드' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Firestore DB에 등록' }));
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
 
     await waitFor(() => expect(mockedCreateProject).toHaveBeenCalledTimes(1));
     expect(mockedCreateProject).toHaveBeenCalledWith(
@@ -387,8 +432,9 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
 
   it('공개 중인 기업 프로젝트만 인재 목록에 포함한다', () => {
     const closedProject = { ...companyProject, id: 'company-project-2', hiringStage: 'closing' as const };
+    const privateProject = { ...companyProject, id: 'company-project-3', isPublic: false };
 
-    expect(getPublishedCompanyProjects([companyProject, closedProject])).toEqual([companyProject]);
+    expect(getPublishedCompanyProjects([companyProject, closedProject, privateProject])).toEqual([companyProject]);
   });
 
   it('기업 관리 화면에는 로그인한 기업이 등록한 공고만 포함한다', () => {
@@ -525,6 +571,32 @@ describe('공고 실제 업무의 task stack 표현', () => {
 });
 
 describe('선택된 프로젝트 카드의 조용한 강조', () => {
+  it('서버 검색 결과는 정렬에 사용한 적합도 점수를 카드에도 동일하게 표시한다', () => {
+    const profile = {
+      desiredCategory: 'service',
+      email: 'senior@example.com',
+      experience: '서비스 운영',
+      field: '서비스 운영',
+      period: '12년',
+      solvedExperiences: '운영 흐름을 개선하고 프로세스를 표준화했습니다.',
+      phone: '010-0000-0000',
+    };
+    const posting = { ...companyProject, seniorFitScore: 42 };
+    render(
+      createElement(PostingCard, {
+        activePrimaryCategory: 'service',
+        posting,
+        profile,
+        role: 'senior',
+        selected: false,
+        preferServerFitScore: true,
+        onSelect: vi.fn(),
+      }),
+    );
+
+    expect(screen.getByText(`${posting.seniorFitScore}점`)).toBeTruthy();
+  });
+
   it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
     const { container, rerender } = render(
       createElement(PostingCard, {

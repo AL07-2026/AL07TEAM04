@@ -7,6 +7,7 @@ import {
   buildExperienceCardFromAnswers,
   cancelApplicationInterview,
   clearPendingExperienceFollowUp,
+  clearStoredExperienceCard,
   evaluateExperienceCardMatch,
   getPendingApplicationInterview,
   readPendingExperienceFollowUp,
@@ -57,6 +58,15 @@ describe('AI 인터뷰 경험 카드 흐름', () => {
       targetTitle: operationsPosting.title,
     });
     expect(readStoredExperienceCard('senior-b')).toBeNull();
+  });
+
+  it('삭제된 경험 카드가 홈 카운트에 남지 않도록 계정별 저장 캐시를 지운다', () => {
+    const card = buildExperienceCardFromAnswers(answers, { category: 'operations' });
+    saveStoredExperienceCard(card, 'senior-a');
+
+    clearStoredExperienceCard('senior-a');
+
+    expect(readStoredExperienceCard('senior-a')).toBeNull();
   });
 
   it('경험 카드 직종과 지원 직종이 일치할 때만 최종 지원 가능 상태로 판정한다', () => {

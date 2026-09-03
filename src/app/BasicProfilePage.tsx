@@ -20,8 +20,12 @@ import { cn } from '@/lib/utils';
 import {
   getLocalSeniorProfile,
   resolveSeniorProfile,
+  isUsableSeniorResumeFile,
+  resolveSeniorResumeUrl,
   saveLocalSeniorProfile,
   saveSeniorProfile,
+  uploadSeniorResumeFile,
+  deleteSeniorResumeFile,
   type SeniorProfileData,
 } from '@/services/profileService';
 
@@ -130,6 +134,8 @@ export function BasicProfilePage() {
   const [isEditing, setIsEditing] = useState<boolean>(() => !getLocalSeniorProfile(user?.uid));
   const [attachment, setAttachment] = useState<File | null>(null);
   const [message, setMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isOpeningResume, setIsOpeningResume] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -161,8 +167,7 @@ export function BasicProfilePage() {
   function selectFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    const extension = file.name.split('.').pop()?.toLowerCase();
-    if (!['pdf', 'doc', 'docx'].includes(extension ?? '') || file.size > 10 * 1024 * 1024) {
+    if (!isUsableSeniorResumeFile(file)) {
       setMessage('PDF 또는 DOCX 파일(최대 10MB)만 첨부할 수 있어요.');
       event.target.value = '';
       return;
@@ -173,6 +178,7 @@ export function BasicProfilePage() {
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
+    if (isSaving) return;
     const rawDesiredCategories = [
       form.desiredCategory,
       form.desiredCategory2,
@@ -201,31 +207,75 @@ export function BasicProfilePage() {
       );
       return;
     }
-    const normalizedForm: ProfileForm = {
-      ...form,
-      desiredCategory: desiredPreferences[0],
-      desiredCategory2: desiredPreferences[1],
-      desiredCategory3: desiredPreferences[2],
-      desiredOccupationText: usesOtherOccupation
-        ? form.desiredOccupationText?.trim()
-        : undefined,
-    };
-    setForm(normalizedForm);
-    if (user?.uid) {
-      try {
-        const savedProfile = await saveSeniorProfile(user.uid, normalizedForm);
-        setForm(savedProfile);
-      } catch (err) {
-        console.error('Failed to save senior profile to Firestore:', err);
-        setMessage('서버에 저장하지 못했습니다. 연결 상태를 확인한 뒤 다시 저장해 주세요.');
-        return;
+    setIsSaving(true);
+    const previousResumeFile = form.resumeFile;
+    let uploadedResumeFile = previousResumeFile;
+    try {
+      if (attachment) {
+        if (!user?.uid) throw new Error('로그인한 사용자만 이력서를 저장할 수 있습니다.');
+        uploadedResumeFile = await uploadSeniorResumeFile(user.uid, attachment);
       }
-    } else {
-      saveLocalSeniorProfile(normalizedForm);
+
+      const normalizedForm: ProfileForm = {
+        ...form,
+        desiredCategory: desiredPreferences[0],
+        desiredCategory2: desiredPreferences[1],
+        desiredCategory3: desiredPreferences[2],
+        desiredOccupationText: usesOtherOccupation
+          ? form.desiredOccupationText?.trim()
+          : undefined,
+        resumeFile: uploadedResumeFile,
+      };
+      if (user?.uid) {
+        await saveSeniorProfile(user.uid, normalizedForm);
+      }
+      setForm(normalizedForm);
+      saveLocalSeniorProfile(normalizedForm, user?.uid);
+      window.dispatchEvent(new Event('eojob_senior_profile_updated'));
+      if (
+        attachment &&
+        previousResumeFile?.storagePath &&
+        previousResumeFile.storagePath !== uploadedResumeFile?.storagePath
+      ) {
+        await deleteSeniorResumeFile(previousResumeFile);
+      }
+      setAttachment(null);
+      setIsEditing(false);
+      setMessage('✓ 프로필 정보가 성공적으로 저장되었습니다.');
+    } catch (err) {
+      if (attachment && uploadedResumeFile?.storagePath !== previousResumeFile?.storagePath) {
+        await deleteSeniorResumeFile(uploadedResumeFile);
+      }
+      console.error('Failed to save senior profile:', err);
+      const isStoragePermissionError =
+        err instanceof Error &&
+        (err.message.includes('storage/unauthorized') ||
+          err.message.includes('does not have permission'));
+      setMessage(
+        isStoragePermissionError
+          ? '이력서 저장 권한을 확인하지 못했습니다. 로그인 상태를 확인한 뒤 다시 저장해 주세요.'
+          : err instanceof Error
+            ? err.message
+          : '프로필 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
+    } finally {
+      setIsSaving(false);
     }
-    window.dispatchEvent(new Event('eojob_senior_profile_updated'));
-    setIsEditing(false);
-    setMessage('✓ 프로필 정보가 성공적으로 저장되었습니다.');
+  }
+
+  async function handleOpenResume() {
+    if (!form.resumeFile || isOpeningResume) return;
+    setIsOpeningResume(true);
+    setMessage('');
+    try {
+      const url = await resolveSeniorResumeUrl(form.resumeFile);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error('Failed to open resume:', err);
+      setMessage('이력서 파일을 열지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsOpeningResume(false);
+    }
   }
 
   async function handleLogout() {
@@ -538,11 +588,18 @@ export function BasicProfilePage() {
               </>
             )}
 
-            {attachment ? (
-              <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-[#FAF7F2] text-xs font-extrabold text-[#173F3A]">
+            {form.resumeFile ? (
+              <button
+                className="flex items-center gap-2 p-3.5 rounded-2xl bg-[#FAF7F2] text-left text-xs font-extrabold text-[#173F3A] transition hover:bg-[#EAF3F0]"
+                onClick={() => void handleOpenResume()}
+                type="button"
+              >
                 <FileText className="size-4 text-[#173F3A]" />
-                <span>첨부 이력서: {attachment.name}</span>
-              </div>
+                <span>
+                  첨부 이력서: {form.resumeFile.name}
+                  {isOpeningResume ? ' 여는 중...' : ''}
+                </span>
+              </button>
             ) : null}
 
             <div className="pt-2 flex flex-col gap-2">
@@ -863,10 +920,10 @@ export function BasicProfilePage() {
                 type="file"
               />
               <ActionButton onClick={() => fileInputRef.current?.click()} secondary type="button">
-                {attachment ? attachment.name : '파일 선택'}
+                {attachment ? attachment.name : form.resumeFile?.name || '파일 선택'}
               </ActionButton>
               <p className="text-[12px] font-medium text-slate-500">
-                PDF·DOCX, 최대 10MB · 제안한 기업만 확인
+                PDF·DOCX, 최대 10MB · 새 파일 저장 시 기존 이력서는 교체됩니다.
               </p>
             </div>
             {message ? (
@@ -875,7 +932,9 @@ export function BasicProfilePage() {
               </p>
             ) : null}
             <div className="flex items-center gap-2 pt-2">
-              <ActionButton type="submit">변경사항 저장하기</ActionButton>
+              <ActionButton disabled={isSaving} type="submit">
+                {isSaving ? '저장 중...' : '변경사항 저장하기'}
+              </ActionButton>
               <ActionButton onClick={() => setIsEditing(false)} secondary type="button">
                 취소
               </ActionButton>
