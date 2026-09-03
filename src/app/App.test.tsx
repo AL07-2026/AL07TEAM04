@@ -239,7 +239,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
       target: { value: '업무 흐름을 정리합니다.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
     expect(
       await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
     ).toBeInTheDocument();

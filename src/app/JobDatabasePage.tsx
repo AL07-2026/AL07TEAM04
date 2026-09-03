@@ -3164,7 +3164,7 @@ export function JobDatabasePage({
                   disabled={isSubmitting}
                   className="h-11 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white shadow-xs hover:bg-[#21544E] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? '저장 중...' : '프로젝트 저장'}
+                  {isSubmitting ? '저장 중...' : '프로젝트 등록'}
                 </button>
               </div>
             </form>

@@ -3296,7 +3296,7 @@ export function ProjectRegisterPage() {
         </section>
         <div className="-mx-1 mt-3 rounded-2xl bg-[#F7F3EA]/95 px-1 pb-[calc(2.5cm+env(safe-area-inset-bottom))] pt-2">
           <ActionButton disabled={!complete || isSaving} role="company" type="submit">
-            {isSaving ? '프로젝트 저장 중...' : '프로젝트 저장'}
+            {isSaving ? '프로젝트 등록 중...' : '프로젝트 등록'}
           </ActionButton>
         </div>
         {saveError ? (
