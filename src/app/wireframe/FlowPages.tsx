@@ -3177,7 +3177,7 @@ export function ProjectRegisterPage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="px-6 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5"
+      contentClassName="px-6 pb-[calc(8rem+2.5cm+env(safe-area-inset-bottom))] pt-5"
       role="company"
       showBack={false}
       title="프로젝트 등록"
@@ -3294,7 +3294,7 @@ export function ProjectRegisterPage() {
             </p>
           ) : null}
         </section>
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 -mx-1 rounded-2xl bg-[#F7F3EA]/95 px-1 py-2 backdrop-blur">
+        <div className="sticky bottom-[calc(4.5rem+2.5cm+env(safe-area-inset-bottom))] z-30 -mx-1 rounded-2xl bg-[#F7F3EA]/95 px-1 py-2 backdrop-blur">
           <ActionButton disabled={!complete || isSaving} role="company" type="submit">
             {isSaving ? '프로젝트 저장 중...' : '프로젝트 저장'}
           </ActionButton>

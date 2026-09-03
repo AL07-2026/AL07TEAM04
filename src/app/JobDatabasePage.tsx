@@ -2887,8 +2887,8 @@ export function JobDatabasePage({
 
       {/* New Project Registration Modal */}
       {isRegisterOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-none bg-black/50 px-2.5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-xs md:items-center md:p-4">
-          <div className="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-xl md:max-h-[calc(100dvh-2rem)] md:p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-none bg-black/50 px-2.5 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-xs md:items-center md:p-4">
+          <div className="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2.5cm-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+3.5cm)] shadow-xl md:max-h-[calc(100dvh-2rem)] md:p-6">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
               <h3 className="text-lg font-extrabold text-[#17212B]">신규 프로젝트 등록</h3>
               <button
@@ -3151,7 +3151,7 @@ export function JobDatabasePage({
                 </label>
               </section>
 
-              <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-end gap-2 border-t border-[#E0D9C8]/70 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 backdrop-blur md:static md:mx-0 md:border-t-0 md:bg-transparent md:p-0 md:pt-0">
+              <div className="sticky bottom-0 -mx-4 mt-2 flex items-center justify-end gap-2 border-t border-[#E0D9C8]/70 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-3 backdrop-blur md:static md:mx-0 md:border-t-0 md:bg-transparent md:p-0 md:pt-0">
                 <button
                   type="button"
                   onClick={() => setIsRegisterOpen(false)}
