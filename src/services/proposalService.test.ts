@@ -3,11 +3,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setDoc } from 'firebase/firestore';
 import { uploadBytes } from 'firebase/storage';
 import {
+  getLocalProposals,
   isUsableProposalResumeFile,
   saveProposal,
   uploadProposalResumeFiles,
   type UserProposal,
+  updateProposalStatus,
 } from './proposalService';
+
+const storedProposal: Omit<UserProposal, 'id'> = {
+  appliedAt: '2026-09-03',
+  category: 'operations',
+  companyName: '테스트 기업',
+  interviewSummary: '운영 경험',
+  location: '서울',
+  projectId: 'project-1',
+  projectOwnerId: 'company-1',
+  projectTitle: '운영 개선',
+  resumeFileName: 'resume.pdf',
+  salaryRange: '협의',
+  seniorFitScore: 90,
+  status: '검토 중',
+  userId: 'senior-1',
+};
 
 describe('지원서 이력서 파일 계약', () => {
   beforeEach(() => {
@@ -83,5 +101,35 @@ describe('지원서 이력서 파일 계약', () => {
         },
       }),
     );
+  });
+
+  it('비로그인 제안은 로컬/Firestore에 저장하지 않는다', async () => {
+    await expect(saveProposal({ ...storedProposal, userId: undefined }, { requireRemote: true })).rejects.toThrow(
+      '로그인한 지원자만 지원서를 저장할 수 있습니다.',
+    );
+    expect(getLocalProposals()).toHaveLength(0);
+    expect(setDoc).not.toHaveBeenCalled();
+  });
+
+  it('제안 취소는 원격 저장 후 재조회 가능한 로컬 상태로 남긴다', async () => {
+    const saved = await saveProposal(storedProposal, { requireRemote: true });
+    await updateProposalStatus(saved.id, '취소됨', { requireRemote: true });
+
+    expect(getLocalProposals('senior-1')[0]?.status).toBe('취소됨');
+    expect(setDoc).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: '취소됨' }),
+      { merge: true },
+    );
+  });
+
+  it('원격 취소 저장 실패 시 로컬 상태도 취소로 남기지 않는다', async () => {
+    const saved = await saveProposal(storedProposal, { requireRemote: true });
+    vi.mocked(setDoc).mockRejectedValueOnce(new Error('permission-denied'));
+
+    await expect(
+      updateProposalStatus(saved.id, '취소됨', { requireRemote: true }),
+    ).rejects.toThrow('permission-denied');
+    expect(getLocalProposals('senior-1')[0]?.status).toBe('검토 중');
   });
 });

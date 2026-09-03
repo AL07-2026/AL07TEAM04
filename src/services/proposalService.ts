@@ -60,7 +60,7 @@ export interface UserProposal {
   resumeFiles?: ProposalResumeFile[];
   salaryRange: string;
   seniorFitScore: number;
-  status: '검토 중' | '연락 받음' | '승인';
+  status: '검토 중' | '연락 받음' | '승인' | '취소됨';
   processStage?: ProposalProcessStage;
   contactStatus?: 'not_contacted' | 'contacted';
   experienceSnapshotV1?: ExperienceProfileV1;
@@ -115,7 +115,10 @@ function normalizeProposal(source: unknown, documentId?: string): UserProposal |
     appliedAt: value.appliedAt || new Date().toISOString().slice(0, 10),
     applicantName: value.applicantName,
     applicantEmail: value.applicantEmail,
-    status: value.status === '연락 받음' || value.status === '승인' ? value.status : '검토 중',
+    status:
+      value.status === '연락 받음' || value.status === '승인' || value.status === '취소됨'
+        ? value.status
+        : '검토 중',
     processStage: isProcessStage(value.processStage)
       ? value.processStage
       : value.status === '승인'
@@ -292,6 +295,10 @@ export async function createProposalFromPosting(
   experienceSnapshotV1?: ExperienceProfileV1,
   subsidyInfo?: { employmentSubsidyProgram?: string; employmentSubsidyTarget?: boolean },
 ): Promise<UserProposal> {
+  if (!userId) {
+    throw new Error('로그인한 지원자만 지원서를 저장할 수 있습니다.');
+  }
+
   const proposalData: Omit<UserProposal, 'id'> = {
     userId,
     projectId: posting.id,
@@ -376,12 +383,11 @@ export async function saveProposal(
   proposalData: Omit<UserProposal, 'id'>,
   options: { requireRemote?: boolean } = {},
 ): Promise<UserProposal> {
-  const savedLocal = saveLocalProposal(proposalData);
-  const userId = proposalData.userId;
-  if (!userId) {
-    if (options.requireRemote) throw new Error('로그인한 지원자만 지원서를 저장할 수 있습니다.');
-    return savedLocal;
+  if (!proposalData.userId) {
+    throw new Error('로그인한 지원자만 지원서를 저장할 수 있습니다.');
   }
+
+  const savedLocal = saveLocalProposal(proposalData);
 
   try {
     await setDoc(
@@ -411,9 +417,11 @@ function removeLocalProposal(proposalId: string) {
 export async function updateProposalStatus(
   proposalId: string,
   status: UserProposal['status'],
+  options: { requireRemote?: boolean } = {},
 ): Promise<void> {
   const updatedAt = new Date().toISOString();
-  const proposals = getAllLocalProposals().map((proposal) =>
+  const previousProposals = getAllLocalProposals();
+  const proposals = previousProposals.map((proposal) =>
     proposal.id === proposalId ? { ...proposal, status, updatedAt } : proposal,
   );
   writeVersionedStorage(LOCAL_STORAGE_KEY, proposals);
@@ -421,6 +429,10 @@ export async function updateProposalStatus(
   try {
     await setDoc(doc(db, PROPOSALS_COLLECTION, proposalId), { status, updatedAt }, { merge: true });
   } catch (error) {
+    if (options.requireRemote) {
+      writeVersionedStorage(LOCAL_STORAGE_KEY, previousProposals);
+      throw error;
+    }
     console.warn('Failed to update proposal status in Firestore, using local status:', error);
   }
 }

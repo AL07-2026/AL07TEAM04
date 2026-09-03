@@ -130,6 +130,31 @@ describe('데이터 저장 및 조회 정합성', () => {
     ).toBeNull();
   });
 
+  it('비어 있는 선택값은 중립값으로 읽고 시간제 고용 형태를 보존한다', () => {
+    const project = normalizeProject('part-time-project', {
+      companyName: '테스트 기업',
+      title: '시간제 운영 지원',
+      category: 'operations',
+      employmentType: 'part-time',
+      location: '',
+      experienceYears: '',
+      salaryRange: '',
+      projectDuration: '',
+      deadline: '',
+      projectGoal: '',
+    });
+
+    expect(project).toMatchObject({
+      employmentType: 'part-time',
+      location: '협의/미등록',
+      experienceYears: '협의/미등록',
+      salaryRange: '협의/미등록',
+      projectDuration: '협의/미등록',
+      deadline: '',
+      projectGoal: '',
+    });
+  });
+
   it('삭제한 가나다라 테스트 공고는 남아 있는 로컬 캐시에서도 제외한다', () => {
     expect(
       normalizeProject('PROJECT-c8fb7c64', {

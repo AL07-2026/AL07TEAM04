@@ -3,19 +3,33 @@ import { createElement, type ChangeEvent, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 
-const { mockedCreateProject, mockedSearch, mockedProfile, mockedProjects, mockedExperienceCard } = vi.hoisted(() => ({
+const {
+  mockedAuthUser,
+  mockedCreateProject,
+  mockedExperienceCard,
+  mockedNavigate,
+  mockedSearch,
+  mockedProfile,
+  mockedProjects,
+} = vi.hoisted(() => ({
+  mockedAuthUser: (() => {
+    const value: { current: { uid: string } | null } = { current: null };
+    value.current = { uid: 'senior-test-user' };
+    return value;
+  })(),
   mockedCreateProject: vi.fn(),
   mockedSearch: vi.fn(),
   mockedProfile: vi.fn(),
   mockedProjects: vi.fn(),
   mockedExperienceCard: vi.fn(),
+  mockedNavigate: vi.fn(),
 }));
 
 vi.mock('react-router', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockedNavigate,
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
-vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: { uid: 'senior-test-user' } }) }));
+vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: mockedAuthUser.current }) }));
 vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
 vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
 vi.mock('@/services/projectService', () => ({ createProject: mockedCreateProject, fetchProjects: mockedProjects }));
@@ -76,6 +90,32 @@ const companyProject: JobPosting = {
 };
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
+  it('비로그인 시니어는 지원 모달 대신 로그인 화면으로 이동한다', async () => {
+    mockedAuthUser.current = null;
+    mockedProjects.mockResolvedValueOnce([companyProject]);
+    mockedSearch.mockResolvedValueOnce({
+      catalogTotal: 1,
+      closingSoonTotal: 0,
+      items: [companyProject],
+      page: 1,
+      pageSize: 12,
+      partTimeTotal: 0,
+      preferredTotal: 1,
+      status: 'success',
+      total: 1,
+      totalPages: 1,
+    });
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+    fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
+
+    expect(mockedNavigate).toHaveBeenCalledWith('/login?role=senior');
+    expect(screen.queryByRole('heading', { name: '프로젝트 지원 준비' })).toBeNull();
+    mockedAuthUser.current = { uid: 'senior-test-user' };
+  });
+
   it('지원 성공 확인은 방금 저장한 제안 상세로 이동한다', () => {
     expect(getCompletedApplicationDestination('proposal-just-created')).toBe(
       '/senior/proposals/proposal-just-created',
@@ -160,8 +200,9 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
 
   it('공개 중인 기업 프로젝트만 인재 목록에 포함한다', () => {
     const closedProject = { ...companyProject, id: 'company-project-2', hiringStage: 'closing' as const };
+    const privateProject = { ...companyProject, id: 'company-project-3', isPublic: false };
 
-    expect(getPublishedCompanyProjects([companyProject, closedProject])).toEqual([companyProject]);
+    expect(getPublishedCompanyProjects([companyProject, closedProject, privateProject])).toEqual([companyProject]);
   });
 
   it('기업 관리 화면에는 로그인한 기업이 등록한 공고만 포함한다', () => {

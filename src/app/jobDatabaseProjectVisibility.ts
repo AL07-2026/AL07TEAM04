@@ -31,7 +31,7 @@ type ProjectVisibilityFilters = {
 };
 
 export function getPublishedCompanyProjects(projects: JobPosting[]) {
-  return projects.filter((project) => project.hiringStage === 'open');
+  return projects.filter((project) => project.isPublic !== false && project.hiringStage === 'open');
 }
 
 export function resolveSeniorCategoryFilter(
