@@ -26,6 +26,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 vi.mock('firebase/storage', () => ({
+  deleteObject: vi.fn(() => Promise.resolve(undefined)),
   getDownloadURL: vi.fn(() => Promise.resolve('https://example.com/project-attachment')),
   getStorage: vi.fn(() => ({})),
   ref: vi.fn(() => ({})),
