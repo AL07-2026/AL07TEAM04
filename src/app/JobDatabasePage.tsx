@@ -1429,6 +1429,7 @@ export function JobDatabasePage({
   const [isRegisterOpen, setIsRegisterOpen] = useState(
     () => role === 'company' && (initialRegisterOpen || searchParams.get('register') === '1'),
   );
+  const [editingProject, setEditingProject] = useState<JobPosting | null>(null);
   const [isCompanyProjectModalOpen, setIsCompanyProjectModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
@@ -2260,6 +2261,7 @@ export function JobDatabasePage({
 
       setPostings((prev) => [created, ...prev]);
       setSelectedPostingTarget(getPostingSelectionTarget(created));
+      setEditingProject(null);
       setIsRegisterOpen(false);
       setActionNotice(
         savedToFirestore
@@ -2890,9 +2892,14 @@ export function JobDatabasePage({
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-none bg-black/50 px-2.5 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-xs md:items-center md:p-4">
           <div className="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2.5cm-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+3.5cm)] shadow-xl md:max-h-[calc(100dvh-2rem)] md:p-6">
             <div className="flex items-center justify-between border-b border-[#E0D9C8]/60 pb-3">
-              <h3 className="text-lg font-extrabold text-[#17212B]">신규 프로젝트 등록</h3>
+              <h3 className="text-lg font-extrabold text-[#17212B]">
+                {editingProject ? '프로젝트 정보 수정' : '신규 프로젝트 등록'}
+              </h3>
               <button
-                onClick={() => setIsRegisterOpen(false)}
+                onClick={() => {
+                  setEditingProject(null);
+                  setIsRegisterOpen(false);
+                }}
                 type="button"
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
               >
@@ -3154,7 +3161,10 @@ export function JobDatabasePage({
               <div className="-mx-4 mt-4 flex items-center justify-end gap-2 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+2.5cm+1rem)] pt-3 md:mx-0 md:bg-transparent md:p-0 md:pt-0">
                 <button
                   type="button"
-                  onClick={() => setIsRegisterOpen(false)}
+                  onClick={() => {
+                    setEditingProject(null);
+                    setIsRegisterOpen(false);
+                  }}
                   className="h-11 rounded-xl border border-[#E0D9C8] px-4 text-sm font-bold text-slate-600 hover:bg-slate-50"
                 >
                   취소
@@ -3164,7 +3174,7 @@ export function JobDatabasePage({
                   disabled={isSubmitting}
                   className="h-11 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white shadow-xs hover:bg-[#21544E] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? '저장 중...' : '프로젝트 등록'}
+                  {isSubmitting ? '저장 중...' : editingProject ? '수정 저장' : '프로젝트 등록'}
                 </button>
               </div>
             </form>
