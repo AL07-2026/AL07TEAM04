@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
-import { saveLocalCompanyProfile } from '@/services/profileService';
+import { saveLocalCompanyProfile, saveLocalSeniorProfile } from '@/services/profileService';
 import * as proposalService from '@/services/proposalService';
 
 describe('Figma v2 통합 화면 라우팅', () => {
@@ -131,6 +131,36 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
     expect(await screen.findByRole('heading', { name: '경험 선택' })).toBeInTheDocument();
     expect(window.location.pathname).toBe('/senior/experience');
+  });
+
+  it('경험 카드 확인 화면은 저장된 프로필 경험카드를 빈 상태 대신 보여준다', async () => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    saveLocalSeniorProfile({
+      email: 'senior@example.com',
+      experience: '12년',
+      field: 'IT개발·데이터',
+      period: '12년',
+      phone: '010-0000-0000',
+      experienceCardsV1: [
+        {
+          id: 'profile-card-1',
+          workedOn: '고객 문의 운영 기준 정비',
+          accomplished: '평균 응답 시간을 30% 줄였습니다.',
+          strengths: ['프로세스 개선', '운영 자동화'],
+          version: 1,
+          confirmedAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+    });
+    window.history.pushState({}, '', '/senior/experience/card');
+
+    render(<App />);
+
+    expect(await screen.findByText('저장된 경험 카드')).toBeInTheDocument();
+    expect(screen.getByText('고객 문의 운영 기준 정비')).toBeInTheDocument();
+    expect(screen.queryByText('저장된 인터뷰 결과가 없습니다')).not.toBeInTheDocument();
+    window.localStorage.clear();
   });
 
   it('경험 선택 화면에서 고른 분야를 AI 인터뷰 기준에 반영한다', async () => {

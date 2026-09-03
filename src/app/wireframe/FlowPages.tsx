@@ -55,6 +55,7 @@ import {
   clearExperienceProfileDraft,
   clearPendingExperienceCard,
   clearPendingExperienceFollowUp,
+  clearStoredExperienceCard,
   completeApplicationInterview,
   getExperienceCardCategoryLabel,
   getPendingApplicationInterview,
@@ -292,6 +293,27 @@ export function ExperienceSummaryCard({
 
 function normalizeExperienceDisplayText(value?: string) {
   return (value || '').replace(/\s+/g, ' ').trim();
+}
+
+function getProfileExperienceCards(profile?: SeniorProfileData | null): ExperienceProfileV1[] {
+  return (
+    profile?.experienceCardsV1 ??
+    (profile?.experienceProfileV1 ? [profile.experienceProfileV1] : [])
+  );
+}
+
+function mapStoredExperienceCardsToProfileCards(
+  cards: StoredExperienceCard[],
+): ExperienceProfileV1[] {
+  return cards.map((card) => ({
+    id: card.id,
+    workedOn: card.role || card.problem,
+    accomplished: card.result || card.action,
+    strengths: [card.action].filter(Boolean).slice(0, 3),
+    version: 1,
+    generatedAt: card.completedAt,
+    confirmedAt: card.completedAt || new Date(0).toISOString(),
+  }));
 }
 
 /** Shared, confirmed experience presentation used across profile and proposal views. */
@@ -835,17 +857,27 @@ export function SeniorHomePage() {
       if (!hasLoadedRef.current) {
         setIsLoadingRecommendations(true);
       }
-      const [profile, proposals, experienceCard, rawCompanyProjects] = await Promise.all([
-        resolveSeniorProfile(user?.uid),
-        getUserProposals(user?.uid),
-        getLatestUserExperienceCard(user?.uid),
-        fetchProjects().catch(() => []),
-      ]);
+      const [profile, proposals, experienceCard, rawCompanyProjects, remoteExperienceCards] =
+        await Promise.all([
+          resolveSeniorProfile(user?.uid),
+          getUserProposals(user?.uid),
+          getLatestUserExperienceCard(user?.uid),
+          fetchProjects().catch(() => []),
+          user?.uid ? getUserExperienceCards(user.uid) : Promise.resolve([]),
+        ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
         proposals.filter((proposal) => isActiveProposalStatus(proposal.status)).length,
       );
-      setSavedExperienceCount(experienceCard ? 1 : 0);
+      const profileExperienceCards =
+        profile?.experienceCardsV1 ??
+        (profile?.experienceProfileV1 ? [profile.experienceProfileV1] : []);
+      const actualExperienceCount = Math.max(
+        profileExperienceCards.length,
+        remoteExperienceCards.length,
+      );
+      const activeExperienceCard = actualExperienceCount > 0 ? experienceCard : null;
+      setSavedExperienceCount(actualExperienceCount);
 
       const primaryCategory = getProfilePrimaryCategory(profile);
       const preferredPreferences = getProfilePreferredPreferences(profile);
@@ -893,8 +925,8 @@ export function SeniorHomePage() {
           desiredOccupationText: shouldUseOtherOccupation
             ? profile?.desiredOccupationText
             : undefined,
-          experienceCardCategory: experienceCard?.category,
-          experienceCardText: getExperienceCardRecommendationText(experienceCard),
+          experienceCardCategory: activeExperienceCard?.category,
+          experienceCardText: getExperienceCardRecommendationText(activeExperienceCard),
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
           page: 1,
           pageSize: 20,
@@ -911,7 +943,7 @@ export function SeniorHomePage() {
               item,
               profile,
               primaryCategory,
-              experienceCard,
+              activeExperienceCard,
             );
             return {
               ...item,
@@ -928,7 +960,7 @@ export function SeniorHomePage() {
         setRecommendedJobs(allPersonalizedItems.slice(0, 5));
         setRecommendedProjectsCount(total);
         setHighestFitProject(getHighestFitProject(allPersonalizedItems));
-        setIsExperienceRecommendationApplied(Boolean(experienceCard));
+        setIsExperienceRecommendationApplied(Boolean(activeExperienceCard));
         setRecommendationFeedMessage(
           total === 0 ? '1순위 희망 직종과 일치하는 추천 공고를 찾지 못했습니다.' : '',
         );
@@ -941,7 +973,7 @@ export function SeniorHomePage() {
           sourceProjects,
           profile,
           primaryCategory,
-          experienceCard,
+          activeExperienceCard,
         );
         const total = ranked.length;
         const pageJobs = ranked
@@ -951,7 +983,7 @@ export function SeniorHomePage() {
         setRecommendedJobs(pageJobs);
         setRecommendedProjectsCount(total);
         setHighestFitProject(getHighestFitProject(pageJobs));
-        setIsExperienceRecommendationApplied(Boolean(experienceCard));
+        setIsExperienceRecommendationApplied(Boolean(activeExperienceCard));
         setRecommendationFeedMessage(worknetFeed.message ?? '');
       }
     }
@@ -2040,6 +2072,9 @@ export function ExperienceCardPage() {
     }
     return readStoredExperienceCard(user?.uid);
   });
+  const [savedExperienceCards, setSavedExperienceCards] = useState<ExperienceProfileV1[]>(() =>
+    getProfileExperienceCards(getLocalSeniorProfile(user?.uid)),
+  );
   const [hasFreshInterview] = useState(() => Boolean(readPendingExperienceCard()));
   const applicationReturn = getPendingApplicationInterview();
 
@@ -2047,6 +2082,64 @@ export function ExperienceCardPage() {
     if (hasFreshInterview || !user?.uid) return;
     void getLatestUserExperienceCard(user.uid).then(setExperienceCard);
   }, [hasFreshInterview, user?.uid]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshSavedExperienceCards = async () => {
+      const profile = user?.uid
+        ? await resolveSeniorProfile(user.uid)
+        : getLocalSeniorProfile(user?.uid);
+      if (!active) return;
+
+      const profileCards = getProfileExperienceCards(profile);
+      if (profileCards.length > 0) {
+        setSavedExperienceCards(profileCards);
+        return;
+      }
+
+      if (!user?.uid) {
+        setSavedExperienceCards([]);
+        return;
+      }
+
+      const remoteCards = await getUserExperienceCards(user.uid);
+      if (!active) return;
+      setSavedExperienceCards(
+        mapStoredExperienceCardsToProfileCards(
+          remoteCards.map((card) => ({
+            action: card.action,
+            category: card.category,
+            completedAt: card.createdAt || new Date(0).toISOString(),
+            facts: card.facts,
+            id: card.id,
+            inferredSkills: card.inferredSkills,
+            informationQuality: card.informationQuality,
+            jobKeywords: card.jobKeywords,
+            missingInformation: card.missingInformation,
+            problem: card.problem,
+            recruiterHighlight: card.recruiterHighlight,
+            result: card.result,
+            role: card.role,
+            skills: card.skills,
+            strengthInsight: card.strengthInsight,
+            summary: card.summary,
+            targetTitle: card.targetTitle,
+            title: card.title,
+            version: 1,
+          })),
+        ),
+      );
+    };
+
+    void refreshSavedExperienceCards();
+
+    const handleCardUpdate = () => void refreshSavedExperienceCards();
+    window.addEventListener('eojob_experience_card_updated', handleCardUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener('eojob_experience_card_updated', handleCardUpdate);
+    };
+  }, [user?.uid]);
 
   function handleContinueFollowUpInterview() {
     if (!experienceCard?.missingInformation?.length) return;
@@ -2128,6 +2221,9 @@ export function ExperienceCardPage() {
     void navigate(returnState?.path ?? '/senior/projects');
   }
 
+  const isFreshExperienceCard = Boolean(experienceCard && draft);
+  const hasVisibleExperienceCard = isFreshExperienceCard || savedExperienceCards.length > 0;
+
   return (
     <MobilePage
       activeNav="projects"
@@ -2140,16 +2236,16 @@ export function ExperienceCardPage() {
 
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
         <h2 className="text-xl font-extrabold tracking-tight text-[#17212B]">
-          {experienceCard ? '경험 카드가 완성됐어요' : '인터뷰 결과를 먼저 만들어 주세요'}
+          {hasVisibleExperienceCard ? '경험 카드가 완성됐어요' : '인터뷰 결과를 먼저 만들어 주세요'}
         </h2>
         <p className="text-xs font-medium text-slate-500">
-          {experienceCard
+          {hasVisibleExperienceCard
             ? '실제 인터뷰 답변으로 정리된 내용을 확인해 주세요.'
             : 'AI 경험 인터뷰를 완료하면 대표 경험 카드가 생성됩니다.'}
         </p>
       </div>
 
-      {experienceCard && draft ? (
+      {isFreshExperienceCard && experienceCard && draft ? (
         <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A]">
@@ -2206,6 +2302,28 @@ export function ExperienceCardPage() {
             }
           />
         </div>
+      ) : savedExperienceCards.length > 0 ? (
+        <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-xs">
+          <div className="flex items-center justify-between gap-3 border-b border-[#E0D9C8]/60 pb-2.5">
+            <strong className="text-[15px] font-extrabold text-[#17212B]">저장된 경험 카드</strong>
+            <span className="text-xs font-extrabold text-[#173F3A]">
+              {savedExperienceCards.length}개 등록
+            </span>
+          </div>
+          {savedExperienceCards.map((card, index) => {
+            const cardKey = card.id || card.confirmedAt;
+            return (
+              <section className="rounded-xl bg-[#FAF7F2] p-3.5" key={cardKey}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="text-xs font-extrabold text-[#173F3A]">
+                    경험 카드 {savedExperienceCards.length - index}
+                  </span>
+                </div>
+                <ExperienceSummaryView snapshot={card} />
+              </section>
+            );
+          })}
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-2xl bg-[#FFF8F6] p-6 text-center shadow-xs">
           <div className="flex size-11 items-center justify-center rounded-full bg-[#FDF0ED] text-[#F06B4F]">
@@ -2223,7 +2341,7 @@ export function ExperienceCardPage() {
       )}
 
       <div className="flex flex-col gap-2.5 pt-1">
-        {experienceCard && draft ? (
+        {isFreshExperienceCard ? (
           <>
             <ActionButton secondary onClick={() => void navigate('/senior/experience/interview')}>
               인터뷰 다시 진행하기
@@ -2236,6 +2354,10 @@ export function ExperienceCardPage() {
                   : '내 경험 프로필에 반영하기'}
             </ActionButton>
           </>
+        ) : savedExperienceCards.length > 0 ? (
+          <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
+            AI 경험 인터뷰 다시 진행하기
+          </ActionButton>
         ) : (
           <ActionButton onClick={() => void navigate('/senior/experience/interview')}>
             AI 경험 인터뷰 시작하기
@@ -4226,8 +4348,6 @@ export function SeniorProfilePage() {
       } else {
         setExperienceCards([]);
       }
-
-      await getLatestUserExperienceCard(user?.uid);
     };
 
     void refreshExperienceCards();
@@ -4257,6 +4377,7 @@ export function SeniorProfilePage() {
 
       if (card.id) await deleteExperienceCard(card.id);
       const nextProfile = await saveSeniorExperienceCards(user.uid, currentProfile, nextCards);
+      if (nextCards.length === 0) clearStoredExperienceCard(user.uid);
       setSeniorProfile(nextProfile);
       setExperienceCards(nextCards);
       window.dispatchEvent(new CustomEvent('eojob_experience_card_updated'));

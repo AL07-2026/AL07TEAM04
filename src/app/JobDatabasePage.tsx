@@ -654,7 +654,12 @@ export function PostingCard({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
+  const displayScore =
+    hasUserProfile && matchResult.personalizedScore > 0
+      ? matchResult.personalizedScore
+      : useServerScore
+        ? posting.seniorFitScore || 75
+        : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -914,7 +919,12 @@ export function DetailPanel({
     experienceCard,
   );
   const hasUserProfile = Boolean(profile && profile.field?.trim() && profile.period?.trim());
-  const displayScore = useServerScore ? posting.seniorFitScore || 75 : hasUserProfile && matchResult.personalizedScore > 0 ? matchResult.personalizedScore : posting.seniorFitScore || 75;
+  const displayScore =
+    hasUserProfile && matchResult.personalizedScore > 0
+      ? matchResult.personalizedScore
+      : useServerScore
+        ? posting.seniorFitScore || 75
+        : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
@@ -1559,13 +1569,14 @@ export function JobDatabasePage({
   );
   const isInterviewReady = interviewMatch?.status === 'matched';
   const applyingPostingFitScore = applyingPosting
-    ? applyingPosting.seniorFitScore ||
-      calculatePersonalizedMatch(
+    ? calculatePersonalizedMatch(
         applyingPosting,
         seniorProfile,
         effectivePrimaryProfileFilter,
         interviewCard,
-      ).personalizedScore
+      ).personalizedScore ||
+      applyingPosting.seniorFitScore ||
+      0
     : 0;
   const applyingPostingFitTone = getFitScoreTone(applyingPostingFitScore);
 

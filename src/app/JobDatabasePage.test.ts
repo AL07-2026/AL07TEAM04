@@ -38,6 +38,7 @@ import {
   PostingWorkSummaryContent,
   type FilterOption,
 } from '@/app/JobDatabasePage';
+import { calculatePersonalizedMatch } from '@/services/recommendationEngine';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
 
 const companyProject: JobPosting = {
@@ -313,6 +314,36 @@ describe('공고 실제 업무의 task stack 표현', () => {
 });
 
 describe('선택된 프로젝트 카드의 조용한 강조', () => {
+  it('서버 검색 결과 점수가 있어도 시니어 화면에서는 홈과 같은 개인화 점수를 우선 표시한다', () => {
+    const profile = {
+      desiredCategory: 'service',
+      email: 'senior@example.com',
+      experience: '서비스 운영',
+      field: '서비스 운영',
+      period: '12년',
+      solvedExperiences: '운영 흐름을 개선하고 프로세스를 표준화했습니다.',
+      phone: '010-0000-0000',
+    };
+    const posting = { ...companyProject, seniorFitScore: 42 };
+    const expectedScore = calculatePersonalizedMatch(posting, profile, 'service').personalizedScore;
+
+    render(
+      createElement(PostingCard, {
+        activePrimaryCategory: 'service',
+        posting,
+        profile,
+        role: 'senior',
+        selected: false,
+        useServerScore: true,
+        onSelect: vi.fn(),
+      }),
+    );
+
+    expect(expectedScore).toBeGreaterThan(posting.seniorFitScore);
+    expect(screen.getByText(`${expectedScore}점`)).toBeTruthy();
+    expect(screen.queryByText(`${posting.seniorFitScore}점`)).toBeNull();
+  });
+
   it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
     const { container, rerender } = render(
       createElement(PostingCard, {

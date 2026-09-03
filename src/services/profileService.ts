@@ -1,4 +1,5 @@
 import { deleteField, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 import {
   OTHER_OCCUPATION_PREFERENCE,
@@ -16,7 +17,7 @@ import {
   removeUndefinedValues,
   writeVersionedStorage,
 } from '@/lib/browserStorage';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { clearWorknetFeedCache } from './worknetService';
 
 export type SeniorProfileData = {
@@ -37,9 +38,18 @@ export type SeniorProfileData = {
   employmentSubsidyTarget?: boolean;
   employmentSubsidyProgram?: string;
   employmentSubsidyDocName?: string;
+  resumeFile?: SeniorResumeFile;
   experienceProfileV1?: ExperienceProfileV1;
   experienceCardsV1?: ExperienceProfileV1[];
   updatedAt?: string;
+};
+
+export type SeniorResumeFile = {
+  name: string;
+  size: number;
+  storagePath: string;
+  type: string;
+  uploadedAt: string;
 };
 
 /** Confirmed public experience only. Unconfirmed interview drafts are session scoped. */
@@ -76,6 +86,8 @@ const SENIOR_PROFILES_COLLECTION = 'senior_profiles';
 const COMPANY_PROFILES_COLLECTION = 'company_profiles';
 const SENIOR_PROFILE_STORAGE_KEY = 'eojob_senior_profile';
 const COMPANY_PROFILE_STORAGE_KEY = 'eojob_company_profile';
+const MAX_RESUME_FILE_SIZE = 10 * 1024 * 1024;
+const RESUME_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx']);
 
 function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -187,6 +199,24 @@ function normalizeExperienceProfiles(value: unknown): ExperienceProfileV1[] {
   );
 }
 
+function normalizeResumeFile(value: unknown): SeniorResumeFile | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const source = value as Record<string, unknown>;
+  const name = stringValue(source.name);
+  const storagePath = stringValue(source.storagePath);
+  const type = stringValue(source.type);
+  const uploadedAt = stringValue(source.uploadedAt);
+  const size = typeof source.size === 'number' && Number.isFinite(source.size) ? source.size : 0;
+  if (!name || !storagePath || !type || size <= 0) return undefined;
+  return {
+    name,
+    size,
+    storagePath,
+    type,
+    uploadedAt: uploadedAt || new Date(0).toISOString(),
+  };
+}
+
 function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
   if (!source || typeof source !== 'object') return null;
   const value = source as Record<string, unknown>;
@@ -233,6 +263,7 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     employmentSubsidyTarget: Boolean(value.employmentSubsidyTarget),
     employmentSubsidyProgram: stringValue(value.employmentSubsidyProgram) || undefined,
     employmentSubsidyDocName: stringValue(value.employmentSubsidyDocName) || undefined,
+    resumeFile: normalizeResumeFile(value.resumeFile),
     experienceProfileV1: hasExperienceCardsField
       ? experienceCards[0]
       : (normalizedExperienceCards?.[0] ?? experienceProfile),
@@ -241,6 +272,59 @@ function normalizeSeniorProfile(source: unknown): SeniorProfileData | null {
     email,
     updatedAt: stringValue(value.updatedAt) || undefined,
   };
+}
+
+export function isUsableSeniorResumeFile(file: File | null | undefined): file is File {
+  if (!file || typeof file.name !== 'string' || typeof file.size !== 'number') return false;
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return (
+    RESUME_FILE_EXTENSIONS.has(extension) &&
+    Number.isFinite(file.size) &&
+    file.size > 0 &&
+    file.size <= MAX_RESUME_FILE_SIZE
+  );
+}
+
+function getResumeContentType(file: File) {
+  const declaredType = typeof file.type === 'string' ? file.type.trim() : '';
+  if (declaredType) return declaredType;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension === 'pdf'
+    ? 'application/pdf'
+    : extension === 'doc'
+      ? 'application/msword'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
+
+function fileNameForStorage(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+export async function uploadSeniorResumeFile(uid: string, file: File): Promise<SeniorResumeFile> {
+  if (!uid) throw new Error('로그인한 사용자만 이력서를 저장할 수 있습니다.');
+  if (!isUsableSeniorResumeFile(file)) {
+    throw new Error('이력서 파일 형식 또는 크기가 올바르지 않습니다.');
+  }
+
+  const contentType = getResumeContentType(file);
+  const storagePath = `resumes/${uid}/profile/${Date.now()}-${fileNameForStorage(file.name)}`;
+  await uploadBytes(ref(storage, storagePath), file, { contentType });
+  return {
+    name: file.name,
+    size: file.size,
+    storagePath,
+    type: contentType,
+    uploadedAt: new Date().toISOString(),
+  };
+}
+
+export async function deleteSeniorResumeFile(resumeFile?: SeniorResumeFile): Promise<void> {
+  if (!resumeFile?.storagePath) return;
+  await deleteObject(ref(storage, resumeFile.storagePath)).catch(() => undefined);
+}
+
+export async function resolveSeniorResumeUrl(resumeFile: SeniorResumeFile): Promise<string> {
+  return getDownloadURL(ref(storage, resumeFile.storagePath));
 }
 
 export async function saveSeniorExperienceCards(

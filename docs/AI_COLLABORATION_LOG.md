@@ -16,6 +16,43 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-03] 인재 홈/프로젝트/내정보 데이터 표시 정합성 보완
+- **작업자**: Codex (`YOO` 브랜치)
+- **작업 전 확인**:
+  - `docs/AI_COLLABORATION_LOG.md` 최근 작업 기록 및 작업 규칙 확인.
+  - 현재 브랜치가 `YOO`이고, `origin/develop` 최신 반영 후 인재 홈/프로젝트/내정보 화면의 데이터 정합성 이슈 수정 중임을 확인.
+- **작업 내용**:
+  1. **저장된 경험 정보 카운트 정합성 보완**:
+     - 로그인 사용자 기준 원격 경험 카드 조회 결과가 비어 있으면 오래된 로컬 저장 카드가 홈 카운트에 남지 않도록 정리.
+     - 경험 카드 삭제 시 마지막 카드가 삭제되면 로컬 저장 카드도 함께 정리.
+  2. **저장된 경험 카드 확인 화면 보완**:
+     - `/senior/experience/card` 화면이 인터뷰 직후 임시 draft에만 의존하지 않고, 프로필의 `experienceCardsV1` 및 원격 경험 카드를 fallback으로 읽어 저장된 경험카드를 표시하도록 수정.
+  3. **추천 프로젝트 점수 표시 기준 통일**:
+     - 홈과 프로젝트 목록/상세가 동일한 개인화 점수 계산 로직을 사용하도록 보완.
+  4. **이력서 첨부 유지 및 저장 권한 오류 보완**:
+     - 인재 프로필에 이력서 메타데이터를 저장하고, 기존 이력서는 새 파일 저장 시 교체되어 1개만 유지되도록 수정.
+     - Firebase Storage 규칙에 맞는 `resumes/{uid}/profile/...` 경로로 업로드하도록 변경.
+- **검증 & 결과**:
+  - `npm run typecheck` 통과
+  - `npm run lint` 통과
+  - `npx vitest run src/app/App.test.tsx src/app/wireframe/FlowPages.test.tsx` 통과
+  - `npm run validate` 통과: 테스트 31개 파일 / 291개 테스트 통과, Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/lib/applicationFlow.test.ts`
+  - [MODIFY] `src/lib/applicationFlow.ts`
+  - [MODIFY] `src/services/interviewService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 로컬 개발 API 서버에는 `/api/jobs/search` 라우트가 없어 Vite 콘솔에 fallback 404 경고가 표시될 수 있음. Firebase Functions 운영 API에는 해당 라우트가 구현되어 있음.
+  - 병합 후 `origin/develop` 및 테스트용 `origin/YOO`에 동일 변경사항을 반영할 예정.
+
 ### [2026-08-31] AI 경험 카드 개선사항 origin/develop 푸시 및 Firebase 배포 완료
 - **작업자**: Codex (`YOO` 브랜치)
 - **작업 전 확인**:

@@ -12,6 +12,7 @@ import {
 import { categoryLabels, type ProjectCategory } from '@/data/jobPostings';
 import {
   cacheStoredExperienceCard,
+  clearStoredExperienceCard,
   type ExperienceInferredSkill,
   type ExperienceInformationQuality,
   type ExperienceMissingInformation,
@@ -179,19 +180,23 @@ export async function deleteExperienceCard(cardId: string): Promise<void> {
   await deleteDoc(doc(db, EXPERIENCE_CARDS_COLLECTION, cardId));
 }
 
+async function queryUserExperienceCards(uid: string): Promise<ExperienceCardData[]> {
+  const cardsRef = collection(db, EXPERIENCE_CARDS_COLLECTION);
+  const q = query(cardsRef, where('uid', '==', uid));
+  const snapshot = await getDocs(q);
+
+  const cards = snapshot.docs
+    .map((docSnap) => normalizeExperienceCard(docSnap.data(), docSnap.id))
+    .filter((card): card is ExperienceCardData => Boolean(card?.uid === uid));
+
+  return uniqueByKey(cards, (card) => card.id || `${card.uid}:${card.title}`).sort(
+    (first, second) => (second.createdAt || '').localeCompare(first.createdAt || ''),
+  );
+}
+
 export async function getUserExperienceCards(uid: string): Promise<ExperienceCardData[]> {
   try {
-    const cardsRef = collection(db, EXPERIENCE_CARDS_COLLECTION);
-    const q = query(cardsRef, where('uid', '==', uid));
-    const snapshot = await getDocs(q);
-
-    const cards = snapshot.docs
-      .map((docSnap) => normalizeExperienceCard(docSnap.data(), docSnap.id))
-      .filter((card): card is ExperienceCardData => Boolean(card?.uid === uid));
-
-    return uniqueByKey(cards, (card) => card.id || `${card.uid}:${card.title}`).sort(
-      (first, second) => (second.createdAt || '').localeCompare(first.createdAt || ''),
-    );
+    return await queryUserExperienceCards(uid);
   } catch (error) {
     console.warn(`getUserExperienceCards(${uid}) failed:`, error);
     return [];
@@ -228,8 +233,18 @@ export async function getLatestUserExperienceCard(
   const localCard = readStoredExperienceCard(uid);
   if (!uid) return localCard;
 
-  const [remoteCard] = await getUserExperienceCards(uid);
-  if (!remoteCard) return localCard;
+  let remoteCard: ExperienceCardData | undefined;
+  try {
+    [remoteCard] = await queryUserExperienceCards(uid);
+  } catch (error) {
+    console.warn(`getLatestUserExperienceCard(${uid}) failed:`, error);
+    return localCard;
+  }
+
+  if (!remoteCard) {
+    clearStoredExperienceCard(uid);
+    return null;
+  }
 
   const storedRemoteCard = toStoredExperienceCard(remoteCard);
   const latestCard =
