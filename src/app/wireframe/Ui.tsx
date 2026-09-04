@@ -260,7 +260,7 @@ export function MobilePage({
             </div>
 
             {/* Bottom Navigation */}
-            {role && activeNav ? <BottomNav active={activeNav} role={role} forceShow /> : null}
+            {role ? <BottomNav active={activeNav} role={role} forceShow /> : null}
           </section>
         </main>
       ) : !role ? (
@@ -410,7 +410,7 @@ function BottomNav({
   forceShow,
   role,
 }: {
-  active: SeniorNav | CompanyNav;
+  active?: SeniorNav | CompanyNav;
   forceShow?: boolean;
   role: Role;
 }) {

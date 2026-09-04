@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 헤더 글로벌 네비게이션 적용 보장 및 Firebase Hosting 캐시 무효화 헤더 추가
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Hosting 캐시 무효화 헤더 보강 (`firebase.json`)**:
+     - `firebase.json`의 `no-cache` 적용 경로에 `community`를 추가(`/@(login|signup|role|company-info|basic-profile|senior|company|community){,/**}`)하여 배포 후 브라우저 캐시로 인해 이전 버전의 화면이 노출되는 현상 원천 차단.
+  2. **모바일/데스크톱 네비게이션 연동 보강 (`src/app/wireframe/Ui.tsx`)**:
+     - `BottomNav`의 `active` prop을 옵셔널로 변경하여 `activeNav`가 지정되지 않은 커뮤니티 화면에서도 모바일 뷰 하단 글로벌 네비게이션이 안정적으로 노출되도록 개선.
+  3. **테스트 및 검증**:
+     - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 100% 통과, 새 chunk hash 번들 빌드 성공.
+
 ### [2026-09-04] 커뮤니티 비로그인 상태 글쓰기 클릭 시 로그인 화면 유도 연동
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 내용**:

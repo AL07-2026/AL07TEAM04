@@ -42,7 +42,7 @@
         ]
       },
       {
-        "source": "/@(login|signup|role|company-info|basic-profile|senior|company){,/**}",
+        "source": "/@(login|signup|role|company-info|basic-profile|senior|company|community){,/**}",
         "headers": [
           {
             "key": "Cache-Control",
