@@ -19,7 +19,7 @@ export function CommunityPage() {
       title="커뮤니티"
     >
       <button
-        className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#53645F] hover:text-[#173F3A] focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+        className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#53645F] hover:text-[#173F3A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-colors cursor-pointer"
         onClick={() => void navigate(-1)}
         type="button"
       >

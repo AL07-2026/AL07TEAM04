@@ -47,6 +47,14 @@ const categories: Array<{ id: 'all' | CommunityCategory; label: string }> = [
   { id: 'project', label: '프로젝트 이야기' },
   { id: 'question', label: '질문과 답변' },
 ];
+
+const reportReasons: Array<{ id: CommunityReportReason; label: string }> = [
+  { id: 'spam', label: '광고·도배' },
+  { id: 'abuse', label: '욕설·비방' },
+  { id: 'privacy', label: '개인정보 노출' },
+  { id: 'other', label: '기타' },
+];
+
 const emptyDraft: CommunityPostInput = { category: 'experience', content: '', title: '' };
 
 function dateLabel(value: string) {
@@ -73,6 +81,8 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [editingId, setEditingId] = useState('');
   const [deletePending, setDeletePending] = useState(false);
   const [reportReason, setReportReason] = useState<CommunityReportReason | ''>('');
+  const [reportDropdownOpen, setReportDropdownOpen] = useState(false);
+  const reportDropdownRef = useRef<HTMLDivElement>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -110,14 +120,21 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   }, []);
 
   useEffect(() => {
-    if (!categoryDropdownOpen) return undefined;
+    if (!categoryDropdownOpen && !reportDropdownOpen) return undefined;
     const closeOnOutside = (event: PointerEvent) => {
-      if (!categoryDropdownRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (categoryDropdownOpen && !categoryDropdownRef.current?.contains(target)) {
         setCategoryDropdownOpen(false);
+      }
+      if (reportDropdownOpen && !reportDropdownRef.current?.contains(target)) {
+        setReportDropdownOpen(false);
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setCategoryDropdownOpen(false);
+      if (event.key === 'Escape') {
+        setCategoryDropdownOpen(false);
+        setReportDropdownOpen(false);
+      }
     };
     document.addEventListener('pointerdown', closeOnOutside);
     document.addEventListener('keydown', closeOnEscape);
@@ -125,7 +142,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
       document.removeEventListener('pointerdown', closeOnOutside);
       document.removeEventListener('keydown', closeOnEscape);
     };
-  }, [categoryDropdownOpen]);
+  }, [categoryDropdownOpen, reportDropdownOpen]);
 
   useEffect(() => {
     if (!userId) return;
@@ -162,7 +179,6 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
   const requireParticipationProfile = () => {
     if (!user) {
-      setMessage('글쓰기와 참여는 로그인 후 이용할 수 있습니다.');
       moveToLogin();
       return false;
     }
@@ -399,7 +415,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         <div className="flex flex-wrap items-center gap-2">
           {user ? (
             <button
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60 transition-all cursor-pointer"
               disabled={!profileReady}
               onClick={() => {
                 setNicknameDraft(communityProfile?.nickname || '');
@@ -413,7 +429,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             </button>
           ) : null}
           <button
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] transition-all cursor-pointer"
             onClick={() => openComposer()}
             type="button"
           >
@@ -447,7 +463,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             </div>
             <button
               aria-label="활동명 설정 닫기"
-              className="grid size-11 shrink-0 place-items-center rounded-xl hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+              className="grid size-11 shrink-0 place-items-center rounded-xl hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-colors cursor-pointer"
               onClick={() => setNicknameOpen(false)}
               type="button"
             >
@@ -479,7 +495,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
               />
             </label>
             <button
-              className="min-h-12 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+              className="min-h-12 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60 transition-all cursor-pointer"
               disabled={nicknameSaving}
               onClick={() => void saveNickname()}
               type="button"
@@ -619,7 +635,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         {categories.map((item) => (
           <button
             aria-current={category === item.id ? 'page' : undefined}
-            className={`min-h-11 shrink-0 rounded-xl px-4 text-sm font-extrabold focus-visible:ring-2 focus-visible:ring-[#173F3A] ${category === item.id ? 'bg-[#173F3A] text-white' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
+            className={`min-h-11 shrink-0 rounded-xl px-4 text-sm font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-all cursor-pointer ${category === item.id ? 'bg-[#173F3A] text-white shadow-2xs' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
             key={item.id}
             onClick={() => chooseCategory(item.id)}
             type="button"
@@ -642,7 +658,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             <div className="my-auto p-8 text-center">
               <p className="font-black text-[#17212B]">아직 게시글이 없습니다.</p>
               <button
-                className="mt-3 min-h-11 rounded-lg px-2 text-sm font-extrabold text-[#173F3A] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                className="mt-3 min-h-11 rounded-lg px-2 text-sm font-extrabold text-[#173F3A] underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                 onClick={() => openComposer()}
                 type="button"
               >
@@ -653,7 +669,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             visiblePosts.map((post) => (
               <button
                 aria-current={post.id === selectedId ? 'true' : undefined}
-                className={`block w-full border-b border-[#E8E2D6] p-5 text-left last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#173F3A] ${post.id === selectedId ? 'bg-[#EAF2EF]' : 'hover:bg-[#FAF7F2]'}`}
+                className={`block w-full border-b border-[#E8E2D6] p-5 text-left last:border-b-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B8AF9C] transition-colors cursor-pointer ${post.id === selectedId ? 'bg-[#EAF2EF]' : 'hover:bg-[#FAF7F2]'}`}
                 key={post.id}
                 onClick={() => selectPost(post.id)}
                 type="button"
@@ -697,7 +713,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                   <div className="flex">
                     <button
                       aria-label="게시글 수정"
-                      className="grid size-11 place-items-center rounded-lg hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                      className="grid size-11 place-items-center rounded-lg hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                       onClick={() => openComposer(selectedPost)}
                       type="button"
                     >
@@ -741,7 +757,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
               <div className="flex flex-wrap items-center gap-2 border-y border-[#E8E2D6] py-3">
                 <button
                   aria-pressed={selectedPost.likedByMe}
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-extrabold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] ${selectedPost.likedByMe ? 'bg-[#FCE8E3] text-[#C85039]' : 'bg-[#F2F7F5] text-[#173F3A]'}`}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-all cursor-pointer ${selectedPost.likedByMe ? 'bg-[#FCE8E3] text-[#C85039]' : 'bg-[#F2F7F5] text-[#173F3A]'}`}
                   onClick={() => void likePost()}
                   type="button"
                 >
@@ -758,8 +774,11 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                 </span>
                 {!selectedPost.ownedByMe ? (
                   <button
-                    className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-bold text-[#64716D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-                    onClick={() => setReportReason('spam')}
+                    className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-bold text-[#64716D] hover:text-[#17212B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-colors cursor-pointer"
+                    onClick={() => {
+                      setReportReason('spam');
+                      setReportDropdownOpen(false);
+                    }}
                     type="button"
                   >
                     <Flag aria-hidden="true" className="size-4" /> 신고
@@ -768,32 +787,75 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
               </div>
               {reportReason ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#FAF7F2] p-3">
-                  <label className="text-sm font-extrabold" htmlFor="report-reason">
-                    신고 사유
-                  </label>
-                  <select
-                    className="h-11 rounded-lg border border-[#D8D1C2] bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-                    id="report-reason"
-                    onChange={(event) =>
-                      setReportReason(event.target.value as CommunityReportReason)
-                    }
-                    value={reportReason}
-                  >
-                    <option value="spam">광고·도배</option>
-                    <option value="abuse">욕설·비방</option>
-                    <option value="privacy">개인정보 노출</option>
-                    <option value="other">기타</option>
-                  </select>
+                  <span className="text-sm font-extrabold text-[#17212B]">신고 사유</span>
+                  <div className="relative" ref={reportDropdownRef}>
+                    <button
+                      type="button"
+                      id="report-reason"
+                      aria-haspopup="listbox"
+                      aria-expanded={reportDropdownOpen}
+                      aria-label={`신고 사유 선택: ${reportReasons.find((r) => r.id === reportReason)?.label || '사유 선택'}`}
+                      onClick={() => setReportDropdownOpen((prev) => !prev)}
+                      className={cn(
+                        'flex h-11 min-w-[140px] items-center justify-between gap-2 rounded-xl border border-[#D8D1C2] bg-white px-3.5 text-sm font-bold text-[#17212B] transition-all cursor-pointer',
+                        'hover:border-[#B8AF9C] focus:outline-none focus:border-[#B8AF9C]',
+                        reportDropdownOpen && 'border-[#B8AF9C] shadow-2xs',
+                      )}
+                    >
+                      <span>{reportReasons.find((r) => r.id === reportReason)?.label || '사유 선택'}</span>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 text-slate-500 transition-transform duration-200',
+                          reportDropdownOpen && 'rotate-180 text-[#17212B]',
+                        )}
+                      />
+                    </button>
+                    {reportDropdownOpen ? (
+                      <div
+                        aria-label="신고 사유 목록"
+                        className="absolute left-0 top-full z-30 mt-1.5 min-w-[150px] overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white p-1.5 shadow-[0_8px_20px_rgba(23,63,58,0.12)] animate-in fade-in zoom-in-95 duration-100"
+                        role="listbox"
+                      >
+                        {reportReasons.map((item) => {
+                          const isSelected = item.id === reportReason;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                setReportReason(item.id);
+                                setReportDropdownOpen(false);
+                              }}
+                              className={cn(
+                                'flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition-all cursor-pointer',
+                                isSelected
+                                  ? 'bg-[#FAF7F2] text-[#F06B4F] shadow-2xs'
+                                  : 'text-[#17212B] hover:bg-[#FAF7F2]',
+                              )}
+                              role="option"
+                              aria-selected={isSelected}
+                            >
+                              <span>{item.label}</span>
+                              {isSelected ? <Check className="size-4 text-[#F06B4F]" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                   <button
-                    className="min-h-11 rounded-lg bg-[#17212B] px-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+                    className="min-h-11 rounded-xl bg-[#17212B] px-4 text-sm font-bold text-white hover:bg-[#2a3847] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-all cursor-pointer"
                     onClick={() => void submitReport()}
                     type="button"
                   >
                     신고 접수
                   </button>
                   <button
-                    className="min-h-11 rounded-lg px-3 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-                    onClick={() => setReportReason('')}
+                    className="min-h-11 rounded-xl px-3 text-sm font-bold text-[#53645F] hover:bg-slate-200/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-all cursor-pointer"
+                    onClick={() => {
+                      setReportReason('');
+                      setReportDropdownOpen(false);
+                    }}
                     type="button"
                   >
                     취소
@@ -817,7 +879,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                     />
                     <button
                       aria-label="댓글 등록"
-                      className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#173F3A] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+                      className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#173F3A] text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-all cursor-pointer"
                       onClick={() => void saveComment()}
                       type="button"
                     >
@@ -826,7 +888,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                   </div>
                 ) : (
                   <button
-                    className="mt-3 min-h-11 rounded-lg px-2 text-sm font-extrabold text-[#173F3A] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                    className="mt-3 min-h-11 rounded-lg px-2 text-sm font-extrabold text-[#173F3A] underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                     onClick={moveToLogin}
                     type="button"
                   >
@@ -851,7 +913,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                           {item.ownedByMe ? (
                             <div className="flex items-center gap-1">
                               <button
-                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                                 onClick={() => startEditComment(item)}
                                 type="button"
                               >
@@ -881,7 +943,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                             />
                             <div className="flex gap-2">
                               <button
-                                className="min-h-9 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                className="min-h-9 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                                 disabled={saving}
                                 onClick={() => void saveEditedComment(item.id)}
                                 type="button"
@@ -889,7 +951,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                 저장
                               </button>
                               <button
-                                className="min-h-9 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                className="min-h-9 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
                                 onClick={cancelEditComment}
                                 type="button"
                               >

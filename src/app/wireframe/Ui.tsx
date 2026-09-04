@@ -117,7 +117,7 @@ export function SiteMenu({
         aria-haspopup="menu"
         aria-label={open ? '더보기 닫기' : '더보기 열기'}
         className={cn(
-          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
+          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] cursor-pointer',
           compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
         )}
         onClick={() => setOpen((current) => !current)}
@@ -141,7 +141,7 @@ export function SiteMenu({
         >
           {showProjectLink ? (
             <button
-              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
               onClick={() => {
                 onProjectClick?.();
                 moveTo('/senior/project-database');
@@ -154,7 +154,7 @@ export function SiteMenu({
             </button>
           ) : null}
           <button
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
             onClick={() => moveTo('/')}
             role="menuitem"
             type="button"
@@ -163,7 +163,7 @@ export function SiteMenu({
             <span>이어잡 소개</span>
           </button>
           <button
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
             onClick={() => moveTo('/community')}
             role="menuitem"
             type="button"
@@ -172,7 +172,7 @@ export function SiteMenu({
             <span>커뮤니티</span>
           </button>
           <a
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
             href="mailto:ieojab2026@gmail.com"
             onClick={() => setOpen(false)}
             role="menuitem"

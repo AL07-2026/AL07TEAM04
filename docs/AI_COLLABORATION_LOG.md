@@ -16,6 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 글쓰기/참여 시 불필요한 '로그인 필요' 배너 문구 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/community/CommunityBoard.tsx`: 로그인 상태 또는 비동기 Auth 복원 타이밍에 화면 상단에 '글쓰기와 참여는 로그인 후 이용할 수 있습니다.' 문구가 노출되던 문제를 해결하기 위해, 비로그인 상태에서 글쓰기 클릭 시 배너 메시지(`setMessage`)를 설정하지 않고 즉시 로그인 페이지(`moveToLogin()`)로 유도하도록 수정.
+  - `src/app/CommunityPage.test.tsx`: 비로그인 사용자가 글쓰기를 클릭했을 때 해당 배너 문구가 화면에 노출되지 않고 정상적으로 로그인 리다이렉트가 발생하는지 보장하는 검증 assertion 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (0 warning, 0 error), 41개 테스트 파일 381개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 커밋 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 글쓰기 폼 게시판 선택 커스텀 드롭다운 UI 적용 및 초록색 포커스 테두리 제거
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **수정한 파일 목록**:

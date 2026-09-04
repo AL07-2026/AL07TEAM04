@@ -88,6 +88,7 @@ describe('CommunityPage', () => {
         },
       }),
     );
+    expect(screen.queryByText('글쓰기와 참여는 로그인 후 이용할 수 있습니다.')).not.toBeInTheDocument();
     await waitFor(() => expect(communityService.createCommunityPost).not.toHaveBeenCalled());
   });
 
