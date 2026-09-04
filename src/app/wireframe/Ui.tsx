@@ -6,12 +6,15 @@ import {
   FolderKanban,
   Home,
   Inbox,
-  Monitor,
+  Info,
+  Mail,
+  Menu,
   Send,
-  Smartphone,
   User,
+  Users,
+  X,
 } from 'lucide-react';
-import { createContext, useContext, type ReactNode, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { cn } from '@/lib/utils';
@@ -24,34 +27,33 @@ export type ViewportMode = 'pc' | 'mobile';
 
 type ViewportContextType = {
   mode: ViewportMode;
-  setMode: (mode: ViewportMode) => void;
 };
 
 const ViewportContext = createContext<ViewportContextType>({
   mode: 'pc',
-  setMode: () => {},
 });
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useViewportMode = () => useContext(ViewportContext);
 
+function detectViewportMode(): ViewportMode {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'pc';
+  return window.matchMedia('(max-width: 767px) and (pointer: coarse)').matches ? 'mobile' : 'pc';
+}
+
 export function ViewportProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ViewportMode>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('eojob_viewport_mode');
-      if (saved === 'pc' || saved === 'mobile') return saved;
-    }
-    return 'pc';
-  });
+  const [mode, setMode] = useState<ViewportMode>(detectViewportMode);
 
-  const setMode = (newMode: ViewportMode) => {
-    setModeState(newMode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('eojob_viewport_mode', newMode);
-    }
-  };
+  useEffect(() => {
+    localStorage.removeItem('eojob_viewport_mode');
+    const query = window.matchMedia?.('(max-width: 767px) and (pointer: coarse)');
+    if (!query) return undefined;
+    const syncMode = () => setMode(query.matches ? 'mobile' : 'pc');
+    query.addEventListener('change', syncMode);
+    return () => query.removeEventListener('change', syncMode);
+  }, []);
 
-  return <ViewportContext.Provider value={{ mode, setMode }}>{children}</ViewportContext.Provider>;
+  return <ViewportContext.Provider value={{ mode }}>{children}</ViewportContext.Provider>;
 }
 
 export function BrandLogo({
@@ -70,50 +72,103 @@ export function BrandLogo({
   );
 }
 
-function ViewportModeSwitcher({ compact = false }: { compact?: boolean }) {
-  const { mode, setMode } = useViewportMode();
+export function SiteMenu({ compact = false }: { compact?: boolean }) {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  const moveTo = (path: string) => {
+    setOpen(false);
+    void navigate(path);
+  };
 
   return (
-    <div
-      aria-label="화면 보기 방식"
-      className={cn(
-        'flex items-center rounded-full border border-[#E0D9C8] bg-[#FAF7F2] shadow-2xs',
-        compact ? 'gap-0.5 p-0.5' : 'gap-1 p-1',
-      )}
-      role="group"
-    >
+    <div className="relative" ref={containerRef}>
       <button
-        aria-label="PC 화면으로 보기"
-        aria-pressed={mode === 'pc'}
+        aria-controls="eojob-site-menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={open ? '전체 메뉴 닫기' : '전체 메뉴 열기'}
         className={cn(
-          'flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full font-extrabold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
-          compact ? 'px-2.5 text-[11px]' : 'px-3 text-xs',
-          mode === 'pc'
-            ? 'bg-[#17212B] text-white shadow-2xs'
-            : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
+          compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
         )}
-        onClick={() => setMode('pc')}
+        onClick={() => setOpen((current) => !current)}
+        ref={triggerRef}
         type="button"
       >
-        <Monitor aria-hidden="true" className={compact ? 'size-3' : 'size-3.5'} />
-        <span className={compact ? undefined : 'hidden sm:inline'}>{compact ? 'PC' : 'PC 웹'}</span>
-      </button>
-      <button
-        aria-label="모바일 화면으로 보기"
-        aria-pressed={mode === 'mobile'}
-        className={cn(
-          'flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full font-extrabold transition-[color,background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
-          compact ? 'px-2.5 text-[11px]' : 'px-3 text-xs',
-          mode === 'mobile'
-            ? 'bg-[#17212B] text-white shadow-2xs'
-            : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+        {open ? (
+          <X aria-hidden="true" className="size-5" />
+        ) : (
+          <Menu aria-hidden="true" className="size-5" />
         )}
-        onClick={() => setMode('mobile')}
-        type="button"
-      >
-        <Smartphone aria-hidden="true" className={compact ? 'size-3' : 'size-3.5'} />
-        <span className={compact ? undefined : 'hidden sm:inline'}>모바일</span>
+        {compact ? null : <span className="hidden sm:inline">전체 메뉴</span>}
       </button>
+
+      {open ? (
+        <div
+          aria-label="이어잡 전체 메뉴"
+          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl bg-white p-2 shadow-[0_6px_12px_rgba(23,63,58,0.16)]"
+          id="eojob-site-menu"
+          role="menu"
+        >
+          <button
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            onClick={() => moveTo('/')}
+            role="menuitem"
+            type="button"
+          >
+            <Info aria-hidden="true" className="size-5 text-[#173F3A]" />
+            <span>
+              <strong className="block">이어잡 소개</strong>
+              <span className="text-xs font-medium text-slate-500">서비스와 이용 방법 보기</span>
+            </span>
+          </button>
+          <button
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            onClick={() => moveTo('/community')}
+            role="menuitem"
+            type="button"
+          >
+            <Users aria-hidden="true" className="size-5 text-[#173F3A]" />
+            <span>
+              <strong className="block">커뮤니티</strong>
+              <span className="text-xs font-medium text-slate-500">경험과 프로젝트 이야기</span>
+            </span>
+          </button>
+          <a
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
+            href="mailto:ieojab2026@gmail.com"
+            onClick={() => setOpen(false)}
+            role="menuitem"
+          >
+            <Mail aria-hidden="true" className="size-5 text-[#173F3A]" />
+            <span>
+              <strong className="block">문의하기</strong>
+              <span className="text-xs font-medium text-slate-500">ieojab2026@gmail.com</span>
+            </span>
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -147,8 +202,8 @@ export function MobilePage({
       {isMobileMode ? (
         <main className="fixed inset-0 sm:static h-full sm:h-dvh sm:max-h-dvh w-full overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
           <section className="mx-auto flex h-full sm:h-[844px] sm:max-h-[calc(100dvh-3rem)] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
-            {/* Top Header Bar (Hidden on Mobile Screens, Visible only on PC Simulator) */}
-            <header className="hidden sm:flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
+            {/* Mobile header */}
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
               <div className="flex items-center gap-2">
                 {showBack ? (
                   <button
@@ -169,19 +224,23 @@ export function MobilePage({
                   onClick={() => void navigate('/')}
                   className="flex items-center rounded-xl hover:opacity-85 transition"
                 >
-                  <img src="/logo_text.png" alt="이어잡" className="h-[18px] w-auto object-contain" />
+                  <BrandLogo />
                 </button>
                 <h1 className="sr-only">{title}</h1>
               </div>
 
-              {/* Mode Switcher Toggle Pill for Mobile View (Hidden on Smartphones) */}
-              <div className="hidden sm:block">
-                <ViewportModeSwitcher compact />
+              <div>
+                <SiteMenu compact />
               </div>
             </header>
 
             {/* Content Container */}
-            <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-4 py-4', contentClassName)}>
+            <div
+              className={cn(
+                'min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-4 py-4',
+                contentClassName,
+              )}
+            >
               {children}
             </div>
 
@@ -193,7 +252,7 @@ export function MobilePage({
         /* Unauthenticated / Login / Signup Screen: Desktop Card Frame Layout */
         <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-10 sm:flex sm:items-center sm:justify-center">
           <section className="mx-auto flex w-full max-w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border min-h-[640px] md:min-h-[740px] lg:min-h-[820px]">
-            {/* Header (Responsive: Desktop PC Top Navbar + View Mode Switcher) */}
+            {/* Header */}
             <header className="flex h-14 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-4 md:px-7 shadow-2xs">
               <div className="flex items-center gap-3">
                 {showBack ? (
@@ -216,21 +275,24 @@ export function MobilePage({
                     onClick={() => void navigate('/')}
                     className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
                   >
-                    <BrandLogo className="hidden md:block" />
-                    <BrandLogo className="md:hidden" variant="icon" />
+                    <BrandLogo />
                   </button>
                   <h1 className="sr-only">{title}</h1>
                 </div>
               </div>
 
-              {/* Viewport Mode Switcher */}
-              <div className="flex items-center gap-2">
-                <ViewportModeSwitcher />
-              </div>
+              <SiteMenu />
             </header>
 
             {/* Content Container */}
-            <div className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full', contentClassName)}>{children}</div>
+            <div
+              className={cn(
+                'min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full',
+                contentClassName,
+              )}
+            >
+              {children}
+            </div>
           </section>
         </main>
       ) : (
@@ -238,66 +300,67 @@ export function MobilePage({
         <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
           <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
             {/* Top Navbar */}
-            <header className="relative w-full h-16 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-6 md:px-12 shadow-2xs sticky top-0 z-30 flex">
-              <div className="flex items-center gap-4">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
-                  </button>
+            <header className="sticky top-0 z-30 h-16 w-full shrink-0 border-b border-[#E0D9C8] bg-white shadow-2xs md:h-18">
+              <div className="relative mx-auto flex h-full w-full max-w-7xl items-center justify-between px-6 md:px-8">
+                <div className="flex items-center gap-4">
+                  {showBack ? (
+                    <button
+                      aria-label="이전 화면으로 돌아가기"
+                      className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
+                      onClick={() => {
+                        if (backTo) void navigate(backTo);
+                        else void navigate(-1);
+                      }}
+                      type="button"
+                    >
+                      <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
+                    </button>
+                  ) : null}
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void navigate('/')}
+                      className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
+                    >
+                      <BrandLogo />
+                    </button>
+                    <h1 className="sr-only">{title}</h1>
+                  </div>
+                </div>
+
+                {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
+                {role ? (
+                  <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
+                    {navItems[role].map((item) => {
+                      const selected = item.id === activeNav;
+                      const IconComponent = item.Icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => void navigate(item.path)}
+                          className={cn(
+                            'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-[color,background-color,box-shadow] duration-150',
+                            selected
+                              ? 'bg-[#F06B4F] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
+                          )}
+                        >
+                          <IconComponent
+                            className={cn(
+                              'size-4 shrink-0',
+                              selected ? 'text-white' : 'text-slate-500',
+                            )}
+                          />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : null}
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void navigate('/')}
-                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
-                  >
-                    <BrandLogo className="hidden md:block" />
-                    <BrandLogo className="md:hidden" variant="icon" />
-                  </button>
-                  <h1 className="sr-only">{title}</h1>
-                </div>
-              </div>
-
-              {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
-              {role ? (
-                <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
-                  {navItems[role].map((item) => {
-                    const selected = item.id === activeNav;
-                    const IconComponent = item.Icon;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => void navigate(item.path)}
-                        className={cn(
-                          'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-all',
-                          selected
-                            ? 'bg-[#F06B4F] text-white shadow-xs'
-                            : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                        )}
-                      >
-                        <IconComponent
-                          className={cn('size-4 shrink-0', selected ? 'text-white' : 'text-slate-500')}
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {/* Right Mode Switcher */}
-              <div className="flex items-center gap-3">
-                <ViewportModeSwitcher />
+                <SiteMenu />
               </div>
             </header>
 
@@ -606,17 +669,24 @@ export function SummaryCard({
     'flex flex-1 flex-col justify-between rounded-[20px] bg-white shadow-xs text-left min-w-0 overflow-hidden h-full',
     onClick &&
       'cursor-pointer transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
-    isMobile
-      ? 'min-h-[124px] p-3.5 sm:p-4'
-      : 'min-h-[148px] p-5 md:p-6',
+    isMobile ? 'min-h-[124px] p-3.5 sm:p-4' : 'min-h-[148px] p-5 md:p-6',
   );
   const content = (
     <>
       <span className="flex items-start justify-between gap-2 min-w-0">
-        <span className={cn('font-bold text-[#4B5768] min-w-0 truncate', isMobile ? 'text-[13px]' : 'text-[16px]')}>
+        <span
+          className={cn(
+            'font-bold text-[#4B5768] min-w-0 truncate',
+            isMobile ? 'text-[13px]' : 'text-[16px]',
+          )}
+        >
           {label}
         </span>
-        {onClick ? <span aria-hidden="true" className="text-[#173F3A]">→</span> : null}
+        {onClick ? (
+          <span aria-hidden="true" className="text-[#173F3A]">
+            →
+          </span>
+        ) : null}
       </span>
       <div className="mt-auto min-w-0">
         <strong
@@ -645,13 +715,16 @@ export function SummaryCard({
   );
 
   return onClick ? (
-    <button aria-label={interactiveLabel ?? `${label} ${value} 보기`} className={classes} onClick={onClick} type="button">
+    <button
+      aria-label={interactiveLabel ?? `${label} ${value} 보기`}
+      className={classes}
+      onClick={onClick}
+      type="button"
+    >
       {content}
     </button>
   ) : (
-    <div className={classes}>
-      {content}
-    </div>
+    <div className={classes}>{content}</div>
   );
 }
 

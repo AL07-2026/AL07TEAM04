@@ -12,8 +12,22 @@ describe('ExperienceSummaryView responsive ownership', () => {
     confirmedAt: '2026-08-30T00:00:00.000Z',
   };
 
+  function setDeviceMode(matches: boolean) {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({
+        addEventListener: () => {},
+        dispatchEvent: () => false,
+        matches,
+        media: '(max-width: 767px) and (pointer: coarse)',
+        onchange: null,
+        removeEventListener: () => {},
+      }),
+    });
+  }
+
   it('renders a structurally vertical mobile branch with no two-column utilities', () => {
-    localStorage.setItem('eojob_viewport_mode', 'mobile');
+    setDeviceMode(true);
     render(
       <ViewportProvider>
         <ExperienceSummaryView snapshot={snapshot} />
@@ -29,17 +43,15 @@ describe('ExperienceSummaryView responsive ownership', () => {
     expect(screen.getByText('해낸 일').compareDocumentPosition(screen.getByText('잘하는 점'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
-    localStorage.removeItem('eojob_viewport_mode');
   });
 
   it('keeps the two-zone desktop branch separate', () => {
-    localStorage.setItem('eojob_viewport_mode', 'pc');
+    setDeviceMode(false);
     render(
       <ViewportProvider>
         <ExperienceSummaryView snapshot={snapshot} />
       </ViewportProvider>,
     );
     expect(screen.getByTestId('experience-summary-desktop').className).toContain('md:grid-cols-2');
-    localStorage.removeItem('eojob_viewport_mode');
   });
 });

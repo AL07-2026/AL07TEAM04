@@ -19,7 +19,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { BrandLogo } from '@/app/wireframe/Ui';
+import { BrandLogo, SiteMenu } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
 
@@ -166,6 +166,7 @@ export function LandingPage() {
                 </button>
               </>
             )}
+            <SiteMenu compact />
           </nav>
         </div>
       </header>

@@ -46,6 +46,7 @@ function lazyPage<TModule, TKey extends keyof TModule>(
 const loadFlowPages = () => import('@/app/wireframe/FlowPages');
 const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
+const CommunityPage = lazyPage(() => import('@/app/CommunityPage'), 'CommunityPage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
 const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
 const LoginPage = lazyPage(() => import('@/app/LoginPage'), 'LoginPage');
@@ -100,6 +101,7 @@ function createAppRouter() {
   return createBrowserRouter([
     // 공개 경로 (인증 불필요)
     { path: '/', Component: LandingPage },
+    { path: '/community', Component: CommunityPage },
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
     // 채용 공고 목록: 비로그인도 열람 가능 (내부에서 배너로 로그인 유도)

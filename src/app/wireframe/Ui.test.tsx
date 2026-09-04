@@ -1,8 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
 
 import {
   BrandLogo,
+  MobilePage,
+  SiteMenu,
   SummaryCard,
   useViewportMode,
   ViewportProvider,
@@ -10,27 +13,38 @@ import {
 import { ExperienceSummaryCard } from '@/app/wireframe/FlowPages';
 
 function ViewportModeHarness() {
-  const { mode, setMode } = useViewportMode();
-  return (
-    <div>
-      <output aria-label="현재 화면 모드">{mode}</output>
-      <button onClick={() => setMode('pc')} type="button">
-        PC 화면
-      </button>
-      <button onClick={() => setMode('mobile')} type="button">
-        모바일 화면
-      </button>
-    </div>
-  );
+  const { mode } = useViewportMode();
+  return <output aria-label="현재 화면 모드">{mode}</output>;
 }
 
-describe('화면 모드 수동 전환', () => {
+function mockDeviceMedia(matches: boolean) {
+  const listeners = new Set<() => void>();
+  const query = {
+    addEventListener: vi.fn((_type: string, listener: () => void) => listeners.add(listener)),
+    dispatchEvent: vi.fn(),
+    matches,
+    media: '(max-width: 767px) and (pointer: coarse)',
+    onchange: null,
+    removeEventListener: vi.fn((_type: string, listener: () => void) => listeners.delete(listener)),
+  };
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn(() => query),
+  });
+}
+
+describe('기기 화면 모드', () => {
   beforeEach(() => {
     localStorage.clear();
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280, writable: true });
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1280,
+      writable: true,
+    });
   });
 
-  it('PC 창을 줄여도 자동으로 모바일 모드로 바뀌지 않는다', () => {
+  it('PC 창을 줄여도 포인터가 PC이면 모바일 모드로 바뀌지 않는다', () => {
+    mockDeviceMedia(false);
     window.innerWidth = 520;
     render(
       <ViewportProvider>
@@ -44,17 +58,55 @@ describe('화면 모드 수동 전환', () => {
     expect(screen.getByLabelText('현재 화면 모드')).toHaveTextContent('pc');
   });
 
-  it('모바일 버튼을 누른 경우에만 모드를 바꾸고 선택을 저장한다', () => {
+  it('작은 터치 기기에서는 모바일 화면을 사용하고 예전 수동 설정을 삭제한다', () => {
+    mockDeviceMedia(true);
+    localStorage.setItem('eojob_viewport_mode', 'pc');
     render(
       <ViewportProvider>
         <ViewportModeHarness />
       </ViewportProvider>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '모바일 화면' }));
-
     expect(screen.getByLabelText('현재 화면 모드')).toHaveTextContent('mobile');
-    expect(localStorage.getItem('eojob_viewport_mode')).toBe('mobile');
+    expect(localStorage.getItem('eojob_viewport_mode')).toBeNull();
+  });
+});
+
+describe('공통 헤더', () => {
+  beforeEach(() => mockDeviceMedia(false));
+
+  it('서비스 로고를 본문과 같은 max-w-7xl 기준선에 맞추고 화면 전환 UI를 표시하지 않는다', () => {
+    render(
+      <MemoryRouter>
+        <ViewportProvider>
+          <MobilePage activeNav="home" role="senior" title="홈">
+            본문
+          </MobilePage>
+        </ViewportProvider>
+      </MemoryRouter>,
+    );
+
+    const headerRail = screen
+      .getByRole('img', { name: '이어잡' })
+      .closest('header')?.firstElementChild;
+    expect(headerRail).toHaveClass('max-w-7xl', 'px-6', 'md:px-8');
+    expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
+  });
+
+  it('전체 메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {
+    render(
+      <MemoryRouter>
+        <SiteMenu />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '전체 메뉴 열기' }));
+    expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /커뮤니티/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /문의하기/ })).toHaveAttribute(
+      'href',
+      'mailto:ieojab2026@gmail.com',
+    );
   });
 });
 
