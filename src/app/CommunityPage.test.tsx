@@ -66,6 +66,9 @@ describe('CommunityPage', () => {
     expect(screen.getByRole('button', { name: '내 제안' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '내 정보' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기 열기' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
+    expect(screen.queryByRole('menuitem', { name: /프로젝트 보러가기/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
   });
 
   it('비로그인 사용자가 글쓰기를 누르면 로그인 화면으로 유도한다', async () => {

@@ -15,7 +15,7 @@ export function CommunityPage() {
       contentClassName="w-full pb-10"
       role={effectiveRole}
       showBack={false}
-      showProjectLink
+      showProjectLink={false}
       title="커뮤니티"
     >
       <button

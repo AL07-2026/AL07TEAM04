@@ -16,6 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 더보기 메뉴 내 중복 '프로젝트 보러가기' 항목 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/CommunityPage.tsx`: `MobilePage`의 `showProjectLink`를 `false`로 설정하여, 헤더 중앙 네비게이션('프로젝트')과 중복되던 우측 더보기 드롭다운 내 '프로젝트 보러가기' 링크를 제거하고 깔끔하게 '이어잡 소개', '커뮤니티', '문의하기'만 노출되도록 정리.
+  - `src/app/CommunityPage.test.tsx`: 커뮤니티 화면에서 더보기 메뉴를 열었을 때 '프로젝트 보러가기' 항목이 노출되지 않음을 보장하는 단위 테스트 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 커뮤니티 본문 너비 및 카드 레이아웃 헤더 정렬 최적화
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **수정한 파일 목록**:
