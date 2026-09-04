@@ -172,4 +172,62 @@ describe('CommunityPage', () => {
     );
     expect(await screen.findByText('수정된 댓글 내용')).toBeInTheDocument();
   });
+
+  it('새 글 작성 시 커스텀 게시판 드롭다운에서 카테고리를 선택할 수 있다', async () => {
+    authState.user = { uid: 'user-1' };
+    vi.mocked(communityService.getCommunityProfile).mockResolvedValue({ nickname: '경험나눔이' });
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValue([]);
+    vi.mocked(communityService.createCommunityPost).mockResolvedValue({
+      authorName: '경험나눔이',
+      category: 'project',
+      commentCount: 0,
+      content: '새로운 프로젝트에 참여한 상세 후기입니다.',
+      createdAt: '2026-09-04T00:00:00.000Z',
+      id: 'post-new',
+      likeCount: 0,
+      likedByMe: false,
+      ownedByMe: true,
+      title: '프로젝트 후기 제목',
+      updatedAt: '2026-09-04T00:00:00.000Z',
+    });
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: '글쓰기' }));
+    expect(await screen.findByRole('heading', { name: '새 글 작성' })).toBeInTheDocument();
+
+    const categorySelectBtn = screen.getByRole('button', { name: /게시판 선택:/ });
+    expect(categorySelectBtn).toHaveTextContent('경험과 노하우');
+
+    // 드롭다운 열기
+    fireEvent.click(categorySelectBtn);
+    expect(screen.getByRole('listbox', { name: '게시판 카테고리 목록' })).toBeInTheDocument();
+
+    // 옵션 선택 ('프로젝트 이야기')
+    const option = screen.getByRole('option', { name: '프로젝트 이야기' });
+    fireEvent.click(option);
+
+    expect(categorySelectBtn).toHaveTextContent('프로젝트 이야기');
+    expect(screen.queryByRole('listbox', { name: '게시판 카테고리 목록' })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('내용을 알 수 있는 제목'), {
+      target: { value: '프로젝트 후기 제목' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('개인정보나 연락처는 작성하지 마세요'), {
+      target: { value: '새로운 프로젝트에 참여한 상세 후기입니다.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '글 저장' }));
+
+    await waitFor(() =>
+      expect(communityService.createCommunityPost).toHaveBeenCalledWith({
+        category: 'project',
+        content: '새로운 프로젝트에 참여한 상세 후기입니다.',
+        title: '프로젝트 후기 제목',
+      }),
+    );
+  });
 });
