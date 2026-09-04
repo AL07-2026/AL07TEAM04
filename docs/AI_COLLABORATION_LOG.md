@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 헤더를 프로젝트보기 헤더와 100% 통일
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **헤더 통일**:
+     - 기존 `CommunityPage.tsx`의 독립적인 커스텀 헤더(간이 헤더, compact 메뉴, 중앙 네비 부재)를 프로젝트보기([`JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx))와 동일한 [`MobilePage`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx) 레이아웃 기반으로 교체.
+     - 데스크톱 화면에서 프로젝트보기와 동일하게 `h-16 md:h-18`, 좌측 `BrandLogo`, 중앙 데스크톱 네비게이션 탭(`프로젝트`, `홈`, `내 제안`, `내 정보`), 우측 `[ ≡ 메뉴 ]` 버튼 및 `SiteMenu` 드롭다운이 완벽하게 일치하도록 통일.
+  2. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 통일된 상단 헤더 네비게이션 버튼(프로젝트, 홈, 내 제안, 내 정보, 메뉴 열기) 렌더링 검증 테스트 추가.
+     - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+
 ### [2026-09-04] 로그인 화면 및 비로그인 메뉴에 '프로젝트 보러가기' 추가 & `leedongwook` 전용 배포 원칙 준수
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 내용**:

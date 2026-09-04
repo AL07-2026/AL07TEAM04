@@ -41,6 +41,21 @@ describe('CommunityPage', () => {
     expect(await screen.findByText('아직 게시글이 없습니다.')).toBeInTheDocument();
   });
 
+  it('프로젝트보기 화면과 통일된 상단 헤더 네비게이션을 표시한다', async () => {
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('아직 게시글이 없습니다.');
+    expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '홈' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '내 제안' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '내 정보' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
+  });
+
   it('비로그인 사용자가 글쓰기를 누르면 로그인 안내를 표시한다', async () => {
     render(
       <MemoryRouter>
