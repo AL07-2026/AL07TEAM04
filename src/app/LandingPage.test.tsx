@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LandingPage } from '@/app/LandingPage';
@@ -39,6 +39,14 @@ describe('LandingPage alignment rail', () => {
     render(<LandingPage />);
 
     expect(screen.getByRole('img', { name: '이어잡' })).toHaveClass('h-7');
+  });
+
+  it('프로젝트 이동을 독립 아이콘 대신 메뉴 첫 항목으로 제공한다', () => {
+    render(<LandingPage />);
+
+    expect(screen.queryByRole('button', { name: '프로젝트 둘러보기' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    expect(screen.getAllByRole('menuitem')[0]).toHaveTextContent('프로젝트 보러가기');
   });
 
   it('히어로 영상이 별도 중앙 폭을 사용하지 않고 본문 레일 전체를 사용한다', () => {

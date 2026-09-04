@@ -93,20 +93,32 @@ describe('공통 헤더', () => {
     expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
   });
 
-  it('전체 메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {
+  it('메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {
     render(
       <MemoryRouter>
         <SiteMenu />
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '더보기 메뉴 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
     expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /커뮤니티/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /문의하기/ })).toHaveAttribute(
       'href',
       'mailto:ieojab2026@gmail.com',
     );
+  });
+
+  it('요청한 화면에서는 프로젝트 보러가기를 메뉴 첫 항목으로 제공한다', () => {
+    render(
+      <MemoryRouter>
+        <SiteMenu showProjectLink />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    const items = screen.getAllByRole('menuitem');
+    expect(items[0]).toHaveTextContent('프로젝트 보러가기');
   });
 });
 

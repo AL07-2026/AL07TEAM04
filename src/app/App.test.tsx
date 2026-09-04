@@ -114,19 +114,22 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
     ['내 제안', '/senior/proposals'],
     ['내 정보', '/senior/profile'],
-  ])('비로그인 상태에서 공개 프로젝트 화면의 %s를 누르면 안내 후 로그인으로 이동한다', async (label, destination) => {
-    mockAuthState = { role: 'senior', user: null };
-    window.history.pushState({}, '', '/senior/project-database');
-    render(<App />);
+  ])(
+    '비로그인 상태에서 공개 프로젝트 화면의 %s를 누르면 안내 후 로그인으로 이동한다',
+    async (label, destination) => {
+      mockAuthState = { role: 'senior', user: null };
+      window.history.pushState({}, '', '/senior/project-database');
+      render(<App />);
 
-    fireEvent.click(await screen.findByRole('button', { name: label }));
+      fireEvent.click(await screen.findByRole('button', { name: label }));
 
-    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
-    expect(await screen.findByText('로그인 후 이용할 수 있어요.')).toBeInTheDocument();
-    expect(`${window.location.pathname}${window.location.search}`).toBe(
-      `/login?redirect=${encodeURIComponent(destination)}`,
-    );
-  });
+      expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+      expect(await screen.findByText('로그인 후 이용할 수 있어요.')).toBeInTheDocument();
+      expect(`${window.location.pathname}${window.location.search}`).toBe(
+        `/login?redirect=${encodeURIComponent(destination)}`,
+      );
+    },
+  );
 
   it('랜딩 페이지는 소개 영상과 하단 프로젝트 CTA 하나만 제공한다', async () => {
     window.history.pushState({}, '', '/');
@@ -135,7 +138,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByTitle('시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상'),
     ).toHaveAttribute('src', '/eojob-landing-hero.mp4');
-    expect(screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*이어잡입니다/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*이어잡입니다/),
+    ).toBeInTheDocument();
 
     const projectButtons = screen.getAllByRole('button', { name: /전체 프로젝트 보러가기/ });
     expect(projectButtons).toHaveLength(1);
@@ -149,7 +154,6 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
     ['인재로 로그인', '/login?role=senior'],
     ['기업으로 로그인', '/login?role=company'],
-    ['프로젝트 보러가기', '/senior/project-database'],
   ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
     mockAuthState = { role: 'senior', user: null }; // 비로그인 상태에서 랜딩 헤더 버튼 테스트
     window.history.pushState({}, '', '/');
@@ -159,6 +163,19 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
     await waitFor(() => {
       expect(`${window.location.pathname}${window.location.search}`).toBe(destination);
+    });
+  });
+
+  it('랜딩 메뉴의 프로젝트 보러가기는 프로젝트 화면으로 이동한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '메뉴 열기' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '프로젝트 보러가기' }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/senior/project-database');
     });
   });
 
@@ -205,7 +222,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
     const requestInit = fetchMock.mock.calls[0]?.[1];
-    const requestBody = JSON.parse(typeof requestInit?.body === 'string' ? requestInit.body : '{}') as {
+    const requestBody = JSON.parse(
+      typeof requestInit?.body === 'string' ? requestInit.body : '{}',
+    ) as {
       history?: Array<{ answer?: string }>;
     };
     expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
@@ -229,23 +248,26 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it('경험 카드 확인 화면은 저장된 프로필 경험카드를 빈 상태 대신 보여준다', async () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-    saveLocalSeniorProfile({
-      email: 'senior@example.com',
-      experience: '12년',
-      field: 'IT개발·데이터',
-      period: '12년',
-      phone: '010-0000-0000',
-      experienceCardsV1: [
-        {
-          id: 'profile-card-1',
-          workedOn: '고객 문의 운영 기준 정비',
-          accomplished: '평균 응답 시간을 30% 줄였습니다.',
-          strengths: ['프로세스 개선', '운영 자동화'],
-          version: 1,
-          confirmedAt: '2026-09-01T00:00:00.000Z',
-        },
-      ],
-    }, mockAuthState.user?.uid);
+    saveLocalSeniorProfile(
+      {
+        email: 'senior@example.com',
+        experience: '12년',
+        field: 'IT개발·데이터',
+        period: '12년',
+        phone: '010-0000-0000',
+        experienceCardsV1: [
+          {
+            id: 'profile-card-1',
+            workedOn: '고객 문의 운영 기준 정비',
+            accomplished: '평균 응답 시간을 30% 줄였습니다.',
+            strengths: ['프로세스 개선', '운영 자동화'],
+            version: 1,
+            confirmedAt: '2026-09-01T00:00:00.000Z',
+          },
+        ],
+      },
+      mockAuthState.user?.uid,
+    );
     const savedProfile = profileService.getLocalSeniorProfile(mockAuthState.user?.uid);
     const resolveProfileSpy = vi
       .spyOn(profileService, 'resolveSeniorProfile')
@@ -340,9 +362,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
     expect(window.location.pathname).toBe('/login');
-    expect(window.location.search).toBe(
-      `?redirect=${encodeURIComponent('/senior/projects/1')}`,
-    );
+    expect(window.location.search).toBe(`?redirect=${encodeURIComponent('/senior/projects/1')}`);
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
@@ -370,14 +390,18 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('필요 경력'), {
       target: { value: '서비스 운영 5년 이상' },
     });
-    fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '주 2회 · 원격' } });
+    fireEvent.change(screen.getByLabelText('프로젝트 기간'), {
+      target: { value: '주 2회 · 원격' },
+    });
     fireEvent.change(screen.getByLabelText('보수/예산'), { target: { value: '월 300만원' } });
     fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
       target: { value: '업무 흐름을 정리합니다.' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^프로젝트 등록$/ }));
     expect(
-      await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
+      await screen.findByText(
+        /프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/,
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
     expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
@@ -398,7 +422,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
       applicantName: '지원자',
       applicantEmail: 'applicant@example.com',
     } as proposalService.UserProposal;
-    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue([proposal]);
     const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
     const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
     window.localStorage.clear();
@@ -430,7 +456,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
       applicantName: '지원자',
       applicantEmail: 'applicant@example.com',
     } as proposalService.UserProposal;
-    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue([proposal]);
     const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
     const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
     window.localStorage.clear();

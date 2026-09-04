@@ -88,21 +88,6 @@ export function LandingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_view_projects');
-                    void navigate('/senior/project-database');
-                  }}
-                  className="group relative grid size-9 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="프로젝트 둘러보기"
-                  title="프로젝트 둘러보기"
-                >
-                  <BriefcaseBusiness className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    프로젝트 둘러보기
-                  </span>
-                </button>
-                <button
-                  type="button"
                   onClick={async () => {
                     trackButtonClick('nav_logout');
                     await signOut();
@@ -149,24 +134,13 @@ export function LandingPage() {
                     기업으로 로그인
                   </span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackButtonClick('nav_view_projects');
-                    void navigate('/senior/project-database');
-                  }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
-                  aria-label="프로젝트 보러가기"
-                  title="프로젝트 보러가기"
-                >
-                  <BriefcaseBusiness className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    프로젝트 보러가기
-                  </span>
-                </button>
               </>
             )}
-            <SiteMenu compact />
+            <SiteMenu
+              compact
+              onProjectClick={() => trackButtonClick('nav_view_projects')}
+              showProjectLink
+            />
           </nav>
         </div>
       </header>
@@ -205,8 +179,8 @@ export function LandingPage() {
                   플랫폼으로{' '}
                 </span>
                 <span className="inline sm:mt-1 sm:block">
-                  개인의 경험 및 경력과 기업의 해결 과제를 분석하여, 필요한 프로젝트를
-                  연결해 드립니다.
+                  개인의 경험 및 경력과 기업의 해결 과제를 분석하여, 필요한 프로젝트를 연결해
+                  드립니다.
                 </span>
               </p>
             </div>
@@ -247,29 +221,27 @@ export function LandingPage() {
             </div>
 
             <div className="mt-10 grid gap-7 md:grid-cols-3">
-              {features.map(
-                ({ number, icon: Icon, title, description }) => (
-                  <article
-                    key={number}
-                    className="min-h-[320px] rounded-2xl bg-[#DDEBE7]/70 p-7 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-8 transition-transform hover:-translate-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[0.95rem] font-black text-[#F06B4F]">{number}</span>
-                      <Icon
-                        className="size-[3.25rem] text-[#173F3A]"
-                        strokeWidth={1.8}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#17212B]">
-                      {title}
-                    </h3>
-                    <p className="mt-4 text-[1.0625rem] font-semibold leading-[1.75] text-[#2C3E3A]">
-                      {description}
-                    </p>
-                  </article>
-                ),
-              )}
+              {features.map(({ number, icon: Icon, title, description }) => (
+                <article
+                  key={number}
+                  className="min-h-[320px] rounded-2xl bg-[#DDEBE7]/70 p-7 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-8 transition-transform hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.95rem] font-black text-[#F06B4F]">{number}</span>
+                    <Icon
+                      className="size-[3.25rem] text-[#173F3A]"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#17212B]">
+                    {title}
+                  </h3>
+                  <p className="mt-4 text-[1.0625rem] font-semibold leading-[1.75] text-[#2C3E3A]">
+                    {description}
+                  </p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -386,18 +358,28 @@ export function LandingPage() {
                 </div>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="font-semibold text-[#173F3A]">우선지원대상기업 (중소·중견)</span>
+                    <span className="font-semibold text-[#173F3A]">
+                      우선지원대상기업 (중소·중견)
+                    </span>
                     <p className="mt-1 text-lg font-extrabold text-[#173F3A]">
-                      월 60만원 <span className="text-xs font-semibold text-[#173F3A]/80">(연 720만원)</span>
+                      월 60만원{' '}
+                      <span className="text-xs font-semibold text-[#173F3A]/80">(연 720만원)</span>
                     </p>
-                    <p className="text-[11.5px] text-slate-500 mt-0.5">3개월 단위 180만원씩 분기별 지급</p>
+                    <p className="text-[11.5px] text-slate-500 mt-0.5">
+                      3개월 단위 180만원씩 분기별 지급
+                    </p>
                   </div>
                   <div>
-                    <span className="font-semibold text-[#173F3A]">특수 대상 (중증장애인·여성가장)</span>
+                    <span className="font-semibold text-[#173F3A]">
+                      특수 대상 (중증장애인·여성가장)
+                    </span>
                     <p className="mt-1 text-lg font-extrabold text-[#173F3A]">
-                      월 80만원 <span className="text-xs font-semibold text-[#173F3A]/80">(연 960만원)</span>
+                      월 80만원{' '}
+                      <span className="text-xs font-semibold text-[#173F3A]/80">(연 960만원)</span>
                     </p>
-                    <p className="text-[11.5px] text-slate-500 mt-0.5">최대 2년까지 지속 지원 가능</p>
+                    <p className="text-[11.5px] text-slate-500 mt-0.5">
+                      최대 2년까지 지속 지원 가능
+                    </p>
                   </div>
                 </div>
               </div>
@@ -410,19 +392,26 @@ export function LandingPage() {
                 </div>
                 <dl className="mt-3 flex flex-col gap-2.5 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 대상 기업</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">
+                      • 대상 기업
+                    </dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
-                      우선지원대상기업 (제조업 500인 이하, 건설·운수 300인 이하, 도소매 200인 이하, 기타 100인 이하)
+                      우선지원대상기업 (제조업 500인 이하, 건설·운수 300인 이하, 도소매 200인 이하,
+                      기타 100인 이하)
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 근로계약 기간</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">
+                      • 근로계약 기간
+                    </dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       정규직 또는 최소 1년 이상의 기간제 근로계약 체결 (1년 미만 단기 계약 제외)
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 근무 조건</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">
+                      • 근무 조건
+                    </dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       주 15시간(월 60시간) 이상 근무, 최저임금 이상 지급, 4대 사회보험 가입 필수
                     </dd>
@@ -438,13 +427,18 @@ export function LandingPage() {
                 </div>
                 <dl className="mt-3 flex flex-col gap-2.5 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 border-b border-[#E0D9C8]/50 pb-2.5">
-                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 이수 프로그램</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">
+                      • 이수 프로그램
+                    </dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
-                      국민취업지원제도 1단계(취업활동계획 IAP) 수료 (1년 이내) 또는 3개월 이상 내일배움카드 직업훈련 이수
+                      국민취업지원제도 1단계(취업활동계획 IAP) 수료 (1년 이내) 또는 3개월 이상
+                      내일배움카드 직업훈련 이수
                     </dd>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">• 구직 등록</dt>
+                    <dt className="font-bold text-[#17212B] w-28 sm:w-32 shrink-0 whitespace-nowrap">
+                      • 구직 등록
+                    </dt>
                     <dd className="font-normal text-slate-600 leading-relaxed">
                       고용24(워크넷)에 구직신청이 유효하게 등록된 상태에서 채용 연계 진행
                     </dd>
@@ -456,9 +450,12 @@ export function LandingPage() {
               <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 p-4 sm:p-5">
                 <ShieldAlert className="size-4.5 shrink-0 text-rose-600 mt-0.5" />
                 <div className="flex flex-col gap-1 text-xs text-rose-950">
-                  <span className="font-bold text-rose-900">기업 필수 유의: 인위적 감원(권고사직) 금지 의무</span>
+                  <span className="font-bold text-rose-900">
+                    기업 필수 유의: 인위적 감원(권고사직) 금지 의무
+                  </span>
                   <p className="font-normal leading-relaxed text-rose-900/90">
-                    채용 전 3개월부터 채용 후 1년까지(총 15개월 동안) 사업주 권고사직 등 인위적 감원이 발생하지 않아야 합니다. (근로자의 자발적 퇴사는 제외)
+                    채용 전 3개월부터 채용 후 1년까지(총 15개월 동안) 사업주 권고사직 등 인위적
+                    감원이 발생하지 않아야 합니다. (근로자의 자발적 퇴사는 제외)
                   </p>
                 </div>
               </div>
