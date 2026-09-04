@@ -38,6 +38,13 @@ async function request<T>(
   options: RequestInit = {},
   authenticated = false,
 ): Promise<T> {
+  if (typeof auth?.authStateReady === 'function') {
+    try {
+      await auth.authStateReady();
+    } catch {
+      // authStateReady 실패 시 현재 상태로 계속 진행
+    }
+  }
   const currentUser = auth.currentUser;
   if (authenticated && !currentUser) throw new Error('로그인 후 이용해 주세요.');
   const token = currentUser ? await currentUser.getIdToken() : '';
@@ -55,12 +62,22 @@ async function request<T>(
 }
 
 export async function getCommunityProfile(): Promise<CommunityProfile | null> {
-  const result = await request<{ profile: CommunityProfile | null }>(
-    '/api/community/profile',
-    {},
-    true,
-  );
-  return result.profile;
+  try {
+    const result = await request<{ profile: CommunityProfile | null }>(
+      '/api/community/profile',
+      {},
+      true,
+    );
+    return result.profile;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message.includes('로그인') || error.message.includes('401') || error.message.includes('인증'))
+    ) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function saveCommunityProfile(nickname: string): Promise<CommunityProfile> {

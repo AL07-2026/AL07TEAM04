@@ -92,6 +92,20 @@ describe('CommunityPage', () => {
     await waitFor(() => expect(communityService.createCommunityPost).not.toHaveBeenCalled());
   });
 
+  it('로그인 사용자가 프로필 조회 실패 시에도 로그인 유도 배너를 표시하지 않는다', async () => {
+    authState.user = { uid: 'user-1' };
+    vi.mocked(communityService.getCommunityProfile).mockRejectedValue(new Error('로그인 후 이용해 주세요.'));
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('아직 게시글이 없습니다.');
+    expect(screen.queryByText(/로그인/)).not.toBeInTheDocument();
+  });
+
   it('로그인 사용자가 익명 활동명을 설정한다', async () => {
     authState.user = { uid: 'user-1' };
     vi.mocked(communityService.getCommunityProfile).mockResolvedValue(null);

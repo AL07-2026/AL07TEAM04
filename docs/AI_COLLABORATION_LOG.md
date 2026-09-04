@@ -16,6 +16,24 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 로그인 상태임에도 커뮤니티 진입 시 '로그인 후 이용해 주세요' 노출 버그 원천 차단
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **근본 원인 분석**:
+  - `authContext`의 로컬 스토리지 복원으로 UI상 사용자(`user`)는 즉시 존재하는 반면, Firebase SDK의 `auth.currentUser`는 비동기로 복원되어 `getCommunityProfile()` 호출 찰나에 `null`이 되는 레이스 컨디션 발생.
+  - 이로 인해 `communityService.ts`에서 `throw new Error('로그인 후 이용해 주세요.')`가 발생하고, `CommunityBoard.tsx`의 `.catch`를 통해 화면 상단에 배너로 노출됨.
+- **수정한 파일 목록**:
+  - `src/services/communityService.ts`:
+    - `request` 함수에서 `auth.authStateReady()` 비동기 대기를 적용하여 세션 복원 전 조기 호출 방지.
+    - `getCommunityProfile()`에서 미인증 또는 401 오류 시 예외를 던지지 않고 조용히 `null`을 반환하도록 예외 안전성 확보.
+  - `src/app/community/CommunityBoard.tsx`:
+    - `getCommunityProfile` 에러 catch 시 로그인 관련 에러는 `setMessage` 하지 않도록 방어 로직 추가.
+    - JSX 렌더링 시 `message`에 로그인 관련 문구가 포함된 경우 배너를 노출하지 않도록 3중 방어 처리.
+  - `src/services/communityService.test.ts`: 미인증 상태에서 `getCommunityProfile()`이 예외 없이 `null`을 반환하는 단위 테스트 추가.
+  - `src/app/CommunityPage.test.tsx`: 프로필 조회 실패 시에도 화면에 로그인 유도 배너가 노출되지 않음을 보장하는 단위 테스트 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (0 warning, 0 error), 41개 테스트 파일 383개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 커밋 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 커뮤니티 글쓰기/참여 시 불필요한 '로그인 필요' 배너 문구 제거
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **수정한 파일 목록**:

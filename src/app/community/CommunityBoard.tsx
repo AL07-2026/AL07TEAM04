@@ -153,7 +153,11 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         setCommunityProfile(profile);
         setNicknameDraft(profile?.nickname || '');
       })
-      .catch((error: Error) => active && setMessage(error.message))
+      .catch((error: Error) => {
+        if (active && !error.message.includes('로그인')) {
+          setMessage(error.message);
+        }
+      })
       .finally(() => active && setProfileOwnerId(userId));
     return () => {
       active = false;
@@ -438,7 +442,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         </div>
       </div>
 
-      {message ? (
+      {message && !message.includes('로그인') ? (
         <p
           className="mt-4 rounded-xl bg-[#E6F0ED] px-4 py-3 text-sm font-bold text-[#173F3A]"
           role="status"

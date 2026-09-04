@@ -88,6 +88,11 @@ describe('communityService', () => {
     await expect(getCommunityProfile()).resolves.toEqual({ nickname: '경험나눔이' });
   });
 
+  it('인증되지 않은 상태에서 프로필 조회 시 오류를 던지지 않고 null을 반환한다', async () => {
+    authState.currentUser = null;
+    await expect(getCommunityProfile()).resolves.toBeNull();
+  });
+
   it('서버 오류 메시지를 사용자에게 전달한다', async () => {
     authState.currentUser = { getIdToken: getIdTokenMock };
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
