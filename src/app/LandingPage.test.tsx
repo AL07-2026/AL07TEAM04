@@ -45,7 +45,7 @@ describe('LandingPage alignment rail', () => {
     render(<LandingPage />);
 
     expect(screen.queryByRole('button', { name: '프로젝트 둘러보기' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.getAllByRole('menuitem')[0]).toHaveTextContent('프로젝트 보러가기');
   });
 

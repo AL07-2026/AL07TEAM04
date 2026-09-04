@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 헤더 우측 메뉴 버튼 명칭을 '메뉴'에서 '더보기'로 직관성 개선
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/wireframe/Ui.tsx`: `SiteMenu` 버튼 표기를 `<span className="hidden sm:inline">더보기</span>`로 변경하고, `aria-label`을 `더보기 열기` / `더보기 닫기`로 개선. 드롭다운의 `aria-label`을 `이어잡 더보기 메뉴`로 명확화.
+  - `src/app/wireframe/Ui.test.tsx`: '더보기 열기' 버튼 상호작용 검증으로 갱신.
+  - `src/app/LandingPage.test.tsx`: 랜딩 헤더의 '더보기 열기' 버튼 클릭 검증으로 갱신.
+  - `src/app/CommunityPage.test.tsx`: 커뮤니티 헤더의 '더보기 열기' 버튼 존재 검증으로 갱신.
+  - `src/app/App.test.tsx`: 로그인 및 랜딩 라우팅 테스트의 '더보기 열기' 버튼 클릭 검증으로 갱신.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 커뮤니티 헤더 글로벌 네비게이션 적용 보장 및 Firebase Hosting 캐시 무효화 헤더 추가
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 내용**:

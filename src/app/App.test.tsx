@@ -94,7 +94,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.getByRole('menuitem', { name: /프로젝트 보러가기/ })).toBeInTheDocument();
   });
 
@@ -174,7 +174,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', '/');
     render(<App />);
 
-    fireEvent.click(await screen.findByRole('button', { name: '메뉴 열기' }));
+    fireEvent.click(await screen.findByRole('button', { name: '더보기 열기' }));
     fireEvent.click(screen.getByRole('menuitem', { name: '프로젝트 보러가기' }));
 
     await waitFor(() => {

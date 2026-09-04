@@ -115,7 +115,7 @@ export function SiteMenu({
         aria-controls="eojob-site-menu"
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={open ? '메뉴 닫기' : '메뉴 열기'}
+        aria-label={open ? '더보기 닫기' : '더보기 열기'}
         className={cn(
           'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
           compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
@@ -129,12 +129,12 @@ export function SiteMenu({
         ) : (
           <Menu aria-hidden="true" className="size-5" />
         )}
-        {compact ? null : <span className="hidden sm:inline">메뉴</span>}
+        {compact ? null : <span className="hidden sm:inline">더보기</span>}
       </button>
 
       {open ? (
         <div
-          aria-label="이어잡 메뉴"
+          aria-label="이어잡 더보기 메뉴"
           className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl bg-white p-2 shadow-[0_6px_12px_rgba(23,63,58,0.16)]"
           id="eojob-site-menu"
           role="menu"
