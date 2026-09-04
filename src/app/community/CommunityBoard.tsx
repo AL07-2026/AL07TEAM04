@@ -131,9 +131,16 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     };
   }, [selectedId]);
 
+  const moveToLogin = () => {
+    void navigate(createLoginRedirectPath('/community'), {
+      state: LOGIN_REQUIRED_NAVIGATION_STATE,
+    });
+  };
+
   const requireParticipationProfile = () => {
     if (!user) {
       setMessage('글쓰기와 참여는 로그인 후 이용할 수 있습니다.');
+      moveToLogin();
       return false;
     }
     if (!profileReady) {
@@ -200,12 +207,6 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     selectPost(
       posts.find((post) => nextCategory === 'all' || post.category === nextCategory)?.id || '',
     );
-  };
-
-  const moveToLogin = () => {
-    void navigate(createLoginRedirectPath('/community'), {
-      state: LOGIN_REQUIRED_NAVIGATION_STATE,
-    });
   };
 
   const openComposer = (post?: CommunityPost) => {

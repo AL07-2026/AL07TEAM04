@@ -1,11 +1,23 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import type * as ReactRouter from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CommunityPage } from '@/app/CommunityPage';
 import * as communityService from '@/services/communityService';
 
-const { authState } = vi.hoisted(() => ({ authState: { user: null as null | { uid: string } } }));
+const { authState, mockNavigate } = vi.hoisted(() => ({
+  authState: { user: null as null | { uid: string } },
+  mockNavigate: vi.fn(),
+}));
+
+vi.mock('react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof ReactRouter>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock('@/lib/authContext', () => ({ useAuth: () => authState }));
 vi.mock('@/services/communityService', () => ({
@@ -56,7 +68,7 @@ describe('CommunityPage', () => {
     expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
   });
 
-  it('비로그인 사용자가 글쓰기를 누르면 로그인 안내를 표시한다', async () => {
+  it('비로그인 사용자가 글쓰기를 누르면 로그인 화면으로 유도한다', async () => {
     render(
       <MemoryRouter>
         <CommunityPage />
@@ -65,7 +77,14 @@ describe('CommunityPage', () => {
 
     await screen.findByText('아직 게시글이 없습니다.');
     fireEvent.click(screen.getByRole('button', { name: '글쓰기' }));
-    expect(screen.getByText(/글쓰기와 참여는 로그인 후 이용할 수 있습니다/)).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/login?redirect=%2Fcommunity',
+      expect.objectContaining({
+        state: {
+          loginRequiredMessage: '로그인 후 이용할 수 있어요.',
+        },
+      }),
+    );
     await waitFor(() => expect(communityService.createCommunityPost).not.toHaveBeenCalled());
   });
 

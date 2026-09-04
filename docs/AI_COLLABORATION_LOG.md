@@ -16,6 +16,16 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 비로그인 상태 글쓰기 클릭 시 로그인 화면 유도 연동
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 화면 유도 및 리다이렉트 연동**:
+     - `src/app/community/CommunityBoard.tsx`: `requireParticipationProfile`에서 비로그인(`!user`) 상태일 때 `moveToLogin()`을 호출하도록 변경.
+     - 비로그인 사용자가 상단 '글쓰기' 및 빈 상태 '첫 글 작성하기' 클릭 시, `createLoginRedirectPath('/community')` 및 `LOGIN_REQUIRED_NAVIGATION_STATE`를 통해 `/login?redirect=%2Fcommunity`로 즉시 이동. 로그인 후 원래 보던 커뮤니티로 자연스럽게 복귀.
+  2. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 비로그인 사용자가 글쓰기 버튼 클릭 시 `mockNavigate`로 로그인 페이지 이동 및 리다이렉트 상태 전달 여부 검증 테스트 갱신.
+     - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 전체 통과, Vite 빌드 성공.
+
 ### [2026-09-04] 커뮤니티 헤더를 프로젝트보기 헤더와 100% 통일
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 내용**:
