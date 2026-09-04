@@ -12,7 +12,7 @@ export function CommunityPage() {
 
   return (
     <MobilePage
-      contentClassName="mx-auto w-full max-w-6xl py-4 sm:py-6"
+      contentClassName="w-full pb-10"
       role={effectiveRole}
       showBack={false}
       showProjectLink

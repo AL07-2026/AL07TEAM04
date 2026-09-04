@@ -16,6 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 커뮤니티 본문 너비 및 카드 레이아웃 헤더 정렬 최적화
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/CommunityPage.tsx`: `contentClassName`의 `max-w-6xl mx-auto` 제약을 제거하고 `w-full pb-10`으로 변경하여, 헤더의 `max-w-7xl` (좌측 이어잡 로고 및 우측 더보기 버튼)과 본문 시작/끝 위치가 완벽히 수직 일치되도록 최적화.
+  - `src/app/community/CommunityBoard.tsx`: 게시글 목록 섹션과 상세 내용 섹션의 높이를 `min-h-[420px] md:min-h-[500px] flex flex-col border border-[#E8E2D6] shadow-2xs`로 통일하고 빈 상태 메시지를 수직 중앙 정렬하여 와이드 화면에서의 시각적 균형감 강화.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 헤더 우측 메뉴 버튼 명칭을 '메뉴'에서 '더보기'로 직관성 개선
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **수정한 파일 목록**:

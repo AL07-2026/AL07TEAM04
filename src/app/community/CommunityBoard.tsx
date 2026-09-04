@@ -555,15 +555,18 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         ))}
       </nav>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.4fr)]">
-        <section aria-label="게시글 목록" className="overflow-hidden rounded-2xl bg-white">
+      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.4fr)]">
+        <section
+          aria-label="게시글 목록"
+          className="flex min-h-[420px] md:min-h-[500px] flex-col overflow-hidden rounded-2xl border border-[#E8E2D6] bg-white shadow-2xs"
+        >
           {loading ? (
-            <p className="p-6 text-sm font-bold text-[#53645F]" role="status">
+            <div className="my-auto grid place-items-center p-6 text-sm font-bold text-[#53645F]" role="status">
               게시글을 불러오는 중입니다.
-            </p>
+            </div>
           ) : visiblePosts.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="font-black">아직 게시글이 없습니다.</p>
+            <div className="my-auto p-8 text-center">
+              <p className="font-black text-[#17212B]">아직 게시글이 없습니다.</p>
               <button
                 className="mt-3 min-h-11 rounded-lg px-2 text-sm font-extrabold text-[#173F3A] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                 onClick={() => openComposer()}
@@ -596,9 +599,12 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           )}
         </section>
 
-        <section aria-label="게시글 내용" className="min-h-80 rounded-2xl bg-white p-5 sm:p-7">
+        <section
+          aria-label="게시글 내용"
+          className="flex min-h-[420px] md:min-h-[500px] flex-col rounded-2xl border border-[#E8E2D6] bg-white p-5 sm:p-7 shadow-2xs"
+        >
           {!selectedPost ? (
-            <div className="grid min-h-64 place-items-center text-sm font-bold text-[#64716D]">
+            <div className="my-auto grid min-h-64 place-items-center text-sm font-bold text-[#64716D]">
               게시글을 선택해 주세요.
             </div>
           ) : (
