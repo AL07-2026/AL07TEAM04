@@ -9,8 +9,10 @@ vi.mock('@/lib/firebase', () => ({ auth: authState }));
 
 import {
   createCommunityPost,
+  getCommunityProfile,
   listCommunityPosts,
   reportCommunityPost,
+  saveCommunityProfile,
 } from '@/services/communityService';
 
 describe('communityService', () => {
@@ -45,6 +47,7 @@ describe('communityService', () => {
       id: 'post-1',
       likedByMe: false,
       likeCount: 0,
+      ownedByMe: true,
       title: '프로젝트 경험 공유',
       updatedAt: '2026-09-04T00:00:00.000Z',
     };
@@ -63,6 +66,24 @@ describe('communityService', () => {
     const [, request] = fetchMock.mock.calls[0] ?? [];
     expect(request?.method).toBe('POST');
     expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer community-token');
+  });
+
+  it('익명 활동명을 계정 프로필로 저장한다', async () => {
+    authState.currentUser = { getIdToken: getIdTokenMock };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ profile: { nickname: '경험나눔이' } }), { status: 200 }),
+        ),
+      );
+
+    await expect(saveCommunityProfile('경험나눔이')).resolves.toEqual({ nickname: '경험나눔이' });
+    const [url, request] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe('/api/community/profile');
+    expect(request?.method).toBe('PUT');
+    expect(request?.body).toBe(JSON.stringify({ nickname: '경험나눔이' }));
+    await expect(getCommunityProfile()).resolves.toEqual({ nickname: '경험나눔이' });
   });
 
   it('서버 오류 메시지를 사용자에게 전달한다', async () => {

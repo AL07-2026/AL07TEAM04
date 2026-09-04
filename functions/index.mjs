@@ -140,6 +140,8 @@ app.post('/api/applications/send', (req, res) => {
 });
 
 function registerCommunityRoutes(targetApp) {
+  targetApp.get('/api/community/profile', communityHandlers.getProfile);
+  targetApp.put('/api/community/profile', communityHandlers.saveProfile);
   targetApp.get('/api/community/posts', communityHandlers.listPosts);
   targetApp.post('/api/community/posts', communityHandlers.createPost);
   targetApp.patch('/api/community/posts/:postId', communityHandlers.updatePost);

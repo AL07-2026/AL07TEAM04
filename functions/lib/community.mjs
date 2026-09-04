@@ -42,6 +42,28 @@ async function authenticatedUser(request, verifyIdToken) {
   }
 }
 
+async function optionalUserId(request, verifyIdToken) {
+  try {
+    return (await authenticatedUser(request, verifyIdToken)).uid;
+  } catch {
+    return '';
+  }
+}
+
+function publicCommunityItem(item, viewerUserId, nickname = '') {
+  const safeItem = { ...item };
+  const authorId = text(safeItem.authorId, 128);
+  const usesCommunityNickname = safeItem.identityType === 'community-nickname';
+  delete safeItem.authorId;
+  delete safeItem.authorRole;
+  delete safeItem.identityType;
+  return {
+    ...safeItem,
+    authorName: nickname || (usesCommunityNickname ? safeItem.authorName : '익명 회원'),
+    ownedByMe: Boolean(viewerUserId && authorId === viewerUserId),
+  };
+}
+
 function validatePost(body) {
   const category = text(body?.category, 30);
   const title = text(body?.title, 80);
@@ -50,6 +72,30 @@ function validatePost(body) {
   if (title.length < 4) throw new CommunityError(400, '제목을 4자 이상 입력해 주세요.');
   if (content.length < 10) throw new CommunityError(400, '내용을 10자 이상 입력해 주세요.');
   return { category, content, title };
+}
+
+function validateNickname(value) {
+  const nickname =
+    typeof value === 'string' ? value.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
+  const length = Array.from(nickname).length;
+  if (length < 2 || length > 12) {
+    throw new CommunityError(400, '활동명은 2자 이상 12자 이하로 입력해 주세요.');
+  }
+  if (!/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 ]+$/.test(nickname)) {
+    throw new CommunityError(400, '활동명에는 한글, 영문, 숫자만 사용할 수 있습니다.');
+  }
+  return {
+    nickname,
+    nicknameKey: nickname.toLocaleLowerCase('ko-KR').replace(/\s+/g, '-'),
+  };
+}
+
+async function requireCommunityProfile(repository, userId) {
+  const profile = await repository.getCommunityProfile(userId);
+  if (!profile?.nickname) {
+    throw new CommunityError(412, '커뮤니티 활동명을 먼저 설정해 주세요.');
+  }
+  return profile;
 }
 
 function respond(handler) {
@@ -68,59 +114,67 @@ function respond(handler) {
 
 export function createCommunityHandlers({ repository, verifyIdToken }) {
   return {
+    getProfile: respond(async (request) => {
+      const user = await authenticatedUser(request, verifyIdToken);
+      const profile = await repository.getCommunityProfile(user.uid);
+      return { profile: profile?.nickname ? { nickname: profile.nickname } : null };
+    }),
+    saveProfile: respond(async (request) => {
+      const user = await authenticatedUser(request, verifyIdToken);
+      return {
+        profile: await repository.saveCommunityProfile(
+          user.uid,
+          validateNickname(request.body?.nickname),
+        ),
+      };
+    }),
     listPosts: respond(async (request) => {
-      let userId = '';
-      try {
-        userId = (await authenticatedUser(request, verifyIdToken)).uid;
-      } catch {
-        // Public reading remains available when no valid login token is present.
-      }
+      const userId = await optionalUserId(request, verifyIdToken);
       return { posts: await repository.listPosts(userId) };
     }),
     createPost: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
-      const profile = await repository.getProfile(user.uid);
-      return {
-        post: await repository.createPost({
-          ...validatePost(request.body),
-          authorId: user.uid,
-          authorName:
-            text(profile?.name || user.name || user.email?.split('@')[0], 40) || '이어잡 회원',
-          authorRole: profile?.role === 'company' ? 'company' : 'senior',
-        }),
-      };
+      const profile = await requireCommunityProfile(repository, user.uid);
+      const post = await repository.createPost({
+        ...validatePost(request.body),
+        authorId: user.uid,
+        authorName: profile.nickname,
+        identityType: 'community-nickname',
+      });
+      return { post: publicCommunityItem(post, user.uid, profile.nickname) };
     }),
     updatePost: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
-      return {
-        post: await repository.updatePost(
-          request.params.postId,
-          user.uid,
-          validatePost(request.body),
-        ),
-      };
+      const profile = await requireCommunityProfile(repository, user.uid);
+      const post = await repository.updatePost(
+        request.params.postId,
+        user.uid,
+        validatePost(request.body),
+      );
+      return { post: publicCommunityItem(post, user.uid, profile.nickname) };
     }),
     deletePost: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       await repository.deletePost(request.params.postId, user.uid);
       return { deleted: true };
     }),
-    listComments: respond(async (request) => ({
-      comments: await repository.listComments(request.params.postId),
-    })),
+    listComments: respond(async (request) => {
+      const userId = await optionalUserId(request, verifyIdToken);
+      return { comments: await repository.listComments(request.params.postId, userId) };
+    }),
     createComment: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       const content = text(request.body?.content, 500);
       if (content.length < 2) throw new CommunityError(400, '댓글을 2자 이상 입력해 주세요.');
-      const profile = await repository.getProfile(user.uid);
+      const profile = await requireCommunityProfile(repository, user.uid);
+      const communityComment = await repository.createComment(request.params.postId, {
+        authorId: user.uid,
+        authorName: profile.nickname,
+        identityType: 'community-nickname',
+        content,
+      });
       return {
-        comment: await repository.createComment(request.params.postId, {
-          authorId: user.uid,
-          authorName:
-            text(profile?.name || user.name || user.email?.split('@')[0], 40) || '이어잡 회원',
-          authorRole: profile?.role === 'company' ? 'company' : 'senior',
-          content,
-        }),
+        comment: publicCommunityItem(communityComment, user.uid, profile.nickname),
       };
     }),
     deleteComment: respond(async (request) => {
@@ -142,10 +196,64 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
   };
 }
 
+async function hydrateCommunityAuthors(items, viewerUserId = '') {
+  const authorIds = [...new Set(items.map((item) => text(item.authorId, 128)).filter(Boolean))];
+  if (authorIds.length === 0) {
+    return items.map((item) => publicCommunityItem(item, viewerUserId));
+  }
+  const snapshots = await adminDb.getAll(
+    ...authorIds.map((userId) => adminDb.collection('community_profiles').doc(userId)),
+  );
+  const nicknameByUserId = new Map(
+    snapshots
+      .filter((snapshot) => snapshot.exists && snapshot.data()?.nickname)
+      .map((snapshot) => [snapshot.id, snapshot.data().nickname]),
+  );
+  return items.map((item) => {
+    return publicCommunityItem(item, viewerUserId, nicknameByUserId.get(item.authorId));
+  });
+}
+
 const repository = {
-  async getProfile(userId) {
-    const snapshot = await adminDb.collection('users').doc(userId).get();
+  async getCommunityProfile(userId) {
+    const snapshot = await adminDb.collection('community_profiles').doc(userId).get();
     return snapshot.exists ? snapshot.data() : null;
+  },
+  async saveCommunityProfile(userId, { nickname, nicknameKey }) {
+    const profileReference = adminDb.collection('community_profiles').doc(userId);
+    const nicknameReference = adminDb.collection('community_nicknames').doc(nicknameKey);
+    const now = new Date().toISOString();
+    return adminDb.runTransaction(async (transaction) => {
+      const current = await transaction.get(profileReference);
+      const desiredNickname = await transaction.get(nicknameReference);
+      if (desiredNickname.exists && desiredNickname.data()?.userId !== userId) {
+        throw new CommunityError(409, '이미 사용 중인 활동명입니다.');
+      }
+
+      const previousNicknameKey = text(current.data()?.nicknameKey, 64);
+      let previousNickname = null;
+      if (previousNicknameKey && previousNicknameKey !== nicknameKey) {
+        previousNickname = await transaction.get(
+          adminDb.collection('community_nicknames').doc(previousNicknameKey),
+        );
+      }
+
+      if (previousNickname?.exists && previousNickname.data()?.userId === userId) {
+        transaction.delete(previousNickname.ref);
+      }
+      transaction.set(nicknameReference, { nickname, updatedAt: now, userId });
+      transaction.set(
+        profileReference,
+        {
+          createdAt: current.data()?.createdAt || now,
+          nickname,
+          nicknameKey,
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+      return { nickname };
+    });
   },
   async listPosts(userId) {
     const snapshot = await adminDb
@@ -153,7 +261,10 @@ const repository = {
       .orderBy('createdAt', 'desc')
       .limit(50)
       .get();
-    const posts = snapshot.docs.map((document) => serialize(document.id, document.data()));
+    const posts = await hydrateCommunityAuthors(
+      snapshot.docs.map((document) => serialize(document.id, document.data())),
+      userId,
+    );
     if (!userId || posts.length === 0) return posts.map((post) => ({ ...post, likedByMe: false }));
     const likes = await adminDb.getAll(
       ...posts.map((post) =>
@@ -194,7 +305,7 @@ const repository = {
       throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
     await adminDb.recursiveDelete(reference);
   },
-  async listComments(postId) {
+  async listComments(postId, userId) {
     const snapshot = await adminDb
       .collection('community_posts')
       .doc(postId)
@@ -202,7 +313,10 @@ const repository = {
       .orderBy('createdAt', 'asc')
       .limit(100)
       .get();
-    return snapshot.docs.map((document) => serialize(document.id, document.data()));
+    return hydrateCommunityAuthors(
+      snapshot.docs.map((document) => serialize(document.id, document.data())),
+      userId,
+    );
   },
   async createComment(postId, data) {
     const postReference = adminDb.collection('community_posts').doc(postId);
@@ -269,4 +383,4 @@ export const communityHandlers = createCommunityHandlers({
   verifyIdToken: (token) => adminAuth.verifyIdToken(token),
 });
 
-export { CommunityError, validatePost };
+export { CommunityError, validateNickname, validatePost };

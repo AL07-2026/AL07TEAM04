@@ -1,4 +1,14 @@
-import { Flag, Heart, MessageCircle, Pencil, PenLine, Send, Trash2, X } from 'lucide-react';
+import {
+  Flag,
+  Heart,
+  MessageCircle,
+  Pencil,
+  PenLine,
+  Send,
+  Trash2,
+  UserRound,
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -12,15 +22,18 @@ import {
   createCommunityPost,
   deleteCommunityComment,
   deleteCommunityPost,
+  getCommunityProfile,
   listCommunityComments,
   listCommunityPosts,
   reportCommunityPost,
+  saveCommunityProfile,
   toggleCommunityLike,
   updateCommunityPost,
   type CommunityCategory,
   type CommunityComment,
   type CommunityPost,
   type CommunityPostInput,
+  type CommunityProfile,
   type CommunityReportReason,
 } from '@/services/communityService';
 
@@ -39,8 +52,8 @@ function dateLabel(value: string) {
     : new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(date);
 }
 
-function authorLabel(item: Pick<CommunityPost, 'authorName' | 'authorRole'>) {
-  return `${item.authorName} (${item.authorRole === 'company' ? '기업' : '인재'})`;
+function authorLabel(item: Pick<CommunityPost, 'authorName'>) {
+  return item.authorName || '익명 회원';
 }
 
 export function CommunityBoard({ user }: { user: UserProfile | null }) {
@@ -58,6 +71,14 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [communityProfile, setCommunityProfile] = useState<CommunityProfile | null>(null);
+  const [profileOwnerId, setProfileOwnerId] = useState('');
+  const [nicknameDraft, setNicknameDraft] = useState('');
+  const [nicknameError, setNicknameError] = useState('');
+  const [nicknameOpen, setNicknameOpen] = useState(false);
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const userId = user?.uid || '';
+  const profileReady = !userId || profileOwnerId === userId;
 
   const selectedPost = posts.find((post) => post.id === selectedId) ?? null;
   const visiblePosts = useMemo(
@@ -81,6 +102,22 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   }, []);
 
   useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    getCommunityProfile()
+      .then((profile) => {
+        if (!active) return;
+        setCommunityProfile(profile);
+        setNicknameDraft(profile?.nickname || '');
+      })
+      .catch((error: Error) => active && setMessage(error.message))
+      .finally(() => active && setProfileOwnerId(userId));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  useEffect(() => {
     if (!selectedId) return;
     let active = true;
     listCommunityComments(selectedId)
@@ -91,10 +128,57 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     };
   }, [selectedId]);
 
-  const requireLogin = () => {
-    if (user) return true;
-    setMessage('글쓰기와 참여는 로그인 후 이용할 수 있습니다.');
+  const requireParticipationProfile = () => {
+    if (!user) {
+      setMessage('글쓰기와 참여는 로그인 후 이용할 수 있습니다.');
+      return false;
+    }
+    if (!profileReady) {
+      setMessage('활동명을 확인하고 있습니다. 잠시만 기다려 주세요.');
+      return false;
+    }
+    if (communityProfile) return true;
+    setNicknameOpen(true);
+    setMessage('커뮤니티에서 사용할 익명 활동명을 먼저 설정해 주세요.');
     return false;
+  };
+
+  const validateNicknameDraft = () => {
+    const nickname = nicknameDraft.normalize('NFKC').trim().replace(/\s+/g, ' ');
+    const length = Array.from(nickname).length;
+    const error =
+      length < 2 || length > 12
+        ? '활동명은 2자 이상 12자 이하로 입력해 주세요.'
+        : !/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 ]+$/.test(nickname)
+          ? '한글, 영문, 숫자만 사용할 수 있습니다.'
+          : '';
+    setNicknameError(error);
+    return error ? '' : nickname;
+  };
+
+  const saveNickname = async () => {
+    const nickname = validateNicknameDraft();
+    if (!nickname || nicknameSaving) return;
+    setNicknameSaving(true);
+    try {
+      const profile = await saveCommunityProfile(nickname);
+      setCommunityProfile(profile);
+      setProfileOwnerId(userId);
+      setNicknameDraft(profile.nickname);
+      setNicknameOpen(false);
+      setNicknameError('');
+      setPosts((current) =>
+        current.map((post) => (post.ownedByMe ? { ...post, authorName: profile.nickname } : post)),
+      );
+      setComments((current) =>
+        current.map((item) => (item.ownedByMe ? { ...item, authorName: profile.nickname } : item)),
+      );
+      setMessage(`활동명을 '${profile.nickname}'으로 저장했습니다.`);
+    } catch (error) {
+      setNicknameError(error instanceof Error ? error.message : '활동명을 저장하지 못했습니다.');
+    } finally {
+      setNicknameSaving(false);
+    }
   };
 
   const selectPost = (postId: string) => {
@@ -121,7 +205,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const openComposer = (post?: CommunityPost) => {
-    if (!requireLogin()) return;
+    if (!requireParticipationProfile()) return;
     setEditingId(post?.id || '');
     setDraft(
       post
@@ -133,7 +217,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const savePost = async () => {
-    if (saving || !requireLogin()) return;
+    if (saving || !requireParticipationProfile()) return;
     if (draft.title.trim().length < 4 || draft.content.trim().length < 10) {
       return setMessage('제목은 4자 이상, 내용은 10자 이상 입력해 주세요.');
     }
@@ -176,7 +260,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const likePost = async () => {
-    if (!selectedPost || !requireLogin()) return;
+    if (!selectedPost || !requireParticipationProfile()) return;
     try {
       const result = await toggleCommunityLike(selectedPost.id);
       setPosts((current) =>
@@ -192,7 +276,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const saveComment = async () => {
-    if (!selectedPost || !requireLogin() || saving) return;
+    if (!selectedPost || !requireParticipationProfile() || saving) return;
     if (comment.trim().length < 2) return setMessage('댓글을 2자 이상 입력해 주세요.');
     setSaving(true);
     try {
@@ -230,7 +314,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const submitReport = async () => {
-    if (!selectedPost || !reportReason || !requireLogin()) return;
+    if (!selectedPost || !reportReason || !requireParticipationProfile()) return;
     try {
       await reportCommunityPost(selectedPost.id, reportReason);
       setReportReason('');
@@ -251,13 +335,30 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             경험을 나누고 프로젝트에 관해 묻고 답하는 공간입니다.
           </p>
         </div>
-        <button
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]"
-          onClick={() => openComposer()}
-          type="button"
-        >
-          <PenLine aria-hidden="true" className="size-4" /> 글쓰기
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {user ? (
+            <button
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+              disabled={!profileReady}
+              onClick={() => {
+                setNicknameDraft(communityProfile?.nickname || '');
+                setNicknameError('');
+                setNicknameOpen(true);
+              }}
+              type="button"
+            >
+              <UserRound aria-hidden="true" className="size-4" />
+              {!profileReady ? '활동명 확인 중' : communityProfile?.nickname || '활동명 설정'}
+            </button>
+          ) : null}
+          <button
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]"
+            onClick={() => openComposer()}
+            type="button"
+          >
+            <PenLine aria-hidden="true" className="size-4" /> 글쓰기
+          </button>
+        </div>
       </div>
 
       {message ? (
@@ -267,6 +368,68 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         >
           {message}
         </p>
+      ) : null}
+
+      {nicknameOpen ? (
+        <section
+          aria-labelledby="community-nickname-heading"
+          className="mt-6 rounded-2xl bg-white p-5 shadow-[0_4px_12px_rgba(23,63,58,0.08)]"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black" id="community-nickname-heading">
+                익명 활동명
+              </h2>
+              <p className="mt-1 text-sm font-medium text-[#53645F]">
+                게시글과 댓글에는 이름 대신 활동명만 표시됩니다.
+              </p>
+            </div>
+            <button
+              aria-label="활동명 설정 닫기"
+              className="grid size-11 shrink-0 place-items-center rounded-xl hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+              onClick={() => setNicknameOpen(false)}
+              type="button"
+            >
+              <X aria-hidden="true" className="size-5" />
+            </button>
+          </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label
+              className="grid flex-1 gap-2 text-sm font-extrabold"
+              htmlFor="community-nickname"
+            >
+              활동명
+              <input
+                aria-describedby="community-nickname-guide community-nickname-error"
+                aria-invalid={Boolean(nicknameError)}
+                className={`h-12 rounded-xl border bg-white px-3 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${nicknameError ? 'border-rose-600 focus-visible:ring-rose-600' : 'border-[#D8D1C2] focus-visible:ring-[#173F3A]'}`}
+                id="community-nickname"
+                maxLength={12}
+                onBlur={validateNicknameDraft}
+                onChange={(event) => {
+                  setNicknameDraft(event.target.value);
+                  if (nicknameError) setNicknameError('');
+                }}
+                placeholder="예: 경험나눔이"
+                value={nicknameDraft}
+              />
+            </label>
+            <button
+              className="min-h-12 rounded-xl bg-[#173F3A] px-5 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+              disabled={nicknameSaving}
+              onClick={() => void saveNickname()}
+              type="button"
+            >
+              {nicknameSaving ? '저장 중' : '활동명 저장'}
+            </button>
+          </div>
+          <p className="mt-2 text-xs font-medium text-[#53645F]" id="community-nickname-guide">
+            2~12자, 한글·영문·숫자 사용 가능
+          </p>
+          <p className="mt-2 min-h-5 text-sm font-bold text-rose-700" id="community-nickname-error">
+            {nicknameError}
+          </p>
+        </section>
       ) : null}
 
       {composerOpen ? (
@@ -413,7 +576,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                     {authorLabel(selectedPost)} · {dateLabel(selectedPost.createdAt)}
                   </p>
                 </div>
-                {user?.uid === selectedPost.authorId ? (
+                {selectedPost.ownedByMe ? (
                   <div className="flex">
                     <button
                       aria-label="게시글 수정"
@@ -476,7 +639,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                   <MessageCircle aria-hidden="true" className="size-4" /> 댓글{' '}
                   {selectedPost.commentCount}
                 </span>
-                {user?.uid !== selectedPost.authorId ? (
+                {!selectedPost.ownedByMe ? (
                   <button
                     className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-bold text-[#64716D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                     onClick={() => setReportReason('spam')}
@@ -568,7 +731,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                               {dateLabel(item.createdAt)}
                             </span>
                           </div>
-                          {user?.uid === item.authorId ? (
+                          {item.ownedByMe ? (
                             <button
                               className="min-h-11 rounded-lg px-2 text-xs font-bold text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700"
                               onClick={() => void removeComment(item.id)}

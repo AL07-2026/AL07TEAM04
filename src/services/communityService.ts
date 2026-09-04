@@ -3,10 +3,12 @@ import { auth } from '@/lib/firebase';
 export type CommunityCategory = 'experience' | 'project' | 'question';
 export type CommunityAuthorRole = 'senior' | 'company';
 
+export interface CommunityProfile {
+  nickname: string;
+}
+
 export interface CommunityPost {
-  authorId: string;
   authorName: string;
-  authorRole: CommunityAuthorRole;
   category: CommunityCategory;
   commentCount: number;
   content: string;
@@ -14,17 +16,17 @@ export interface CommunityPost {
   id: string;
   likedByMe: boolean;
   likeCount: number;
+  ownedByMe: boolean;
   title: string;
   updatedAt: string;
 }
 
 export interface CommunityComment {
-  authorId: string;
   authorName: string;
-  authorRole: CommunityAuthorRole;
   content: string;
   createdAt: string;
   id: string;
+  ownedByMe: boolean;
   updatedAt: string;
 }
 
@@ -50,6 +52,24 @@ async function request<T>(
   const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok) throw new Error(payload.error || '커뮤니티 요청을 처리하지 못했습니다.');
   return payload;
+}
+
+export async function getCommunityProfile(): Promise<CommunityProfile | null> {
+  const result = await request<{ profile: CommunityProfile | null }>(
+    '/api/community/profile',
+    {},
+    true,
+  );
+  return result.profile;
+}
+
+export async function saveCommunityProfile(nickname: string): Promise<CommunityProfile> {
+  const result = await request<{ profile: CommunityProfile }>(
+    '/api/community/profile',
+    { body: JSON.stringify({ nickname }), method: 'PUT' },
+    true,
+  );
+  return result.profile;
 }
 
 export async function listCommunityPosts(): Promise<CommunityPost[]> {
