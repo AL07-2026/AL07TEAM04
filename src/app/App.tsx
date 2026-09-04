@@ -41,6 +41,7 @@ function lazyPage<TModule, TKey extends keyof TModule>(
 const loadFlowPages = () => import('@/app/wireframe/FlowPages');
 const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
+const AdminPage = lazyPage(() => import('@/app/AdminPage'), 'AdminPage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
 const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
 const LoginPage = lazyPage(() => import('@/app/LoginPage'), 'LoginPage');
@@ -80,6 +81,8 @@ function createAppRouter() {
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
     { path: '/role', Component: RoleSelectionPage },
+    { path: '/admin', element: <Navigate replace to="/admin/dashboard" /> },
+    { path: '/admin/*', Component: AdminPage },
     { path: '/company-info', Component: CompanyInfoPage },
     { path: '/basic-profile', Component: BasicProfilePage },
     { path: '/senior', Component: SeniorHomePage },
@@ -97,7 +100,10 @@ function createAppRouter() {
     { path: '/senior/profile', Component: SeniorProfilePage },
     { path: '/company', Component: CompanyHomePage },
     { path: '/company/projects', Component: ProjectManagementPage },
-    { path: '/company/projects/new', element: <Navigate replace to="/company/project-database?register=1" /> },
+    {
+      path: '/company/projects/new',
+      element: <Navigate replace to="/company/project-database?register=1" />,
+    },
     { path: '/company/project-complete', Component: ProjectCompletePage },
     { path: '/company/proposals', Component: ReceivedProposalsPage },
     { path: '/company/proposals/:proposalId', Component: ReceivedProposalDetailPage },

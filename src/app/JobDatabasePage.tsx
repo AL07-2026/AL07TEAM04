@@ -1372,6 +1372,19 @@ export function JobDatabasePage({
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [isCompactPagination, setIsCompactPagination] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      setIsCompactPagination(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [postings, setPostings] = useState<JobPosting[]>(() => {
     if (typeof window === 'undefined') return [];
     if (role === 'senior') return [];
@@ -2534,6 +2547,8 @@ export function JobDatabasePage({
         ? Math.max(1, serverSearchMeta?.totalPages ?? 1)
         : Math.max(1, Math.ceil(filteredPostings.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
+  const compactPagination = isMobile || isCompactPagination;
+  const visiblePaginationPageCount = compactPagination ? 5 : 7;
   const paginatedPostings = useMemo(() => {
     if (isServerSearchActive) return filteredPostings;
 
@@ -4383,7 +4398,7 @@ export function JobDatabasePage({
                     </span>건 표시
                   </div>
 
-                  <div className="flex w-full flex-nowrap items-center gap-1 sm:w-auto sm:flex-wrap sm:gap-1.5">
+                  <div className="flex w-full min-w-0 flex-nowrap items-center gap-1 sm:w-auto sm:flex-wrap sm:gap-1.5">
                     <button
                       onClick={() => {
                         activeFocusProjectRef.current = emptyPostingSelection;
@@ -4393,13 +4408,13 @@ export function JobDatabasePage({
                       }}
                       disabled={safeCurrentPage === 1}
                       type="button"
-                      className="h-8 shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:px-3"
+                      className="h-8 min-w-[42px] shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-0 sm:px-3"
                     >
                       이전
                     </button>
 
-                    {Array.from({ length: Math.min(isMobile ? 5 : 7, totalPages) }, (_, idx) => {
-                      const visiblePageCount = isMobile ? 5 : 7;
+                    {Array.from({ length: Math.min(visiblePaginationPageCount, totalPages) }, (_, idx) => {
+                      const visiblePageCount = visiblePaginationPageCount;
                       const sidePageCount = Math.floor(visiblePageCount / 2);
                       let pageNum = idx + 1;
                       if (totalPages > visiblePageCount) {
@@ -4422,7 +4437,7 @@ export function JobDatabasePage({
                             window.scrollTo({ top: 300, behavior: 'smooth' });
                           }}
                           type="button"
-                          className={`h-8 min-w-[30px] shrink-0 rounded-xl px-2 text-xs font-extrabold transition-all sm:min-w-[32px] ${
+                          className={`h-8 min-w-[29px] shrink-0 rounded-xl px-1.5 text-xs font-extrabold transition-all sm:min-w-[32px] sm:px-2 ${
                             safeCurrentPage === pageNum
                               ? 'bg-[#173F3A] text-white shadow-xs'
                               : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
@@ -4442,7 +4457,7 @@ export function JobDatabasePage({
                       }}
                       disabled={safeCurrentPage === totalPages}
                       type="button"
-                      className="h-8 shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2.5 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:px-3"
+                      className="h-8 min-w-[42px] shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-0 sm:px-3"
                     >
                       다음
                     </button>

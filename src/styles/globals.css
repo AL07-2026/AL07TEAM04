@@ -203,6 +203,24 @@ input:focus-visible {
   white-space: normal;
 }
 
+/* 관리자 화면의 한글은 공백 단위로만 줄바꿈해 단어가 글자 중간에서 갈라지지 않게 한다. */
+.admin-console,
+.admin-console :is(p, li, label, button, span, strong, dd, dt, h1, h2, h3, h4, th, td) {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  line-break: auto;
+}
+
+.admin-console :is(.break-all, [class*='break-all']) {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.admin-console :is(input, select, textarea) {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
 .eojob-readable [class~='text-[10px]'],
 .eojob-readable [class~='text-[11px]'],
 .eojob-readable [class~='text-[11.5px]'] {

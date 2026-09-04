@@ -331,8 +331,18 @@ export function ExperienceSummaryView({
   const { mode } = useViewportMode();
   const items = snapshot
     ? [
-        { label: '해온 일', value: normalizeExperienceDisplayText(snapshot.workedOn), icon: Route, tone: 'emerald' },
-        { label: '해낸 일', value: normalizeExperienceDisplayText(snapshot.accomplished), icon: Target, tone: 'coral' },
+        {
+          label: '해온 일',
+          value: normalizeExperienceDisplayText(snapshot.workedOn),
+          icon: Route,
+          tone: 'emerald',
+        },
+        {
+          label: '해낸 일',
+          value: normalizeExperienceDisplayText(snapshot.accomplished),
+          icon: Target,
+          tone: 'coral',
+        },
         {
           label: '잘하는 점',
           value: snapshot.strengths.map(normalizeExperienceDisplayText).filter(Boolean).join(' · '),
@@ -341,7 +351,14 @@ export function ExperienceSummaryView({
         },
       ]
     : legacyText
-      ? [{ label: '해온 일', value: normalizeExperienceDisplayText(legacyText), icon: Route, tone: 'emerald' }]
+      ? [
+          {
+            label: '해온 일',
+            value: normalizeExperienceDisplayText(legacyText),
+            icon: Route,
+            tone: 'emerald',
+          },
+        ]
       : [];
 
   if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
@@ -1082,7 +1099,8 @@ export function SeniorHomePage() {
               AI 경험 인터뷰 시작하기
             </strong>
             <span className="text-xs md:text-base font-medium text-slate-600">
-              말로 편하게 답하면 전용 경험 카드가 자동 <span className="whitespace-nowrap">완성됩니다.</span>
+              말로 편하게 답하면 전용 경험 카드가 자동{' '}
+              <span className="whitespace-nowrap">완성됩니다.</span>
             </span>
           </div>
 
@@ -1178,19 +1196,17 @@ export function SeniorHomePage() {
           <span className="font-extrabold">1순위 직무 · {recommendationPrimaryLabel}</span>
           <span className="text-slate-300">|</span>
           <span className="text-slate-700">
-            {isExperienceRecommendationApplied
-              ? (
-                <>
-                  AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천{' '}
-                  <span className="whitespace-nowrap">공고입니다.</span>
-                </>
-              )
-              : (
-                <>
-                  경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5{' '}
-                  <span className="whitespace-nowrap">공고입니다.</span>
-                </>
-              )}
+            {isExperienceRecommendationApplied ? (
+              <>
+                AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천{' '}
+                <span className="whitespace-nowrap">공고입니다.</span>
+              </>
+            ) : (
+              <>
+                경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5{' '}
+                <span className="whitespace-nowrap">공고입니다.</span>
+              </>
+            )}
           </span>
         </div>
 
@@ -3561,12 +3577,30 @@ export function ProjectManagementPage() {
   return <JobDatabasePage role="company" />;
 }
 
+const EMPLOYMENT_SUBSIDY_WEB_INFO_URL =
+  'https://www.work24.go.kr/cm/c/f/1100/selecSystInfo.do?systId=SI00000370';
+const EMPLOYMENT_SUBSIDY_MOBILE_INFO_URL =
+  'https://m.work24.go.kr/cm/c/f/1100/selecSystInfo.do?systId=SI00000370';
+
+function getEmploymentSubsidyInfoUrl(isMobileMode: boolean) {
+  if (typeof window === 'undefined') return EMPLOYMENT_SUBSIDY_WEB_INFO_URL;
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const isMobileDevice =
+    /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
+      userAgent,
+    );
+  return isMobileMode || isMobileDevice || window.innerWidth < 768
+    ? EMPLOYMENT_SUBSIDY_MOBILE_INFO_URL
+    : EMPLOYMENT_SUBSIDY_WEB_INFO_URL;
+}
+
 export function ReceivedProposalsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const employmentSubsidyInfoUrl = getEmploymentSubsidyInfoUrl(isMobile);
   const initialFilter =
     searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
   const [filter, setFilter] = useState(initialFilter);
@@ -3604,16 +3638,47 @@ export function ReceivedProposalsPage() {
             <Coins className="size-5 text-[#F06B4F]" />
           </div>
           <div className="min-w-0">
-            <strong className={cn('block font-extrabold text-[#173F3A]', isMobile ? 'text-[15px] leading-6' : 'text-sm')}>
+            <strong
+              className={cn(
+                'block font-extrabold text-[#173F3A]',
+                isMobile ? 'text-[15px] leading-6' : 'text-sm',
+              )}
+            >
               고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
             </strong>
-            <p className={cn('mt-1 font-medium text-slate-600', isMobile ? 'text-[13px] leading-5' : 'text-xs')}>
-              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총 {subsidyEligibleCount}명)
+            <p
+              className={cn(
+                'mt-1 font-medium text-slate-600',
+                isMobile ? 'text-[13px] leading-5' : 'text-xs',
+              )}
+            >
+              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총{' '}
+              {subsidyEligibleCount}명)
             </p>
           </div>
-          <span className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-center font-black text-white', isMobile ? 'size-[4.75rem] flex-col leading-5' : 'px-3 py-1.5 text-xs')}>
-            {isMobile ? <><span className="whitespace-nowrap text-[13px]">연 최대</span><span className="whitespace-nowrap text-lg">720만원</span></> : '연 최대 720만원'}
-          </span>
+          <a
+            aria-label="고용촉진장려금 지원 제도 안내 새 창에서 보기"
+            className={cn(
+              'flex shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-center font-black text-white transition hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]/30 active:scale-[0.98]',
+              isMobile ? 'size-[4.75rem] flex-col leading-5' : 'gap-1.5 px-3 py-1.5 text-xs',
+            )}
+            href={employmentSubsidyInfoUrl}
+            rel="noreferrer"
+            target="_blank"
+            title="고용촉진장려금 지원 제도 세부 안내 보기"
+          >
+            {isMobile ? (
+              <>
+                <span className="whitespace-nowrap text-[13px]">연 최대</span>
+                <span className="whitespace-nowrap text-lg">720만원</span>
+              </>
+            ) : (
+              <>
+                <span>연 최대 720만원</span>
+                <Link2 className="size-3.5" aria-hidden="true" />
+              </>
+            )}
+          </a>
         </div>
       </div>
 
@@ -4353,7 +4418,7 @@ export function ReceivedProposalDetailPage() {
 export function SeniorProfilePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
-  const { user, signOut, deleteAccount } = useAuth();
+  const { isAdmin, user, signOut, deleteAccount } = useAuth();
   const isMobile = mode === 'mobile';
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(() =>
     getLocalSeniorProfile(user?.uid),
@@ -4575,6 +4640,11 @@ export function SeniorProfilePage() {
 
       {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
+        {isAdmin ? (
+          <ActionButton onClick={() => void navigate('/admin/dashboard')} secondary>
+            관리자 페이지
+          </ActionButton>
+        ) : null}
         <ActionButton onClick={() => void navigate('/basic-profile')} secondary>
           기본 정보 수정
         </ActionButton>
@@ -4647,7 +4717,7 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
-  const { user, signOut, deleteAccount } = useAuth();
+  const { isAdmin, user, signOut, deleteAccount } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(
@@ -4778,6 +4848,11 @@ export function CompanyProfilePage() {
 
       {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
+        {isAdmin ? (
+          <ActionButton onClick={() => void navigate('/admin/dashboard')} role="company" secondary>
+            관리자 페이지
+          </ActionButton>
+        ) : null}
         <ActionButton onClick={() => void navigate('/company-info')} role="company" secondary>
           기업 정보 수정
         </ActionButton>

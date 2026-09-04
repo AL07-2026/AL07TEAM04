@@ -42,7 +42,7 @@
         ]
       },
       {
-        "source": "/@(login|signup|role|company-info|basic-profile|senior|company){,/**}",
+        "source": "/@(login|signup|role|company-info|basic-profile|senior|company|admin){,/**}",
         "headers": [
           {
             "key": "Cache-Control",
@@ -51,11 +51,7 @@
         ]
       }
     ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "/api/**",
