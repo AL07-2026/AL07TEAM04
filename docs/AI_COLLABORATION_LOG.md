@@ -27,8 +27,10 @@
      - `src/app/wireframe/Ui.test.tsx`: `MobilePage` 비인증 화면 메뉴에 '프로젝트 보러가기' 렌더링 검증 테스트 추가.
      - `src/app/App.test.tsx`: `/login` 화면 진입 시 상단 메뉴 열기 후 '프로젝트 보러가기' 메뉴 항목 노출 검증 추가.
      - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 379개 테스트 전체 통과, Vite 빌드 성공.
-- **배포 정책 확인**:
-  - 사용자 지침: 배포 시 메인 라이브(`al07team04-bdfcd.web.app`)가 아닌, 반드시 **`leedongwook` 브랜치 및 `leedongwook` 전용 미리보기 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)**로만 배포 수행 (`npx firebase-tools hosting:channel:deploy leedongwook`).
+- **배포 완료**:
+  - 사용자 명시 요청에 따라 `leedongwook` 브랜치 원격 push (`77ca60b`) 완료.
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+  - Firebase Functions `communityApi` 업데이트 배포 완료 (asia-northeast3).
 
 ### [2026-09-04] 커뮤니티 댓글 인라인 수정 및 회원 탈퇴 데이터 정리 완결 (Codex 작업 인계 완료)
 - **작업자**: Antigravity (Gemini)
