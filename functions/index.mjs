@@ -12,6 +12,7 @@ import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator
 import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
 import { handleApplicationContact } from './lib/applicationContact.mjs';
 import { handleApplicationEmail } from './lib/applicationEmail.mjs';
+import { communityHandlers } from './lib/community.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
@@ -137,6 +138,23 @@ app.post('/api/applications/contact', (req, res) => {
 app.post('/api/applications/send', (req, res) => {
   return handleApplicationEmail(req, res);
 });
+
+function registerCommunityRoutes(targetApp) {
+  targetApp.get('/api/community/posts', communityHandlers.listPosts);
+  targetApp.post('/api/community/posts', communityHandlers.createPost);
+  targetApp.patch('/api/community/posts/:postId', communityHandlers.updatePost);
+  targetApp.delete('/api/community/posts/:postId', communityHandlers.deletePost);
+  targetApp.get('/api/community/posts/:postId/comments', communityHandlers.listComments);
+  targetApp.post('/api/community/posts/:postId/comments', communityHandlers.createComment);
+  targetApp.delete(
+    '/api/community/posts/:postId/comments/:commentId',
+    communityHandlers.deleteComment,
+  );
+  targetApp.post('/api/community/posts/:postId/like', communityHandlers.toggleLike);
+  targetApp.post('/api/community/posts/:postId/report', communityHandlers.reportPost);
+}
+
+registerCommunityRoutes(app);
 
 app.get('/api/jobs/stats', async (_req, res) => {
   const stats = await getAccumulatedStats();
@@ -277,16 +295,27 @@ app.use((error, _req, res, _next) => {
   return sendClientError(res, 500, '서버에서 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
 });
 
+const communityApp = express();
+communityApp.use(express.json({ limit: '256kb' }));
+registerCommunityRoutes(communityApp);
+
+// A small, secret-free function lets a Hosting preview test the community
+// independently without redeploying the production API bundle.
+export const communityApi = onRequest(
+  {
+    region: 'asia-northeast3',
+    timeoutSeconds: 30,
+    memory: '256MiB',
+  },
+  communityApp,
+);
+
 export const api = onRequest(
   {
     region: 'asia-northeast3',
     timeoutSeconds: 120,
     memory: '1GiB',
-    secrets: [
-      'ASSEMBLYAI_API_KEY',
-      'GEMINI_API_KEY',
-      'GMAIL_APP_PASSWORD',
-    ],
+    secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY', 'GMAIL_APP_PASSWORD'],
   },
   app,
 );

@@ -51,12 +51,15 @@
         ]
       }
     ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      {
+        "source": "/api/community/**",
+        "function": {
+          "functionId": "communityApi",
+          "region": "asia-northeast3"
+        }
+      },
       {
         "source": "/api/**",
         "function": {

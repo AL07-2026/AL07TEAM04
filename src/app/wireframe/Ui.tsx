@@ -107,7 +107,7 @@ export function SiteMenu({ compact = false }: { compact?: boolean }) {
         aria-controls="eojob-site-menu"
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={open ? '전체 메뉴 닫기' : '전체 메뉴 열기'}
+        aria-label={open ? '더보기 메뉴 닫기' : '더보기 메뉴 열기'}
         className={cn(
           'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97]',
           compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
@@ -121,12 +121,12 @@ export function SiteMenu({ compact = false }: { compact?: boolean }) {
         ) : (
           <Menu aria-hidden="true" className="size-5" />
         )}
-        {compact ? null : <span className="hidden sm:inline">전체 메뉴</span>}
+        {compact ? null : <span className="hidden sm:inline">더보기</span>}
       </button>
 
       {open ? (
         <div
-          aria-label="이어잡 전체 메뉴"
+          aria-label="이어잡 더보기 메뉴"
           className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl bg-white p-2 shadow-[0_6px_12px_rgba(23,63,58,0.16)]"
           id="eojob-site-menu"
           role="menu"
@@ -138,10 +138,7 @@ export function SiteMenu({ compact = false }: { compact?: boolean }) {
             type="button"
           >
             <Info aria-hidden="true" className="size-5 text-[#173F3A]" />
-            <span>
-              <strong className="block">이어잡 소개</strong>
-              <span className="text-xs font-medium text-slate-500">서비스와 이용 방법 보기</span>
-            </span>
+            <span>이어잡 소개</span>
           </button>
           <button
             className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
@@ -150,10 +147,7 @@ export function SiteMenu({ compact = false }: { compact?: boolean }) {
             type="button"
           >
             <Users aria-hidden="true" className="size-5 text-[#173F3A]" />
-            <span>
-              <strong className="block">커뮤니티</strong>
-              <span className="text-xs font-medium text-slate-500">경험과 프로젝트 이야기</span>
-            </span>
+            <span>커뮤니티</span>
           </button>
           <a
             className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
@@ -162,10 +156,7 @@ export function SiteMenu({ compact = false }: { compact?: boolean }) {
             role="menuitem"
           >
             <Mail aria-hidden="true" className="size-5 text-[#173F3A]" />
-            <span>
-              <strong className="block">문의하기</strong>
-              <span className="text-xs font-medium text-slate-500">ieojab2026@gmail.com</span>
-            </span>
+            <span>문의하기</span>
           </a>
         </div>
       ) : null}

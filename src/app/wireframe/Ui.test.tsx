@@ -100,7 +100,7 @@ describe('공통 헤더', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '전체 메뉴 열기' }));
+    fireEvent.click(screen.getByRole('button', { name: '더보기 메뉴 열기' }));
     expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /커뮤니티/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /문의하기/ })).toHaveAttribute(
