@@ -5,19 +5,19 @@
 1. 인재의 지원 기록과 이력서·포트폴리오를 Firestore와 Firebase Storage에 저장한다.
 2. `POST /api/applications/send`가 Firebase 로그인 토큰과 해당 사용자의 지원 기록을 검증한다.
 3. 프로젝트 소유자의 `company_profiles` 문서에서 담당자 이메일을 읽는다. 클라이언트가 보낸 수신 주소는 사용하지 않는다.
-4. 서버가 Storage에 저장된 해당 지원자의 파일만 읽어 Resend 트랜잭션 메일에 첨부한다.
-5. 지원 ID를 Resend `Idempotency-Key`로 사용하고, 발송 결과를 지원 문서의 `emailDelivery`에 저장해 중복 발송을 막는다.
+4. 서버가 Storage에 저장된 해당 지원자의 파일만 읽어 Gmail 메일에 첨부한다.
+5. `ieojab2026@gmail.com`에서 담당자에게 발송하고, 답장 주소는 지원자 이메일로 지정한다.
+6. 발송 결과를 지원 문서의 `emailDelivery`에 저장해 같은 지원의 중복 발송을 막는다.
 
 ## 운영 설정
 
-Resend에서 발급한 API 키와 검증된 도메인의 발신 주소가 필요하다. 값은 소스코드나 `.env`에 저장하지 않고 Firebase Secret Manager에 등록한다.
+`ieojab2026@gmail.com` 계정에서 2단계 인증을 켠 뒤 앱 비밀번호를 만든다. 일반 Gmail 비밀번호는 사용하지 않는다. 앱 비밀번호만 Firebase Secret Manager에 등록하며 소스코드나 `.env`에는 저장하지 않는다.
 
 ```powershell
-npm exec --yes --package=firebase-tools -- firebase functions:secrets:set RESEND_API_KEY
-npm exec --yes --package=firebase-tools -- firebase functions:secrets:set APPLICATION_FROM_EMAIL
+npm exec --yes --package=firebase-tools -- firebase functions:secrets:set GMAIL_APP_PASSWORD
 ```
 
-`APPLICATION_FROM_EMAIL`은 `이어잡 <apply@검증된-도메인>` 형식으로 입력한다. 도메인이 검증되지 않으면 임의의 기업 담당자에게 운영 메일을 발송할 수 없다.
+Firebase 명령이 입력을 요청하면 Google에서 발급된 16자리 앱 비밀번호를 입력한다. 채팅, 문서, Git 저장소에는 앱 비밀번호를 남기지 않는다.
 
 설정 후 Functions와 Hosting을 배포한다.
 
@@ -35,3 +35,5 @@ npm exec --yes --package=firebase-tools -- firebase deploy --only functions:api,
 6. 같은 프로젝트에 다시 지원해도 메일이 중복 발송되지 않는지 확인한다.
 
 고용24·서울시·공공 공고는 외부 채용 시스템이 최종 접수처이므로 자동 메일 발송 대상이 아니다.
+
+개인 Gmail은 초기 운영과 테스트용이다. 발송량이 늘거나 자체 도메인을 확보하면 전문 트랜잭션 메일 서비스와 이어잡 도메인 주소로 교체한다.

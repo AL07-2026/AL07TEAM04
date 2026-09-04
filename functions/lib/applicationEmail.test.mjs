@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createApplicationEmailHandler,
-  sendResendEmail,
+  sendGmailEmail,
 } from './applicationEmail.mjs';
 import { createStableProposalId } from './applicationContact.mjs';
 
@@ -105,7 +105,7 @@ describe('기업 담당자 지원 이메일 발송 API', () => {
       'user_proposals',
       expect.stringMatching(/^PROPOSAL-/),
       expect.objectContaining({
-        emailDelivery: expect.objectContaining({ status: 'sent' }),
+        emailDelivery: expect.objectContaining({ provider: 'gmail', status: 'sent' }),
       }),
     );
   });
@@ -155,17 +155,19 @@ describe('기업 담당자 지원 이메일 발송 API', () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
-  it('Resend 요청에 중복 방지 키와 신청자 답장 주소를 전달한다', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'resend-email-id' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
+  it('Gmail 발송에 이어잡 주소, 중복 추적 키와 신청자 답장 주소를 전달한다', async () => {
+    const sendMail = vi.fn().mockResolvedValue({ messageId: 'gmail-message-id' });
+    const createTransport = vi.fn().mockReturnValue({ sendMail });
 
-    await sendResendEmail(
+    const result = await sendGmailEmail(
       {
-        attachments: [],
+        attachments: [
+          {
+            content: Buffer.from('resume').toString('base64'),
+            content_type: 'application/pdf',
+            filename: 'resume.pdf',
+          },
+        ],
         html: '<p>지원</p>',
         idempotencyKey: 'application/PROPOSAL-1',
         replyTo: 'senior@example.com',
@@ -173,15 +175,54 @@ describe('기업 담당자 지원 이메일 발송 API', () => {
         text: '신규 지원',
         to: 'manager@example.com',
       },
-      { apiKey: 'test-api-key', fetchImpl, from: '이어잡 <apply@example.com>' },
+      {
+        appPassword: 'abcd efgh ijkl mnop',
+        createTransport,
+        user: 'ieojab2026@gmail.com',
+      },
     );
 
-    const [, request] = fetchImpl.mock.calls[0];
-    expect(request.headers['Idempotency-Key']).toBe('application/PROPOSAL-1');
-    expect(JSON.parse(request.body)).toMatchObject({
-      from: '이어잡 <apply@example.com>',
-      reply_to: 'senior@example.com',
-      to: ['manager@example.com'],
-    });
+    expect(result).toEqual({ id: 'gmail-message-id' });
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: { pass: 'abcdefghijklmnop', user: 'ieojab2026@gmail.com' },
+        service: 'gmail',
+      }),
+    );
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: [
+          expect.objectContaining({
+            content: Buffer.from('resume'),
+            contentType: 'application/pdf',
+            filename: 'resume.pdf',
+          }),
+        ],
+        from: '"이어잡" <ieojab2026@gmail.com>',
+        headers: { 'X-IEOJAB-Application-ID': 'application/PROPOSAL-1' },
+        replyTo: 'senior@example.com',
+        to: 'manager@example.com',
+      }),
+    );
+  });
+
+  it('Gmail 앱 비밀번호가 없으면 발송을 시작하지 않는다', async () => {
+    const createTransport = vi.fn();
+
+    await expect(
+      sendGmailEmail(
+        {
+          attachments: [],
+          html: '<p>지원</p>',
+          idempotencyKey: 'application/PROPOSAL-1',
+          replyTo: 'senior@example.com',
+          subject: '신규 지원',
+          text: '신규 지원',
+          to: 'manager@example.com',
+        },
+        { appPassword: '', createTransport, user: 'ieojab2026@gmail.com' },
+      ),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(createTransport).not.toHaveBeenCalled();
   });
 });

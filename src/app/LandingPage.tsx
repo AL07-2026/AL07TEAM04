@@ -489,9 +489,12 @@ export function LandingPage() {
       )}
 
       <footer className="border-t border-[#e7dfcb] bg-white py-7">
-        <p className="mx-auto w-full max-w-6xl px-5 text-right text-[0.875rem] font-semibold text-[#667085] sm:px-8">
-          © 2026 이어잡 IEO Job. All rights reserved.
-        </p>
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 text-[0.875rem] font-semibold text-[#667085] sm:px-8">
+          <a className="hover:text-[#173F3A]" href="mailto:ieojab2026@gmail.com">
+            고객 문의 ieojab2026@gmail.com
+          </a>
+          <p>© 2026 이어잡 IEO Job. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );

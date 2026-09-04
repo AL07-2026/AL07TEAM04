@@ -283,10 +283,9 @@ export const api = onRequest(
     timeoutSeconds: 120,
     memory: '1GiB',
     secrets: [
-      'APPLICATION_FROM_EMAIL',
       'ASSEMBLYAI_API_KEY',
       'GEMINI_API_KEY',
-      'RESEND_API_KEY',
+      'GMAIL_APP_PASSWORD',
     ],
   },
   app,

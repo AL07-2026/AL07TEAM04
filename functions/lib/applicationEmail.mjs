@@ -1,4 +1,5 @@
 import { adminAuth, adminDb, adminStorage } from './firestoreAdmin.mjs';
+import nodemailer from 'nodemailer';
 import {
   ApplicationContactError,
   resolveApplicationContact,
@@ -6,6 +7,7 @@ import {
 
 const MAX_ATTACHMENT_COUNT = 2;
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const GMAIL_SENDER_EMAIL = 'ieojab2026@gmail.com';
 const ALLOWED_ATTACHMENT_TYPES = new Set([
   'application/pdf',
   'application/msword',
@@ -104,40 +106,48 @@ ${coverNote}
   return { applicantEmail, html, subject, text };
 }
 
-export async function sendResendEmail(message, options = {}) {
-  const apiKey = stringValue(options.apiKey ?? process.env.RESEND_API_KEY);
-  const from = stringValue(options.from ?? process.env.APPLICATION_FROM_EMAIL);
-  const fetchImpl = options.fetchImpl ?? fetch;
-  if (!apiKey || !from) {
+export async function sendGmailEmail(message, options = {}) {
+  const user = stringValue(options.user ?? process.env.APPLICATION_GMAIL_USER) || GMAIL_SENDER_EMAIL;
+  const appPassword = stringValue(options.appPassword ?? process.env.GMAIL_APP_PASSWORD).replace(/\s/g, '');
+  const createTransport = options.createTransport ?? nodemailer.createTransport;
+  if (!isValidEmail(user) || !appPassword) {
     const error = new Error('메일 발송 설정이 완료되지 않았습니다.');
     error.status = 503;
     throw error;
   }
 
-  const response = await fetchImpl('https://api.resend.com/emails', {
-    body: JSON.stringify({
-      attachments: message.attachments,
-      from,
+  const transporter = createTransport({
+    auth: { pass: appPassword, user },
+    connectionTimeout: 15_000,
+    greetingTimeout: 10_000,
+    secure: true,
+    service: 'gmail',
+    socketTimeout: 30_000,
+  });
+
+  try {
+    const result = await transporter.sendMail({
+      attachments: message.attachments.map((attachment) => ({
+        content: Buffer.from(attachment.content, 'base64'),
+        contentType: attachment.content_type,
+        filename: attachment.filename,
+      })),
+      from: `"이어잡" <${user}>`,
+      headers: {
+        'X-IEOJAB-Application-ID': message.idempotencyKey,
+      },
       html: message.html,
-      reply_to: isValidEmail(message.replyTo) ? message.replyTo : undefined,
+      replyTo: isValidEmail(message.replyTo) ? message.replyTo : undefined,
       subject: message.subject,
       text: message.text,
-      to: [message.to],
-    }),
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': message.idempotencyKey,
-    },
-    method: 'POST',
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !stringValue(payload?.id)) {
+      to: message.to,
+    });
+    return { id: stringValue(result?.messageId) || message.idempotencyKey };
+  } catch {
     const error = new Error('메일 발송 업체에서 요청을 처리하지 못했습니다.');
-    error.status = response.status >= 400 && response.status < 500 ? 502 : response.status || 502;
+    error.status = 502;
     throw error;
   }
-  return { id: stringValue(payload.id) };
 }
 
 function sendError(response, status, message) {
@@ -196,7 +206,7 @@ export function createApplicationEmailHandler({
       await updateDocument('user_proposals', context.proposalId, {
         emailDelivery: {
           messageId: sent.id,
-          provider: 'resend',
+          provider: 'gmail',
           recipientEmail: context.recipientEmail,
           sentAt,
           status: 'sent',
@@ -238,7 +248,7 @@ const handleApplicationEmail = createApplicationEmailHandler({
     const snapshot = await adminDb.collection(collectionName).doc(documentId).get();
     return snapshot.exists ? snapshot.data() : null;
   },
-  sendEmail: (message) => sendResendEmail(message),
+  sendEmail: (message) => sendGmailEmail(message),
   updateDocument: (collectionName, documentId, data) =>
     adminDb.collection(collectionName).doc(documentId).set(data, { merge: true }),
   verifyIdToken: (token) => adminAuth.verifyIdToken(token),
