@@ -1,4 +1,6 @@
 import {
+  Check,
+  ChevronDown,
   Flag,
   Heart,
   MessageCircle,
@@ -9,7 +11,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
@@ -17,6 +19,7 @@ import {
   LOGIN_REQUIRED_NAVIGATION_STATE,
 } from '@/app/authRequiredNavigation';
 import type { UserProfile } from '@/lib/authContext';
+import { cn } from '@/lib/utils';
 import {
   createCommunityComment,
   createCommunityPost,
@@ -71,6 +74,8 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [deletePending, setDeletePending] = useState(false);
   const [reportReason, setReportReason] = useState<CommunityReportReason | ''>('');
   const [composerOpen, setComposerOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -103,6 +108,24 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) return undefined;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!categoryDropdownRef.current?.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCategoryDropdownOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [categoryDropdownOpen]);
 
   useEffect(() => {
     if (!userId) return;
@@ -218,6 +241,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         : { ...emptyDraft, category: category === 'all' ? 'experience' : category },
     );
     setComposerOpen(true);
+    setCategoryDropdownOpen(false);
     setMessage('');
   };
 
@@ -439,7 +463,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
               <input
                 aria-describedby="community-nickname-guide community-nickname-error"
                 aria-invalid={Boolean(nicknameError)}
-                className={`h-12 rounded-xl border bg-white px-3 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${nicknameError ? 'border-rose-600 focus-visible:ring-rose-600' : 'border-[#D8D1C2] focus-visible:ring-[#173F3A]'}`}
+                className={cn(
+                  'h-12 rounded-xl border bg-white px-3.5 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none transition-all',
+                  nicknameError ? 'border-rose-600 focus:border-rose-600' : 'border-[#D8D1C2] focus:border-[#B8AF9C]',
+                )}
                 id="community-nickname"
                 maxLength={12}
                 onBlur={validateNicknameDraft}
@@ -471,44 +498,91 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
       {composerOpen ? (
         <section
-          className="mt-6 rounded-2xl bg-white p-5 shadow-[0_4px_12px_rgba(23,63,58,0.08)]"
+          className="mt-6 rounded-2xl border border-[#E0D9C8] bg-white p-5 shadow-[0_4px_12px_rgba(23,63,58,0.08)] sm:p-6"
           aria-label={editingId ? '게시글 수정' : '새 글 작성'}
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black">{editingId ? '게시글 수정' : '새 글 작성'}</h2>
+            <h2 className="text-xl font-black text-[#17212B]">{editingId ? '게시글 수정' : '새 글 작성'}</h2>
             <button
               aria-label="글쓰기 닫기"
-              className="grid size-11 place-items-center rounded-xl hover:bg-[#F2F7F5] focus-visible:ring-2 focus-visible:ring-[#173F3A]"
-              onClick={() => setComposerOpen(false)}
+              className="grid size-11 place-items-center rounded-xl hover:bg-[#F2F7F5] focus:outline-none transition-colors cursor-pointer"
+              onClick={() => {
+                setComposerOpen(false);
+                setCategoryDropdownOpen(false);
+              }}
               type="button"
             >
-              <X aria-hidden="true" className="size-5" />
+              <X aria-hidden="true" className="size-5 text-[#53645F]" />
             </button>
           </div>
           <div className="mt-4 grid gap-4">
-            <label className="grid gap-2 text-sm font-extrabold">
-              게시판
-              <select
-                className="h-12 rounded-xl border border-[#D8D1C2] bg-white px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    category: event.target.value as CommunityCategory,
-                  }))
-                }
-                value={draft.category}
-              >
-                {categories.slice(1).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm font-extrabold">
+            <div className="grid gap-2 text-sm font-extrabold text-[#17212B]" ref={categoryDropdownRef}>
+              <span>게시판</span>
+              <div className="relative">
+                <button
+                  type="button"
+                  id="community-category-select"
+                  aria-haspopup="listbox"
+                  aria-expanded={categoryDropdownOpen}
+                  aria-label={`게시판 선택: ${categories.find((item) => item.id === draft.category)?.label || '경험과 노하우'}`}
+                  onClick={() => setCategoryDropdownOpen((prev) => !prev)}
+                  className={cn(
+                    'flex h-12 w-full items-center justify-between rounded-xl border border-[#D8D1C2] bg-white px-4 text-sm font-extrabold text-[#17212B] transition-all cursor-pointer',
+                    'hover:border-[#B8AF9C] focus:outline-none focus:border-[#B8AF9C]',
+                    categoryDropdownOpen && 'border-[#B8AF9C] shadow-2xs',
+                  )}
+                >
+                  <span>{categories.find((item) => item.id === draft.category)?.label || '경험과 노하우'}</span>
+                  <ChevronDown
+                    className={cn(
+                      'size-4 text-slate-500 transition-transform duration-200',
+                      categoryDropdownOpen && 'rotate-180 text-[#17212B]',
+                    )}
+                  />
+                </button>
+
+                {categoryDropdownOpen ? (
+                  <div
+                    aria-label="게시판 카테고리 목록"
+                    className="absolute left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white p-1.5 shadow-[0_8px_20px_rgba(23,63,58,0.12)] animate-in fade-in zoom-in-95 duration-100"
+                    role="listbox"
+                  >
+                    {categories.slice(1).map((item) => {
+                      const isSelected = item.id === draft.category;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setDraft((current) => ({
+                              ...current,
+                              category: item.id as CommunityCategory,
+                            }));
+                            setCategoryDropdownOpen(false);
+                          }}
+                          className={cn(
+                            'flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left text-sm font-extrabold transition-all cursor-pointer',
+                            isSelected
+                              ? 'bg-[#FAF7F2] text-[#F06B4F] shadow-2xs'
+                              : 'text-[#17212B] hover:bg-[#FAF7F2]',
+                          )}
+                          role="option"
+                          aria-selected={isSelected}
+                        >
+                          <span>{item.label}</span>
+                          {isSelected ? <Check className="size-4 text-[#F06B4F]" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <label className="grid gap-2 text-sm font-extrabold text-[#17212B]">
               제목
               <input
-                className="h-12 rounded-xl border border-[#D8D1C2] px-3 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+                className="h-12 rounded-xl border border-[#D8D1C2] bg-white px-4 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#B8AF9C] transition-all"
                 maxLength={80}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, title: event.target.value }))
@@ -517,10 +591,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                 value={draft.title}
               />
             </label>
-            <label className="grid gap-2 text-sm font-extrabold">
+            <label className="grid gap-2 text-sm font-extrabold text-[#17212B]">
               내용
               <textarea
-                className="min-h-36 resize-y rounded-xl border border-[#D8D1C2] p-3 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+                className="min-h-36 resize-y rounded-xl border border-[#D8D1C2] bg-white p-4 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#B8AF9C] transition-all leading-relaxed"
                 maxLength={2000}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, content: event.target.value }))
@@ -530,7 +604,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
               />
             </label>
             <button
-              className="ml-auto min-h-11 rounded-xl bg-[#F06B4F] px-5 text-sm font-extrabold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C85039] focus-visible:ring-offset-2 disabled:opacity-50"
+              className="ml-auto min-h-11 rounded-xl bg-[#F06B4F] px-5 text-sm font-extrabold text-white hover:bg-[#E05B3F] focus:outline-none active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs transition-all"
               disabled={saving}
               onClick={() => void savePost()}
               type="button"
@@ -734,7 +808,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                       댓글 내용
                     </label>
                     <input
-                      className="h-12 min-w-0 flex-1 rounded-xl border border-[#D8D1C2] px-3 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                      className="h-12 min-w-0 flex-1 rounded-xl border border-[#D8D1C2] bg-white px-4 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#B8AF9C] transition-all"
                       id="community-comment"
                       maxLength={500}
                       onChange={(event) => setComment(event.target.value)}
@@ -799,7 +873,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                               댓글 수정 내용
                             </label>
                             <input
-                              className="h-11 w-full rounded-lg border border-[#D8D1C2] px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                              className="h-11 w-full rounded-xl border border-[#D8D1C2] bg-white px-3.5 text-sm font-medium text-[#17212B] focus:outline-none focus:border-[#B8AF9C] transition-all"
                               id={`edit-comment-${item.id}`}
                               maxLength={500}
                               onChange={(event) => setEditingCommentContent(event.target.value)}

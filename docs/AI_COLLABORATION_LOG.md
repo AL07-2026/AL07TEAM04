@@ -16,6 +16,15 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 글쓰기 폼 게시판 선택 커스텀 드롭다운 UI 적용 및 초록색 포커스 테두리 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/community/CommunityBoard.tsx`: 브라우저 기본 `<select>` 요소를 이어잡 디자인 시스템 표준인 커스텀 드롭다운(`button` + `role="listbox"`, `Check`, `ChevronDown`, `rounded-2xl`, 부드러운 그림자 `shadow-[0_8px_20px_rgba(23,63,58,0.12)]`)으로 전면 개편. 외부 클릭 및 ESC 키 닫기 지원.
+  - 폼 입력 필드(게시판 선택, 제목, 본문, 댓글) 선택 시 노출되던 과도한 초록색 테두리(`focus-visible:ring-[#173F3A]`)를 제거하고 모던하고 차분한 테두리(`focus:outline-none focus:border-[#B8AF9C]`)로 정돈.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
 ### [2026-09-04] 커뮤니티 더보기 메뉴 내 중복 '프로젝트 보러가기' 항목 제거
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **수정한 파일 목록**:
