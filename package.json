@@ -19,6 +19,18 @@
     "test:watch": "vitest",
     "batch:analyze": "node scripts/runInitialJobAnalysisBatch.mjs",
     "batch:dry-run": "node scripts/runInitialJobAnalysisBatch.mjs --dry-run",
+    "slide:reveal": "powershell -Command \"Start-Process docs/slides/reveal-eojob.html\"",
+    "slide:slidev": "npx -y @slidev/cli --open docs/slides/slidev-eojob.md",
+    "slide:marp": "npx -y @marp-team/marp-cli --preview --allow-local-files docs/slides/marp-eojob.md",
+    "slide:marp:html": "npx -y @marp-team/marp-cli --no-stdin --allow-local-files docs/slides/marp-eojob.md --html -o docs/slides/eojob-intro.html",
+    "slide:open": "powershell -Command \"Start-Process docs/slides/reveal-eojob.html\"",
+    "slide:marp:open": "powershell -Command \"Start-Process docs/slides/eojob-intro.html\"",
+    "slide:html-ppt": "powershell -Command \"Start-Process docs/slides/html-ppt-eojob.html\"",
+    "slide:brochure": "powershell -Command \"Start-Process docs/slides/eojob-onepage-brochure.html\"",
+    "pdf:brochure": "powershell -Command \"Start-Process -FilePath 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' -ArgumentList '--headless=new', '--disable-gpu', '--no-pdf-header-footer', '--print-to-pdf=c:\\AL07TEAM04\\docs\\slides\\eojob-brochure.pdf', 'file:///c:/AL07TEAM04/docs/slides/eojob-onepage-brochure.html' -Wait; Start-Process 'docs/slides/eojob-brochure.pdf'\"",
+    "pdf:open": "powershell -Command \"Start-Process docs/slides/eojob-brochure.pdf\"",
+    "slide:native": "python scripts/generate_native_pptx.py",
+    "slide:pptx": "powershell -Command \"Start-Process docs/slides/eojob-intro.pptx\"",
     "validate": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "engines": {

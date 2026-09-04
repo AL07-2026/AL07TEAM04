@@ -19,6 +19,7 @@ vi.mock('@/services/communityService', () => ({
   reportCommunityPost: vi.fn(),
   saveCommunityProfile: vi.fn(),
   toggleCommunityLike: vi.fn(),
+  updateCommunityComment: vi.fn(),
   updateCommunityPost: vi.fn(),
 }));
 
@@ -73,5 +74,65 @@ describe('CommunityPage', () => {
       expect(communityService.saveCommunityProfile).toHaveBeenCalledWith('경험나눔이'),
     );
     expect(await screen.findByRole('button', { name: '경험나눔이' })).toBeInTheDocument();
+  });
+
+  it('자신이 작성한 댓글을 수정한다', async () => {
+    authState.user = { uid: 'user-1' };
+    vi.mocked(communityService.getCommunityProfile).mockResolvedValue({ nickname: '경험나눔이' });
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValue([
+      {
+        authorName: '작성자',
+        category: 'experience',
+        commentCount: 1,
+        content: '게시글 본문',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'post-1',
+        likeCount: 0,
+        likedByMe: false,
+        ownedByMe: false,
+        title: '첫 번째 글',
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.listCommunityComments).mockResolvedValue([
+      {
+        authorName: '경험나눔이',
+        content: '원래 댓글',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'comment-1',
+        ownedByMe: true,
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.updateCommunityComment).mockResolvedValue({
+      authorName: '경험나눔이',
+      content: '수정된 댓글 내용',
+      createdAt: '2026-09-04T00:00:00.000Z',
+      id: 'comment-1',
+      ownedByMe: true,
+      updatedAt: '2026-09-04T00:01:00.000Z',
+    });
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('원래 댓글')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    const input = screen.getByLabelText('댓글 수정 내용');
+    expect(input).toHaveValue('원래 댓글');
+    fireEvent.change(input, { target: { value: '수정된 댓글 내용' } });
+    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+
+    await waitFor(() =>
+      expect(communityService.updateCommunityComment).toHaveBeenCalledWith(
+        'post-1',
+        'comment-1',
+        '수정된 댓글 내용',
+      ),
+    );
+    expect(await screen.findByText('수정된 댓글 내용')).toBeInTheDocument();
   });
 });

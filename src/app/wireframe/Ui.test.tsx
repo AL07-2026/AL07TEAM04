@@ -120,6 +120,19 @@ describe('공통 헤더', () => {
     const items = screen.getAllByRole('menuitem');
     expect(items[0]).toHaveTextContent('프로젝트 보러가기');
   });
+
+  it('MobilePage 비인증 화면에서는 기본적으로 프로젝트 보러가기를 메뉴에 포함한다', () => {
+    render(
+      <MemoryRouter>
+        <MobilePage title="로그인 화면">
+          <div>로그인 본문</div>
+        </MobilePage>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    expect(screen.getByRole('menuitem', { name: /프로젝트 보러가기/ })).toBeInTheDocument();
+  });
 });
 
 describe('BrandLogo', () => {

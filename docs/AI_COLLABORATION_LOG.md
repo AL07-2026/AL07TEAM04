@@ -16,6 +16,115 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-04] 로그인 화면 및 비로그인 메뉴에 '프로젝트 보러가기' 추가 & `leedongwook` 전용 배포 원칙 준수
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 메뉴에 '프로젝트 보러가기' 항목 추가**:
+     - `src/app/wireframe/Ui.tsx`: `MobilePageProps`에 `showProjectLink` 추가 (기본값 `!role`로 비로그인 진입 화면에서 자동 활성화). 모바일 및 데스크톱 비로그인/로그인 헤더의 `SiteMenu`에 `showProjectLink` 연결.
+     - `src/app/LoginPage.tsx`: 모바일 및 데스크톱 로그인 화면의 `MobilePage`에 `showProjectLink` 명시.
+     - `src/app/CommunityPage.tsx`: 헤더의 `SiteMenu`에 `showProjectLink` 추가.
+  2. **테스트 및 검증**:
+     - `src/app/wireframe/Ui.test.tsx`: `MobilePage` 비인증 화면 메뉴에 '프로젝트 보러가기' 렌더링 검증 테스트 추가.
+     - `src/app/App.test.tsx`: `/login` 화면 진입 시 상단 메뉴 열기 후 '프로젝트 보러가기' 메뉴 항목 노출 검증 추가.
+     - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 379개 테스트 전체 통과, Vite 빌드 성공.
+- **배포 정책 확인**:
+  - 사용자 지침: 배포 시 메인 라이브(`al07team04-bdfcd.web.app`)가 아닌, 반드시 **`leedongwook` 브랜치 및 `leedongwook` 전용 미리보기 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)**로만 배포 수행 (`npx firebase-tools hosting:channel:deploy leedongwook`).
+
+### [2026-09-04] 커뮤니티 댓글 인라인 수정 및 회원 탈퇴 데이터 정리 완결 (Codex 작업 인계 완료)
+- **작업자**: Antigravity (Gemini)
+- **협업 컨텍스트**: Codex와 진행 중단되었던 커뮤니티 댓글 수정 및 데이터 정리 기능 바통 터치 완료.
+- **구현 및 변경 내용**:
+  1. **댓글 수정 기능 완결**:
+     - `src/app/community/CommunityBoard.tsx`: 본인 작성 댓글에 '수정' 버튼 추가, 클릭 시 인라인 input 필드와 '저장/취소' 버튼 노출 및 `updateCommunityComment` 연동.
+     - `src/services/communityService.ts`: `PATCH /api/community/posts/:postId/comments/:commentId` 서비스 함수 추가.
+     - `functions/lib/community.mjs`: `updateComment` 핸들러 및 저장소 메서드 추가.
+  2. **회원 탈퇴 시 커뮤니티 데이터 정리 완결**:
+     - `functions/lib/community.mjs`: `deleteAccount` API 핸들러 추가(작성 글/댓글 삭제 및 좋아요/제한 기록 청소).
+     - `src/services/communityService.ts`: `deleteCommunityAccountData` 함수 구현.
+     - `src/lib/authContext.tsx`: `deleteAccount` 흐름에 `deleteCommunityAccountData` 연동.
+     - `src/lib/authContext.tsx`: `canUseDemoAuth(email = '')` 타입 호환성 복구 (TS2554 해결).
+  3. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 댓글 수정 인터랙션 테스트 케이스 추가.
+     - `src/services/communityService.test.ts`, `functions/lib/community.test.mjs`, `src/lib/authContext.test.tsx`: 단위 테스트 추가 및 통과.
+     - `npm run validate` 전체 파이프라인 100% 무결점 통과 (41개 파일, 378개 테스트 통과, Typecheck/Lint/Build 성공).
+- **수정 파일**:
+  - `src/app/community/CommunityBoard.tsx`
+  - `src/app/CommunityPage.test.tsx`
+  - `src/services/communityService.ts`
+  - `src/services/communityService.test.ts`
+  - `src/lib/authContext.tsx`
+  - `src/lib/authContext.test.tsx`
+  - `functions/lib/community.mjs`
+  - `functions/lib/community.test.mjs`
+- **다음 전달 사항**:
+  - 커뮤니티 기본 기능(게시글 작성/수정/삭제/좋아요/신고, 댓글 작성/수정/삭제, 익명 프로필, 탈퇴 시 데이터 정리)이 프론트엔드와 백엔드 모두 온전히 연결되어 테스트 및 빌드가 완료되었습니다.
+
+### [2026-09-03] 기업 직접 등록 프로젝트 지원서 자동 이메일 발송 구축
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **구현 내용**:
+  1. Firebase 인증 토큰, 지원 이력, 프로젝트 소유자, 기업 프로필을 서버에서 검증하는 `POST /api/applications/send` 추가.
+  2. 지원자별 Storage 경로를 검증한 뒤 PDF/DOC/DOCX 이력서를 Resend 메일에 자동 첨부.
+  3. 지원 ID 기반 중복 발송 방지와 Firestore `emailDelivery` 발송 결과 기록 추가.
+  4. UI를 메일 직접 발송 안내에서 서버 자동 발송 성공/실패 상태 안내로 변경.
+- **보안**: 수신자 주소는 클라이언트 입력을 신뢰하지 않고 서버의 `company_profiles`에서만 조회. API 키와 발신 주소는 Firebase Secret Manager에 바인딩.
+- **운영 상태**: `RESEND_API_KEY`, `APPLICATION_FROM_EMAIL` 시크릿이 아직 등록되지 않아 배포 전 설정이 필요함.
+
+### [2026-09-03] 짤림 없는 단일 연속 롱-페이지(Single Seamless Page) 고화질 PDF 빌드 완료
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 브라우저 인쇄 시 A4/A3 강제 페이지 분할(Pagination)로 인해 카드와 텍스트 중간이 잘리는 현상 원천 차단.
+  - 컨텐츠 전체 높이(620mm)를 하나의 캔버스에 담는 **연속 단일 페이지 규격(`@page { size: 210mm 620mm; margin: 0; }`)**을 적용하고, Chrome 헤드리스 렌더링 엔진으로 완벽한 PDF 직접 빌드.
+- **주요 생성 및 빌드 파일**:
+  1. [eojob-brochure.pdf](file:///c:/AL07TEAM04/docs/slides/eojob-brochure.pdf): **페이지 나뉨 없이 1장으로 끝나는 롱스크롤 PDF (2.47MB)**. 배경색 100% 보존, 폰트/비주얼/QR 짤림 0%.
+  2. [package.json](file:///c:/AL07TEAM04/package.json): `npm run pdf:open` 및 `npm run pdf:brochure` 스크립트 추가.
+- **검증**: `npm run validate` 100% 무결점 통과 (35개 테스트 파일 338개 통과, 빌드 완료).
+
+---
+
+### [2026-09-03] Leonxlnx/taste-skill 공식 탑재 & B2B 원페이지 A4 인쇄/PDF 리플렛(Brochure) 환골탈태
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 깃허브 스타 83.7k의 최고 프론트엔드 디자인 스킬 `Leonxlnx/taste-skill` 공식 도입(`.agents/skills/taste-skill/SKILL.md`).
+  - 사용자가 업로드한 '이어잡 기업용·파일럿 참여' 원본 리플렛을 기반으로, 촌스러운 템플릿 박스를 제거하고 **Anti-Slop 에디토리얼 타이포그래피 + 비대칭 벤토 그리드(Bento Grid) + A4 1:1 완벽 인쇄 규격**의 프리미엄 리플렛(`docs/slides/eojob-onepage-brochure.html`) 제작.
+- **주요 반영 및 생성 파일**:
+  1. [eojob-onepage-brochure.html](file:///c:/AL07TEAM04/docs/slides/eojob-onepage-brochure.html): A4(210mm x 297mm) 정밀 규격 대응, `@media print` 1페이지 완벽 피팅, 상단 원클릭 [🖨️ PDF 다운로드 / 인쇄] 툴바, 실제 동작하는 SVG QR 코드, 고화질 B2B 현장 사진 탑재.
+  2. [.agents/skills/taste-skill/SKILL.md](file:///c:/AL07TEAM04/.agents/skills/taste-skill/SKILL.md): `taste-skill` 공식 등록 (The Three Dials: 8 / 6 / 4).
+  3. [package.json](file:///c:/AL07TEAM04/package.json): `npm run slide:brochure` 실행 스크립트 추가.
+- **검증**: `npm run validate` 전체 파이프라인 100% 무결점 통과 (35개 테스트 파일, 338개 테스트 패스, 빌드 완료).
+
+---
+
+### [2026-09-03] slide-master 원칙 적용: 100% 네이티브 개체 편집형 PPTX 및 8개 슬라이드 완결판 구축
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - `byungjunjang/slide-master`의 핵심 철학("PowerPoint에서 열어서 요소 하나하나를 클릭해서 고칠 수 없으면 진짜 PPT가 아니다") 반영.
+  - 마크다운 렌더링 방식의 단점을 극복하고, `python-pptx`를 통해 도형/텍스트/표/이미지가 파워포인트 내에서 100% 개별 편집 가능한 네이티브 덱 생성.
+  - B2B 인사담당자용 8개 슬라이드 심층 강화(경력직 채용 비용 통계, 비교 매트릭스 표, 3대 직무별 시니어 쇼케이스, 스마트제조 S사 도입 성공 사례, 14일 무상 재매칭 안심 보증제).
+- **주요 생성 및 빌드 파일**:
+  1. [eojob-intro.pptx](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pptx): **100% 네이티브 파워포인트 개체**로 제작된 B2B 제안서 (글자, 박스, 표, 컬러 전면 수정 가능)
+  2. [generate_native_pptx.py](file:///c:/AL07TEAM04/scripts/generate_native_pptx.py): 네이티브 PPTX 자동 생성 파이썬 엔진 (`npm run slide:native`)
+  3. [reveal-eojob.html](file:///c:/AL07TEAM04/docs/slides/reveal-eojob.html): 8장 구성 3D 인터랙티브 웹 슬라이드 (실시간 계산기 위젯, 1280x720 핏)
+  4. [marp-eojob.md](file:///c:/AL07TEAM04/docs/slides/marp-eojob.md) & [eojob-intro.html](file:///c:/AL07TEAM04/docs/slides/eojob-intro.html): Marp 마크다운/HTML 동기화
+- **검증**: `npm run validate` (35개 테스트 338개 통과, TypeScript 및 Vite 빌드 100% 무결점 완료).
+
+---
+
+### [2026-09-03] 기업 인사담당자(HR) 전용 이어잡 B2B 소개서 3대 엔진(Reveal.js, Marp, Slidev) 완성
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 이메일 발송 및 기업 미팅에 특화된 B2B 인사담당자(HR Manager/채용총괄/CEO) 타깃 서비스 소개서 제작.
+  - 고유 로고, 감각적인 AI 생성 비주얼 에셋(B2B 협업, 3D AI 경험 카드 목업), 입체적인 3D 전환 및 실시간 지원금 절감 계산기 위젯 적용.
+- **주요 생성 및 빌드 파일**:
+  1. [reveal-eojob.html](file:///c:/AL07TEAM04/docs/slides/reveal-eojob.html): **Reveal.js 3D 인터랙티브 슬라이드** (실시간 채용 인원별 고용촉진장려금 계산 슬라이더 위젯, 3D 큐브 전환, 글래스모피즘)
+  2. [eojob-intro.pptx](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pptx) & [eojob-intro.pdf](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pdf): 이메일 첨부 발송용 정밀 빌드 문서 (로고 및 고화질 에셋 완전 임베드)
+  3. [eojob-intro.html](file:///c:/AL07TEAM04/docs/slides/eojob-intro.html): Marp 경량 웹 슬라이드
+  4. [slidev-eojob.md](file:///c:/AL07TEAM04/docs/slides/slidev-eojob.md): Slidev 전용 마크다운 덱
+  5. [marp-eojob.md](file:///c:/AL07TEAM04/docs/slides/marp-eojob.md): Marp 소스 마크다운
+  6. [README.md](file:///c:/AL07TEAM04/docs/slides/README.md): 통합 실행 가이드 및 B2B 소구 포인트 정리
+- **검증**: `npm run validate` 전체 파이프라인 100% 무결점 통과 (35개 테스트 파일 338개 테스트 패스, 빌드 완료).
+
+---
+
 ### [2026-09-03] origin/develop 최신 14개 커밋 안전 통합
 - **작업자**: Codex (`leedongwook` 브랜치)
 - **작업 배경**: 팀원이 `develop` 브랜치에 추가한 프로젝트·지원 관리, 로그인, 이력서·프로필 동기화, 모바일 프로젝트 등록 변경을 현재 작업에 통합.

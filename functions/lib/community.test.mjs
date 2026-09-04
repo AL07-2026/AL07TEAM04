@@ -21,6 +21,8 @@ function repository() {
   return {
     createComment: vi.fn(),
     createPost: vi.fn(),
+    consumeRateLimit: vi.fn(),
+    deleteAccountData: vi.fn(),
     deleteComment: vi.fn(),
     deletePost: vi.fn(),
     getCommunityProfile: vi.fn().mockResolvedValue({ nickname: '경험나눔이' }),
@@ -29,6 +31,7 @@ function repository() {
     reportPost: vi.fn(),
     saveCommunityProfile: vi.fn(),
     toggleLike: vi.fn(),
+    updateComment: vi.fn(),
     updatePost: vi.fn(),
   };
 }
@@ -50,6 +53,7 @@ describe('community API', () => {
     });
     expect(() => validateNickname('a')).toThrow('2자 이상');
     expect(() => validateNickname('메일@test')).toThrow('한글, 영문, 숫자');
+    expect(() => validateNickname('관리자')).toThrow('사용할 수 없는 활동명');
   });
 
   it('로그인 사용자의 서버 프로필로 게시글을 생성한다', async () => {
@@ -83,6 +87,53 @@ describe('community API', () => {
     );
     expect(response.body.post).not.toHaveProperty('authorId');
     expect(response.body.post).toMatchObject({ authorName: '경험나눔이', ownedByMe: true });
+    expect(store.consumeRateLimit).toHaveBeenCalledWith('user-1', 'create-post', 5, 3_600_000);
+  });
+
+  it('댓글 수정은 인증된 작성자 UID로만 저장소에 요청한다', async () => {
+    const store = repository();
+    store.updateComment.mockResolvedValue({
+      authorId: 'user-1',
+      content: '수정한 댓글 내용',
+      id: 'comment-1',
+    });
+    const handlers = createCommunityHandlers({
+      repository: store,
+      verifyIdToken: vi.fn().mockResolvedValue({ uid: 'user-1' }),
+    });
+    const response = responseHarness();
+
+    await handlers.updateComment(
+      {
+        body: { content: '수정한 댓글 내용' },
+        headers: { authorization: 'Bearer token' },
+        params: { commentId: 'comment-1', postId: 'post-1' },
+      },
+      response,
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(store.updateComment).toHaveBeenCalledWith(
+      'post-1',
+      'comment-1',
+      'user-1',
+      '수정한 댓글 내용',
+    );
+    expect(response.body.comment).not.toHaveProperty('authorId');
+  });
+
+  it('회원 탈퇴 정리는 인증 토큰의 UID로만 실행한다', async () => {
+    const store = repository();
+    const handlers = createCommunityHandlers({
+      repository: store,
+      verifyIdToken: vi.fn().mockResolvedValue({ uid: 'user-1' }),
+    });
+    const response = responseHarness();
+
+    await handlers.deleteAccount({ headers: { authorization: 'Bearer token' } }, response);
+
+    expect(response.statusCode).toBe(200);
+    expect(store.deleteAccountData).toHaveBeenCalledWith('user-1');
   });
 
   it('활동명이 없는 사용자의 게시글 작성을 차단한다', async () => {

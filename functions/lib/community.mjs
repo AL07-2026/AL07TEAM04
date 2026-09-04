@@ -4,6 +4,14 @@ import { adminAuth, adminDb } from './firestoreAdmin.mjs';
 
 const CATEGORIES = new Set(['experience', 'project', 'question']);
 const REPORT_REASONS = new Set(['spam', 'abuse', 'privacy', 'other']);
+const RESERVED_NICKNAME_KEYS = new Set(['admin', 'ieojab', '관리자', '운영자', '이어잡']);
+const RATE_LIMITS = {
+  comment: { action: 'comment', limit: 30, windowMs: 3_600_000 },
+  like: { action: 'like', limit: 60, windowMs: 60_000 },
+  nickname: { action: 'nickname', limit: 5, windowMs: 3_600_000 },
+  post: { action: 'create-post', limit: 5, windowMs: 3_600_000 },
+  report: { action: 'report', limit: 10, windowMs: 3_600_000 },
+};
 
 class CommunityError extends Error {
   constructor(status, message) {
@@ -84,10 +92,11 @@ function validateNickname(value) {
   if (!/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 ]+$/.test(nickname)) {
     throw new CommunityError(400, '활동명에는 한글, 영문, 숫자만 사용할 수 있습니다.');
   }
-  return {
-    nickname,
-    nicknameKey: nickname.toLocaleLowerCase('ko-KR').replace(/\s+/g, '-'),
-  };
+  const nicknameKey = nickname.toLocaleLowerCase('ko-KR').replace(/\s+/g, '-');
+  if (RESERVED_NICKNAME_KEYS.has(nicknameKey)) {
+    throw new CommunityError(400, '사용할 수 없는 활동명입니다.');
+  }
+  return { nickname, nicknameKey };
 }
 
 async function requireCommunityProfile(repository, userId) {
@@ -121,6 +130,12 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
     }),
     saveProfile: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
+      await repository.consumeRateLimit(
+        user.uid,
+        RATE_LIMITS.nickname.action,
+        RATE_LIMITS.nickname.limit,
+        RATE_LIMITS.nickname.windowMs,
+      );
       return {
         profile: await repository.saveCommunityProfile(
           user.uid,
@@ -134,6 +149,7 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
     }),
     createPost: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
+      await repository.consumeRateLimit(user.uid, 'create-post', 5, 3_600_000);
       const profile = await requireCommunityProfile(repository, user.uid);
       const post = await repository.createPost({
         ...validatePost(request.body),
@@ -164,6 +180,12 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
     }),
     createComment: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
+      await repository.consumeRateLimit(
+        user.uid,
+        RATE_LIMITS.comment.action,
+        RATE_LIMITS.comment.limit,
+        RATE_LIMITS.comment.windowMs,
+      );
       const content = text(request.body?.content, 500);
       if (content.length < 2) throw new CommunityError(400, '댓글을 2자 이상 입력해 주세요.');
       const profile = await requireCommunityProfile(repository, user.uid);
@@ -177,6 +199,21 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
         comment: publicCommunityItem(communityComment, user.uid, profile.nickname),
       };
     }),
+    updateComment: respond(async (request) => {
+      const user = await authenticatedUser(request, verifyIdToken);
+      const content = text(request.body?.content, 500);
+      if (content.length < 2) throw new CommunityError(400, '댓글을 2자 이상 입력해 주세요.');
+      const profile = await requireCommunityProfile(repository, user.uid);
+      const communityComment = await repository.updateComment(
+        request.params.postId,
+        request.params.commentId,
+        user.uid,
+        content,
+      );
+      return {
+        comment: publicCommunityItem(communityComment, user.uid, profile.nickname),
+      };
+    }),
     deleteComment: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       await repository.deleteComment(request.params.postId, request.params.commentId, user.uid);
@@ -184,14 +221,31 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
     }),
     toggleLike: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
+      await repository.consumeRateLimit(
+        user.uid,
+        RATE_LIMITS.like.action,
+        RATE_LIMITS.like.limit,
+        RATE_LIMITS.like.windowMs,
+      );
       return repository.toggleLike(request.params.postId, user.uid);
     }),
     reportPost: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
+      await repository.consumeRateLimit(
+        user.uid,
+        RATE_LIMITS.report.action,
+        RATE_LIMITS.report.limit,
+        RATE_LIMITS.report.windowMs,
+      );
       const reason = text(request.body?.reason, 30);
       if (!REPORT_REASONS.has(reason)) throw new CommunityError(400, '신고 사유를 선택해 주세요.');
       await repository.reportPost(request.params.postId, user.uid, reason);
       return { reported: true };
+    }),
+    deleteAccount: respond(async (request) => {
+      const user = await authenticatedUser(request, verifyIdToken);
+      await repository.deleteAccountData(user.uid);
+      return { deleted: true };
     }),
   };
 }
@@ -215,6 +269,26 @@ async function hydrateCommunityAuthors(items, viewerUserId = '') {
 }
 
 const repository = {
+  async consumeRateLimit(userId, action, limit, windowMs) {
+    const reference = adminDb.collection('community_rate_limits').doc(`${userId}_${action}`);
+    await adminDb.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(reference);
+      const now = Date.now();
+      const windowStartedAt = Number(snapshot.data()?.windowStartedAt || 0);
+      const inCurrentWindow = snapshot.exists && now - windowStartedAt < windowMs;
+      const count = inCurrentWindow ? Number(snapshot.data()?.count || 0) : 0;
+      if (count >= limit) {
+        throw new CommunityError(429, '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.');
+      }
+      transaction.set(reference, {
+        action,
+        count: count + 1,
+        updatedAt: new Date(now).toISOString(),
+        userId,
+        windowStartedAt: inCurrentWindow ? windowStartedAt : now,
+      });
+    });
+  },
   async getCommunityProfile(userId) {
     const snapshot = await adminDb.collection('community_profiles').doc(userId).get();
     return snapshot.exists ? snapshot.data() : null;
@@ -303,7 +377,9 @@ const repository = {
     if (!snapshot.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
     if (snapshot.data()?.authorId !== userId)
       throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
+    const reports = await adminDb.collection('community_reports').where('postId', '==', postId).get();
     await adminDb.recursiveDelete(reference);
+    await deleteDocumentSnapshots(reports.docs);
   },
   async listComments(postId, userId) {
     const snapshot = await adminDb
@@ -329,6 +405,20 @@ const repository = {
       transaction.update(postReference, { commentCount: FieldValue.increment(1), updatedAt: now });
     });
     return serialize(commentReference.id, { ...data, createdAt: now, updatedAt: now });
+  },
+  async updateComment(postId, commentId, userId, content) {
+    const reference = adminDb
+      .collection('community_posts')
+      .doc(postId)
+      .collection('comments')
+      .doc(commentId);
+    const snapshot = await reference.get();
+    if (!snapshot.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
+    if (snapshot.data()?.authorId !== userId)
+      throw new CommunityError(403, '작성자만 수정할 수 있습니다.');
+    const updatedAt = new Date().toISOString();
+    await reference.update({ content, updatedAt });
+    return serialize(commentId, { ...snapshot.data(), content, updatedAt });
   },
   async deleteComment(postId, commentId, userId) {
     const postReference = adminDb.collection('community_posts').doc(postId);
@@ -376,7 +466,70 @@ const repository = {
       status: 'pending',
     });
   },
+  async deleteAccountData(userId) {
+    const profileReference = adminDb.collection('community_profiles').doc(userId);
+    const profile = await profileReference.get();
+    const authoredPosts = await adminDb
+      .collection('community_posts')
+      .where('authorId', '==', userId)
+      .get();
+
+    for (const post of authoredPosts.docs) {
+      const reports = await adminDb
+        .collection('community_reports')
+        .where('postId', '==', post.id)
+        .get();
+      await adminDb.recursiveDelete(post.ref);
+      await deleteDocumentSnapshots(reports.docs);
+    }
+
+    const comments = await adminDb
+      .collectionGroup('comments')
+      .where('authorId', '==', userId)
+      .get();
+    for (const comment of comments.docs) {
+      const postId = comment.ref.parent.parent?.id;
+      if (postId) await repository.deleteComment(postId, comment.id, userId);
+    }
+
+    const likes = await adminDb.collectionGroup('likes').where('userId', '==', userId).get();
+    for (const like of likes.docs) {
+      const postId = like.ref.parent.parent?.id;
+      if (postId) await repository.toggleLike(postId, userId);
+    }
+
+    const reports = await adminDb
+      .collection('community_reports')
+      .where('reporterId', '==', userId)
+      .get();
+    await deleteDocumentSnapshots(reports.docs);
+
+    await deleteDocumentSnapshots(
+      Object.values(RATE_LIMITS).map(({ action }) => ({
+        ref: adminDb.collection('community_rate_limits').doc(`${userId}_${action}`),
+      })),
+    );
+
+    const nicknameKey = text(profile.data()?.nicknameKey, 64);
+    await adminDb.runTransaction(async (transaction) => {
+      const nicknameReference = nicknameKey
+        ? adminDb.collection('community_nicknames').doc(nicknameKey)
+        : null;
+      const nickname = nicknameReference ? await transaction.get(nicknameReference) : null;
+      if (nickname?.exists && nickname.data()?.userId === userId) {
+        transaction.delete(nickname.ref);
+      }
+      transaction.delete(profileReference);
+    });
+  },
 };
+
+async function deleteDocumentSnapshots(documents) {
+  if (documents.length === 0) return;
+  const writer = adminDb.bulkWriter();
+  documents.forEach((document) => writer.delete(document.ref));
+  await writer.close();
+}
 
 export const communityHandlers = createCommunityHandlers({
   repository,

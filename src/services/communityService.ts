@@ -121,6 +121,19 @@ export async function createCommunityComment(
   return result.comment;
 }
 
+export async function updateCommunityComment(
+  postId: string,
+  commentId: string,
+  content: string,
+): Promise<CommunityComment> {
+  const result = await request<{ comment: CommunityComment }>(
+    `/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,
+    { body: JSON.stringify({ content }), method: 'PATCH' },
+    true,
+  );
+  return result.comment;
+}
+
 export async function deleteCommunityComment(postId: string, commentId: string): Promise<void> {
   await request(
     `/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,
@@ -148,4 +161,8 @@ export async function reportCommunityPost(
     { body: JSON.stringify({ reason }), method: 'POST' },
     true,
   );
+}
+
+export async function deleteCommunityAccountData(): Promise<void> {
+  await request('/api/community/account', { method: 'DELETE' }, true);
 }

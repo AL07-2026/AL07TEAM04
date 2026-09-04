@@ -21,7 +21,7 @@ export function CommunityPage() {
           >
             <BrandLogo />
           </button>
-          <SiteMenu compact />
+          <SiteMenu compact showProjectLink />
         </div>
       </header>
 

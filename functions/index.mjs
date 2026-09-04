@@ -142,12 +142,17 @@ app.post('/api/applications/send', (req, res) => {
 function registerCommunityRoutes(targetApp) {
   targetApp.get('/api/community/profile', communityHandlers.getProfile);
   targetApp.put('/api/community/profile', communityHandlers.saveProfile);
+  targetApp.delete('/api/community/account', communityHandlers.deleteAccount);
   targetApp.get('/api/community/posts', communityHandlers.listPosts);
   targetApp.post('/api/community/posts', communityHandlers.createPost);
   targetApp.patch('/api/community/posts/:postId', communityHandlers.updatePost);
   targetApp.delete('/api/community/posts/:postId', communityHandlers.deletePost);
   targetApp.get('/api/community/posts/:postId/comments', communityHandlers.listComments);
   targetApp.post('/api/community/posts/:postId/comments', communityHandlers.createComment);
+  targetApp.patch(
+    '/api/community/posts/:postId/comments/:commentId',
+    communityHandlers.updateComment,
+  );
   targetApp.delete(
     '/api/community/posts/:postId/comments/:commentId',
     communityHandlers.deleteComment,

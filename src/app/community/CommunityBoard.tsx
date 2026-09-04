@@ -28,6 +28,7 @@ import {
   reportCommunityPost,
   saveCommunityProfile,
   toggleCommunityLike,
+  updateCommunityComment,
   updateCommunityPost,
   type CommunityCategory,
   type CommunityComment,
@@ -64,6 +65,8 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [category, setCategory] = useState<'all' | CommunityCategory>('all');
   const [draft, setDraft] = useState<CommunityPostInput>(emptyDraft);
   const [comment, setComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editingId, setEditingId] = useState('');
   const [deletePending, setDeletePending] = useState(false);
   const [reportReason, setReportReason] = useState<CommunityReportReason | ''>('');
@@ -183,6 +186,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
   const selectPost = (postId: string) => {
     setComments([]);
+    cancelEditComment();
     setSelectedId(postId);
   };
 
@@ -310,6 +314,38 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
       );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '댓글을 삭제하지 못했습니다.');
+    }
+  };
+
+  const startEditComment = (item: CommunityComment) => {
+    setEditingCommentId(item.id);
+    setEditingCommentContent(item.content);
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentContent('');
+  };
+
+  const saveEditedComment = async (commentId: string) => {
+    if (!selectedPost || !requireParticipationProfile()) return;
+    const content = editingCommentContent.trim();
+    if (content.length < 2) {
+      setMessage('댓글을 2자 이상 입력해 주세요.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const updated = await updateCommunityComment(selectedPost.id, commentId, content);
+      setComments((current) =>
+        current.map((item) => (item.id === commentId ? updated : item)),
+      );
+      cancelEditComment();
+      setMessage('댓글을 수정했습니다.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '댓글을 수정하지 못했습니다.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -732,16 +768,57 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                             </span>
                           </div>
                           {item.ownedByMe ? (
-                            <button
-                              className="min-h-11 rounded-lg px-2 text-xs font-bold text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700"
-                              onClick={() => void removeComment(item.id)}
-                              type="button"
-                            >
-                              삭제
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                onClick={() => startEditComment(item)}
+                                type="button"
+                              >
+                                수정
+                              </button>
+                              <button
+                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700"
+                                onClick={() => void removeComment(item.id)}
+                                type="button"
+                              >
+                                삭제
+                              </button>
+                            </div>
                           ) : null}
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{item.content}</p>
+                        {editingCommentId === item.id ? (
+                          <div className="mt-2 space-y-2">
+                            <label className="sr-only" htmlFor={`edit-comment-${item.id}`}>
+                              댓글 수정 내용
+                            </label>
+                            <input
+                              className="h-11 w-full rounded-lg border border-[#D8D1C2] px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                              id={`edit-comment-${item.id}`}
+                              maxLength={500}
+                              onChange={(event) => setEditingCommentContent(event.target.value)}
+                              value={editingCommentContent}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                className="min-h-9 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                disabled={saving}
+                                onClick={() => void saveEditedComment(item.id)}
+                                type="button"
+                              >
+                                저장
+                              </button>
+                              <button
+                                className="min-h-9 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                                onClick={cancelEditComment}
+                                type="button"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{item.content}</p>
+                        )}
                       </article>
                     ))
                   )}

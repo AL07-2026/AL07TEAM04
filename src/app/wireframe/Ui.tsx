@@ -193,6 +193,7 @@ type MobilePageProps = {
   contentClassName?: string;
   role?: Role;
   showBack?: boolean;
+  showProjectLink?: boolean;
   title: string;
 };
 
@@ -203,6 +204,7 @@ export function MobilePage({
   contentClassName,
   role,
   showBack = Boolean(backTo),
+  showProjectLink = !role,
   title,
 }: MobilePageProps) {
   const navigate = useNavigate();
@@ -243,7 +245,7 @@ export function MobilePage({
               </div>
 
               <div>
-                <SiteMenu compact />
+                <SiteMenu compact showProjectLink={showProjectLink} />
               </div>
             </header>
 
@@ -294,7 +296,7 @@ export function MobilePage({
                 </div>
               </div>
 
-              <SiteMenu />
+              <SiteMenu showProjectLink={showProjectLink} />
             </header>
 
             {/* Content Container */}
@@ -373,7 +375,7 @@ export function MobilePage({
                   </div>
                 ) : null}
 
-                <SiteMenu />
+                <SiteMenu showProjectLink={showProjectLink} />
               </div>
             </header>
 

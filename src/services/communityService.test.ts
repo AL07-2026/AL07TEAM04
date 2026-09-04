@@ -9,10 +9,12 @@ vi.mock('@/lib/firebase', () => ({ auth: authState }));
 
 import {
   createCommunityPost,
+  deleteCommunityAccountData,
   getCommunityProfile,
   listCommunityPosts,
   reportCommunityPost,
   saveCommunityProfile,
+  updateCommunityComment,
 } from '@/services/communityService';
 
 describe('communityService', () => {
@@ -95,5 +97,35 @@ describe('communityService', () => {
     await expect(reportCommunityPost('post-1', 'spam')).rejects.toThrow(
       '이미 신고한 게시글입니다.',
     );
+  });
+
+  it('댓글 수정과 회원 데이터 삭제에 인증 토큰을 사용한다', async () => {
+    authState.currentUser = { getIdToken: getIdTokenMock };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            comment: {
+              authorName: '경험나눔이',
+              content: '수정 댓글',
+              createdAt: '2026-09-04T00:00:00.000Z',
+              id: 'comment-1',
+              ownedByMe: true,
+              updatedAt: '2026-09-04T00:01:00.000Z',
+            },
+            deleted: true,
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await updateCommunityComment('post-1', 'comment-1', '수정 댓글');
+    await deleteCommunityAccountData();
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/community/posts/post-1/comments/comment-1');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('PATCH');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/community/account');
+    expect(fetchMock.mock.calls[1]?.[1]?.method).toBe('DELETE');
   });
 });

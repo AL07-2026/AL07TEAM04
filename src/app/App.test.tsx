@@ -93,6 +93,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     window.history.pushState({}, '', '/login');
     render(<App />);
     expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    expect(screen.getByRole('menuitem', { name: /프로젝트 보러가기/ })).toBeInTheDocument();
   });
 
   it.each([

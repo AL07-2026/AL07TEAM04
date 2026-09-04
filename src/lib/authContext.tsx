@@ -29,6 +29,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { auth, db, storage } from '@/lib/firebase';
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
+import { deleteCommunityAccountData } from '@/services/communityService';
 
 export type UserRole = 'senior' | 'company';
 
@@ -544,6 +545,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (uid) {
       try {
+        if (currentFirebaseUser) await deleteCommunityAccountData();
         await deleteUserRemoteData(uid);
       } catch (err) {
         console.warn('Firestore deletion during account delete:', err);

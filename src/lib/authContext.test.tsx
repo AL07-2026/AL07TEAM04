@@ -3,13 +3,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type MockFirebaseUser = {
   email?: string;
+  getIdToken?: () => Promise<string>;
   uid: string;
 };
 
 type MockAuthStateCallback = (user: MockFirebaseUser | null) => void;
 
+const communityMocks = vi.hoisted(() => ({
+  deleteCommunityAccountData: vi.fn(() => Promise.resolve(undefined)),
+}));
+
+vi.mock('@/services/communityService', () => ({
+  deleteCommunityAccountData: communityMocks.deleteCommunityAccountData,
+}));
+
 const authMocks = vi.hoisted(() => ({
-  auth: { currentUser: null as { uid: string } | null },
+  auth: { currentUser: null as (MockFirebaseUser | null) },
   deleteUser: vi.fn(() => Promise.resolve(undefined)),
   onAuthStateChanged: vi.fn(
     (_auth: unknown, callback: MockAuthStateCallback) => {
@@ -172,6 +181,7 @@ describe('AuthProvider 계정 데이터 처리', () => {
     fireEvent.click(screen.getByRole('button', { name: '회원 탈퇴' }));
 
     await waitFor(() => expect(authMocks.deleteUser).toHaveBeenCalledWith(authMocks.auth.currentUser));
+    expect(communityMocks.deleteCommunityAccountData).toHaveBeenCalledTimes(1);
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'users/user-1' }));
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'senior_profiles/user-1' }));
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'company_profiles/user-1' }));

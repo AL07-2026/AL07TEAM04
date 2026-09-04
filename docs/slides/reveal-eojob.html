@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>이어잡(EOJOB) | 인사담당자를 위한 시니어 인재 매칭 & 정부 지원금 솔루션</title>
+  
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  
+  <!-- Reveal.js CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/white.min.css" id="theme">
+
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css");
+
+    :root {
+      --primary: #173F3A;
+      --primary-dark: #0F2A27;
+      --primary-light: #245A53;
+      --accent: #F06B4F;
+      --accent-dark: #B84734;
+      --bg-ivory: #F7F3EA;
+      --bg-card: #FFFFFF;
+      --mint: #DDEBE7;
+      --mint-border: #BBD5CE;
+      --border: #E0D9C8;
+      --border-light: #EBE5D9;
+      --ink: #17212B;
+      --ink-muted: #53606E;
+      --ink-subtle: #8A96A3;
+    }
+
+    *, html, body, .reveal, .reveal *, .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6,
+    .reveal p, .reveal span, .reveal li, .reveal div, .reveal table, .reveal th, .reveal td, .reveal input, .reveal button {
+      box-sizing: border-box;
+      font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Segoe UI", sans-serif !important;
+      letter-spacing: -0.02em;
+    }
+
+    html, body {
+      background-color: var(--bg-ivory);
+      color: var(--ink);
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .reveal {
+      background-color: var(--bg-ivory);
+      color: var(--ink);
+      font-family: "Pretendard Variable", "Pretendard", sans-serif !important;
+    }
+
+    /* 슬라이드 캔버스 내부 여백 및 박스 모델 안정화 */
+    .reveal .slides {
+      text-align: left;
+    }
+
+    .reveal .slides section {
+      padding: 16px 32px 32px 32px !important;
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    /* Top Fixed Header with Logo */
+    .top-brand-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      padding: 0 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      background: rgba(247, 243, 234, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-brand-bar img {
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .top-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--mint);
+      color: var(--primary);
+      border: 1px solid var(--mint-border);
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    /* 타이포그래피 정밀 스케일링 (1280x720 뷰포트 최적화) */
+    .reveal h1, .reveal h2, .reveal h3 {
+      text-transform: none;
+      word-break: keep-all;
+      letter-spacing: -0.02em;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .reveal h1 {
+      color: var(--primary);
+      font-size: 32px !important;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .reveal h2 {
+      color: var(--primary);
+      font-size: 23px !important;
+      font-weight: 800;
+      margin-bottom: 14px;
+      line-height: 1.35;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+
+    .highlight-coral {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .highlight-primary {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* 세련된 B2B 에디토리얼 카드 */
+    .glass-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 4px 14px rgba(23, 63, 58, 0.04);
+      text-align: left;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(23, 63, 58, 0.08);
+      border-color: var(--primary);
+    }
+
+    /* 그리드 시스템 */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 100%;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* 이미지 컨테이너 */
+    .hero-img-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(23, 63, 58, 0.09);
+      border: 1px solid var(--border);
+      max-height: 350px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+    }
+
+    .hero-img-frame img {
+      width: 100%;
+      height: 100%;
+      max-height: 350px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 실시간 지원금 계산기 위젯 */
+    .calc-box {
+      background: #FFFFFF;
+      border: 1.5px solid var(--primary);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 6px 20px rgba(23, 63, 58, 0.06);
+    }
+
+    .slider-container {
+      margin: 12px 0 8px 0;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .styled-slider {
+      width: 100%;
+      height: 7px;
+      border-radius: 4px;
+      background: var(--mint);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .styled-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .result-badge {
+      background: var(--mint);
+      border: 1px solid var(--mint-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .result-amount {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.2;
+      margin: 2px 0;
+    }
+
+    /* 표 디자인 (비교 매트릭스) */
+    .compare-table {
+      width: 100%;
+      font-size: 12.5px;
+      border-collapse: collapse;
+      background: #FFFFFF;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .compare-table th {
+      background: #FAF7F2;
+      color: var(--ink);
+      padding: 8px 12px;
+      font-weight: 800;
+      border-bottom: 1.5px solid var(--border);
+      font-size: 12px;
+    }
+
+    .compare-table th.highlight-col {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .compare-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-light);
+      text-align: center;
+      color: var(--ink-muted);
+    }
+
+    .compare-table td.highlight-cell {
+      background: #FDF9F7;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .compare-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* 태그 및 인재 프로필 미니 카드 */
+    .mini-profile-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .mini-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--mint);
+    }
+
+    /* 액션 버튼 */
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary);
+      color: #FFFFFF !important;
+      font-weight: 700;
+      font-size: 13.5px;
+      padding: 9px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(23, 63, 58, 0.15);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .cta-btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    /* Reveal UI 컨트롤러 스타일링 */
+    .reveal .controls {
+      color: var(--primary) !important;
+      bottom: 8px !important;
+      right: 8px !important;
+    }
+
+    .reveal .progress {
+      color: var(--accent) !important;
+      height: 3px;
+    }
+
+    .reveal .progress span {
+      background-color: var(--accent);
+    }
+
+    .reveal .slide-number {
+      bottom: 10px !important;
+      left: 18px !important;
+      font-size: 11px !important;
+      color: var(--ink-muted) !important;
+      background: rgba(255,255,255,0.85) !important;
+      padding: 2px 8px !important;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Fixed Brand Header -->
+  <header class="top-brand-bar">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <img src="assets/logo_text.png" alt="이어잡" onerror="this.src='/logo_text.png'">
+      <span style="font-size: 12.5px; color: var(--ink-muted); font-weight: 600;">기업 인사담당자 전용 B2B 소개서</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 11.5px; color: var(--ink-muted);">파트너십 문의: contact@eojob.kr</span>
+      <div class="top-badge">
+        <span>🏢 채용 인건비 연 720만원 정부 지원</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- SLIDE 1: Cover (인사담당자 맞춤 표지) -->
+      <section data-transition="zoom">
+        <div class="grid-2">
+          <div>
+            <div class="top-badge" style="margin-bottom: 12px;">
+              FOR HR DIRECTORS & TALENT ACQUISITION
+            </div>
+            <h1>
+              실무 검증된 <span class="highlight-coral">시니어 전문가</span> 채용,<br>
+              정부 지원금으로 <span class="highlight-primary">연 720만원</span> 절감하세요
+            </h1>
+            <p style="font-size: 14.5px; color: var(--ink-muted); margin: 12px 0 20px 0; line-height: 1.6; font-weight: 500;">
+              <b>이어잡(EOJOB)</b>은 AI 역량 분석을 통해 실무 해결력 높은 시니어만 정밀 추천하고,<br>
+              고용노동부 고용촉진장려금 환급을 원클릭으로 직결해 드리는 B2B 매칭 플랫폼입니다.
+            </p>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <a href="#/1" class="cta-btn">
+                <span>핵심 요약 살펴보기 ➔</span>
+              </a>
+              <a href="#/4" class="cta-btn" style="background: #FFFFFF; color: var(--primary) !important; border: 1px solid var(--border);">
+                <span>💰 절감액 계산기</span>
+              </a>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; gap: 16px; font-size: 11.5px; color: var(--ink-subtle);">
+              <span>✓ 서류 합격률 2.4배</span>
+              <span>✓ 채용 실패 리스크 Zero 보장제</span>
+              <span>✓ 고용노동부 장려금 연계</span>
+            </div>
+          </div>
+
+          <div class="hero-img-frame" style="max-height: 340px;">
+            <img src="assets/eojob_senior_leader.jpg" alt="시니어 엔지니어링 리더 포트레이트" onerror="this.src='/eojob_senior_leader.jpg'">
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: 2026 기업 채용 위기 & 인사담당자 고충 -->
+      <section data-transition="convex">
+        <div class="grid-2">
+          <div>
+            <span class="section-eyebrow">MARKET REALITY & PAIN POINTS</span>
+            <h2>"경력직 1명 채용에 평균 850만원,<br>그런데 3개월 내 조기 퇴사율 27%"</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+              <div class="glass-card" style="padding: 10px 14px;">
+                <div style="font-weight: 800; color: #B84734; font-size: 13px;">1. 높은 고정 인건비 & 헤드헌팅 수수료</div>
+                <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 2px;">
+                  10~20년차 시니어 채용 시 고연봉 부담 및 연봉의 15~25%에 달하는 중개 수수료 출혈
+                </div>
+              </div>
+
+              <div class="glass-card" style="padding: 10px 14px;">
+                <div style="font-weight: 800; color: #B84734; font-size: 13px;">2. 역량 검증 실패와 직무 불일치</div>
+                <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 2px;">
+                  화려한 회사명/직급만 보고 뽑았으나, 우리 회사의 당면 실무 과제를 해결하지 못하는 미스매칭
+                </div>
+              </div>
+
+              <div class="glass-card" style="padding: 10px 14px;">
+                <div style="font-weight: 800; color: #B84734; font-size: 13px;">3. 복잡한 정부 지원금 제도의 벽</div>
+                <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 2px;">
+                  고용노동부 장려금 제도는 알고 있지만, 대상자 사전 선별과 행정 서류가 너무 번거로워 포기
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-img-frame" style="max-height: 340px;">
+            <img src="assets/eojob_hr_concept.jpg" alt="인사담당자 채용 상담" onerror="this.src='/eojob_hr_concept.jpg'">
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: 비교 매트릭스 (기존 채용 vs 이어잡) -->
+      <section data-transition="convex">
+        <span class="section-eyebrow">COMPETITIVE ADVANTAGE</span>
+        <h2>기존 채용 방식 vs 이어잡(EOJOB) 비교</h2>
+
+        <table class="compare-table" style="margin-top: 10px;">
+          <thead>
+            <tr>
+              <th style="width: 18%;">구분</th>
+              <th style="width: 27%;">일반 채용 포털</th>
+              <th style="width: 27%;">헤드헌팅 사</th>
+              <th style="width: 28%;" class="highlight-col">이어잡 (EOJOB)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>역량 검증 방식</b></td>
+              <td>지원자의 일방적 텍스트 이력서</td>
+              <td>단순 경력 연차 및 평판 조회</td>
+              <td class="highlight-cell">AI 음성 인터뷰 기반 '문제해결 카드'</td>
+            </tr>
+            <tr>
+              <td><b>고용 형태 유연성</b></td>
+              <td>정규직 위주 (경직성 높음)</td>
+              <td>정규직 전용</td>
+              <td class="highlight-cell">정규직 + 주 2~3일 반일/시간/프로젝트</td>
+            </tr>
+            <tr>
+              <td><b>정부 지원금 연계</b></td>
+              <td>기업이 직접 알아서 신청</td>
+              <td>연계 없음</td>
+              <td class="highlight-cell"><b>연 720만원(월 60만원)</b> 자동 리포트</td>
+            </tr>
+            <tr>
+              <td><b>채용 리스크 보장</b></td>
+              <td>환불/교체 없음</td>
+              <td>3개월 내 1회 교체</td>
+              <td class="highlight-cell"><b>14일 무상 교체 보증제 (Risk-Zero)</b></td>
+            </tr>
+            <tr>
+              <td><b>소요 시간</b></td>
+              <td>서류 검토 평균 3주 이상</td>
+              <td>후보자 서칭 평균 4~6주</td>
+              <td class="highlight-cell"><b>AI 맞춤 추천 48시간 내 완료</b></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 12px; background: var(--mint); border: 1px solid var(--mint-border); padding: 8px 16px; border-radius: 8px; font-size: 12px; color: var(--primary); text-align: center; font-weight: 700;">
+          💡 검증 시간은 80% 단축하고, 정부 지원금으로 채용 1인당 연 720만원 인건비를 즉각 보전합니다.
+        </div>
+      </section>
+
+      <!-- SLIDE 4: AI 경험 카드 심층 분석 & 인재 풀 쇼케이스 -->
+      <section data-transition="convex">
+        <div class="grid-2">
+          <div class="hero-img-frame" style="max-height: 340px;">
+            <img src="assets/eojob_ai_card_mockup.jpg" alt="AI 경험 카드 비주얼" onerror="this.src='/eojob_ai_card_mockup.jpg'">
+          </div>
+
+          <div>
+            <span class="section-eyebrow">PRE-SCREENED TALENT POOL</span>
+            <h2>검토 시간 80% 단축,<br><span class="highlight-primary">AI 경험 카드</span>란?</h2>
+            
+            <p style="font-size: 12.5px; color: var(--ink-muted); margin: 6px 0 10px 0; line-height: 1.5;">
+              단순 회사 나열이 아닌, <b>"공정 불량률 80% 감축", "정부 R&D 15억 수주"</b> 등 수치화된 실제 성과와 적합도 점수를 30초 만에 파악합니다.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div class="mini-profile-card">
+                <div style="font-size: 20px;">🏭</div>
+                <div>
+                  <div style="font-size: 12px; font-weight: 800; color: var(--primary);">제조 품질·공정 혁신 임원 출신 (경력 28년)</div>
+                  <div style="font-size: 11px; color: var(--ink-muted);">불량률 4.2% ➔ 0.8% 개선, 스마트팩토리 공정 표준화 구축</div>
+                </div>
+              </div>
+
+              <div class="mini-profile-card">
+                <div style="font-size: 20px;">💻</div>
+                <div>
+                  <div style="font-size: 12px; font-weight: 800; color: var(--primary);">클라우드/인프라 총괄 아키텍트 (경력 22년)</div>
+                  <div style="font-size: 11px; color: var(--ink-muted);">AWS 대규모 마이그레이션, 연간 인프라 비용 35% 절감</div>
+                </div>
+              </div>
+
+              <div class="mini-profile-card">
+                <div style="font-size: 20px;">📜</div>
+                <div>
+                  <div style="font-size: 12px; font-weight: 800; color: var(--primary);">정부 R&D 과제 기획/평가위원 (경력 19년)</div>
+                  <div style="font-size: 11px; color: var(--ink-muted);">중기부/산자부 국책과제 누적 42억원 수주 총괄 자문</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: Interactive 정부 지원금 시뮬레이터 -->
+      <section data-transition="cube">
+        <div class="grid-2">
+          <div>
+            <span class="section-eyebrow">FINANCIAL ROI CALCULATOR</span>
+            <h2>우리 회사 맞춤<br><span class="highlight-coral">예상 정부 지원금</span>을 계산해보세요</h2>
+            <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.55; margin: 8px 0 12px 0;">
+              이어잡 플랫폼에서 <b>[연 720만원 지원 대상]</b> 뱃지가 부여된 시니어 인재를 채용하시면, 우선지원대상기업 기준 분기별 180만원씩 회사 지정 계좌로 환급됩니다.
+            </p>
+            
+            <div style="font-size: 11.5px; color: var(--ink-muted); background: rgba(255,255,255,0.75); padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--border); line-height: 1.5;">
+              ⚖️ <b>고용보험법 시행령 제12조</b>: 국민취업지원제도 1단계 이수 인재 채용 시 고용노동부 장려금 지원 규정 완벽 준수
+            </div>
+          </div>
+
+          <!-- 반응형 인터랙티브 계산기 위젯 -->
+          <div class="calc-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 14px; font-weight: 800; color: var(--primary);">채용 인원 실시간 계산기</span>
+              <span class="top-badge" style="font-size: 10.5px;">1인당 연 720만원</span>
+            </div>
+
+            <div class="slider-container">
+              <div class="slider-label">
+                <span style="font-size: 12px;">채용 예정 인원</span>
+                <span id="hire-count-text" style="color: var(--accent); font-size: 17px; font-weight: 900;">2 명</span>
+              </div>
+              <input type="range" id="hire-slider" min="1" max="10" value="2" class="styled-slider" oninput="updateSubsidyCalc(this.value)">
+              <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #888; margin-top: 3px;">
+                <span>1명</span>
+                <span>5명</span>
+                <span>10명</span>
+              </div>
+            </div>
+
+            <div class="result-badge">
+              <div style="font-size: 11px; font-weight: 700; color: var(--primary);">연간 예상 정부 지원금 총액</div>
+              <div id="subsidy-total-text" class="result-amount">1,440 만원</div>
+              <div style="font-size: 11px; color: var(--ink-muted);">
+                (매 분기마다 <b id="quarter-text" style="color: var(--primary);">360만원</b>씩 지정 통장으로 환급)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: 실제 도입 성공 사례 (Case Study) -->
+      <section data-transition="convex">
+        <div class="grid-2">
+          <div>
+            <span class="section-eyebrow">PROVEN CASE STUDY</span>
+            <h2>스마트제조 S사 도입 성공 사례</h2>
+            <p style="font-size: 13px; color: var(--ink-muted); margin: 6px 0 12px 0;">
+              "대기업 공장장 출신 시니어 고문 2명을 영입해 불량률을 극적으로 낮추고, <b>연 1,440만원의 정부 지원금</b>까지 수령했습니다."
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div class="glass-card" style="padding: 10px 14px;">
+                <div style="font-size: 11.5px; color: var(--accent); font-weight: 800;">CHALLENGE</div>
+                <div style="font-size: 12px; color: var(--ink); margin-top: 2px;">
+                  신규 자동차 부품 양산 라인에서 원인 불명의 불량률(2.5%) 지속 발생으로 납기 지연 위기
+                </div>
+              </div>
+
+              <div class="glass-card" style="padding: 10px 14px;">
+                <div style="font-size: 11.5px; color: var(--primary); font-weight: 800;">SOLUTION (이어잡 매칭)</div>
+                <div style="font-size: 12px; color: var(--ink); margin-top: 2px;">
+                  현대/기아 1차 협력사 품질총괄 28년 경력 시니어 전문가 주 3일 하이브리드 투입
+                </div>
+              </div>
+
+              <div class="glass-card" style="padding: 10px 14px; border: 1.5px solid var(--accent); background: #FFFDFD;">
+                <div style="font-size: 11.5px; color: #B84734; font-weight: 800;">OUTCOME (도입 3개월 성과)</div>
+                <div style="font-size: 12px; color: var(--ink); margin-top: 2px; font-weight: 700;">
+                  • 불량률 2.5% ➔ 0.15% 급감 (연간 폐기 비용 3.2억원 절감)<br>
+                  • 고용노동부 장려금 연 1,440만원(2명) 순수 현금 환급 수령
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-img-frame" style="max-height: 340px;">
+            <img src="assets/eojob_success_case.jpg" alt="성공 사례 프로젝트 검토" onerror="this.src='/eojob_success_case.jpg'">
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: 3단계 도입 절차 & Risk-Zero 보증제 -->
+      <section data-transition="convex">
+        <span class="section-eyebrow">SEAMLESS PROCESS & RISK-ZERO</span>
+        <h2>단 3단계 채용 절차 & 100% 안심 보증제</h2>
+
+        <div class="grid-3" style="margin-top: 10px; margin-bottom: 14px;">
+          <div class="glass-card" style="padding: 12px 14px;">
+            <div style="background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-bottom: 6px;">1</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--primary);">과제/직무 1분 등록</div>
+            <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 3px;">
+              해결 과제나 채용 조건을 등록하면 AI가 역량 요건을 즉시 파싱
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding: 12px 14px; border: 1.5px solid var(--accent);">
+            <div style="background: var(--accent); color: #fff; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-bottom: 6px;">2</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--accent);">AI 정밀 매칭 & 검토</div>
+            <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 3px;">
+              적합도 90점 이상 & 지원금 대상 인재의 경험 카드를 48시간 내 추천
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding: 12px 14px;">
+            <div style="background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-bottom: 6px;">3</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: var(--primary);">계약 & 환급 가이드</div>
+            <div style="font-size: 11.5px; color: var(--ink-muted); margin-top: 3px;">
+              정규직/유연 계약 체결 및 고용24 분기별 장려금 환급 가이드 밀착 지원
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="background: #FDF9F7; border: 1.5px dashed var(--accent); padding: 12px 18px; display: flex; align-items: center; gap: 16px;">
+          <div style="font-size: 28px;">🛡️</div>
+          <div>
+            <div style="font-size: 13.5px; font-weight: 800; color: #B84734;">이어잡 인사담당자 안심 보장제 (Risk-Zero Policy)</div>
+            <div style="font-size: 12px; color: var(--ink-muted); margin-top: 2px;">
+              채용 후 14일 이내 업무 적합도 불만족 시, <b>추가 비용 없이 100% 무상으로 1회 재매칭</b>을 보장해 드립니다.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: CTA & Special Offer (마무리) -->
+      <section data-transition="zoom" style="text-align: center; align-items: center;">
+        <div class="glass-card" style="max-width: 660px; margin: 0 auto; padding: 24px 32px; text-align: center;">
+          <img src="assets/logo_text.png" alt="이어잡" style="height: 26px; margin: 0 auto 10px auto; display: block;" onerror="this.src='/logo_text.png'">
+          
+          <h2 style="font-size: 21px !important; margin-bottom: 6px;">
+            지금 우리 회사에 꼭 필요한<br><span class="highlight-coral">검증된 시니어 인재 3인</span>을 무료로 추천받으세요
+          </h2>
+          <p style="font-size: 13px; color: var(--ink-muted); line-height: 1.5; margin: 0 0 16px 0;">
+            채용 중인 포지션이나 당면 과제를 메일로 회신해 주시면,<br>
+            <b>최적 매칭 인재 3인의 경험 카드와 지원금 산출서</b>를 24시간 내 무상으로 전달해 드립니다.
+          </p>
+
+          <div style="display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--border); padding-top: 14px; font-size: 12.5px;">
+            <div>
+              <div style="font-size: 11px; color: #888; font-weight: 700;">🌐 공식 플랫폼</div>
+              <div style="font-weight: 800; color: var(--primary); margin-top: 2px;">https://eojob.kr</div>
+            </div>
+            <div style="border-left: 1px solid var(--border); padding-left: 20px;">
+              <div style="font-size: 11px; color: #888; font-weight: 700;">✉️ 제휴 및 채용 문의</div>
+              <div style="font-weight: 800; color: var(--primary); margin-top: 2px;">contact@eojob.kr</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px;">
+            <a href="mailto:contact@eojob.kr?subject=[이어잡] 기업 시니어 인재 매칭 및 정부 지원금 무료 리포트 신청" class="cta-btn" style="font-size: 13.5px; padding: 10px 24px;">
+              ✉️ 담당자에게 바로 메일 회신하기 (무료 리포트 신청)
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Reveal.js Scripts & 1280x720 와이드스크린 정밀 세팅 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.2,
+      maxScale: 2.0,
+
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'convex',
+      backgroundTransition: 'fade',
+      controls: true,
+      progress: true,
+      center: true,
+      touch: true,
+      mouseWheel: false
+    });
+
+    // 실시간 인건비 지원금 계산기 함수
+    function updateSubsidyCalc(val) {
+      const count = parseInt(val, 10);
+      document.getElementById('hire-count-text').innerText = count + ' 명';
+      
+      const totalAmount = count * 720;
+      const quarterAmount = count * 180;
+      
+      document.getElementById('subsidy-total-text').innerText = totalAmount.toLocaleString('ko-KR') + ' 만원';
+      document.getElementById('quarter-text').innerText = quarterAmount.toLocaleString('ko-KR') + '만원';
+    }
+  </script>
+</body>
+</html>
