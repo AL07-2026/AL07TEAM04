@@ -16,6 +16,33 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-05] 로그인 상태 유지(Remember Me) 및 세션 지속성 설정 기능 구현
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 기획 의도**:
+  - 포털 및 글로벌 서비스 표준에 따라, 개인 PC/모바일 사용자는 브라우저 창을 닫아도 로그인이 안전하게 유지되어 시니어 사용자의 불필요한 재인증 피로도를 최소화하고, 공용 PC나 타인 기기 이용자는 `로그인 상태 유지` 체크 해제 시 브라우저 창/탭을 닫으면 즉시 자동 로그아웃되는 보안 편의 하이브리드 옵션(1번 방식) 적용.
+- **개선 내용**:
+  1. **Firebase Auth 공식 지속성(`setPersistence`) 연동 (`authContext.tsx`)**:
+     - `rememberMe: true` (기본값) ➔ `browserLocalPersistence` (로컬 스토리지/IndexedDB 영구 유지).
+     - `rememberMe: false` ➔ `browserSessionPersistence` (브라우저 세션 전용 메모리 보존, 창 닫으면 만료).
+     - 이메일/비밀번호(`signIn`) 및 구글 로그인(`signInWithGoogle`, 리디렉션 복원 포함) 전체에 `rememberMe` 옵션 적용.
+     - `saveUserLocal` 및 `readInitialUser`를 통해 `session_only` 모드일 때 `sessionStorage`를 활용하여 탭/창 종료 시 잔여 로컬 데이터 클리어 보장.
+  2. **로그인 화면 UI 개선 (`LoginPage.tsx`)**:
+     - 모바일 및 데스크톱 폼에 세련된 `[✓] 로그인 상태 유지` 체크박스 컴포넌트 추가 (기본값 체크됨).
+     - 시니어 접근성(WCAG) 가이드라인 준수: 명확한 터치 영역, 폰트 크기 및 시그니처 딥그린(`accent-[#173F3A]`) 스타일.
+     - 친절한 안내 텍스트 제공: `"공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요."`
+  3. **단위 테스트 작성 및 무결점 파이프라인 통과**:
+     - `src/lib/authContext.test.tsx`: `rememberMe = false` 시 세션 스토리지 격리 및 플래그 검증 케이스 추가.
+     - `src/app/LoginPage.test.tsx`: 체크박스 렌더링, 토글 인터랙션, `signIn`/`signInWithGoogle` 인자 전달 단위 테스트 신규 구현 (4 passed).
+     - `npm run validate`: 43개 테스트 파일 397개 케이스 전체 통과.
+- **수정한 파일 목록**:
+  - `src/lib/authContext.tsx`: persistence 모드 전환 및 세션/로컬 스토리지 분기 제어
+  - `src/lib/authContext.test.tsx`: 지속성 모킹 및 세션 전용 로그인 테스트 추가
+  - `src/app/LoginPage.tsx`: `rememberMe` 상태, 폼 체크박스 UI 및 로그인 핸들러 연동
+  - `src/app/LoginPage.test.tsx`: 로그인 상태 유지 UI 및 인터랙션 테스트 작성
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 43개 파일 397개 테스트 100% 통과, Vite 빌드 성공.
+  - Firebase Hosting `leedongwook` 채널 및 메인 라이브 사이트(`https://al07team04-bdfcd.web.app`) 배포 완료.
+
 ### [2026-09-05] 프로젝트 로딩 시 건수 깜빡임(25건 ➔ 8,853건) 방지 및 카탈로그 메타데이터 캐시 보존
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **배경 및 원인 분석**:

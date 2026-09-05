@@ -30,6 +30,8 @@ const authMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('firebase/auth', () => ({
+  browserLocalPersistence: 'LOCAL',
+  browserSessionPersistence: 'SESSION',
   createUserWithEmailAndPassword: vi.fn(),
   deleteUser: authMocks.deleteUser,
   getAuth: vi.fn(() => authMocks.auth),
@@ -39,6 +41,7 @@ vi.mock('firebase/auth', () => ({
   },
   onAuthStateChanged: authMocks.onAuthStateChanged,
   sendEmailVerification: vi.fn(),
+  setPersistence: vi.fn(() => Promise.resolve(undefined)),
   signInWithEmailAndPassword: vi.fn(),
   signInWithPopup: authMocks.signInWithPopup,
   signInWithRedirect: vi.fn(() => Promise.resolve(undefined)),
@@ -51,13 +54,19 @@ import { deleteObject } from 'firebase/storage';
 import { AuthProvider, useAuth } from './authContext';
 
 function AuthHarness() {
-  const { deleteAccount, signInWithGoogle, user } = useAuth();
+  const { deleteAccount, signIn, signInWithGoogle, user } = useAuth();
 
   return (
     <div>
       <p data-testid="role">{user?.role ?? 'none'}</p>
       <button type="button" onClick={() => void signInWithGoogle('senior')}>
         구글 로그인
+      </button>
+      <button
+        type="button"
+        onClick={() => void signIn('test@example.com', 'pw', 'senior', false)}
+      >
+        세션 전용 로그인
       </button>
       <button type="button" onClick={() => void deleteAccount()}>
         회원 탈퇴
@@ -189,5 +198,24 @@ describe('AuthProvider 계정 데이터 처리', () => {
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'projects/project-1' }));
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'user_proposals/proposal-1' }));
     expect(deleteObject).toHaveBeenCalledTimes(2);
+  });
+
+  it('rememberMe가 false일 때 session_only 플래그와 sessionStorage를 사용한다', async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '세션 전용 로그인' }));
+
+    await waitFor(() => expect(screen.getByTestId('role')).toHaveTextContent('senior'));
+    expect(localStorage.getItem('eojob_session_only')).toBe('true');
+    expect(sessionStorage.getItem('eojob_remember_me')).toBe('false');
+    expect(sessionStorage.getItem('eojob_current_user')).toBeTruthy();
+    expect(localStorage.getItem('eojob_current_user')).toBeNull();
   });
 });

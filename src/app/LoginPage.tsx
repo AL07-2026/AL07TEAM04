@@ -191,6 +191,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const routeLoginRequiredMessage = getLoginRequiredMessage(location.state);
@@ -214,7 +215,7 @@ export function LoginPage() {
     }
     setIsSubmitting(true);
     try {
-      const userProfile = await signIn(email, password, role);
+      const userProfile = await signIn(email, password, role, rememberMe);
       const redirectTo = searchParams.get('redirect');
       if (redirectTo && redirectTo.startsWith('/')) {
         void navigate(redirectTo);
@@ -240,7 +241,7 @@ export function LoginPage() {
     setErrorMessage('');
     setIsSubmitting(true);
     try {
-      const userProfile = await signInWithGoogle(role);
+      const userProfile = await signInWithGoogle(role, rememberMe);
       const redirectTo = searchParams.get('redirect');
       if (redirectTo && redirectTo.startsWith('/')) {
         void navigate(redirectTo);
@@ -463,6 +464,28 @@ export function LoginPage() {
               />
             </div>
 
+            <div className="flex flex-col gap-1 py-0.5 text-left">
+              <label
+                htmlFor="remember-me-mobile"
+                className="group flex cursor-pointer select-none items-center gap-2"
+              >
+                <input
+                  id="remember-me-mobile"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="size-4.5 cursor-pointer rounded border border-[#D4CBB8] accent-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
+                />
+                <span className="text-xs font-extrabold text-[#17212B] transition-colors group-hover:text-[#173F3A] sm:text-[13px]">
+                  로그인 상태 유지
+                </span>
+              </label>
+              <p className="pl-6.5 text-[11px] font-medium leading-tight text-[#62748E]">
+                공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요.
+              </p>
+            </div>
+
             {errorMessage ? (
               <p aria-live="polite" className="text-xs font-bold text-rose-700">
                 {errorMessage}
@@ -639,6 +662,28 @@ export function LoginPage() {
               type="password"
               value={password}
             />
+
+            <div className="flex flex-col gap-1 py-1 text-left">
+              <label
+                htmlFor="remember-me-desktop"
+                className="group flex cursor-pointer select-none items-center gap-2"
+              >
+                <input
+                  id="remember-me-desktop"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="size-4.5 cursor-pointer rounded border border-[#D4CBB8] accent-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
+                />
+                <span className="text-xs font-extrabold text-[#17212B] transition-colors group-hover:text-[#173F3A] sm:text-sm">
+                  로그인 상태 유지
+                </span>
+              </label>
+              <p className="pl-6.5 text-[11px] font-medium leading-tight text-[#62748E] sm:text-xs">
+                공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요.
+              </p>
+            </div>
 
             {errorMessage ? (
               <p aria-live="polite" className="text-xs font-bold text-rose-700">

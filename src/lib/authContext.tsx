@@ -1,10 +1,13 @@
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   deleteUser,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
   sendEmailVerification,
+  setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -53,8 +56,13 @@ type AuthContextType = {
   refreshAdminAccess: () => Promise<AdminRole | null>;
   role: UserRole;
   sendVerificationEmail: () => Promise<void>;
-  signIn: (email: string, password: string, targetRole?: UserRole) => Promise<UserProfile>;
-  signInWithGoogle: (role?: UserRole) => Promise<UserProfile>;
+  signIn: (
+    email: string,
+    password: string,
+    targetRole?: UserRole,
+    rememberMe?: boolean,
+  ) => Promise<UserProfile>;
+  signInWithGoogle: (role?: UserRole, rememberMe?: boolean) => Promise<UserProfile>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, name: string, role: UserRole) => Promise<UserProfile>;
   user: UserProfile | null;
@@ -62,6 +70,8 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
+const REMEMBER_ME_STORAGE_KEY = 'eojob_remember_me';
+const SESSION_ONLY_STORAGE_KEY = 'eojob_session_only';
 const USER_ROOT_COLLECTIONS = [
   'users',
   'senior_profiles',
@@ -74,6 +84,33 @@ const USER_QUERY_COLLECTIONS = [
   { collectionName: 'user_proposals', field: 'userId' },
   { collectionName: 'user_proposals', field: 'projectOwnerId' },
 ] as const;
+
+function readInitialUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+
+  const isSessionOnly = localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true';
+  if (isSessionOnly) {
+    try {
+      const sessionUserRaw = sessionStorage.getItem(CURRENT_USER_STORAGE_KEY);
+      if (sessionUserRaw) {
+        const parsed = JSON.parse(sessionUserRaw) as UserProfile;
+        if (parsed?.uid && parsed.email && (parsed.role === 'senior' || parsed.role === 'company')) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore JSON parse error
+    }
+    // 브라우저 세션(창/탭)이 닫혀 sessionStorage가 비었으므로 자동 로그아웃 처리
+    localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+    return null;
+  }
+
+  const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
+  return saved?.uid && saved.email && (saved.role === 'senior' || saved.role === 'company')
+    ? saved
+    : null;
+}
 
 function canUseDemoAuth() {
   return import.meta.env.MODE === 'test';
@@ -169,33 +206,47 @@ function clearDeletedUserLocalData(uid?: string) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoggingOutRef = useRef(false);
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
-    return saved?.uid && saved.email && (saved.role === 'senior' || saved.role === 'company')
-      ? saved
-      : null;
-  });
+  const [user, setUser] = useState<UserProfile | null>(() => readInitialUser());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAdminRole, setResolvedAdminRole] = useState<AdminRole | null>(() => {
-    const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
+    const saved = readInitialUser();
     return getAdminRoleForEmail(saved?.email);
   });
 
-  const saveUserLocal = (profile: UserProfile | null) => {
+  const saveUserLocal = (profile: UserProfile | null, rememberMe?: boolean) => {
     setUser(profile);
-    if (typeof window !== 'undefined') {
-      if (profile) {
-        writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
-      } else {
+    if (typeof window === 'undefined') return;
+
+    if (profile) {
+      const isExplicitSessionOnly =
+        rememberMe === false ||
+        (rememberMe === undefined &&
+          (sessionStorage.getItem(REMEMBER_ME_STORAGE_KEY) === 'false' ||
+            localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true'));
+
+      if (isExplicitSessionOnly) {
+        sessionStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(profile));
+        sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'false');
+        localStorage.setItem(SESSION_ONLY_STORAGE_KEY, 'true');
         localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+        localStorage.removeItem(`v1_${CURRENT_USER_STORAGE_KEY}`);
         localStorage.removeItem('eojob_current_user');
-        localStorage.removeItem('v1_eojob_current_user');
-        localStorage.removeItem('eojob_senior_profile');
-        localStorage.removeItem('eojob_company_profile');
-        localStorage.removeItem('eojob_experience_card');
-        sessionStorage.clear();
+      } else {
+        writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
+        sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'true');
+        sessionStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+        localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
       }
+    } else {
+      localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+      localStorage.removeItem('eojob_current_user');
+      localStorage.removeItem('v1_eojob_current_user');
+      localStorage.removeItem('eojob_senior_profile');
+      localStorage.removeItem('eojob_company_profile');
+      localStorage.removeItem('eojob_experience_card');
+      localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+      sessionStorage.clear();
     }
   };
 
@@ -244,7 +295,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (fsErr) {
             console.warn('Firestore setDoc failed during Google redirect sign in:', fsErr);
           }
-          saveUserLocal(profile);
+          const rememberMe =
+            typeof sessionStorage !== 'undefined' &&
+            sessionStorage.getItem(REMEMBER_ME_STORAGE_KEY) === 'false'
+              ? false
+              : true;
+          saveUserLocal(profile, rememberMe);
         })
         .catch((err: unknown) => {
           const authErr = err as { code?: string };
@@ -436,6 +492,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     targetRole: UserRole = 'senior',
+    rememberMe: boolean = true,
   ): Promise<UserProfile> => {
     setError(null);
     setLoading(true);
@@ -451,12 +508,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: defaultName,
         role: targetRole,
       };
-      saveUserLocal(demoProfile);
+      saveUserLocal(demoProfile, rememberMe);
       setLoading(false);
       return demoProfile;
     }
 
     try {
+      if (auth) {
+        try {
+          await setPersistence(
+            auth,
+            rememberMe ? browserLocalPersistence : browserSessionPersistence,
+          );
+        } catch (persistErr) {
+          console.warn('Failed to set auth persistence:', persistErr);
+        }
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
       let userRole = targetRole;
@@ -481,7 +549,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: userRole,
       };
 
-      saveUserLocal(profile);
+      saveUserLocal(profile, rememberMe);
       setLoading(false);
       return profile;
     } catch (err: unknown) {
@@ -589,7 +657,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 1000);
   };
 
-  const signInWithGoogle = async (targetRole: UserRole = 'senior'): Promise<UserProfile> => {
+  const signInWithGoogle = async (
+    targetRole: UserRole = 'senior',
+    rememberMe: boolean = true,
+  ): Promise<UserProfile> => {
     setLoading(true);
     setError(null);
 
@@ -606,6 +677,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      if (auth) {
+        try {
+          await setPersistence(
+            auth,
+            rememberMe ? browserLocalPersistence : browserSessionPersistence,
+          );
+        } catch (persistErr) {
+          console.warn('Failed to set Google auth persistence:', persistErr);
+        }
+      }
+
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -618,6 +700,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (pErr?.code === 'auth/popup-blocked') {
           if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('eojob_oauth_target_role', targetRole);
+            sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, String(rememberMe));
           }
           await signInWithRedirect(auth, provider);
           return new Promise(() => {});
@@ -675,7 +758,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (fsErr) {
         console.warn('Firestore setDoc failed during Google sign in:', fsErr);
       }
-      saveUserLocal(profile);
+      saveUserLocal(profile, rememberMe);
       setLoading(false);
       return profile;
     } catch (err: unknown) {
