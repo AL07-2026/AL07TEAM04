@@ -1261,6 +1261,19 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const [isCompactPagination, setIsCompactPagination] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      setIsCompactPagination(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [postings, setPostings] = useState<JobPosting[]>(() => {
     if (typeof window === 'undefined') return [];
     if (role === 'senior') return [];
@@ -2266,6 +2279,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         ? Math.max(1, serverSearchMeta?.totalPages ?? 1)
         : Math.max(1, Math.ceil(filteredPostings.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
+  const compactPagination = isMobile || isCompactPagination;
+  const visiblePaginationPageCount = compactPagination ? 5 : 7;
   const paginatedPostings = useMemo(() => {
     if (isServerSearchActive) return filteredPostings;
 
@@ -4091,23 +4106,28 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     </span>건 표시
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex w-full min-w-0 flex-nowrap items-center gap-1 sm:w-auto sm:flex-wrap sm:gap-1.5">
                     <button
                       onClick={() => changePage(safeCurrentPage - 1)}
                       disabled={safeCurrentPage === 1}
                       type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                      className="h-8 min-w-[42px] shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-0 sm:px-3"
                     >
                       이전
                     </button>
 
-                    {Array.from({ length: Math.min(7, totalPages) }, (_, idx) => {
+                    {Array.from({ length: Math.min(visiblePaginationPageCount, totalPages) }, (_, idx) => {
+                      const visiblePageCount = visiblePaginationPageCount;
+                      const sidePageCount = Math.floor(visiblePageCount / 2);
                       let pageNum = idx + 1;
-                      if (totalPages > 7) {
-                        if (safeCurrentPage > 4 && safeCurrentPage < totalPages - 3) {
-                          pageNum = safeCurrentPage - 3 + idx;
-                        } else if (safeCurrentPage >= totalPages - 3) {
-                          pageNum = totalPages - 6 + idx;
+                      if (totalPages > visiblePageCount) {
+                        if (
+                          safeCurrentPage > sidePageCount + 1 &&
+                          safeCurrentPage < totalPages - sidePageCount
+                        ) {
+                          pageNum = safeCurrentPage - sidePageCount + idx;
+                        } else if (safeCurrentPage >= totalPages - sidePageCount) {
+                          pageNum = totalPages - visiblePageCount + 1 + idx;
                         }
                       }
                       return (
@@ -4115,7 +4135,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                           key={pageNum}
                           onClick={() => changePage(pageNum)}
                           type="button"
-                          className={`min-w-[32px] h-8 px-2 text-xs font-extrabold rounded-xl transition-all ${
+                          className={`h-8 min-w-[29px] shrink-0 rounded-xl px-1.5 text-xs font-extrabold transition-all sm:min-w-[32px] sm:px-2 ${
                             safeCurrentPage === pageNum
                               ? 'bg-[#173F3A] text-white shadow-xs'
                               : 'bg-white text-slate-700 hover:bg-[#FAF7F2] border border-[#E0D9C8]'
@@ -4130,7 +4150,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                       onClick={() => changePage(safeCurrentPage + 1)}
                       disabled={safeCurrentPage === totalPages}
                       type="button"
-                      className="px-3 py-1.5 text-xs font-extrabold rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] text-[#17212B] hover:bg-[#EFE9DC] disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+                      className="h-8 min-w-[42px] shrink-0 rounded-xl border border-[#E0D9C8] bg-[#FAF7F2] px-2 text-xs font-extrabold text-[#17212B] transition-all hover:bg-[#EFE9DC] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-0 sm:px-3"
                     >
                       다음
                     </button>

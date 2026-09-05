@@ -12,6 +12,7 @@ import {
   Landmark,
   LogOut,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   UserRound,
   X,
@@ -49,7 +50,7 @@ const features = [
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { isAdmin, user, signOut } = useAuth();
   const [showSubsidyModal, setShowSubsidyModal] = useState(false);
 
   const homePath = user?.role === 'company' ? '/company' : '/senior';
@@ -86,6 +87,20 @@ export function LandingPage() {
                   <Home className="size-4" strokeWidth={2} aria-hidden="true" />
                   <span>내 홈</span>
                 </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => void navigate('/admin/dashboard')}
+                    className="group relative grid size-9 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+                    aria-label="관리자 페이지"
+                    title="관리자 페이지"
+                  >
+                    <ShieldCheck className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
+                      관리자 페이지
+                    </span>
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={async () => {

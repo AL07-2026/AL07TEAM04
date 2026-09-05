@@ -27,6 +27,7 @@ import { deleteObject, ref } from 'firebase/storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
+import { getAdminRoleForEmail, resolveCurrentAdminRole, type AdminRole } from '@/lib/adminAccess';
 import { auth, db, storage } from '@/lib/firebase';
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
 import { deleteCommunityAccountData } from '@/services/communityService';
@@ -47,6 +48,9 @@ type AuthContextType = {
   deleteAccount: () => Promise<void>;
   error: string | null;
   loading: boolean;
+  isAdmin: boolean;
+  adminRole: AdminRole | null;
+  refreshAdminAccess: () => Promise<AdminRole | null>;
   role: UserRole;
   sendVerificationEmail: () => Promise<void>;
   signIn: (email: string, password: string, targetRole?: UserRole) => Promise<UserProfile>;
@@ -58,7 +62,12 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
-const USER_ROOT_COLLECTIONS = ['users', 'senior_profiles', 'company_profiles', 'companies'] as const;
+const USER_ROOT_COLLECTIONS = [
+  'users',
+  'senior_profiles',
+  'company_profiles',
+  'companies',
+] as const;
 const USER_QUERY_COLLECTIONS = [
   { collectionName: 'experience_cards', field: 'uid' },
   { collectionName: 'projects', field: 'ownerId' },
@@ -66,13 +75,8 @@ const USER_QUERY_COLLECTIONS = [
   { collectionName: 'user_proposals', field: 'projectOwnerId' },
 ] as const;
 
-function canUseDemoAuth(email = '') {
-  return (
-    import.meta.env.MODE === 'test' ||
-    import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true' ||
-    email.endsWith('@example.com') ||
-    email.includes('test')
-  );
+function canUseDemoAuth() {
+  return import.meta.env.MODE === 'test';
 }
 
 function collectStoragePaths(value: unknown, paths: Set<string>) {
@@ -97,9 +101,7 @@ async function getUserScopedDocuments(uid: string) {
   const documents = new Map<string, QueryDocumentSnapshot<DocumentData>>();
 
   for (const { collectionName, field } of USER_QUERY_COLLECTIONS) {
-    const snapshot = await getDocs(
-      query(collection(db, collectionName), where(field, '==', uid)),
-    );
+    const snapshot = await getDocs(query(collection(db, collectionName), where(field, '==', uid)));
 
     snapshot.docs.forEach((documentSnapshot) => {
       if (!documents.has(documentSnapshot.ref.path)) {
@@ -175,6 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedAdminRole, setResolvedAdminRole] = useState<AdminRole | null>(() => {
+    const saved = readVersionedStorage<UserProfile>(CURRENT_USER_STORAGE_KEY);
+    return getAdminRoleForEmail(saved?.email);
+  });
 
   const saveUserLocal = (profile: UserProfile | null) => {
     setUser(profile);
@@ -252,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void (async () => {
         if (isLoggingOutRef.current) {
           saveUserLocal(null);
+          setResolvedAdminRole(null);
           setLoading(false);
           return;
         }
@@ -283,8 +290,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (err) {
             console.warn('Firestore user fetch failed, using fallback:', err);
           }
+          setResolvedAdminRole(await resolveCurrentAdminRole());
         } else {
           saveUserLocal(null);
+          setResolvedAdminRole(null);
         }
         setLoading(false);
       })();
@@ -296,6 +305,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const refreshAdminAccess = async () => {
+    const nextRole = await resolveCurrentAdminRole();
+    setResolvedAdminRole(nextRole);
+    return nextRole;
+  };
+
   const signUp = async (
     email: string,
     password: string,
@@ -305,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     setLoading(true);
 
-    if (canUseDemoAuth(email)) {
+    if (canUseDemoAuth()) {
       const demoProfile: UserProfile = {
         uid: 'demo-user-' + Math.random().toString(36).slice(2, 9),
         email,
@@ -353,17 +368,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       const authErr = err as { code?: string; message?: string };
       if (authErr.code === 'auth/email-already-in-use') {
-        if (email.includes('example.com') || email.includes('test')) {
-          const demoProfile: UserProfile = {
-            uid: 'user-' + Date.now(),
-            email,
-            name,
-            role,
-            createdAt: new Date().toISOString(),
-          };
-          saveUserLocal(demoProfile);
-          return demoProfile;
-        }
         const msg = '이미 등록된 이메일 주소입니다. 로그인해주세요.';
         setError(msg);
         throw new Error(msg, { cause: err });
@@ -379,7 +383,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(msg, { cause: err });
       }
 
-      if (canUseDemoAuth(email)) {
+      if (canUseDemoAuth()) {
         const demoProfile: UserProfile = {
           uid: 'user-' + Date.now(),
           email,
@@ -436,7 +440,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     setLoading(true);
 
-    if (canUseDemoAuth(email)) {
+    if (canUseDemoAuth()) {
       const defaultName =
         email === 'sehddnr2@gmail.com'
           ? '이동욱'
@@ -498,7 +502,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(msg, { cause: err });
       }
 
-      if (canUseDemoAuth(email)) {
+      if (canUseDemoAuth()) {
         const defaultName =
           email === 'sehddnr2@gmail.com'
             ? '이동욱'
@@ -522,6 +526,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoggingOutRef.current = true;
     saveUserLocal(null);
     setUser(null);
+    setResolvedAdminRole(null);
     try {
       await firebaseSignOut(auth);
     } catch (err) {
@@ -574,6 +579,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearDeletedUserLocalData(uid);
     saveUserLocal(null);
     setUser(null);
+    setResolvedAdminRole(null);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('eojob_user_logged_out'));
       window.dispatchEvent(new Event('storage'));
@@ -665,11 +671,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userDocument.role = profileRole;
         }
 
-        await setDoc(
-          doc(db, 'users', googleUser.uid),
-          userDocument,
-          { merge: true },
-        );
+        await setDoc(doc(db, 'users', googleUser.uid), userDocument, { merge: true });
       } catch (fsErr) {
         console.warn('Firestore setDoc failed during Google sign in:', fsErr);
       }
@@ -710,12 +712,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = () => setError(null);
 
   const currentRole: UserRole = user?.role || 'senior';
+  const adminRole = resolvedAdminRole ?? getAdminRoleForEmail(user?.email);
+  const isAdmin = Boolean(adminRole);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         role: currentRole,
+        isAdmin,
+        adminRole,
+        refreshAdminAccess,
         loading,
         error,
         signUp,

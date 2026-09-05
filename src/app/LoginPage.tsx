@@ -8,10 +8,12 @@ import {
   LogOut,
   Pause,
   Play,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
 import { getLoginRequiredMessage } from '@/app/authRequiredNavigation';
+import { isSuperAdminEmail } from '@/lib/adminAccess';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
@@ -169,7 +171,7 @@ export function LoginPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
-  const { user, signIn, signInWithGoogle, signOut } = useAuth();
+  const { isAdmin, refreshAdminAccess, user, signIn, signInWithGoogle, signOut } = useAuth();
   const [userSelectedRole, setUserSelectedRole] = useState<'senior' | 'company' | null>(null);
   const roleParam = searchParams.get('role');
   const role: 'senior' | 'company' =
@@ -216,10 +218,15 @@ export function LoginPage() {
       const redirectTo = searchParams.get('redirect');
       if (redirectTo && redirectTo.startsWith('/')) {
         void navigate(redirectTo);
-      } else if (userProfile.role === 'company') {
-        void navigate('/company');
       } else {
-        void navigate('/senior');
+        const signedInAdminRole = await refreshAdminAccess();
+        if (signedInAdminRole || isSuperAdminEmail(userProfile.email)) {
+          void navigate('/admin/dashboard');
+        } else if (userProfile.role === 'company') {
+          void navigate('/company');
+        } else {
+          void navigate('/senior');
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -237,10 +244,15 @@ export function LoginPage() {
       const redirectTo = searchParams.get('redirect');
       if (redirectTo && redirectTo.startsWith('/')) {
         void navigate(redirectTo);
-      } else if (userProfile.role === 'company') {
-        void navigate('/company');
       } else {
-        void navigate('/senior');
+        const signedInAdminRole = await refreshAdminAccess();
+        if (signedInAdminRole || isSuperAdminEmail(userProfile.email)) {
+          void navigate('/admin/dashboard');
+        } else if (userProfile.role === 'company') {
+          void navigate('/company');
+        } else {
+          void navigate('/senior');
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -302,6 +314,16 @@ export function LoginPage() {
               <BriefcaseBusiness className="size-4.5 text-[#173F3A]" />
               <span>프로젝트 둘러보기</span>
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => void navigate('/admin/dashboard')}
+                className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-4 text-sm font-extrabold text-[#173F3A] shadow-2xs transition hover:bg-[#CFE3DD] active:scale-[0.98]"
+              >
+                <ShieldCheck className="size-4.5" />
+                <span>관리자 페이지</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={async () => {
