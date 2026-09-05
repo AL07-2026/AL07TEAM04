@@ -973,24 +973,28 @@ export function SeniorHomePage() {
         });
 
         const mergedPostings = mergeSeniorPostings(matchingCompanyProjects, result.items);
-        const allPersonalizedItems = mergedPostings
-          .map((item) => {
-            const matchResult = calculatePersonalizedMatch(
-              item,
-              profile,
-              primaryCategory,
-              activeExperienceCard,
-            );
-            return {
-              ...item,
-              seniorFitScore: matchResult.personalizedScore,
-              recommendationReasons:
-                matchResult.matchReasons.length > 0
-                  ? matchResult.matchReasons
-                  : item.recommendationReasons,
-            };
-          })
-          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+        const allPersonalizedItems = mergedPostings.map((item) => {
+          if (typeof item.seniorFitScore === 'number' && item.seniorFitScore > 0) {
+            return item;
+          }
+          const matchResult = calculatePersonalizedMatch(
+            item,
+            profile,
+            primaryCategory,
+            activeExperienceCard,
+          );
+          return {
+            ...item,
+            seniorFitScore: matchResult.personalizedScore,
+            recommendationReasons:
+              matchResult.matchReasons.length > 0
+                ? matchResult.matchReasons
+                : item.recommendationReasons,
+            experienceRecommendationApplied: matchResult.experienceRecommendationApplied,
+          };
+        });
+
+        allPersonalizedItems.sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
 
         const total = allPersonalizedItems.length;
         setRecommendedJobs(allPersonalizedItems.slice(0, 5));
@@ -1198,7 +1202,11 @@ export function SeniorHomePage() {
             </span>
           </div>
           <button
-            onClick={() => void navigate('/senior/projects')}
+            onClick={() => {
+              void navigate(
+                getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined),
+              );
+            }}
             className="shrink-0 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] hover:text-[#0F2D2A] hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer"
             type="button"
           >

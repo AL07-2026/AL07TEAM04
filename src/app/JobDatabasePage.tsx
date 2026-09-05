@@ -1624,7 +1624,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         hiringStage: selectedHiringStage,
         forceRefresh: automaticSearchRetryCount > 0,
         page: currentPage,
-        pageSize: itemsPerPage,
+        pageSize:
+          role === 'senior' && sortBy === 'fit-desc' && currentPage === 1
+            ? Math.max(20, itemsPerPage)
+            : itemsPerPage,
         profileExperience:
           seniorProfile?.experience === seniorProfile?.desiredWorkType
             ? ''
@@ -1650,7 +1653,36 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 customFallbackCategories.includes(getPostingOccupationCategory(project)),
               )
             : result.items;
-          const nextPostings = matchingCatalogProjects.slice(0, itemsPerPage);
+
+          const processedPostings = matchingCatalogProjects.map((item) => {
+            if (typeof item.seniorFitScore === 'number' && item.seniorFitScore > 0) {
+              return item;
+            }
+            if (role === 'senior' && seniorProfile) {
+              const currentFilterCategory =
+                selectedCategory === all
+                  ? (primaryProfileCategory ?? '전체')
+                  : (selectedOccupationCategory ?? '전체');
+              const matchResult = calculatePersonalizedMatch(
+                item,
+                seniorProfile,
+                currentFilterCategory,
+                interviewCard,
+              );
+              return {
+                ...item,
+                seniorFitScore: matchResult.personalizedScore,
+                recommendationReasons:
+                  matchResult.matchReasons.length > 0
+                    ? matchResult.matchReasons
+                    : item.recommendationReasons,
+                experienceRecommendationApplied: matchResult.experienceRecommendationApplied,
+              };
+            }
+            return item;
+          });
+
+          const nextPostings = processedPostings.slice(0, itemsPerPage);
           const isFirstPreferenceOverviewContext =
             selectedCategory === all ||
             (primaryProfileCategory &&

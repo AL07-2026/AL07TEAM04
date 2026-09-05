@@ -16,6 +16,32 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-06] 홈 맞춤 추천 순위와 프로젝트 1순위 추천 순위 및 점수 체계 100% 동기화 및 최적화
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 원인 분석**:
+  - 홈 화면(`/senior`)의 "맞춤 추천 프로젝트(TOP 5)"와 프로젝트 탐색 화면(`/senior/projects`)의 1순위 추천 목록 간에 순위와 점수 불일치 현상이 발생함.
+  - **원인 1 (점수 산출 이원화)**: 프로젝트 화면은 검색 서버(`functions/lib/jobSearch.mjs`)가 정밀 계산한 적합도 점수(`seniorFitScore`)를 그대로 보존·표시하였으나, 홈 화면은 서버 응답 후 클라이언트에서 `calculatePersonalizedMatch`로 점수를 다시 덮어써서 동일 공고의 점수와 정렬 순위가 어긋남.
+  - **원인 2 (네비게이션 쿼리 유실)**: 홈 화면의 "전체 N개 보기 →" 링크 클릭 시 단순 `/senior/projects`로 이동하여 1순위 탭이 아닌 '전체' 탭이 활성화되어 추천 목록과 다른 공고가 먼저 노출됨.
+- **개선 내용**:
+  1. **홈 화면 추천 점수 체계 단일화 (`FlowPages.tsx`)**:
+     - `searchFullJobDatabase`가 산출한 `seniorFitScore`를 최우선 보존하도록 정렬 및 매핑 로직 개선.
+     - fallback 또는 점수가 누락된 경우에만 클라이언트 보정 점수를 부여하여, 서버-홈-프로젝트 화면 간 1위~5위 순위와 점수가 100% 일치하도록 보장.
+  2. **홈 화면 추천 "전체보기" 네비게이션 개선 (`FlowPages.tsx`)**:
+     - `getRecommendedProjectsDestination(recommendationPrimaryCategory)` 함수를 통해 1순위 추천 직종 카테고리(`recommendedCategory`) 쿼리 파라미터를 보존하며 이동하도록 연결.
+  3. **프로젝트 탐색 화면 추천 정합성 최적화 (`JobDatabasePage.tsx`)**:
+     - URL 파라미터 `recommendedCategory`를 기반으로 1순위 직종 탭을 기본 선택하도록 초기화 일치.
+     - 서버 점수를 충실히 보존하여 홈 화면의 TOP 5 목록과 완벽히 동기화.
+- **수정한 파일 목록**:
+  - `src/app/wireframe/FlowPages.tsx`: 추천 공고 점수 보존 및 1순위 네비게이션 연결
+  - `src/app/JobDatabasePage.tsx`: 서버 점수 보존 및 1순위 필터 연동 정합성 확보
+  - `docs/AI_COLLABORATION_LOG.md`: 작업 로그 기록
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint(0 warning), 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - Firebase Hosting 채널 배포: `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`
+  - Firebase Hosting 메인 배포: `https://al07team04-bdfcd.web.app`
+- **다음 작업자 전달 사항**:
+  - 홈 화면과 프로젝트 화면 1순위 탭은 동일한 서버 적합도 점수(`seniorFitScore`) 체계를 공유하므로, 임의로 클라이언트 점수를 덮어쓰지 않도록 주의바랍니다.
+
 ### [2026-09-05] 로그인 상태 유지(Remember Me) 및 세션 지속성 설정 기능 구현
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **배경 및 기획 의도**:
