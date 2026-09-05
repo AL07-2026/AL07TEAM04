@@ -39,13 +39,14 @@
 - **검증 결과**:
   - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 테스트 파일 391개 테스트 100% 통과, Vite 빌드 성공.
 - **배포 완료 및 트러블슈팅**:
-  - **원격 Git Push**: `origin/leedongwook`에 `84f7cb9` 푸시 완료.
-  - **Firebase Hosting 배포**: `leedongwook` 전용 미리보기 채널 배포 성공 (`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`).
+  - **원격 Git Push**: `origin/leedongwook`에 `84f7cb9` 및 배포 설정 커밋(`5cb66de`) 푸시 완료.
+  - **Firebase Hosting 채널 배포**: `leedongwook` 전용 미리보기 채널 배포 성공 (`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`).
+  - **Firebase Hosting 메인 라이브 배포**: 사용자 명시 요청에 따라 메인 라이브 사이트 배포 성공 (`https://al07team04-bdfcd.web.app`).
   - **Cloud Functions 배포 트러블슈팅**:
     - **원인**: Windows + Node v24 환경에서 `firebase-tools`가 로컬 디스커버리 서버를 띄울 때 `localhost` fetch IPv6 바인딩 불일치(`TypeError: fetch failed`)로 함수 배포가 중단되는 현상 발생.
     - **해결**: `functions/functions.yaml` 매니페스트를 선제적으로 생성하여 HTTP discovery 단계를 안전하게 건너뛰도록 처리 후 `npx -y firebase-tools deploy --only functions:communityApi` 정상 완료.
   - **라이브 검증**:
-    - Hosting 및 rewrite API(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app/api/community/posts`) 호출 정상 작동 확인 완료.
+    - 미리보기 채널 및 메인 라이브 채널 모두 rewrite API(`https://al07team04-bdfcd.web.app/api/community/posts`) 정상 연동 및 200 OK 응답 확인 완료.
 
 ### [2026-09-04] 로그인 상태임에도 커뮤니티 진입 시 '로그인 후 이용해 주세요' 노출 버그 원천 차단
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
