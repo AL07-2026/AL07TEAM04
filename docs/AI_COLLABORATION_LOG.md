@@ -16,7 +16,33 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-09-06] 홈 맞춤 추천 순위와 프로젝트 1순위 추천 순위 및 점수 체계 100% 동기화 및 최적화
+### [2026-09-06] 기업 직접 등록 프로젝트 탐색 화면 병합 및 홈-프로젝트 순위·점수·총건수 완전 일치화
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **발견된 이상 현상 및 근본 원인 분석**:
+  - **증상**: 홈 화면(`/senior`) 맞춤 추천에는 1위 `스튜디오 크리에이티브 (97점)`, 2위 `워크디자인 (94점)`, 3위 `(주) 디자인브릿지스튜디오 (80점)` 등으로 표시되고 건수도 22건으로 표기되었으나, 프로젝트 화면(`/senior/projects`)에서 [1순위 디자인] 선택 시 97점/94점 공고가 증발하고 3위였던 `(주) 디자인브릿지스튜디오 (80점)`부터 1위로 노출되며 건수도 28건으로 불일치함.
+  - **근본 원인**:
+    1. 97점(`스튜디오 크리에이티브`), 94점(`워크디자인`) 프로젝트는 기업 회원이 직접 등록한 공고(`localStorage`의 `eojob_projects`)임.
+    2. 홈 화면(`FlowPages.tsx`)은 `getLocalProjects()`를 읽어 워크넷 공고와 `mergeSeniorPostings()`로 병합하여 97점, 94점이 1, 2위로 정상 랭크되었음.
+    3. 반면 프로젝트 탐색 화면(`JobDatabasePage.tsx`)은 검색 API(워크넷 카탈로그 공고)만 표시하고 기업 프로젝트를 전혀 병합하지 않아 97점, 94점 최고 적합도 공고가 아예 누락되고 80점짜리 워크넷 공고부터 노출됨.
+    4. 건수 역시 홈은 워크넷 20개 슬라이스 + 기업 공고 2개 = 22개, 프로젝트 화면은 워크넷만 28개로 카운트되어 불일치함.
+- **해결 및 개선 내용**:
+  1. `src/services/projectService.ts`: `getLocalProjects(): JobPosting[]` 함수를 `export`하여 외부에서 기업 등록 프로젝트를 동기적으로 접근 가능하도록 수정.
+  2. `src/app/JobDatabasePage.tsx`:
+     - 시니어 역할일 때 `getLocalProjects()`와 `getPublishedCompanyProjects()`를 통해 공개 기업 프로젝트를 가져와 `matchesPublishedCompanyProject()`로 필터링.
+     - `mergeSeniorPostings()`를 사용하여 워크넷 공고와 기업 프로젝트를 정상 병합.
+     - `sortBy === 'fit-desc'` 시 `seniorFitScore` 내림차순 정렬을 수행하여 1위 `스튜디오 크리에이티브(97점)`, 2위 `워크디자인(94점)`이 프로젝트 화면에서도 최상단에 동일하게 노출되도록 보장.
+     - 총 검색 결과 건수(`total`, `catalogTotal`, `preferredTotal`)에 매칭된 기업 프로젝트 수(`matchingCompanyProjectsCount`)를 합산하여 워크넷 28건 + 기업 프로젝트 2건 = **총 30건**으로 정확히 집계.
+  3. `src/app/wireframe/FlowPages.tsx`:
+     - 홈 화면의 맞춤 추천 프로젝트 총 건수 계산을 슬라이스 길이가 아닌 실제 전체 검색 건수(28건) + 기업 프로젝트(2건) = **총 30건**으로 일치시킴.
+  4. `src/app/JobDatabasePage.test.ts`:
+     - `vi.mock('@/services/projectService')`에 `getLocalProjects` 모의 함수 추가하여 단위 테스트 격리 및 무결점 유지.
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - Firebase Hosting 배포 완료 (`leedongwook` 채널 & 라이브 호스팅).
+- **다음 전달 사항**:
+  - 홈 화면의 TOP 5 목록(1위 스튜디오 크리에이티브 97점, 2위 워크디자인 94점, 3위 디자인브릿지 80점, 4위 부국티엔씨 80점, 5위 아이디플러스 80점)과 프로젝트 탐색 화면의 1순위 추천 목록 및 총 건수(30건)가 완벽하게 일치합니다.
+
+
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **배경 및 원인 분석**:
   - 홈 화면(`/senior`)의 "맞춤 추천 프로젝트(TOP 5)"와 프로젝트 탐색 화면(`/senior/projects`)의 1순위 추천 목록 간에 순위와 점수 불일치 현상이 발생함.

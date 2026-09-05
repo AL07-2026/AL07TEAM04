@@ -45,6 +45,7 @@ vi.mock('@/services/projectService', () => ({
   createProject: mockedCreateProject,
   deleteProject: mockedDeleteProject,
   fetchProjects: mockedProjects,
+  getLocalProjects: vi.fn(() => []),
   updateProject: mockedUpdateProject,
 }));
 vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));

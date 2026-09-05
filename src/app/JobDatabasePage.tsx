@@ -110,7 +110,12 @@ import {
   getProfilePrimaryCategory,
   getProfilePrimaryPreference,
 } from '@/services/recommendationEngine';
-import { createProject, deleteProject, fetchProjects, updateProject } from '@/services/projectService';
+import { createProject, deleteProject, fetchProjects, getLocalProjects, updateProject } from '@/services/projectService';
+import {
+  getPublishedCompanyProjects,
+  matchesPublishedCompanyProject,
+  mergeSeniorPostings,
+} from '@/app/jobDatabaseProjectVisibility';
 import { createProposalFromPosting } from '@/services/proposalService';
 import { resolveSeniorProfile, type SeniorProfileData } from '@/services/profileService';
 import {
@@ -1654,15 +1659,47 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               )
             : result.items;
 
-          const processedPostings = matchingCatalogProjects.map((item) => {
-            if (typeof item.seniorFitScore === 'number' && item.seniorFitScore > 0) {
-              return item;
-            }
+          let mergedPostings = matchingCatalogProjects;
+          let matchingCompanyProjectsCount = 0;
+
+          if (role === 'senior') {
+            const localProjects = getLocalProjects();
+            const publishedCompanyProjects = getPublishedCompanyProjects(localProjects);
+
+            const matchingCompanyProjects = publishedCompanyProjects.filter((project) =>
+              matchesPublishedCompanyProject(project, {
+                desiredOccupationText: shouldUseOtherOccupation
+                  ? seniorProfile?.desiredOccupationText
+                  : undefined,
+                employmentType: selectedEmploymentType,
+                fallbackOccupationCategories: customFallbackCategories,
+                hiringStage: selectedHiringStage,
+                query,
+                selectedCategory:
+                  selectedCategory === all && primaryProfileCategory
+                    ? primaryProfileCategory
+                    : selectedCategory,
+                workType: selectedWorkType,
+              }),
+            );
+            matchingCompanyProjectsCount = matchingCompanyProjects.length;
+
+            mergedPostings = mergeSeniorPostings(
+              matchingCompanyProjects,
+              matchingCatalogProjects,
+            );
+          }
+
+          const processedPostings = mergedPostings.map((item) => {
+            const currentFilterCategory =
+              selectedCategory === all
+                ? (primaryProfileCategory ?? '전체')
+                : (selectedOccupationCategory ?? '전체');
+
             if (role === 'senior' && seniorProfile) {
-              const currentFilterCategory =
-                selectedCategory === all
-                  ? (primaryProfileCategory ?? '전체')
-                  : (selectedOccupationCategory ?? '전체');
+              if (typeof item.seniorFitScore === 'number' && item.seniorFitScore > 0) {
+                return item;
+              }
               const matchResult = calculatePersonalizedMatch(
                 item,
                 seniorProfile,
@@ -1681,6 +1718,10 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             }
             return item;
           });
+
+          if (sortBy === 'fit-desc') {
+            processedPostings.sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+          }
 
           const nextPostings = processedPostings.slice(0, itemsPerPage);
           const isFirstPreferenceOverviewContext =
@@ -1727,14 +1768,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               }, AUTOMATIC_SEARCH_RETRY_DELAY_MS);
             }
           } else {
+            const adjustedTotal = (result.total ?? 0) + matchingCompanyProjectsCount;
             setServerSearchMeta({
-              catalogTotal: result.catalogTotal,
+              catalogTotal: (result.catalogTotal ?? 0) + matchingCompanyProjectsCount,
               closingSoonTotal: result.closingSoonTotal,
               page: result.page,
               partTimeTotal: result.partTimeTotal,
-              preferredTotal: result.preferredTotal,
-              total: result.total,
-              totalPages: result.totalPages,
+              preferredTotal: (result.preferredTotal ?? 0) + matchingCompanyProjectsCount,
+              total: adjustedTotal,
+              totalPages: Math.max(1, Math.ceil(adjustedTotal / itemsPerPage)),
             });
             setWorknetFeedStatus('success');
             setWorknetFeedMessage(

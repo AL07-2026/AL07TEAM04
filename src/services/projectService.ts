@@ -207,7 +207,7 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
 
 const DELETED_TEST_PROJECT_IDS = new Set(['PROJECT-4716ed6d', 'PROJECT-8fe2dfaa', 'PROJECT-faffec6f']);
 
-function getLocalProjects() {
+export function getLocalProjects(): JobPosting[] {
   const stored = readVersionedStorage<unknown[]>(LOCAL_PROJECTS_KEY);
   if (!Array.isArray(stored)) return [];
   return stored

@@ -996,7 +996,8 @@ export function SeniorHomePage() {
 
         allPersonalizedItems.sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
 
-        const total = allPersonalizedItems.length;
+        const total =
+          (result.total > 0 ? result.total : result.items.length) + matchingCompanyProjects.length;
         setRecommendedJobs(allPersonalizedItems.slice(0, 5));
         setRecommendedProjectsCount(total);
         setHighestFitProject(getHighestFitProject(allPersonalizedItems));
