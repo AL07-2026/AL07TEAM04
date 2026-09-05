@@ -188,12 +188,16 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
       );
       const content = text(request.body?.content, 500);
       if (content.length < 2) throw new CommunityError(400, '댓글을 2자 이상 입력해 주세요.');
+      const parentId = text(request.body?.parentId, 128) || null;
+      const replyToAuthorName = text(request.body?.replyToAuthorName, 64) || null;
       const profile = await requireCommunityProfile(repository, user.uid);
       const communityComment = await repository.createComment(request.params.postId, {
         authorId: user.uid,
         authorName: profile.nickname,
         identityType: 'community-nickname',
         content,
+        parentId,
+        replyToAuthorName,
       });
       return {
         comment: publicCommunityItem(communityComment, user.uid, profile.nickname),
@@ -398,13 +402,38 @@ const repository = {
     const postReference = adminDb.collection('community_posts').doc(postId);
     const commentReference = postReference.collection('comments').doc();
     const now = new Date().toISOString();
+    let commentData = { ...data, createdAt: now, updatedAt: now };
+
     await adminDb.runTransaction(async (transaction) => {
       const post = await transaction.get(postReference);
       if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-      transaction.set(commentReference, { ...data, createdAt: now, updatedAt: now });
+
+      if (data.parentId) {
+        const parentReference = postReference.collection('comments').doc(data.parentId);
+        const parentComment = await transaction.get(parentReference);
+        if (!parentComment.exists) {
+          throw new CommunityError(404, '답글 대상 댓글을 찾을 수 없습니다.');
+        }
+        const parentData = parentComment.data() || {};
+        const normalizedParentId = parentData.parentId || data.parentId;
+        const normalizedReplyTo = data.replyToAuthorName || parentData.authorName || '작성자';
+        commentData = {
+          ...commentData,
+          parentId: normalizedParentId,
+          replyToAuthorName: normalizedReplyTo,
+        };
+      } else {
+        commentData = {
+          ...commentData,
+          parentId: null,
+          replyToAuthorName: null,
+        };
+      }
+
+      transaction.set(commentReference, commentData);
       transaction.update(postReference, { commentCount: FieldValue.increment(1), updatedAt: now });
     });
-    return serialize(commentReference.id, { ...data, createdAt: now, updatedAt: now });
+    return serialize(commentReference.id, commentData);
   },
   async updateComment(postId, commentId, userId, content) {
     const reference = adminDb
@@ -423,18 +452,28 @@ const repository = {
   async deleteComment(postId, commentId, userId) {
     const postReference = adminDb.collection('community_posts').doc(postId);
     const commentReference = postReference.collection('comments').doc(commentId);
+    const repliesSnapshot = await postReference
+      .collection('comments')
+      .where('parentId', '==', commentId)
+      .get();
+
     await adminDb.runTransaction(async (transaction) => {
-      const [post, comment] = await Promise.all([
+      const [post, comment, ...replies] = await Promise.all([
         transaction.get(postReference),
         transaction.get(commentReference),
+        ...repliesSnapshot.docs.map((document) => transaction.get(document.ref)),
       ]);
       if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
       if (!comment.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
       if (comment.data()?.authorId !== userId)
         throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
       transaction.delete(commentReference);
+      replies.forEach((reply) => {
+        if (reply.exists) transaction.delete(reply.ref);
+      });
+      const totalDeleted = 1 + replies.filter((reply) => reply.exists).length;
       transaction.update(postReference, {
-        commentCount: Math.max(0, Number(post.data()?.commentCount || 0) - 1),
+        commentCount: Math.max(0, Number(post.data()?.commentCount || 0) - totalDeleted),
       });
     });
   },

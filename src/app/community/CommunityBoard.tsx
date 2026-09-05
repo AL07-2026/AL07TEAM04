@@ -1,6 +1,7 @@
 import {
   Check,
   ChevronDown,
+  CornerDownRight,
   Flag,
   Heart,
   MessageCircle,
@@ -76,6 +77,9 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [category, setCategory] = useState<'all' | CommunityCategory>('all');
   const [draft, setDraft] = useState<CommunityPostInput>(emptyDraft);
   const [comment, setComment] = useState('');
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [replyTargetAuthor, setReplyTargetAuthor] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editingId, setEditingId] = useState('');
@@ -103,6 +107,21 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     () => posts.filter((post) => category === 'all' || post.category === category),
     [category, posts],
   );
+
+  const { rootComments, repliesMap } = useMemo(() => {
+    const roots: CommunityComment[] = [];
+    const replies = new Map<string, CommunityComment[]>();
+    for (const item of comments) {
+      if (item.parentId) {
+        const list = replies.get(item.parentId) || [];
+        list.push(item);
+        replies.set(item.parentId, list);
+      } else {
+        roots.push(item);
+      }
+    }
+    return { rootComments: roots, repliesMap: replies };
+  }, [comments]);
 
   useEffect(() => {
     let active = true;
@@ -237,6 +256,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const selectPost = (postId: string) => {
     setComments([]);
     cancelEditComment();
+    cancelReply();
     setSelectedId(postId);
   };
 
@@ -345,18 +365,75 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     }
   };
 
+  const startReply = (parentComment: CommunityComment, targetComment?: CommunityComment) => {
+    if (!user) {
+      moveToLogin();
+      return;
+    }
+    if (!requireParticipationProfile()) return;
+    const rootId = parentComment.parentId || parentComment.id;
+    setReplyingToCommentId(rootId);
+    setReplyTargetAuthor(targetComment ? authorLabel(targetComment) : authorLabel(parentComment));
+    setReplyContent('');
+  };
+
+  const cancelReply = () => {
+    setReplyingToCommentId(null);
+    setReplyTargetAuthor('');
+    setReplyContent('');
+  };
+
+  const saveReply = async (rootCommentId: string) => {
+    if (!selectedPost || !requireParticipationProfile() || saving) return;
+    if (replyContent.trim().length < 2) return setMessage('답글을 2자 이상 입력해 주세요.');
+    setSaving(true);
+    try {
+      const saved = await createCommunityComment(
+        selectedPost.id,
+        replyContent,
+        rootCommentId,
+        replyTargetAuthor,
+      );
+      setComments((current) => [...current, saved]);
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === selectedPost.id ? { ...post, commentCount: post.commentCount + 1 } : post,
+        ),
+      );
+      cancelReply();
+      setMessage('답글을 등록했습니다.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '답글을 등록하지 못했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const removeComment = async (commentId: string) => {
     if (!selectedPost) return;
     try {
       await deleteCommunityComment(selectedPost.id, commentId);
-      setComments((current) => current.filter((item) => item.id !== commentId));
+      const targetComment = comments.find((item) => item.id === commentId);
+      const isRoot = !targetComment?.parentId;
+      const childCount = isRoot
+        ? comments.filter((item) => item.parentId === commentId).length
+        : 0;
+      const totalDeleted = 1 + childCount;
+
+      setComments((current) =>
+        current.filter((item) => item.id !== commentId && item.parentId !== commentId),
+      );
       setPosts((current) =>
         current.map((post) =>
           post.id === selectedPost.id
-            ? { ...post, commentCount: Math.max(0, post.commentCount - 1) }
+            ? { ...post, commentCount: Math.max(0, post.commentCount - totalDeleted) }
             : post,
         ),
       );
+      if (replyingToCommentId === commentId) {
+        cancelReply();
+      }
+      setMessage('댓글을 삭제했습니다.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '댓글을 삭제하지 못했습니다.');
     }
@@ -905,69 +982,220 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                       아직 댓글이 없습니다.
                     </p>
                   ) : (
-                    comments.map((item) => (
-                      <article className="border-t border-[#E8E2D6] py-4" key={item.id}>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <strong className="text-sm">{authorLabel(item)}</strong>
-                            <span className="ml-2 text-xs text-[#64716D]">
-                              {dateLabel(item.createdAt)}
-                            </span>
-                          </div>
-                          {item.ownedByMe ? (
+                    rootComments.map((root) => {
+                      const replies = repliesMap.get(root.id) || [];
+                      const isReplying = replyingToCommentId === root.id;
+                      return (
+                        <article className="border-t border-[#E8E2D6] py-4" key={root.id}>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <strong className="text-sm">{authorLabel(root)}</strong>
+                              <span className="ml-2 text-xs text-[#64716D]">
+                                {dateLabel(root.createdAt)}
+                              </span>
+                            </div>
                             <div className="flex items-center gap-1">
                               <button
-                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
-                                onClick={() => startEditComment(item)}
+                                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                onClick={() => startReply(root)}
                                 type="button"
                               >
-                                수정
+                                <CornerDownRight aria-hidden="true" className="size-3.5" />
+                                답글
                               </button>
-                              <button
-                                className="min-h-11 rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700"
-                                onClick={() => void removeComment(item.id)}
-                                type="button"
-                              >
-                                삭제
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                        {editingCommentId === item.id ? (
-                          <div className="mt-2 space-y-2">
-                            <label className="sr-only" htmlFor={`edit-comment-${item.id}`}>
-                              댓글 수정 내용
-                            </label>
-                            <input
-                              className="h-11 w-full rounded-xl border border-[#D8D1C2] bg-white px-3.5 text-sm font-medium text-[#17212B] focus:outline-none focus:border-[#B8AF9C] transition-all"
-                              id={`edit-comment-${item.id}`}
-                              maxLength={500}
-                              onChange={(event) => setEditingCommentContent(event.target.value)}
-                              value={editingCommentContent}
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                className="min-h-9 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
-                                disabled={saving}
-                                onClick={() => void saveEditedComment(item.id)}
-                                type="button"
-                              >
-                                저장
-                              </button>
-                              <button
-                                className="min-h-9 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
-                                onClick={cancelEditComment}
-                                type="button"
-                              >
-                                취소
-                              </button>
+                              {root.ownedByMe ? (
+                                <>
+                                  <button
+                                    className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                    onClick={() => startEditComment(root)}
+                                    type="button"
+                                  >
+                                    수정
+                                  </button>
+                                  <button
+                                    className="min-h-11 rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 cursor-pointer"
+                                    onClick={() => void removeComment(root.id)}
+                                    type="button"
+                                  >
+                                    삭제
+                                  </button>
+                                </>
+                              ) : null}
                             </div>
                           </div>
-                        ) : (
-                          <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{item.content}</p>
-                        )}
-                      </article>
-                    ))
+                          {editingCommentId === root.id ? (
+                            <div className="mt-2 space-y-2">
+                              <label className="sr-only" htmlFor={`edit-comment-${root.id}`}>
+                                댓글 수정 내용
+                              </label>
+                              <input
+                                className="h-11 w-full rounded-xl border border-[#D8D1C2] bg-white px-3.5 text-sm font-medium text-[#17212B] focus:outline-none focus:border-[#B8AF9C] transition-all"
+                                id={`edit-comment-${root.id}`}
+                                maxLength={500}
+                                onChange={(event) => setEditingCommentContent(event.target.value)}
+                                value={editingCommentContent}
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  className="min-h-9 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                  disabled={saving}
+                                  onClick={() => void saveEditedComment(root.id)}
+                                  type="button"
+                                >
+                                  저장
+                                </button>
+                                <button
+                                  className="min-h-9 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                  onClick={cancelEditComment}
+                                  type="button"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#17212B]">{root.content}</p>
+                          )}
+
+                          {replies.length > 0 ? (
+                            <div className="mt-3 space-y-2.5 border-l-2 border-[#D8D1C2] pl-3.5 sm:pl-4 sm:ml-2">
+                              {replies.map((reply) => (
+                                <div
+                                  key={reply.id}
+                                  className="rounded-xl bg-[#F7F5F0] p-3 text-sm"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <CornerDownRight aria-hidden="true" className="size-3.5 text-[#53645F] shrink-0" />
+                                      <strong className="text-xs font-bold sm:text-sm">{authorLabel(reply)}</strong>
+                                      {reply.replyToAuthorName ? (
+                                        <span className="rounded bg-[#E6F0ED] px-1.5 py-0.5 text-xs font-bold text-[#173F3A]">
+                                          @{reply.replyToAuthorName}
+                                        </span>
+                                      ) : null}
+                                      <span className="text-xs text-[#64716D]">
+                                        {dateLabel(reply.createdAt)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                        onClick={() => startReply(root, reply)}
+                                        type="button"
+                                      >
+                                        <CornerDownRight aria-hidden="true" className="size-3" />
+                                        답글
+                                      </button>
+                                      {reply.ownedByMe ? (
+                                        <>
+                                          <button
+                                            className="min-h-9 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                            onClick={() => startEditComment(reply)}
+                                            type="button"
+                                          >
+                                            수정
+                                          </button>
+                                          <button
+                                            className="min-h-9 rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 cursor-pointer"
+                                            onClick={() => void removeComment(reply.id)}
+                                            type="button"
+                                          >
+                                            삭제
+                                          </button>
+                                        </>
+                                      ) : null}
+                                    </div>
+                                  </div>
+
+                                  {editingCommentId === reply.id ? (
+                                    <div className="mt-2 space-y-2">
+                                      <label className="sr-only" htmlFor={`edit-comment-${reply.id}`}>
+                                        답글 수정 내용
+                                      </label>
+                                      <input
+                                        className="h-10 w-full rounded-xl border border-[#D8D1C2] bg-white px-3 text-sm font-medium text-[#17212B] focus:outline-none focus:border-[#B8AF9C] transition-all"
+                                        id={`edit-comment-${reply.id}`}
+                                        maxLength={500}
+                                        onChange={(event) => setEditingCommentContent(event.target.value)}
+                                        value={editingCommentContent}
+                                      />
+                                      <div className="flex gap-2">
+                                        <button
+                                          className="min-h-8 rounded-lg bg-[#173F3A] px-3 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                          disabled={saving}
+                                          onClick={() => void saveEditedComment(reply.id)}
+                                          type="button"
+                                        >
+                                          저장
+                                        </button>
+                                        <button
+                                          className="min-h-8 rounded-lg border border-[#D8D1C2] bg-white px-3 text-xs font-bold text-[#53645F] hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                          onClick={cancelEditComment}
+                                          type="button"
+                                        >
+                                          취소
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-[#17212B]">
+                                      {reply.content}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {isReplying ? (
+                            <div className="mt-3 border-l-2 border-[#173F3A] pl-3.5 sm:pl-4 sm:ml-2">
+                              <div className="rounded-xl bg-[#EBF2F0] p-3">
+                                <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#173F3A]">
+                                  <span>@{replyTargetAuthor} 님에게 답글 작성</span>
+                                  <button
+                                    className="text-xs font-medium text-[#53645F] hover:underline cursor-pointer"
+                                    onClick={cancelReply}
+                                    type="button"
+                                  >
+                                    취소
+                                  </button>
+                                </div>
+                                <div className="flex gap-2">
+                                  <label className="sr-only" htmlFor={`reply-input-${root.id}`}>
+                                    답글 내용
+                                  </label>
+                                  <input
+                                    autoFocus
+                                    className="h-11 min-w-0 flex-1 rounded-xl border border-[#C9D6D2] bg-white px-3.5 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#173F3A] transition-all"
+                                    id={`reply-input-${root.id}`}
+                                    maxLength={500}
+                                    onChange={(event) => setReplyContent(event.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        void saveReply(root.id);
+                                      }
+                                    }}
+                                    placeholder={`@${replyTargetAuthor} 님에게 답글을 남겨주세요`}
+                                    value={replyContent}
+                                  />
+                                  <button
+                                    aria-label="답글 등록"
+                                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-xl bg-[#173F3A] px-3.5 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-50"
+                                    disabled={saving}
+                                    onClick={() => void saveReply(root.id)}
+                                    type="button"
+                                  >
+                                    <Send aria-hidden="true" className="size-3.5" />
+                                    <span>등록</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : null}
+                        </article>
+                      );
+                    })
                   )}
                 </div>
               </div>

@@ -8,6 +8,7 @@ const { authState, getIdTokenMock } = vi.hoisted(() => ({
 vi.mock('@/lib/firebase', () => ({ auth: authState }));
 
 import {
+  createCommunityComment,
   createCommunityPost,
   deleteCommunityAccountData,
   getCommunityProfile,
@@ -132,5 +133,36 @@ describe('communityService', () => {
     expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('PATCH');
     expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/community/account');
     expect(fetchMock.mock.calls[1]?.[1]?.method).toBe('DELETE');
+  });
+
+  it('대댓글 작성 시 parentId와 replyToAuthorName을 본문에 포함하여 요청한다', async () => {
+    authState.currentUser = { getIdToken: getIdTokenMock };
+    const reply = {
+      authorName: '후배시니어',
+      content: '좋은 팁 감사합니다!',
+      createdAt: '2026-09-04T00:02:00.000Z',
+      id: 'comment-2',
+      ownedByMe: true,
+      parentId: 'comment-1',
+      replyToAuthorName: '선배시니어',
+      updatedAt: '2026-09-04T00:02:00.000Z',
+    };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ comment: reply }), { status: 200 }));
+
+    await expect(
+      createCommunityComment('post-1', '좋은 팁 감사합니다!', 'comment-1', '선배시니어'),
+    ).resolves.toEqual(reply);
+
+    const [url, request] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe('/api/community/posts/post-1/comments');
+    expect(request?.method).toBe('POST');
+    expect(JSON.parse(request?.body as string)).toEqual({
+      content: '좋은 팁 감사합니다!',
+      parentId: 'comment-1',
+      replyToAuthorName: '선배시니어',
+    });
+    expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer community-token');
   });
 });

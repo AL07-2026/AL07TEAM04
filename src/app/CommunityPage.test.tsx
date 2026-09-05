@@ -245,4 +245,140 @@ describe('CommunityPage', () => {
       }),
     );
   });
+
+  it('댓글에 답글(대댓글)을 작성할 수 있다', async () => {
+    authState.user = { uid: 'user-1' };
+    vi.mocked(communityService.getCommunityProfile).mockResolvedValue({ nickname: '경험나눔이' });
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValue([
+      {
+        authorName: '작성자',
+        category: 'experience',
+        commentCount: 1,
+        content: '게시글 본문',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'post-1',
+        likeCount: 0,
+        likedByMe: false,
+        ownedByMe: false,
+        title: '첫 번째 글',
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.listCommunityComments).mockResolvedValue([
+      {
+        authorName: '원댓글러',
+        content: '원래 댓글입니다.',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'comment-1',
+        ownedByMe: false,
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.createCommunityComment).mockResolvedValue({
+      authorName: '경험나눔이',
+      content: '답글을 작성합니다!',
+      createdAt: '2026-09-04T00:02:00.000Z',
+      id: 'comment-reply-1',
+      ownedByMe: true,
+      parentId: 'comment-1',
+      replyToAuthorName: '원댓글러',
+      updatedAt: '2026-09-04T00:02:00.000Z',
+    });
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('원래 댓글입니다.')).toBeInTheDocument();
+
+    // '답글' 버튼 클릭
+    fireEvent.click(screen.getByRole('button', { name: /답글/ }));
+
+    // 인라인 답글 입력창 표시 확인
+    const replyInput = screen.getByLabelText('답글 내용');
+    expect(replyInput).toBeInTheDocument();
+    expect(screen.getByText('@원댓글러 님에게 답글 작성')).toBeInTheDocument();
+
+    // 답글 내용 입력 후 등록
+    fireEvent.change(replyInput, { target: { value: '답글을 작성합니다!' } });
+    fireEvent.click(screen.getByRole('button', { name: '답글 등록' }));
+
+    await waitFor(() =>
+      expect(communityService.createCommunityComment).toHaveBeenCalledWith(
+        'post-1',
+        '답글을 작성합니다!',
+        'comment-1',
+        '원댓글러',
+      ),
+    );
+    expect(await screen.findByText('답글을 작성합니다!')).toBeInTheDocument();
+    expect(screen.getByText('@원댓글러')).toBeInTheDocument();
+  });
+
+  it('부모 댓글 삭제 시 하위 대댓글도 화면에서 함께 제거된다', async () => {
+    authState.user = { uid: 'user-1' };
+    vi.mocked(communityService.getCommunityProfile).mockResolvedValue({ nickname: '경험나눔이' });
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValue([
+      {
+        authorName: '경험나눔이',
+        category: 'experience',
+        commentCount: 2,
+        content: '게시글 본문',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'post-1',
+        likeCount: 0,
+        likedByMe: false,
+        ownedByMe: true,
+        title: '첫 번째 글',
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.listCommunityComments).mockResolvedValue([
+      {
+        authorName: '경험나눔이',
+        content: '부모 댓글입니다.',
+        createdAt: '2026-09-04T00:00:00.000Z',
+        id: 'comment-root',
+        ownedByMe: true,
+        updatedAt: '2026-09-04T00:00:00.000Z',
+      },
+      {
+        authorName: '다른사용자',
+        content: '자식 대댓글입니다.',
+        createdAt: '2026-09-04T00:01:00.000Z',
+        id: 'comment-child',
+        ownedByMe: false,
+        parentId: 'comment-root',
+        replyToAuthorName: '경험나눔이',
+        updatedAt: '2026-09-04T00:01:00.000Z',
+      },
+    ]);
+    vi.mocked(communityService.deleteCommunityComment).mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('부모 댓글입니다.')).toBeInTheDocument();
+    expect(screen.getByText('자식 대댓글입니다.')).toBeInTheDocument();
+
+    // 부모 댓글의 삭제 버튼 클릭
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }));
+
+    await waitFor(() =>
+      expect(communityService.deleteCommunityComment).toHaveBeenCalledWith(
+        'post-1',
+        'comment-root',
+      ),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('부모 댓글입니다.')).not.toBeInTheDocument();
+      expect(screen.queryByText('자식 대댓글입니다.')).not.toBeInTheDocument();
+    });
+  });
 });

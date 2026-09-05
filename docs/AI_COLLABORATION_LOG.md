@@ -16,6 +16,29 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-05] `develop` 브랜치 동기화 및 커뮤니티 댓글의 대댓글(답글) 기능 구현
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **주요 내용**:
+  1. **`origin/develop` 최신 동기화**:
+     - `origin/develop` 최신 변경사항(관리자 초대 관리 기능 등)을 로컬 및 작업 브랜치(`leedongwook`)에 완벽 동기화 완료.
+  2. **커뮤니티 댓글의 대댓글(답글) 기능 구현**:
+     - **계층 구조 설계**: 시니어 가독성 및 모바일 레이아웃(360px+) 보호를 위해 1단계 들여쓰기(Depth 1) 플랫 스레드 모델 적용. 대댓글에 다시 답글을 달아도 최상위 부모 ID를 유지하며 `@상대방활동명` 멘션 배지로 수신 대상 식별.
+     - **백엔드 (Cloud Functions)**:
+       - `createComment`: 부모 댓글 존재 검증, 1-depth 강제를 위한 부모 ID 정규화(`parentData.parentId || data.parentId`), 작성 대상 닉네임 폴백 처리.
+       - `deleteComment`: 부모 댓글 삭제 시 하위 대댓글 연쇄 삭제(Cascade Delete) 및 총 삭제 개수만큼 게시글의 `commentCount` 안전 차감.
+     - **프론트엔드 UI/UX**:
+       - `CommunityBoard.tsx`: 댓글별 '답글' 버튼, 인라인 답글 입력 폼(44px 이상 시니어 터치 타깃, Enter 전송, ESC/취소 버튼), `@상대방` 멘션 배지, 부모 댓글 삭제 시 연쇄 UI 정리.
+       - 비로그인 유저가 '답글' 클릭 시 안전하게 로그인 화면으로 리다이렉트(`moveToLogin()`).
+- **수정한 파일 목록**:
+  - `functions/lib/community.mjs`: 대댓글 생성 및 연쇄 삭제 로직 구현
+  - `functions/lib/community.test.mjs`: 대댓글 생성 백엔드 단위 테스트 추가 (9 passed)
+  - `src/services/communityService.ts`: `parentId`, `replyToAuthorName` 타입 및 API 페이로드 확장
+  - `src/services/communityService.test.ts`: 대댓글 서비스 단위 테스트 추가 (7 passed)
+  - `src/app/community/CommunityBoard.tsx`: 답글 인라인 작성 및 대댓글 렌더링 UI 구현
+  - `src/app/CommunityPage.test.tsx`: 답글 작성 및 부모 댓글 삭제 연쇄 제거 통합 테스트 추가 (9 passed)
+- **검증 결과**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 테스트 파일 391개 테스트 100% 통과, Vite 빌드 성공.
+
 ### [2026-09-04] 로그인 상태임에도 커뮤니티 진입 시 '로그인 후 이용해 주세요' 노출 버그 원천 차단
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **근본 원인 분석**:

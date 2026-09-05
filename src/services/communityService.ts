@@ -28,6 +28,8 @@ export interface CommunityComment {
   id: string;
   ownedByMe: boolean;
   updatedAt: string;
+  parentId?: string | null;
+  replyToAuthorName?: string | null;
 }
 
 export type CommunityPostInput = Pick<CommunityPost, 'category' | 'content' | 'title'>;
@@ -129,10 +131,19 @@ export async function listCommunityComments(postId: string): Promise<CommunityCo
 export async function createCommunityComment(
   postId: string,
   content: string,
+  parentId?: string | null,
+  replyToAuthorName?: string | null,
 ): Promise<CommunityComment> {
   const result = await request<{ comment: CommunityComment }>(
     `/api/community/posts/${encodeURIComponent(postId)}/comments`,
-    { body: JSON.stringify({ content }), method: 'POST' },
+    {
+      body: JSON.stringify({
+        content,
+        parentId: parentId || null,
+        replyToAuthorName: replyToAuthorName || null,
+      }),
+      method: 'POST',
+    },
     true,
   );
   return result.comment;

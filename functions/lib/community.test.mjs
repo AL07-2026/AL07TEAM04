@@ -122,6 +122,51 @@ describe('community API', () => {
     expect(response.body.comment).not.toHaveProperty('authorId');
   });
 
+  it('대댓글 작성 시 parentId와 replyToAuthorName을 저장소에 전달한다', async () => {
+    const store = repository();
+    store.createComment.mockImplementation(async (_postId, data) => ({
+      id: 'comment-2',
+      ...data,
+    }));
+    const handlers = createCommunityHandlers({
+      repository: store,
+      verifyIdToken: vi.fn().mockResolvedValue({ uid: 'user-2' }),
+    });
+    const response = responseHarness();
+
+    await handlers.createComment(
+      {
+        body: {
+          content: '대댓글 내용입니다.',
+          parentId: 'comment-1',
+          replyToAuthorName: '원댓글작성자',
+        },
+        headers: { authorization: 'Bearer token' },
+        params: { postId: 'post-1' },
+      },
+      response,
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(store.createComment).toHaveBeenCalledWith(
+      'post-1',
+      expect.objectContaining({
+        authorId: 'user-2',
+        authorName: '경험나눔이',
+        content: '대댓글 내용입니다.',
+        parentId: 'comment-1',
+        replyToAuthorName: '원댓글작성자',
+      }),
+    );
+    expect(response.body.comment).toMatchObject({
+      content: '대댓글 내용입니다.',
+      parentId: 'comment-1',
+      replyToAuthorName: '원댓글작성자',
+      ownedByMe: true,
+    });
+    expect(response.body.comment).not.toHaveProperty('authorId');
+  });
+
   it('회원 탈퇴 정리는 인증 토큰의 UID로만 실행한다', async () => {
     const store = repository();
     const handlers = createCommunityHandlers({
