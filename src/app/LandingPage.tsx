@@ -68,53 +68,70 @@ export function LandingPage() {
             <BrandLogo />
           </button>
 
-          <nav className="ml-auto flex items-center gap-1 sm:gap-2" aria-label="빠른 이동">
+          <nav className="ml-auto flex items-center gap-1.5 sm:gap-2" aria-label="빠른 이동">
             {user ? (
               <>
-                <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-1 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-                  {user.role === 'company' ? '🏢 기업 로그인됨' : '👤 인재 로그인됨'}
-                </span>
+                {/* 1. 회원 구분 뱃지 */}
+                <div
+                  className="hidden sm:inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D5DDD8] bg-[#F2F7F5] px-3.5 text-xs font-bold text-[#173F3A]"
+                  aria-label={user.role === 'company' ? '기업 회원으로 로그인됨' : '인재 회원으로 로그인됨'}
+                >
+                  <span className="size-2 rounded-full bg-[#10B981] ring-2 ring-[#10B981]/25" aria-hidden="true" />
+                  {user.role === 'company' ? (
+                    <span className="flex items-center gap-1.5">
+                      <Building2 className="size-3.5 shrink-0 text-[#173F3A]" aria-hidden="true" />
+                      <span>기업 회원</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      <UserRound className="size-3.5 shrink-0 text-[#173F3A]" aria-hidden="true" />
+                      <span>인재 회원</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* 2. 내 홈 메인 버튼 (Primary CTA) */}
                 <button
                   type="button"
                   onClick={() => {
                     trackButtonClick('nav_user_home');
                     void navigate(homePath);
                   }}
-                  className="group relative flex h-9 items-center gap-1.5 rounded-full bg-[#173F3A] px-3.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-3.5 sm:px-4 text-sm font-bold text-white shadow-xs transition-[background-color,transform] duration-150 hover:bg-[#21544E] active:scale-[0.98] cursor-pointer"
                   aria-label="내 홈으로 이동"
                   title="내 홈으로 이동"
                 >
-                  <Home className="size-4" strokeWidth={2} aria-hidden="true" />
+                  <Home className="size-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
                   <span>내 홈</span>
                 </button>
+
+                {/* 3. 관리자 버튼 (관리자일 때) */}
                 {isAdmin ? (
                   <button
                     type="button"
                     onClick={() => void navigate('/admin/dashboard')}
-                    className="group relative grid size-9 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+                    className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-2.5 sm:px-3 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
                     aria-label="관리자 페이지"
                     title="관리자 페이지"
                   >
-                    <ShieldCheck className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                      관리자 페이지
-                    </span>
+                    <ShieldCheck className="size-4.5 shrink-0 text-[#173F3A]" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="hidden md:inline">관리자</span>
                   </button>
                 ) : null}
+
+                {/* 4. 로그아웃 버튼 */}
                 <button
                   type="button"
                   onClick={async () => {
                     trackButtonClick('nav_logout');
                     await signOut();
                   }}
-                  className="group relative grid size-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-2.5 sm:px-3 text-sm font-bold text-[#5A6872] transition-[color,background-color,border-color,transform] duration-150 hover:border-rose-200 hover:bg-rose-50/60 hover:text-rose-600 active:scale-[0.98] cursor-pointer"
                   aria-label="로그아웃"
                   title="로그아웃"
                 >
-                  <LogOut className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    로그아웃
-                  </span>
+                  <LogOut className="size-4.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span className="hidden sm:inline">로그아웃</span>
                 </button>
               </>
             ) : (
@@ -125,14 +142,12 @@ export function LandingPage() {
                     trackButtonClick('nav_login_senior');
                     void navigate('/login?role=senior');
                   }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-3 sm:px-3.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
                   aria-label="인재로 로그인"
                   title="인재로 로그인"
                 >
-                  <UserRound className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    인재로 로그인
-                  </span>
+                  <UserRound className="size-4.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span className="hidden sm:inline">인재 로그인</span>
                 </button>
                 <button
                   type="button"
@@ -140,14 +155,12 @@ export function LandingPage() {
                     trackButtonClick('nav_login_company');
                     void navigate('/login?role=company');
                   }}
-                  className="group relative grid size-10 place-items-center rounded-md text-[#173f3a] transition hover:bg-[#edf6f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173f3a] cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-3 sm:px-3.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
                   aria-label="기업으로 로그인"
                   title="기업으로 로그인"
                 >
-                  <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-[#17212b] px-2 py-1 text-xs font-semibold text-white shadow-md group-hover:block group-focus-visible:block">
-                    기업으로 로그인
-                  </span>
+                  <Building2 className="size-4.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <span className="hidden sm:inline">기업 로그인</span>
                 </button>
               </>
             )}
