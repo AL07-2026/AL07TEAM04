@@ -16,6 +16,28 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-05] 프로젝트 로딩 시 건수 깜빡임(25건 ➔ 8,853건) 방지 및 카탈로그 메타데이터 캐시 보존
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 원인 분석**:
+  - 프로젝트 DB 페이지(`JobDatabasePage`) 초기 진입 시 서버 API 지연/콜드 스타트 동안 로컬 시드 25건 기반 Fast Fallback(`createFallbackSearchResult`)이 먼저 화면에 반영되어 총 건수가 `25건`으로 노출된 후, 백엔드 Cloud Functions API 응답(8,853건)이 도착하며 숫자가 점프하는 시각적 깜빡임 발생.
+- **개선 내용**:
+  1. **카탈로그 메타데이터 세션/로컬 스토리지 캐싱 (`jobSearchService.ts`)**:
+     - `readLastCatalogMeta()`, `writeLastCatalogMeta()` 도입 (`eojob_last_catalog_meta_v1`).
+     - 검색 서버 응답 성공 시 최신 카탈로그 통계(`catalogTotal`, `preferredTotal`, `partTimeTotal`, `closingSoonTotal`)를 로컬 스토리지에 캐시.
+     - 네트워크 지연 시의 Fast Fallback에서도 직전 캐시된 메타데이터를 유지하여 재방문 시 25건으로 덮어쓰지 않음.
+  2. **초기 로딩 시 부드러운 스켈레톤 인디케이터 처리 (`JobDatabasePage.tsx`)**:
+     - 첫 방문자처럼 캐시가 없거나 서버 응답 대기 중일 때 25건을 노출하지 않고 `···` 로딩 인디케이터를 표시하여 혼란 제거.
+     - 메타데이터 통계 카드 및 검색 결과 카운트에 일관된 로딩 표현 적용.
+  3. **React 19 / ESLint 룰 무결성 보장**:
+     - React 19 컴파일러 규칙(`react-hooks/refs`) 및 `react-hooks/exhaustive-deps`를 준수하도록 순수 헬퍼(`readLastCatalogMeta()`)와 안전한 state setter 패턴 적용.
+- **수정한 파일 목록**:
+  - `src/services/jobSearchService.ts`: 카탈로그 메타데이터 캐시 로직 및 Fallback 건수 보존
+  - `src/app/JobDatabasePage.tsx`: 캐시 메타 바인딩, 초기 로딩 `···` 스켈레톤 인디케이터, 린트 클린업
+  - `src/app/JobDatabasePage.test.ts`: 모킹에 `readLastCatalogMeta` 추가
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 파일 392개 테스트 100% 통과, Vite 빌드 성공.
+  - Firebase Hosting `leedongwook` 채널 및 메인 라이브 사이트(`https://al07team04-bdfcd.web.app`) 배포 완료.
+
 ### [2026-09-05] 랜딩 페이지 로그인/회원 헤더 네비게이션 디자인 시스템 통일
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **배경 및 원인 분석**:

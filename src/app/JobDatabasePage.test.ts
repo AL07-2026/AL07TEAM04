@@ -35,7 +35,11 @@ vi.mock('react-router', () => ({
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: mockAuthState.user }) }));
-vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
+vi.mock('@/services/jobSearchService', () => ({
+  clearJobSearchClientCache: vi.fn(),
+  readLastCatalogMeta: vi.fn(() => null),
+  searchFullJobDatabase: mockedSearch,
+}));
 vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
 vi.mock('@/services/projectService', () => ({
   createProject: mockedCreateProject,

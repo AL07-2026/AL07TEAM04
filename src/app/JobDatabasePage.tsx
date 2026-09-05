@@ -95,6 +95,7 @@ import {
 } from '@/services/projectFilterPresentation';
 import {
   clearJobSearchClientCache,
+  readLastCatalogMeta,
   searchFullJobDatabase,
   type FullJobSearchResult,
   type JobOccupationFilter,
@@ -1354,7 +1355,18 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     preferredTotal: number;
     partTimeTotal: number;
     closingSoonTotal: number;
-  } | null>(null);
+  } | null>(() => {
+    const cached = readLastCatalogMeta();
+    if (cached && cached.catalogTotal > 25) {
+      return {
+        catalogTotal: cached.catalogTotal,
+        preferredTotal: cached.preferredTotal,
+        partTimeTotal: cached.partTimeTotal,
+        closingSoonTotal: cached.closingSoonTotal,
+      };
+    }
+    return null;
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const detailContainerRef = useRef<HTMLDivElement>(null);
@@ -1645,15 +1657,33 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               normalizeOccupationCategory(selectedCategory) === primaryProfileCategory);
 
           if (result.isFallback) {
-            setServerSearchMeta({
-              catalogTotal: result.catalogTotal,
-              closingSoonTotal: result.closingSoonTotal,
+            const currentOverview = readLastCatalogMeta();
+            setServerSearchMeta((prev) => ({
+              catalogTotal:
+                currentOverview?.catalogTotal && currentOverview.catalogTotal > 25
+                  ? currentOverview.catalogTotal
+                  : prev?.catalogTotal && prev.catalogTotal > 25
+                    ? prev.catalogTotal
+                    : result.catalogTotal,
+              closingSoonTotal:
+                currentOverview?.closingSoonTotal ??
+                prev?.closingSoonTotal ??
+                result.closingSoonTotal,
               page: result.page,
-              partTimeTotal: result.partTimeTotal,
-              preferredTotal: result.preferredTotal,
-              total: result.total,
+              partTimeTotal:
+                currentOverview?.partTimeTotal ??
+                prev?.partTimeTotal ??
+                result.partTimeTotal,
+              preferredTotal:
+                currentOverview?.preferredTotal ??
+                prev?.preferredTotal ??
+                result.preferredTotal,
+              total:
+                prev?.total && prev.total > 25
+                  ? prev.total
+                  : result.total,
               totalPages: result.totalPages,
-            });
+            }));
             setWorknetFeedStatus('unavailable');
             setWorknetFeedMessage(
               '실시간 채용공고를 다시 연결하고 있습니다. 임시 목록을 먼저 표시합니다.',
@@ -3663,7 +3693,9 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           onClick={role === 'company' ? () => setIsCompanyProjectModalOpen(true) : undefined}
           value={
             role === 'senior'
-              ? `${overviewCatalogTotal.toLocaleString()}건`
+              ? overviewCatalogTotal > 25
+                ? `${overviewCatalogTotal.toLocaleString()}건`
+                : '···'
               : `${postings.length}건`
           }
         />
@@ -3674,17 +3706,31 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               : '맞춤 희망 조건 부합 기준'
           }
           label="추천 건수"
-          value={`${overviewRecommendedTotal.toLocaleString()}건`}
+          value={
+            role === 'senior' && !user
+              ? '0건'
+              : overviewCatalogTotal > 25 || role !== 'senior'
+                ? `${overviewRecommendedTotal.toLocaleString()}건`
+                : '···'
+          }
         />
         <DatabaseMetric
           caption={role === 'senior' ? '시간제·파트타임·유연근무 기준' : '현재 지원 접수 가능'}
           label="시간제 채용"
-          value={`${overviewPartTimeTotal.toLocaleString()}건`}
+          value={
+            overviewCatalogTotal > 25 || role !== 'senior'
+              ? `${overviewPartTimeTotal.toLocaleString()}건`
+              : '···'
+          }
         />
         <DatabaseMetric
           caption={role === 'senior' ? '마감일까지 7일 이내' : '등록 마감일 기준'}
           label="마감 임박"
-          value={`${overviewClosingSoonTotal.toLocaleString()}건`}
+          value={
+            overviewCatalogTotal > 25 || role !== 'senior'
+              ? `${overviewClosingSoonTotal.toLocaleString()}건`
+              : '···'
+          }
         />
       </div>
 
@@ -3925,12 +3971,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       <div className="flex items-center justify-between gap-3 text-[13px] font-bold text-slate-500">
         <span className="min-w-0 truncate">
           {query.trim() ? '검색 결과' : '추천 결과'}{' '}
-          {isFilterTransition ? (
+          {isFilterTransition || (role === 'senior' && isLoadingPostings && overviewCatalogTotal <= 25) ? (
             <strong aria-label="결과 업데이트 중" className="text-[#4B756E]">···</strong>
           ) : (
             <strong className="text-[#173F3A]">{displayedResultCount}</strong>
           )}
-          {isFilterTransition ? null : '건'}
+          {isFilterTransition || (role === 'senior' && isLoadingPostings && overviewCatalogTotal <= 25) ? null : '건'}
         </span>
         <div className="relative inline-block text-left shrink-0" ref={sortDropdownRef}>
           <button

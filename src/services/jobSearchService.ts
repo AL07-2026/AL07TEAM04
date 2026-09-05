@@ -67,6 +67,40 @@ const SEARCH_REQUEST_TIMEOUT_MS = 4_000;
 const SEARCH_RETRY_REQUEST_TIMEOUT_MS = 15_000;
 const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSearchResult }>();
 
+const LAST_CATALOG_META_KEY = 'eojob_last_catalog_meta_v1';
+
+export type LastCatalogMeta = {
+  catalogTotal: number;
+  closingSoonTotal: number;
+  partTimeTotal: number;
+  preferredTotal: number;
+  timestamp: number;
+};
+
+export function readLastCatalogMeta(): LastCatalogMeta | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw =
+      window.sessionStorage.getItem(LAST_CATALOG_META_KEY) ||
+      window.localStorage.getItem(LAST_CATALOG_META_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LastCatalogMeta;
+  } catch {
+    return null;
+  }
+}
+
+export function writeLastCatalogMeta(meta: Omit<LastCatalogMeta, 'timestamp'>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload = JSON.stringify({ ...meta, timestamp: Date.now() });
+    window.sessionStorage.setItem(LAST_CATALOG_META_KEY, payload);
+    window.localStorage.setItem(LAST_CATALOG_META_KEY, payload);
+  } catch {
+    // Ignore quota errors
+  }
+}
+
 function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearchResult {
   const seedProjects = getDefaultSeniorJobPostings();
   const requestedCategories = options.categories && options.categories.length > 0
@@ -96,15 +130,29 @@ function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearc
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * pageSize;
   const items = targetProjects.slice(start, start + pageSize);
+
+  const lastMeta = readLastCatalogMeta();
+  const catalogTotal =
+    lastMeta && lastMeta.catalogTotal > targetProjects.length
+      ? lastMeta.catalogTotal
+      : targetProjects.length;
+  const closingSoonTotal =
+    lastMeta?.closingSoonTotal ??
+    targetProjects.filter((project) => project.hiringStage === 'closing').length;
+  const partTimeTotal =
+    lastMeta?.partTimeTotal ??
+    targetProjects.filter((project) => project.employmentType === 'part-time').length;
+  const preferredTotal = lastMeta?.preferredTotal ?? total;
+
   return {
-    catalogTotal: targetProjects.length,
-    closingSoonTotal: targetProjects.filter((project) => project.hiringStage === 'closing').length,
+    catalogTotal,
+    closingSoonTotal,
     isFallback: true,
     items,
     page: safePage,
     pageSize,
-    partTimeTotal: targetProjects.filter((project) => project.employmentType === 'part-time').length,
-    preferredTotal: total,
+    partTimeTotal,
+    preferredTotal,
     status: 'success',
     total,
     totalPages,
@@ -273,6 +321,15 @@ export async function searchFullJobDatabase(
       result: searchResult,
     });
     writeSessionStorageCache(cacheKey, searchResult);
+
+    if (searchResult.catalogTotal > 0) {
+      writeLastCatalogMeta({
+        catalogTotal: searchResult.catalogTotal,
+        closingSoonTotal: searchResult.closingSoonTotal,
+        partTimeTotal: searchResult.partTimeTotal,
+        preferredTotal: searchResult.preferredTotal,
+      });
+    }
 
     return searchResult;
   } catch (error) {
