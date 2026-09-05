@@ -1,0 +1,78 @@
+{
+  "endpoints": {
+    "api": {
+      "availableMemoryMb": 1024,
+      "timeoutSeconds": 120,
+      "minInstances": null,
+      "maxInstances": null,
+      "ingressSettings": null,
+      "concurrency": null,
+      "serviceAccountEmail": null,
+      "vpc": null,
+      "platform": "gcfv2",
+      "region": [
+        "asia-northeast3"
+      ],
+      "secretEnvironmentVariables": [
+        {
+          "key": "ASSEMBLYAI_API_KEY"
+        },
+        {
+          "key": "GEMINI_API_KEY"
+        },
+        {
+          "key": "GMAIL_APP_PASSWORD"
+        }
+      ],
+      "labels": {},
+      "httpsTrigger": {},
+      "entryPoint": "api"
+    },
+    "communityApi": {
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 30,
+      "minInstances": null,
+      "maxInstances": null,
+      "ingressSettings": null,
+      "concurrency": null,
+      "serviceAccountEmail": null,
+      "vpc": null,
+      "platform": "gcfv2",
+      "region": [
+        "asia-northeast3"
+      ],
+      "labels": {},
+      "httpsTrigger": {},
+      "entryPoint": "communityApi"
+    },
+    "scheduledJobSync": {
+      "availableMemoryMb": 512,
+      "timeoutSeconds": 180,
+      "minInstances": null,
+      "maxInstances": null,
+      "ingressSettings": null,
+      "concurrency": null,
+      "serviceAccountEmail": null,
+      "vpc": null,
+      "platform": "gcfv2",
+      "region": [
+        "asia-northeast3"
+      ],
+      "labels": {},
+      "scheduleTrigger": {
+        "schedule": "0 0 * * *",
+        "retryConfig": {},
+        "timeZone": "Asia/Seoul"
+      },
+      "entryPoint": "scheduledJobSync"
+    }
+  },
+  "specVersion": "v1alpha1",
+  "requiredAPIs": [
+    {
+      "api": "cloudscheduler.googleapis.com",
+      "reason": "Needed for scheduled functions."
+    }
+  ],
+  "extensions": {}
+}
