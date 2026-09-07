@@ -54,6 +54,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
     ['/', /기업의 실무 프로젝트와\s*시니어의 경험을 잇다/],
     ['/signup', '회원가입'],
+    ['/premium-companies', '프리미엄 기업'],
     ['/role', '역할 선택'],
     ['/basic-profile', '인재 기본정보'],
     ['/company-info', '회사 기본정보'],

@@ -15,6 +15,7 @@ import { adminDb } from './lib/firestoreAdmin.mjs';
 import { handleApplicationContact } from './lib/applicationContact.mjs';
 import { handleApplicationEmail } from './lib/applicationEmail.mjs';
 import { communityHandlers } from './lib/community.mjs';
+import { premiumCompanyHandlers } from './lib/premiumCompanies.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
@@ -615,6 +616,13 @@ const communityApp = express();
 communityApp.use(express.json({ limit: '256kb' }));
 registerCommunityRoutes(communityApp);
 
+const premiumApp = express();
+premiumApp.use(express.json({ limit: '128kb' }));
+premiumApp.get('/api/premium/companies', premiumCompanyHandlers.listCompanies);
+premiumApp.get('/api/premium/application', premiumCompanyHandlers.getApplication);
+premiumApp.post('/api/premium/application', premiumCompanyHandlers.apply);
+premiumApp.delete('/api/premium/account', premiumCompanyHandlers.deleteAccount);
+
 // A small, secret-free function lets a Hosting preview test the community
 // independently without redeploying the production API bundle.
 export const communityApi = onRequest(
@@ -624,6 +632,15 @@ export const communityApi = onRequest(
     memory: '256MiB',
   },
   communityApp,
+);
+
+export const premiumApi = onRequest(
+  {
+    region: 'asia-northeast3',
+    timeoutSeconds: 30,
+    memory: '256MiB',
+  },
+  premiumApp,
 );
 
 export const api = onRequest(

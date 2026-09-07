@@ -47,6 +47,10 @@ const loadFlowPages = () => import('@/app/wireframe/FlowPages');
 const LandingPage = lazyPage(() => import('@/app/LandingPage'), 'LandingPage');
 const BasicProfilePage = lazyPage(() => import('@/app/BasicProfilePage'), 'BasicProfilePage');
 const CommunityPage = lazyPage(() => import('@/app/CommunityPage'), 'CommunityPage');
+const PremiumCompaniesPage = lazyPage(
+  () => import('@/app/PremiumCompaniesPage'),
+  'PremiumCompaniesPage',
+);
 const AdminPage = lazyPage(() => import('@/app/AdminPage'), 'AdminPage');
 const CompanyInfoPage = lazyPage(() => import('@/app/CompanyInfoPage'), 'CompanyInfoPage');
 const JobDatabasePage = lazyPage(() => import('@/app/JobDatabasePage'), 'JobDatabasePage');
@@ -103,6 +107,7 @@ function createAppRouter() {
     // 공개 경로 (인증 불필요)
     { path: '/', Component: LandingPage },
     { path: '/community', Component: CommunityPage },
+    { path: '/premium-companies', Component: PremiumCompaniesPage },
     { path: '/login', Component: LoginPage },
     { path: '/signup', Component: SignupPage },
     // 관리자 경로

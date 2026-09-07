@@ -12,9 +12,15 @@ type MockAuthStateCallback = (user: MockFirebaseUser | null) => void;
 const communityMocks = vi.hoisted(() => ({
   deleteCommunityAccountData: vi.fn(() => Promise.resolve(undefined)),
 }));
+const premiumMocks = vi.hoisted(() => ({
+  deletePremiumCompanyAccountData: vi.fn(() => Promise.resolve(undefined)),
+}));
 
 vi.mock('@/services/communityService', () => ({
   deleteCommunityAccountData: communityMocks.deleteCommunityAccountData,
+}));
+vi.mock('@/services/premiumCompanyService', () => ({
+  deletePremiumCompanyAccountData: premiumMocks.deletePremiumCompanyAccountData,
 }));
 
 const authMocks = vi.hoisted(() => ({
@@ -191,6 +197,7 @@ describe('AuthProvider 계정 데이터 처리', () => {
 
     await waitFor(() => expect(authMocks.deleteUser).toHaveBeenCalledWith(authMocks.auth.currentUser));
     expect(communityMocks.deleteCommunityAccountData).toHaveBeenCalledTimes(1);
+    expect(premiumMocks.deletePremiumCompanyAccountData).toHaveBeenCalledTimes(1);
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'users/user-1' }));
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'senior_profiles/user-1' }));
     expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'company_profiles/user-1' }));

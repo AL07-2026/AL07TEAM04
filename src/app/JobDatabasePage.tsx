@@ -130,6 +130,7 @@ import type {
 } from '@/data/occupationCategories';
 
 import { MobilePage, type Role, useViewportMode } from '@/app/wireframe/Ui';
+import { PremiumCompaniesSection } from '@/app/premium/PremiumCompaniesSection';
 
 const all = 'all';
 const MAX_AUTOMATIC_SEARCH_RETRIES = 2;
@@ -3807,6 +3808,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           }
         />
       </div>
+
+      <PremiumCompaniesSection role={role} user={user} />
 
       {isMobile ? (
         <section className="rounded-[20px] bg-white p-4 shadow-xs flex flex-col gap-3.5">

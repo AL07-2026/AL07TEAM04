@@ -34,6 +34,7 @@ import { getAdminRoleForEmail, resolveCurrentAdminRole, type AdminRole } from '@
 import { auth, db, storage } from '@/lib/firebase';
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
 import { deleteCommunityAccountData } from '@/services/communityService';
+import { deletePremiumCompanyAccountData } from '@/services/premiumCompanyService';
 
 export type UserRole = 'senior' | 'company';
 
@@ -618,7 +619,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (uid) {
       try {
-        if (currentFirebaseUser) await deleteCommunityAccountData();
+        if (currentFirebaseUser) {
+          await Promise.all([
+            deleteCommunityAccountData(),
+            deletePremiumCompanyAccountData(),
+          ]);
+        }
         await deleteUserRemoteData(uid);
       } catch (err) {
         console.warn('Firestore deletion during account delete:', err);
