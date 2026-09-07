@@ -29,3 +29,16 @@
     - `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`
   - 사용자의 명시적 요청 없이 메인 운영 주소(`https://al07team04-bdfcd.web.app`)로 배포하거나 `develop` 브랜치로 병합/배포하지 않습니다.
 
+## 4. One-Stop Autonomous Execution (원스톱 자율 완결 원칙)
+- **추가 승인 버튼 요구 최소화**:
+  - 사용자가 계획(Plan)을 승인하거나 작업을 지시하면, 중간에 사소한 확인이나 추가 승인 버튼을 요구하지 않고 **최종 배포 및 정리까지 단일 턴/흐름 내에서 원스톱으로 완결**합니다.
+  - **원스톱 실행 파이프라인**:
+    1. 코드 구현 및 단위 테스트 작성/수정
+    2. 무결점 검증 (`npm run validate`: typecheck, lint, test, build 100% 통과)
+    3. Git 커밋 및 원격 푸시 (`git commit` ➔ `git push origin leedongwook`)
+    4. 채널 배포 (`npm run deploy:leedongwook`)
+    5. 협업 로그 작성 (`docs/AI_COLLABORATION_LOG.md`)
+    6. 최종 완료 상태 및 배포 URL 요약 보고
+  - 비가역적 데이터 삭제와 같은 중대한 파괴적 위험이 없는 한, 중간 단계마다 질문하거나 멈추지 않고 끝까지 완결하여 사용자의 승인 피로도를 최소화합니다.
+
+

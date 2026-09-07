@@ -10,11 +10,15 @@
    - 사용자가 특별히 `develop` 브랜치 작업을 요청하기 전까지는 **항상 `leedongwook` 브랜치에서만 작업**합니다.
    - 배포는 **오직 `leedongwook` 배포 주소(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)로만 배포**합니다. (`npm run deploy:leedongwook` 사용)
    - 사용자의 명시적 요청 없이 `develop` 브랜치 작업이나 메인 운영 주소(`al07team04-bdfcd.web.app`)로의 배포를 임의로 진행하지 않습니다.
-2. **작업 시작 전**:
+2. **원스톱 자율 완결 원칙 (추가 승인 버튼 최소화)**:
+   - 사용자가 계획(Plan)을 한 번 승인하거나 작업을 요청하면, **중간에 불필요하게 멈추거나 추가 승인 버튼을 여러 번 누르게 하지 않고 최종 배포 및 정리까지 원스톱으로 끝까지 완결**합니다.
+   - **실행 흐름**: [구현/수정] ➔ [검증 `npm run validate`] ➔ [Git 커밋 & 푸시 `origin/leedongwook`] ➔ [채널 배포 `npm run deploy:leedongwook`] ➔ [협업 로그 작성 `docs/AI_COLLABORATION_LOG.md`] ➔ [최종 완료 안내]
+   - 파괴적 데이터 삭제나 핵심 설계 변경이 아닌 일반 개발/수정 작업에서는 사소한 확인 질문으로 작업 흐름을 끊지 않습니다.
+3. **작업 시작 전**:
    - `docs/AI_COLLABORATION_LOG.md`를 먼저 읽고 최근 변경 사항, 설계 결정, 다음 할 일/전달 사항을 확인합니다.
-3. **작업 완료 후**:
+4. **작업 완료 후**:
    - `docs/AI_COLLABORATION_LOG.md` 상단에 작업 날짜, 작업자, 수정한 파일 목록, 주요 변경 내용, 다음 전달 사항을 명시합니다.
-4. **무결점 검증 필수**:
+5. **무결점 검증 필수**:
    - 코드 변경 후 항상 `npm run validate` (typecheck, lint, test, build)를 수행하여 빌드 파이프라인을 100% 통과시킵니다.
 
 ---
