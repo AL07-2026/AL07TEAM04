@@ -3791,12 +3791,12 @@ function ProposalProgress({
             <span
               aria-hidden="true"
               className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold',
+                'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black',
                 active
-                  ? 'border-[#005EEB] bg-[#005EEB] text-white ring-4 ring-[#EAF2FE]'
+                  ? 'border-[#173F3A] bg-[#173F3A] text-white ring-4 ring-[#DDEBE7]'
                   : completed
-                    ? 'border-[#C9DEFE] bg-[#EAF2FE] text-[#005EEB]'
-                    : 'border-[#E1E2E4] bg-white text-[#878A93]',
+                    ? 'border-[#78A99D] bg-[#DDEBE7] text-[#173F3A]'
+                    : 'border-[#D4CBB8] bg-white text-slate-400',
               )}
             >
               {completed ? '✓' : active ? '●' : '○'}
@@ -3805,10 +3805,10 @@ function ProposalProgress({
               className={cn(
                 'mt-1 w-14 text-center text-[10px] leading-4',
                 active
-                  ? 'font-bold text-[#005EEB]'
+                  ? 'font-black text-[#173F3A]'
                   : completed
-                    ? 'font-medium text-[#70737C]'
-                    : 'font-medium text-[#878A93]',
+                    ? 'font-extrabold text-[#4B756E]'
+                    : 'font-extrabold text-slate-500',
               )}
             >
               {proposalStageDisplayLabels[stage]}
@@ -3821,7 +3821,7 @@ function ProposalProgress({
               <button
                 aria-pressed={active}
                 aria-label={`${proposalStageDisplayLabels[stage]} 단계로 변경`}
-                className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005EEB]"
+                className="flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                 onClick={() => onSelect(stage)}
                 type="button"
               >
@@ -3837,7 +3837,7 @@ function ProposalProgress({
                 aria-hidden="true"
                 className={cn(
                   'mt-3 h-px min-w-3 flex-1',
-                  index < currentIndex ? 'bg-[#005EEB]' : 'bg-[#E1E2E4]',
+                  index < currentIndex ? 'bg-[#78A99D]' : 'bg-[#E0D9C8]',
                 )}
               />
             ) : null}

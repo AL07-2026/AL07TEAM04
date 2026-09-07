@@ -30,6 +30,3 @@ pnpm-debug.log*
 
 # Firebase local cache
 .firebase/
-
-# Design files
-*.fig

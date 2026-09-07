@@ -20,26 +20,11 @@
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-raised: var(--surface-raised);
 
-  /* Wanted Design System (WDS) Official Tokens */
-  --color-wanted-blue: #005eeb;
-  --color-wanted-blue-strong: #0054d1;
-  --color-wanted-blue-heavy: #0047b3;
-  --color-wanted-blue-subtle: #eaf2fe;
-
-  --color-wanted-gray-50: #f7f7f8;
-  --color-wanted-gray-100: #f4f4f5;
-  --color-wanted-gray-200: #e1e2e4;
-  --color-wanted-gray-300: #c2c4c8;
-  --color-wanted-gray-400: #878a93;
-  --color-wanted-gray-500: #70737c;
-  --color-wanted-gray-900: #171719;
-
-  /* Backward-compatible utility aliases mapped to WDS */
-  --color-evergreen: #005eeb;
-  --color-coral: #ff5e00;
-  --color-ivory: #f7f7f8;
-  --color-mint: #eaf2fe;
-  --color-ink: #171719;
+  --color-evergreen: #173f3a;
+  --color-coral: #b84734;
+  --color-ivory: #f7f3ea;
+  --color-mint: #ddebe7;
+  --color-ink: #17212b;
 }
 
 html {
@@ -49,32 +34,24 @@ html {
 
 :root {
   color-scheme: light;
-  --background: #f7f7f8; /* WDS Background/Normal/Alternative */
-  --foreground: #171719; /* WDS Label/Normal */
-  --card: #ffffff;       /* WDS Background/Elevated */
-  --card-foreground: #171719;
-  --primary: #005eeb;    /* WDS Primary/Normal: Wanted Blue */
-  --primary-hover: #0054d1;
-  --primary-active: #0047b3;
+  --background: #f7f3ea; /* Background: Warm Ivory */
+  --foreground: #17212b; /* Text: Ink */
+  --card: #ffffff;
+  --card-foreground: #17212b;
+  --primary: #173f3a; /* Primary: Deep Evergreen */
   --primary-foreground: #ffffff;
-  --accent: #005eeb;
+  --accent: #b84734; /* Accessible Warm Coral */
   --accent-foreground: #ffffff;
-  --secondary: #eaf2fe;  /* WDS Primary/Subtle */
-  --secondary-foreground: #005eeb;
-  --muted: #f4f4f5;      /* WDS Cool Neutral 98 */
-  --muted-foreground: #70737c; /* WDS Label/Alternative */
-  --border: #e1e2e4;     /* WDS Line/Normal */
-  --input: #e1e2e4;
-  --ring: #005eeb;
-  --surface-subtle: #f7f7f8;
+  --secondary: #ddebe7; /* Secondary: Soft Mint */
+  --secondary-foreground: #173f3a;
+  --muted: #ebe5d9;
+  --muted-foreground: #45556c;
+  --border: #e0d9c8;
+  --input: #e0d9c8;
+  --ring: #173f3a;
+  --surface-subtle: #faf7f2;
   --surface-raised: #ffffff;
-  --focus-ring: #005eeb;
-  --status-positive: #00bf40;
-  --status-positive-bg: #d9ffe6;
-  --status-cautionary: #ff5e00;
-  --status-cautionary-bg: #fff0e6;
-  --status-negative: #e52222;
-  --status-negative-bg: #ffeeee;
+  --focus-ring: #173f3a;
   --motion-fast: 160ms;
   --motion-standard: 220ms;
 }
@@ -91,7 +68,6 @@ select,
 textarea {
   font-family:
     'Pretendard',
-    'Wanted Sans',
     -apple-system,
     BlinkMacSystemFont,
     system-ui,
@@ -118,9 +94,9 @@ body {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #171719;
-  box-shadow: 0 0 0 1000px #ffffff inset;
-  caret-color: #005eeb;
+  -webkit-text-fill-color: #17212b;
+  box-shadow: 0 0 0 1000px #faf7f2 inset;
+  caret-color: #17212b;
 }
 
 button,
