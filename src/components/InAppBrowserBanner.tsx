@@ -29,18 +29,18 @@ export function InAppBrowserBanner() {
   return (
     <aside
       aria-label="인앱 브라우저 안내"
-      className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 border-b border-[#F06B4F]/30 bg-[#FFF5F2] px-4 py-2.5 text-[#173F3A] shadow-xs backdrop-blur-md"
+      className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 border-b border-[#005EEB]/20 bg-[#EAF2FE] px-4 py-2.5 text-[#171719] shadow-xs backdrop-blur-md"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 text-xs sm:text-sm">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#005EEB] text-white">
           <Sparkles className="size-3.5" />
         </span>
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-          <span className="font-bold text-[#E05A3E]">
+          <span className="font-bold text-[#005EEB]">
             {isKakao ? '카카오톡 브라우저로 접속 중' : '인앱 브라우저로 접속 중'}
           </span>
-          <span className="hidden text-[#53606E] sm:inline">|</span>
-          <span className="text-[12px] text-[#53606E] break-keep sm:text-[13px]">
+          <span className="hidden text-[#70737C] sm:inline">|</span>
+          <span className="text-[12px] text-[#70737C] break-keep sm:text-[13px]">
             구글 보안 정책으로 인해 크롬/사파리에서 더 원활하게 로그인하실 수 있습니다.
           </span>
         </div>
@@ -48,7 +48,7 @@ export function InAppBrowserBanner() {
 
       <div className="flex shrink-0 items-center gap-2">
         <button
-          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#173F3A] px-3.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#235851] active:scale-95"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#005EEB] px-3.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#0054D1] active:scale-95"
           onClick={handleOpenExternal}
           type="button"
         >

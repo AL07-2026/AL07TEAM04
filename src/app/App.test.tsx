@@ -440,7 +440,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     await waitFor(() => expect(contactSpy).toHaveBeenCalledWith('1', 'contacted'));
     const activeStageButton = screen.getByRole('button', { name: '2차 면접 단계로 변경' });
     expect(activeStageButton).toHaveAttribute('aria-pressed', 'true');
-    expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#173F3A]');
+    expect(activeStageButton.querySelector('[aria-hidden="true"]')).toHaveClass('bg-[#005EEB]');
     stageSpy.mockRestore();
     contactSpy.mockRestore();
     proposalsSpy.mockRestore();
