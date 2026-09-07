@@ -45,6 +45,23 @@
       "httpsTrigger": {},
       "entryPoint": "communityApi"
     },
+    "premiumApi": {
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 30,
+      "minInstances": null,
+      "maxInstances": null,
+      "ingressSettings": null,
+      "concurrency": null,
+      "serviceAccountEmail": null,
+      "vpc": null,
+      "platform": "gcfv2",
+      "region": [
+        "asia-northeast3"
+      ],
+      "labels": {},
+      "httpsTrigger": {},
+      "entryPoint": "premiumApi"
+    },
     "scheduledJobSync": {
       "availableMemoryMb": 512,
       "timeoutSeconds": 180,
