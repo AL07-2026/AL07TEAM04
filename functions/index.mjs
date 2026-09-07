@@ -658,14 +658,19 @@ export const scheduledJobSync = onSchedule(
     schedule: '0 0 * * *',
     timeZone: 'Asia/Seoul',
     region: 'asia-northeast3',
-    timeoutSeconds: 180,
+    timeoutSeconds: 540,
     memory: '512MiB',
+    maxInstances: 1,
+    concurrency: 1,
+    retryCount: 0,
+    secrets: ['GEMINI_API_KEY'],
   },
   async () => {
     console.log('Starting daily Cloud Scheduled Job Sync (00:00 Asia/Seoul)...');
     const result = await runBackendJobSync();
     clearJobCatalogCache();
-    console.log('Scheduled Job Sync completed:', result);
+    if (!result.skipped && result.runStatus !== 'success') console.warn('Scheduled Job Sync incomplete:', result);
+    else console.log('Scheduled Job Sync completed:', result);
     if (result.skipped) return;
     try {
       const warmupResponse = await fetch(jobSearchWarmupUrl, {

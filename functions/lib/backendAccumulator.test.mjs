@@ -8,6 +8,7 @@ import {
   shouldStartDailyJobSync,
   transformPublicRow,
   transformSeoulRow,
+  transformSeoulPortalRow,
   transformWorknetRow,
 } from './backendAccumulator.mjs';
 
@@ -35,6 +36,16 @@ const worknetXmlFixture = `<?xml version="1.0" encoding="UTF-8"?>
 </wantedRoot>`;
 
 describe('backend accumulator source mappings', () => {
+  it('maps the replacement Seoul portal dataset without relying on unstable row positions', () => {
+    const row = { COMPANY: '새 기업', TITLE: '운영 총괄', REG_DT: '26-09-03', CLOSE_DT: '채용시까지  26-09-17',
+      REGION: '서울', JOBS_CD: '1', CAREER: '10년', JOB_CONT: '운영 개선', SAL_TP_NM: '연봉 5000만원', EMP_TP_NM: '정규직' };
+    const first = transformSeoulPortalRow(row, '2026-09-08T00:00:00Z', new Date('2026-09-08'));
+    expect(first).toMatchObject({ source: 'seoul', sourceDataset: 'recMntList', postedAt: '2026-09-03', deadline: '2026-09-17', coreResponsibilities: ['운영 개선'] });
+    expect(first.id).toMatch(/^SEOUL-PORTAL-[a-f0-9]{32}$/);
+    expect(transformSeoulPortalRow({ ...row, SAL_TP_NM: '연봉 6000만원' }, nowStr, now).id).toBe(first.id);
+    expect(transformSeoulPortalRow({ ...row, CLOSE_DT: '26-08-01' }, nowStr, now)).toBeNull();
+    expect(transformSeoulPortalRow({ TITLE: '정보부족' }, nowStr, now)).toBeNull();
+  });
   it('uses the Asia/Seoul calendar day for the once-daily sync guard', () => {
     const beforeMidnight = new Date('2026-09-01T14:59:59.000Z');
     const afterMidnight = new Date('2026-09-01T15:00:00.000Z');

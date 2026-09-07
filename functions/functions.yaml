@@ -64,21 +64,22 @@
     },
     "scheduledJobSync": {
       "availableMemoryMb": 512,
-      "timeoutSeconds": 180,
+      "timeoutSeconds": 540,
       "minInstances": null,
-      "maxInstances": null,
+      "maxInstances": 1,
       "ingressSettings": null,
-      "concurrency": null,
+      "concurrency": 1,
       "serviceAccountEmail": null,
       "vpc": null,
       "platform": "gcfv2",
       "region": [
         "asia-northeast3"
       ],
+      "secretEnvironmentVariables": [{ "key": "GEMINI_API_KEY" }],
       "labels": {},
       "scheduleTrigger": {
         "schedule": "0 0 * * *",
-        "retryConfig": {},
+        "retryConfig": { "retryCount": 0 },
         "timeZone": "Asia/Seoul"
       },
       "entryPoint": "scheduledJobSync"
