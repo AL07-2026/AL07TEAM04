@@ -16,6 +16,20 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-07] 작업 브랜치 및 배포 정책 확립: `leedongwook` 브랜치 및 전용 배포 주소 고정
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **사용자 지침 반영**: 사용자의 명시적 요청이 있기 전까지는 `develop` 브랜치 작업 및 메인 라이브 배포를 일체 중단하고, 모든 개발/수정 작업은 **`leedongwook` 브랜치에서만 진행**하며 배포 역시 **`leedongwook` 전용 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)로만 수행**하도록 정책 확정.
+  - **규칙 문서 영구 반영**:
+    - `.agents/AGENTS.md`: AI 협업 규칙 1항에 `leedongwook` 브랜치 및 배포 주소 전용 원칙 엄격 준수 명시.
+    - `.agents/rules/06-verification-and-collaboration.md`: 3항에 브랜치 및 배포 정책(배포 명령어 `npm run deploy:leedongwook`, 배포 URL) 영구 등록.
+  - **배포 스크립트 추가**:
+    - `package.json`: `"deploy:leedongwook": "npx firebase-tools hosting:channel:deploy leedongwook"` 스크립트 추가하여 간편하고 안전한 배포 환경 구축.
+- **검증**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+- **다음 작업자 전달 사항**:
+  - 사용자가 특별히 "develop에 배포해달라"고 요청하기 전까지는 절대로 `develop` 브랜치 체크아웃/머지나 메인 운영 사이트(`https://al07team04-bdfcd.web.app`) 배포를 진행하지 마시고, 반드시 `leedongwook` 브랜치 및 `npm run deploy:leedongwook`을 사용하시기 바랍니다.
+
 ### [2026-09-06] 기업 직접 등록 프로젝트 탐색 화면 병합 및 홈-프로젝트 순위·점수·총건수 완전 일치화
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **발견된 이상 현상 및 근본 원인 분석**:

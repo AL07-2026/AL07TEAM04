@@ -15,3 +15,17 @@
   - `docs/AI_COLLABORATION_LOG.md` 상단에 새로운 작업 로그(날짜, 작업자, 주요 변경 내용, 검증 결과, 변경 파일 목록, 다음 전달 사항)를 명시합니다.
 - **원자적 변경 (Atomic Changes)**:
   - 한 번의 작업에 단일 목적의 변경 사항만 포함하며, 관련 없는 코드나 서식을 불필요하게 수정하지 않습니다.
+
+## 3. Branch & Deployment Policy (브랜치 및 배포 정책)
+- **작업 브랜치 원칙**:
+  - 사용자가 특별히 `develop`에 배포/작업해달라고 지정하기 전까지는, 모든 작업은 **`leedongwook` 브랜치**에서만 수행합니다.
+- **배포 주소 원칙**:
+  - 배포는 **오직 `leedongwook` 배포 채널**로만 수행합니다:
+    ```bash
+    npm run deploy:leedongwook
+    # (내부적으로 npx firebase-tools hosting:channel:deploy leedongwook 실행)
+    ```
+  - **`leedongwook` 배포 주소**:
+    - `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`
+  - 사용자의 명시적 요청 없이 메인 운영 주소(`https://al07team04-bdfcd.web.app`)로 배포하거나 `develop` 브랜치로 병합/배포하지 않습니다.
+

@@ -31,7 +31,8 @@
     "pdf:open": "powershell -Command \"Start-Process docs/slides/eojob-brochure.pdf\"",
     "slide:native": "python scripts/generate_native_pptx.py",
     "slide:pptx": "powershell -Command \"Start-Process docs/slides/eojob-intro.pptx\"",
-    "validate": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "deploy:leedongwook": "npx firebase-tools hosting:channel:deploy leedongwook"
   },
   "engines": {
     "node": ">=22.22.2 <23 || >=24.15.0 <25"
