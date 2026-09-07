@@ -16,7 +16,47 @@
 
 ## 📝 작업 기록 (Work History)
 
-### [2026-09-07] 작업 원칙 강화: 원스톱 자율 완결(추가 승인 최소화) 및 `leedongwook` 고정
+### [2026-09-07] 원티드 디자인 시스템 (Wanted Design System) 피그마 토큰 및 UI 전면 적용
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 목적**:
+  - 사용자가 제공한 원티드 디자인 시스템 커뮤니티 피그마 파일(`Wanted Design System (Community).fig`)을 분석·추출하여, 기존 이어잡(Eojob)의 레거시 색상 체계(청록 `#173F3A`, 다홍 `#F06B4F`)를 원티드 공식 디자인 시스템(WDS) 토큰으로 전면 개편.
+  - 원스톱 자율 완결 원칙(추가 승인 버튼 최소화) 및 `leedongwook` 브랜치/채널 배포 규칙 준수.
+- **피그마 토큰 추출 및 분석**:
+  - `Wanted Design System (Community).fig` 내부의 Zstandard 압축 키위(Kiwi) 바이너리 파싱을 통해 원티드 공식 시스템 토큰 추출:
+    - **Primary / Action**: `#005EEB` (Blue-50, Wanted Blue), `#0054D1` (Blue-60, Hover), `#0047B3` (Blue-70, Active), `#EAF2FE` (Blue-10, Soft Tint), `#C9DEFE` (Blue-20, Border).
+    - **Backgrounds**: `#FFFFFF` (Normal / Card), `#F7F7F8` (Alternative / Cool Neutral 99).
+    - **Labels / Typography**: `#171719` (Normal), `#000000` (Strong), `#70737C` (Alternative), `#878A93` (Assistive), `#C2C4C8` (Disable).
+    - **Lines / Borders**: `#E1E2E4` (Line Normal), `#F0F0F2` (Line Alternative).
+    - **Status**: Positive `#00BF40` (`#D9FFE6`), Cautionary `#FF5E00` (`#FFF0E6`), Negative `#E52222` (`#FFEEEE`).
+    - **Font Family**: `Pretendard`, `Wanted Sans`, `-apple-system`, `sans-serif`.
+- **주요 수정 내역**:
+  1. `src/styles/globals.css`:
+     - `@theme inline` 및 CSS 변수 전면 교체 (`--primary: #005EEB`, `--border: #E1E2E4`, `--background: #FFFFFF`, `--secondary: #F7F7F8`, `--accent: #EAF2FE` 등).
+  2. `src/components/ui/button.tsx`:
+     - shadcn UI Button variants를 WDS 토큰으로 업데이트 (`default`: `bg-[#005EEB] hover:bg-[#0054D1]`, `outline`: `border-[#E1E2E4] text-[#171719] hover:bg-[#F7F7F8]`, `secondary`: `bg-[#F7F7F8] text-[#171719] hover:bg-[#E1E2E4]`).
+  3. `src/app/wireframe/Ui.tsx`:
+     - `SiteMenu`: 테두리 `#E1E2E4`, 텍스트 `#171719` 및 호버 `#F7F7F8`.
+     - `MobilePage` / `DesktopPage`: 헤더 및 백그라운드 `#F7F7F8` / `#FFFFFF`, 탭 바 활성 WDS 블루 `#005EEB`.
+     - `BottomNav`: 활성 아이콘 및 텍스트 `#005EEB`.
+     - `StepProgressBar`: 활성 단계 인디케이터 `#005EEB` 및 프로그레스 바.
+     - `ActionButton`: WDS 기본 버튼 및 변형 스타일 동기화.
+     - `Chip`: 선택 시 `#005EEB`, 비선택 시 `#F7F7F8` / `#E1E2E4`.
+     - `ProjectCard`, `SummaryCard`, `InfoPanel`, `Field`, `TextAreaField`, `StatusBadge`: 모던 WDS 비주얼 토큰으로 전면 통일.
+  4. `src/app/LandingPage.tsx`:
+     - 헤더 뱃지, CTA 버튼, 섹션 카드, 혜택 배너, 하단 CTA, 고용촉진장려금 모달의 색상 체계를 WDS 토큰(`#005EEB`, `#F7F7F8`, `#E1E2E4`, `#171719`)으로 전면 전환.
+  5. `src/app/wireframe/FlowPages.tsx` & `src/app/App.test.tsx`:
+     - 제안서 단계 인디케이터 도트/선 색상을 `#005EEB`로 일치시키고, 관련 단위 테스트 동기화.
+  6. `src/components/ui/ErrorBoundaryHarness.tsx` & `src/components/InAppBrowserBanner.tsx`:
+     - 에러 화면 및 인앱 브라우저 배너의 키 컬러를 WDS 블루로 교체.
+  7. `.gitignore`:
+     - 대용량 디자인 바이너리(`*.fig`) git 추적 제외 추가.
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint(0 warnings), Vitest(43개 파일, 397개 테스트 전체 통과), Vite 빌드 무결점 통과.
+  - Git Commit & Push: `leedongwook` 브랜치에 푸시 완료.
+  - 배포 완료: `npm run deploy:leedongwook` ➔ `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app` (2026-10-04 만료 예정).
+- **다음 작업자 전달 사항**:
+  - WDS 토큰이 CSS 변수 및 UI 공통 컴포넌트에 표준화되어 있으므로, 신규 컴포넌트 추가 시에도 `bg-[#005EEB]`, `text-[#171719]`, `border-[#E1E2E4]`, `bg-[#F7F7F8]` 등을 일관되게 활용하시기 바랍니다.
+
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **주요 내용**:
   - **원스톱 자율 완결 원칙 수립**:
