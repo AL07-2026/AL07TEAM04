@@ -33,6 +33,20 @@ describe('premiumCompanyService', () => {
     );
   });
 
+  it('로그인 토큰 갱신에 문제가 있어도 공개 기업 목록은 조회할 수 있다', async () => {
+    authState.currentUser = { getIdToken: getIdTokenMock };
+    getIdTokenMock.mockRejectedValue(new Error('토큰 갱신 실패'));
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ companies: [] }), { status: 200 }),
+    );
+    await expect(listPremiumCompanies(4)).resolves.toEqual([]);
+    expect(getIdTokenMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/premium/companies?limit=4',
+      expect.objectContaining({ headers: {} }),
+    );
+  });
+
   it('신청과 내 신청 조회 및 계정 정리에 Firebase 인증 토큰을 사용한다', async () => {
     authState.currentUser = { getIdToken: getIdTokenMock };
     const application = {

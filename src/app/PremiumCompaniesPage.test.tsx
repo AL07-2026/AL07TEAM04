@@ -40,4 +40,17 @@ describe('PremiumCompaniesPage', () => {
     fireEvent.change(screen.getByLabelText('기업 검색'), { target: { value: '일치하지 않음' } });
     expect(screen.getByText('조건에 맞는 기업이 없습니다.')).toBeInTheDocument();
   });
+
+  it('홈 배너에서 선택한 기업을 바로 보여주고 검색을 비우면 전체를 보여준다', async () => {
+    render(
+      <MemoryRouter initialEntries={['/premium-companies?company=한결바이오연구소']}>
+        <PremiumCompaniesPage />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('1개 기업')).toBeInTheDocument();
+    expect(screen.getByLabelText('기업 검색')).toHaveValue('한결바이오연구소');
+    expect(screen.queryByText('담은생활연구소')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('기업 검색'), { target: { value: '' } });
+    expect(screen.getByText('4개 기업')).toBeInTheDocument();
+  });
 });

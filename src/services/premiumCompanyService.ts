@@ -20,7 +20,7 @@ export type PremiumApplicationInput = {
 async function request<T>(path: string, options: RequestInit = {}, authenticated = false): Promise<T> {
   const currentUser = auth.currentUser;
   if (authenticated && !currentUser) throw new Error('기업 회원으로 로그인 후 신청해 주세요.');
-  const token = currentUser ? await currentUser.getIdToken() : '';
+  const token = authenticated && currentUser ? await currentUser.getIdToken() : '';
   const response = await fetch(path, {
     ...options,
     headers: {

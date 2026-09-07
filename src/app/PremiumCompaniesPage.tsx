@@ -1,6 +1,6 @@
 import { ArrowLeft, Building2, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import { PremiumCompanyCard } from '@/app/premium/PremiumCompaniesSection';
 import { MobilePage } from '@/app/wireframe/Ui';
@@ -10,11 +10,21 @@ import { listPremiumCompaniesWithFallback } from '@/services/premiumCompanyServi
 
 export function PremiumCompaniesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [companies, setCompanies] = useState<PremiumCompany[]>(initialPremiumCompanies);
-  const [query, setQuery] = useState('');
+  const query = searchParams.get('company') || '';
   const [industry, setIndustry] = useState('전체');
   const [region, setRegion] = useState('전체');
+
+  const setQuery = (value: string) => {
+    void setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value) next.set('company', value);
+      else next.delete('company');
+      return next;
+    }, { replace: true });
+  };
 
   useEffect(() => {
     let active = true;

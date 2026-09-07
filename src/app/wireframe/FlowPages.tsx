@@ -36,6 +36,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
+import { PremiumCompanyBanner } from '@/app/premium/PremiumCompanyBanner';
 import {
   createLoginRedirectPath,
   LOGIN_REQUIRED_NAVIGATION_STATE,
@@ -1095,8 +1096,7 @@ export function SeniorHomePage() {
         </p>
       </div>
 
-      {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR MOBILE & PC */}
-      <RollingBanner isCompact={isMobile} />
+      <PremiumCompanyBanner isCompact={isMobile} />
 
       {/* AI Experience Interview Banner */}
       <button
