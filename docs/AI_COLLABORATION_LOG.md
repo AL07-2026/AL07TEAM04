@@ -16,6 +16,18 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-07] 사용자 요청에 따른 이전 버전(WDS 적용 이전) 롤백 완료
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  - 사용자 요청 ("이전 버전으로 돌아가자")에 따라 원티드 디자인 시스템(WDS) 피그마 토큰 적용 작업 커밋들을 안전하게 `git revert`하여 작업 이전 상태(`8868243`)로 100% 완전 복원.
+  - 레거시 브랜드 색상(숲록 `#173F3A`, 다홍 `#F06B4F`, 배경/보더) 및 기존 와이어프레임 UI 컴포넌트 상태 복원.
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - `git push origin leedongwook`: 리버트 커밋 반영 완료.
+  - `npm run deploy:leedongwook`: 롤백 버전 전용 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`) 배포 완료.
+- **다음 작업자 전달 사항**:
+  - 현재 코드는 WDS 적용 이전의 안정 버전(`8868243`)의 상태와 정확히 동일합니다.
+
 ### [2026-09-07] 작업 원칙 강화: 원스톱 자율 완결(추가 승인 최소화) 및 `leedongwook` 고정
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **주요 내용**:
