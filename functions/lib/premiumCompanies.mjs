@@ -1,4 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import { adminAuth, adminDb } from './firestoreAdmin.mjs';
+import { applicationStatus, premiumBenefit, PremiumWorkflowError, reviewPremium, submitPremium } from './premiumWorkflow.mjs';
+import { premiumImages } from './premiumImages.mjs';
 
 const INITIAL_PREMIUM_COMPANIES = [
   {
@@ -81,13 +84,18 @@ function publicCompany(value) {
 
 function publicApplication(value) {
   if (!value) return null;
-  const allowedStatuses = new Set(['approved', 'changes_requested', 'pending', 'rejected']);
-  const status = text(value.status, 30);
+  const allowedStatuses = new Set(['approved', 'changes_requested', 'pending', 'rejected', 'expired']);
+  const status = applicationStatus(value);
   return {
     companyName: text(value.companyName, 80),
     id: text(value.id || value.companyId, 128),
     status: allowedStatuses.has(status) ? status : 'pending',
     submittedAt: text(value.submittedAt, 60),
+    headline: text(value.headline, 60), description: text(value.description, 300),
+    hiringFocus: text(value.hiringFocus, 80), websiteUrl: text(value.websiteUrl, 240),
+    imageUrl: text(value.imageUrl, 1000), reviewNote: text(value.reviewNote, 500),
+    revision: value.revision || 0, endsAt: text(value.endsAt, 60),
+    benefit: value.benefit,
   };
 }
 
@@ -132,7 +140,7 @@ function respond(handler, successStatus = 200) {
       const status = Number(error?.status) || 500;
       return response.status(status).json({
         error:
-          error instanceof PremiumCompanyError
+          error instanceof PremiumCompanyError || error instanceof PremiumWorkflowError
             ? error.message
             : '프리미엄 기업 요청을 처리하지 못했습니다.',
       });
@@ -152,7 +160,12 @@ async function requireCompanyAccount(repository, userId) {
   return profile;
 }
 
-export function createPremiumCompanyHandlers({ repository, verifyIdToken }) {
+export function createPremiumCompanyHandlers({ repository, verifyIdToken, verifyAdmin, images = premiumImages }) {
+  const requireOperator = async (request) => {
+    const admin = verifyAdmin ? await verifyAdmin(request) : null;
+    if (!admin || !['super_admin', 'operations_admin'].includes(admin.role)) throw new PremiumCompanyError(403, '운영 관리자 권한이 필요합니다.');
+    return admin;
+  };
   return {
     listCompanies: respond(async (request) => {
       const requested = Number.parseInt(String(request.query?.limit || '20'), 10);
@@ -163,25 +176,50 @@ export function createPremiumCompanyHandlers({ repository, verifyIdToken }) {
     getApplication: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       await requireCompanyAccount(repository, user.uid);
-      return { application: publicApplication(await repository.getMyApplication(user.uid)) };
+      return { application: publicApplication(await repository.getMyApplication(user.uid)), benefit: await repository.getBenefit(user.uid) };
     }),
     apply: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       const profile = await requireCompanyAccount(repository, user.uid);
       const input = validateApplication(request.body);
-      const application = await repository.createApplicationOnce(user.uid, {
-        ...input,
-        companyAddress: text(profile.companyAddress, 160),
-        companyName: text(profile.companyName, 80),
-        companySize: text(profile.companySize, 40),
-        industry: text(profile.industry, 80),
-        managerEmail: text(profile.email, 160),
-        managerName: text(profile.managerName, 80),
-        managerPhone: text(profile.phone, 40),
-        status: 'pending',
-      });
+      const current = await repository.getMyApplication(user.uid);
+      const revision = request.body?.revision ?? 0;
+      // Validate state before uploading. The transaction checks it again against concurrent changes.
+      const benefit = await repository.getBenefit(user.uid);
+      submitPremium({ current, entitlement: { used: benefit.used }, input, revision, uid: user.uid, now: new Date().toISOString() });
+      const uploaded = request.body?.imageData ? await images.save(user.uid, request.body.imageData) : null;
+      let application;
+      try {
+        application = await repository.submitApplication(user.uid, {
+          ...input,
+          imageUrl: uploaded?.imageUrl || current?.imageUrl || '',
+          imageStoragePath: uploaded?.imageStoragePath || current?.imageStoragePath || '',
+          companyAddress: text(profile.companyAddress, 160),
+          companyName: text(profile.companyName, 80), industry: text(profile.industry, 80),
+          managerEmail: text(profile.email, 160), managerName: text(profile.managerName, 80),
+        }, revision);
+      } catch (error) {
+        if (uploaded) await images.remove(uploaded.imageStoragePath).catch(() => {});
+        throw error;
+      }
       return { application: publicApplication(application) };
     }, 201),
+    listApplications: respond(async (request) => {
+      await requireOperator(request);
+      const result = await repository.listApplications(text(request.query?.cursor, 128));
+      return { applications: result.applications.map(publicApplication), nextCursor: result.nextCursor };
+    }),
+    reviewApplication: respond(async (request) => {
+      const admin = await requireOperator(request);
+      const uid = text(request.params?.uid, 128);
+      if (!uid || uid.includes('/')) throw new PremiumCompanyError(400, '기업 계정을 확인해 주세요.');
+      const application = await repository.reviewApplication(uid, {
+        decision: request.body?.decision, revision: request.body?.revision,
+        reviewNote: text(request.body?.reviewNote, 500), endsAt: text(request.body?.endsAt, 60),
+        reviewerId: admin.uid,
+      });
+      return { application: publicApplication(application) };
+    }),
     deleteAccount: respond(async (request) => {
       const user = await authenticatedUser(request, verifyIdToken);
       await repository.deleteAccountData(user.uid);
@@ -190,12 +228,13 @@ export function createPremiumCompanyHandlers({ repository, verifyIdToken }) {
   };
 }
 
-const repository = {
+export function createPremiumRepository(db = adminDb) {
+return {
   async listPublicCompanies(limit) {
-    const snapshot = await adminDb.collection('premium_company_listings').limit(100).get();
+    const snapshot = await db.collection('premium_company_listings').where('status', '==', 'published').get();
     const published = snapshot.docs
       .map((document) => ({ id: document.id, ...document.data() }))
-      .filter((company) => company.status === 'published' && company.imageUrl && company.companyName)
+      .filter((company) => company.status === 'published' && company.imageUrl && company.companyName && (!company.endsAt || company.endsAt > new Date().toISOString()))
       .sort((left, right) => Number(left.displayOrder || 999) - Number(right.displayOrder || 999));
     const publishedIds = new Set(published.map(({ id }) => id));
     const publishedNames = new Set(published.map(({ companyName }) => companyName));
@@ -205,50 +244,85 @@ const repository = {
     return [...published, ...fallback].slice(0, limit).map(publicCompany);
   },
   async getUserRole(userId) {
-    const snapshot = await adminDb.collection('users').doc(userId).get();
+    const snapshot = await db.collection('users').doc(userId).get();
     return snapshot.exists ? snapshot.data()?.role : null;
   },
   async getCompanyProfile(userId) {
-    const snapshot = await adminDb.collection('company_profiles').doc(userId).get();
+    const snapshot = await db.collection('company_profiles').doc(userId).get();
     return snapshot.exists ? snapshot.data() : null;
   },
   async getMyApplication(userId) {
-    const snapshot = await adminDb.collection('premium_company_applications').doc(userId).get();
+    const snapshot = await db.collection('premium_company_applications').doc(userId).get();
     return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
   },
-  async createApplicationOnce(userId, input) {
-    const reference = adminDb.collection('premium_company_applications').doc(userId);
-    return adminDb.runTransaction(async (transaction) => {
-      const current = await transaction.get(reference);
-      if (current.exists) {
-        throw new PremiumCompanyError(409, '프리미엄 노출 신청은 계정당 1회만 가능합니다.');
-      }
+  async getBenefit(userId) {
+    const [app, entitlement] = await Promise.all([
+      db.collection('premium_company_applications').doc(userId).get(),
+      db.collection('premium_company_entitlements').doc(userId).get(),
+    ]);
+    return premiumBenefit(app.data(), entitlement.data());
+  },
+  async submitApplication(userId, input, revision) {
+    const reference = db.collection('premium_company_applications').doc(userId);
+    const allowance = db.collection('premium_company_entitlements').doc(userId);
+    return db.runTransaction(async (transaction) => {
+      const [current, entitlement] = await Promise.all([transaction.get(reference), transaction.get(allowance)]);
       const now = new Date().toISOString();
-      const application = {
-        ...input,
-        companyId: userId,
-        submittedAt: now,
-        updatedAt: now,
-      };
-      transaction.create(reference, application);
-      return { id: userId, ...application };
+      const benefit = premiumBenefit(current.data(), entitlement.data());
+      const application = submitPremium({ current: current.data(), entitlement: { used: benefit.used }, input, revision, uid: userId, now });
+      transaction.set(reference, application);
+      // Preserve legacy usage before replacing an expired approved application.
+      transaction.set(allowance, { used: benefit.used, updatedAt: now });
+      return { id: userId, ...application, benefit };
     });
   },
+  async reviewApplication(userId, input) {
+    const reference = db.collection('premium_company_applications').doc(userId);
+    const allowance = db.collection('premium_company_entitlements').doc(userId);
+    const listing = db.collection('premium_company_listings').doc(userId);
+    const event = db.collection('premium_company_reviews').doc(randomUUID());
+    return db.runTransaction(async (transaction) => {
+      const [current, entitlement, previousListings] = await Promise.all([transaction.get(reference), transaction.get(allowance), transaction.get(db.collection('premium_company_listings').where('ownerId', '==', userId))]);
+      const result = reviewPremium({ current: current.data(), entitlement: entitlement.data(), ...input, now: new Date().toISOString() });
+      transaction.set(reference, result.application);
+      if (result.entitlement) transaction.set(allowance, result.entitlement);
+      if (result.listing) previousListings.docs.filter((doc) => doc.id !== userId).forEach((doc) => transaction.set(doc.ref, { status: 'ended' }, { merge: true }));
+      if (result.listing) transaction.set(listing, result.listing, { merge: input.decision === 'end' });
+      transaction.create(event, { companyId: userId, revision: result.application.revision, decision: input.decision, reviewerId: input.reviewerId, reviewNote: result.application.reviewNote, at: result.application.updatedAt });
+      return { id: userId, ...result.application, benefit: premiumBenefit(result.application, result.entitlement || entitlement.data()) };
+    });
+  },
+  async listApplications(cursor) {
+    let query = db.collection('premium_company_applications').orderBy('__name__').limit(25);
+    if (cursor) query = query.startAfter(cursor);
+    const snapshot = await query.get();
+    const applications = await Promise.all(snapshot.docs.map(async (document) => ({
+      id: document.id, ...document.data(), benefit: await this.getBenefit(document.id),
+    })));
+    return { applications, nextCursor: snapshot.size === 25 ? snapshot.docs.at(-1).id : null };
+  },
   async deleteAccountData(userId) {
-    const applicationReference = adminDb.collection('premium_company_applications').doc(userId);
-    const listings = await adminDb
-      .collection('premium_company_listings')
-      .where('ownerId', '==', userId)
-      .get();
-    const writer = adminDb.bulkWriter();
-    writer.delete(applicationReference);
-    listings.docs.forEach((listing) => writer.delete(listing.ref));
-    await writer.close();
+    const application = db.collection('premium_company_applications').doc(userId);
+    const allowance = db.collection('premium_company_entitlements').doc(userId);
+    const listings = db.collection('premium_company_listings').where('ownerId', '==', userId);
+    await db.runTransaction(async (transaction) => {
+      const [current, entitlement, published] = await Promise.all([
+        transaction.get(application), transaction.get(allowance), transaction.get(listings),
+      ]);
+      const benefit = premiumBenefit(current.data(), entitlement.data());
+      transaction.set(allowance, { used: benefit.used, updatedAt: new Date().toISOString() });
+      transaction.delete(application);
+      published.docs.forEach((listing) => transaction.delete(listing.ref));
+    });
   },
 };
 
+}
+
+export const premiumRepository = createPremiumRepository();
+
 export const premiumCompanyHandlers = createPremiumCompanyHandlers({
-  repository,
+  repository: premiumRepository,
   verifyIdToken: (token) => adminAuth.verifyIdToken(token),
 });
 

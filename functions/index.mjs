@@ -16,7 +16,7 @@ import { handleApplicationContact } from './lib/applicationContact.mjs';
 import { handleApplicationEmail } from './lib/applicationEmail.mjs';
 import { registerCommunityRoutes } from './community-entry.mjs';
 export { communityApi } from './community-entry.mjs';
-import { premiumCompanyHandlers } from './lib/premiumCompanies.mjs';
+import { createPremiumCompanyHandlers, premiumRepository } from './lib/premiumCompanies.mjs';
 
 const app = express();
 const maxAudioFileSize = 25 * 1024 * 1024;
@@ -592,11 +592,22 @@ app.use((error, _req, res, _next) => {
 });
 
 const premiumApp = express();
-premiumApp.use(express.json({ limit: '128kb' }));
+const premiumCompanyHandlers = createPremiumCompanyHandlers({
+  repository: premiumRepository,
+  verifyIdToken: (token) => getAuth().verifyIdToken(token),
+  verifyAdmin: (request) => verifyAdminRequest(request, { acceptInvite: false }),
+});
+premiumApp.use((_request, response, next) => {
+  response.set('Cache-Control', 'private, no-store');
+  next();
+});
+premiumApp.use(express.json({ limit: '3mb' }));
 premiumApp.get('/api/premium/companies', premiumCompanyHandlers.listCompanies);
 premiumApp.get('/api/premium/application', premiumCompanyHandlers.getApplication);
 premiumApp.post('/api/premium/application', premiumCompanyHandlers.apply);
 premiumApp.delete('/api/premium/account', premiumCompanyHandlers.deleteAccount);
+premiumApp.get('/api/premium/admin/applications', premiumCompanyHandlers.listApplications);
+premiumApp.post('/api/premium/admin/applications/:uid/review', premiumCompanyHandlers.reviewApplication);
 
 export const premiumApi = onRequest(
   {

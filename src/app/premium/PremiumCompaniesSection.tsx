@@ -7,7 +7,9 @@ import { initialPremiumCompanies, type PremiumCompany } from '@/data/premiumComp
 import type { UserProfile } from '@/lib/authContext';
 import {
   applyForPremiumExposure,
-  getMyPremiumApplication,
+  getPremiumAccount,
+  readPremiumPhoto,
+  type PremiumBenefit,
   listPremiumCompanies,
   type PremiumApplication,
   type PremiumApplicationInput,
@@ -23,8 +25,9 @@ const emptyApplication: PremiumApplicationInput = {
 const applicationButtonLabels: Record<PremiumApplication['status'], string> = {
   approved: '프리미엄 노출 중',
   changes_requested: '정보 보완 필요',
-  pending: '신청 검토 중',
-  rejected: '신청 검토 완료',
+  pending: '신청 내용 수정',
+  expired: '다음 무료 노출 신청',
+  rejected: '수정 후 재신청',
 };
 
 export function PremiumCompanyCard({ company }: { company: PremiumCompany }) {
@@ -67,19 +70,23 @@ export function PremiumCompanyCard({ company }: { company: PremiumCompany }) {
 }
 
 function PremiumApplicationForm({
+  application,
   onCancel,
   onSaved,
 }: {
+  application: PremiumApplication | null;
   onCancel: () => void;
   onSaved: (application: PremiumApplication) => void;
 }) {
-  const [draft, setDraft] = useState(emptyApplication);
+  const [draft, setDraft] = useState<PremiumApplicationInput>(() => ({ ...emptyApplication, headline: application?.headline || '', description: application?.description || '', hiringFocus: application?.hiringFocus || '', websiteUrl: application?.websiteUrl || '', revision: application?.revision || 0 }));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [readingPhoto, setReadingPhoto] = useState(false);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (saving) return;
+    if (saving || readingPhoto) return;
+    if (!draft.imageData && !application?.imageUrl) { setError('기업 대표 사진을 등록해 주세요.'); return; }
     if (draft.headline.trim().length < 4 || draft.description.trim().length < 10) {
       setError('대표 문구는 4자 이상, 기업 소개는 10자 이상 입력해 주세요.');
       return;
@@ -113,7 +120,7 @@ function PremiumApplicationForm({
         <div>
           <h3 className="text-[17px] font-black text-[#17212B]">프리미엄 노출 신청</h3>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#53645F]">
-            저장된 기업 정보를 기준으로 접수합니다. 대표 사진은 선정 후 별도로 확인합니다.
+            저장된 기업 정보와 대표 사진으로 접수합니다. 승인되어 노출될 때 무료 이용권 1회가 사용됩니다.
           </p>
         </div>
         <button
@@ -125,7 +132,22 @@ function PremiumApplicationForm({
           <X aria-hidden="true" className="size-4" />
         </button>
       </div>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <fieldset disabled={saving || readingPhoto} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm font-bold sm:col-span-2">
+          기업 대표 사진 (JPG·PNG·WEBP, 2MB 이하)
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            if (!file) return;
+            setReadingPhoto(true);
+            setError('');
+            void readPremiumPhoto(file).then((imageData) => setDraft((current) => ({ ...current, imageData })))
+              .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : '사진을 읽지 못했습니다.'))
+              .finally(() => setReadingPhoto(false));
+          }} />
+          {draft.imageData || application?.imageUrl ? <img className="aspect-video w-full max-w-sm rounded-xl object-cover" alt="등록할 기업 대표 사진" src={draft.imageData || application?.imageUrl} /> : null}
+          {readingPhoto ? <span role="status">사진 확인 중</span> : null}
+        </label>
         <label className="grid gap-2 text-[13px] font-extrabold text-[#17212B]">
           대표 문구
           <input
@@ -181,9 +203,9 @@ function PremiumApplicationForm({
             value={draft.websiteUrl}
           />
         </label>
-      </div>
+      </fieldset>
       <p className="mt-3 text-[12px] font-semibold text-[#6A4B43]">
-        프리미엄 노출 신청은 기업 계정당 1회만 가능합니다.
+        기업회원 무료 노출 3회. 보완·반려·재제출에는 횟수가 차감되지 않습니다.
       </p>
       {error ? (
         <p className="mt-2 text-sm font-bold text-rose-700" role="alert">
@@ -200,7 +222,7 @@ function PremiumApplicationForm({
         </button>
         <button
           className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
-          disabled={saving}
+          disabled={saving || readingPhoto}
           type="submit"
         >
           <Send aria-hidden="true" className="size-4" /> {saving ? '신청 중' : '신청 접수'}
@@ -210,7 +232,7 @@ function PremiumApplicationForm({
   );
 }
 
-export function PremiumCompaniesSection({
+function PremiumCompaniesSectionContent({
   role,
   user,
 }: {
@@ -219,6 +241,8 @@ export function PremiumCompaniesSection({
 }) {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState(() => initialPremiumCompanies.slice(0, 4));
+  const [benefit, setBenefit] = useState<PremiumBenefit | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [application, setApplication] = useState<PremiumApplication | null>(null);
   const [applicationReady, setApplicationReady] = useState(role !== 'company' || !user);
   const [formOpen, setFormOpen] = useState(false);
@@ -241,14 +265,14 @@ export function PremiumCompaniesSection({
   useEffect(() => {
     if (role !== 'company' || !user) return;
     let active = true;
-    getMyPremiumApplication()
-      .then((item) => active && setApplication(item))
+    getPremiumAccount()
+      .then((result) => { if (active) { setApplication(result.application); setBenefit(result.benefit); } })
       .catch((error: Error) => active && setNotice(error.message))
       .finally(() => active && setApplicationReady(true));
     return () => {
       active = false;
     };
-  }, [role, user]);
+  }, [role, user, refreshKey]);
 
   const companyCanApply = role === 'company' && user?.role === 'company';
   const applicationLabel = application
@@ -273,7 +297,7 @@ export function PremiumCompaniesSection({
           {companyCanApply ? (
             <button
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-[13px] font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!applicationReady || Boolean(application)}
+              disabled={!applicationReady || !benefit || benefit.remaining < 1 || application?.status === 'approved'}
               onClick={() => setFormOpen(true)}
               type="button"
             >
@@ -291,6 +315,15 @@ export function PremiumCompaniesSection({
         </div>
       </div>
 
+      {companyCanApply ? (
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+          <p className="font-bold">무료 노출 {benefit ? `${benefit.remaining}/${benefit.limit}회 남음` : '확인 중'}</p>
+          <button type="button" disabled={!applicationReady} className="min-h-11 rounded-lg px-3 font-bold underline disabled:opacity-60" onClick={() => { setFormOpen(false); setApplicationReady(false); setBenefit(null); setNotice(''); setRefreshKey((key) => key + 1); }}>신청 상태 새로고침</button>
+          {application?.endsAt ? <p>노출 종료: {new Date(application.endsAt).toLocaleString('ko-KR')}</p> : null}
+          {application?.reviewNote ? <p className="w-full rounded-xl bg-white p-3">검토 의견: {application.reviewNote}</p> : null}
+          {application?.status === 'pending' ? <p>관리자가 신청 내용을 검토하고 있습니다.</p> : null}
+        </div>
+      ) : null}
       {notice ? (
         <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-[#6A4B43]" role="status">
           {notice}
@@ -303,11 +336,14 @@ export function PremiumCompaniesSection({
         ))}
       </div>
 
-      {formOpen && !application ? (
+      {formOpen && benefit && benefit.remaining > 0 && application?.status !== 'approved' ? (
         <PremiumApplicationForm
+          key={application?.revision ?? 0}
+          application={application}
           onCancel={() => setFormOpen(false)}
           onSaved={(saved) => {
             setApplication(saved);
+            if (saved.benefit) setBenefit(saved.benefit);
             setFormOpen(false);
             setNotice('프리미엄 노출 신청이 접수되었습니다. 검토 결과는 이 화면에서 확인할 수 있습니다.');
           }}
@@ -315,4 +351,8 @@ export function PremiumCompaniesSection({
       ) : null}
     </section>
   );
+}
+
+export function PremiumCompaniesSection(props: { role: Role; user: UserProfile | null }): React.JSX.Element {
+  return <PremiumCompaniesSectionContent key={`${props.role}:${props.user?.uid || 'guest'}`} {...props} />;
 }

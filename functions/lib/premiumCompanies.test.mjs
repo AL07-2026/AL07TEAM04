@@ -22,7 +22,7 @@ function responseHarness() {
 
 function repository() {
   return {
-    createApplicationOnce: vi.fn(),
+    submitApplication: vi.fn(),
     deleteAccountData: vi.fn(),
     getCompanyProfile: vi.fn().mockResolvedValue({
       companyAddress: '서울 성동구',
@@ -32,6 +32,7 @@ function repository() {
       managerName: '김담당',
       phone: '010-0000-0000',
     }),
+    getBenefit: vi.fn().mockResolvedValue({ limit: 3, used: 0, remaining: 3 }),
     getMyApplication: vi.fn().mockResolvedValue(null),
     getUserRole: vi.fn().mockResolvedValue('company'),
     listPublicCompanies: vi.fn().mockResolvedValue([]),
@@ -39,6 +40,34 @@ function repository() {
 }
 
 describe('premium companies API', () => {
+  it('사진은 인증된 기업 경로에 저장하며 실패한 신청의 새 파일만 정리한다', async () => {
+    const store = repository();
+    store.submitApplication.mockRejectedValue(new PremiumCompanyError(409, '신청 정보가 변경되었습니다.'));
+    const images = { save: vi.fn().mockResolvedValue({ imageUrl: 'https://example.com/server.png', imageStoragePath: 'premium-company-images/company-user/new' }), remove: vi.fn().mockResolvedValue(undefined) };
+    const handlers = createPremiumCompanyHandlers({ repository: store, images, verifyIdToken: async () => ({ uid: 'company-user' }) });
+    const response = responseHarness();
+    await handlers.apply({ headers: { authorization: 'Bearer token' }, body: {
+      headline: '기업 대표 문구', description: '기업의 상세한 소개를 작성합니다.', hiringFocus: '디자인',
+      imageData: 'new-photo', imageUrl: 'https://example.com/spoofed.png', imageStoragePath: 'another-user/photo',
+    } }, response);
+    expect(images.save).toHaveBeenCalledWith('company-user', 'new-photo');
+    expect(store.submitApplication).toHaveBeenCalledWith('company-user', expect.objectContaining({ imageUrl: 'https://example.com/server.png' }), 0);
+    expect(images.remove).toHaveBeenCalledExactlyOnceWith('premium-company-images/company-user/new');
+    expect(response.statusCode).toBe(409);
+  });
+  it('다른 탭에서 바뀐 신청은 사진 업로드 전에 거부한다', async () => {
+    const store = repository();
+    store.getMyApplication.mockResolvedValue({ status: 'pending', revision: 2 });
+    const images = { save: vi.fn(), remove: vi.fn() };
+    const handlers = createPremiumCompanyHandlers({ repository: store, images, verifyIdToken: async () => ({ uid: 'company-user' }) });
+    const response = responseHarness();
+    await handlers.apply({ headers: { authorization: 'Bearer token' }, body: {
+      headline: '기업 대표 문구', description: '기업의 상세한 소개를 작성합니다.', hiringFocus: '디자인', revision: 1, imageData: 'photo',
+    } }, response);
+    expect(response.statusCode).toBe(409);
+    expect(images.save).not.toHaveBeenCalled();
+    expect(store.submitApplication).not.toHaveBeenCalled();
+  });
   it('공개 목록에서 내부 신청자 정보를 제거하고 요청 개수를 제한한다', async () => {
     const store = repository();
     store.listPublicCompanies.mockResolvedValue([
@@ -77,7 +106,7 @@ describe('premium companies API', () => {
     await handlers.apply({ body: {}, headers: {} }, response);
 
     expect(response.statusCode).toBe(401);
-    expect(store.createApplicationOnce).not.toHaveBeenCalled();
+    expect(store.submitApplication).not.toHaveBeenCalled();
   });
 
   it('요청 본문의 역할을 믿지 않고 서버 사용자 역할로 시니어 신청을 차단한다', async () => {
@@ -103,12 +132,12 @@ describe('premium companies API', () => {
     );
 
     expect(response.statusCode).toBe(403);
-    expect(store.createApplicationOnce).not.toHaveBeenCalled();
+    expect(store.submitApplication).not.toHaveBeenCalled();
   });
 
   it('기업 프로필의 회사 정보로 최초 신청을 저장한다', async () => {
     const store = repository();
-    store.createApplicationOnce.mockImplementation(async (_uid, input) => ({
+    store.submitApplication.mockImplementation(async (_uid, input) => ({
       companyName: input.companyName,
       id: 'company-user',
       status: 'pending',
@@ -134,20 +163,20 @@ describe('premium companies API', () => {
     );
 
     expect(response.statusCode).toBe(201);
-    expect(store.createApplicationOnce).toHaveBeenCalledWith(
+    expect(store.submitApplication).toHaveBeenCalledWith(
       'company-user',
       expect.objectContaining({
         companyName: '서버 등록 기업',
         managerEmail: 'manager@example.com',
-        status: 'pending',
       }),
+      0,
     );
   });
 
-  it('동일 계정의 두 번째 신청 오류를 그대로 반환한다', async () => {
+  it('무료 노출 횟수 소진 오류를 그대로 반환한다', async () => {
     const store = repository();
-    store.createApplicationOnce.mockRejectedValue(
-      new PremiumCompanyError(409, '프리미엄 노출 신청은 계정당 1회만 가능합니다.'),
+    store.submitApplication.mockRejectedValue(
+      new PremiumCompanyError(409, '무료 프리미엄 노출 3회를 모두 사용했습니다.'),
     );
     const handlers = createPremiumCompanyHandlers({
       repository: store,
@@ -168,6 +197,6 @@ describe('premium companies API', () => {
     );
 
     expect(response.statusCode).toBe(409);
-    expect(response.body.error).toContain('계정당 1회');
+    expect(response.body.error).toContain('3회');
   });
 });

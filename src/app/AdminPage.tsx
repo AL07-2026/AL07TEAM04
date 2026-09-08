@@ -48,10 +48,12 @@ import {
   type SettlementStatus,
 } from '@/services/adminService';
 import { updateProposalStatus, type UserProposal } from '@/services/proposalService';
+import { PremiumApplicationsAdmin } from '@/app/premium/PremiumApplicationsAdmin';
 
 const adminSections = [
   { id: 'dashboard', path: '/admin/dashboard', label: '대시보드', Icon: LayoutDashboard },
   { id: 'projects', path: '/admin/projects', label: '프로젝트 관리', Icon: ClipboardList },
+  { id: 'premium', path: '/admin/premium', label: '프리미엄 신청', Icon: Building2 },
   { id: 'applications', path: '/admin/applications', label: '지원·제안 관리', Icon: Send },
   { id: 'matches', path: '/admin/matches', label: '매칭 관리', Icon: Users },
   { id: 'settlements', path: '/admin/settlements', label: '계약·정산', Icon: CreditCard },
@@ -1509,6 +1511,9 @@ function SectionContent({
         onRefresh={onRefresh}
       />
     );
+  }
+  if (activeSection === 'premium') {
+    return <PremiumApplicationsAdmin canManage={canManageOperations(adminRole)} />;
   }
   if (activeSection === 'applications') {
     return <ApplicationsSection data={data} onRefresh={onRefresh} />;
