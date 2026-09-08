@@ -9,7 +9,15 @@ const signIn = vi.fn();
 const signInWithGoogle = vi.fn();
 
 vi.mock('react-router', () => ({
-  Link: ({ children, to, className }: { children: React.ReactNode; to: string; className?: string }) => (
+  Link: ({
+    children,
+    to,
+    className,
+  }: {
+    children: React.ReactNode;
+    to: string;
+    className?: string;
+  }) => (
     <a href={to} className={className}>
       {children}
     </a>
@@ -79,7 +87,7 @@ describe('LoginPage rememberMe persistence', () => {
       target: { value: 'password123' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '인재로 로그인 →' }));
+    fireEvent.click(screen.getByRole('button', { name: '인재로 로그인' }));
 
     await waitFor(() => {
       expect(signIn).toHaveBeenCalledWith('test@example.com', 'password123', 'senior', true);
@@ -107,7 +115,7 @@ describe('LoginPage rememberMe persistence', () => {
       target: { value: 'password123' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '인재로 로그인 →' }));
+    fireEvent.click(screen.getByRole('button', { name: '인재로 로그인' }));
 
     await waitFor(() => {
       expect(signIn).toHaveBeenCalledWith('test@example.com', 'password123', 'senior', false);

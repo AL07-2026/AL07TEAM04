@@ -7,7 +7,9 @@ import {
   BriefcaseBusiness,
   Check,
   Coins,
+  Circle,
   CircleCheck,
+  CircleDot,
   FileText,
   ImagePlus,
   Loader2,
@@ -750,7 +752,10 @@ function HomeRecommendationRow({
             {analyzed.keyJobFacts.roleTitle}
           </h4>
           <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-slate-600 truncate">
-            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#F06B4F]">
+              <Zap aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              해결과제
+            </span>
             <span className="truncate font-semibold text-[#17212B]/90">
               {analyzed.aiExecutiveSummary.keyChallenge}
             </span>
@@ -799,7 +804,10 @@ function HomeRecommendationRow({
 
           {/* AI 1-line Challenge */}
           <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-600 truncate mt-0.5">
-            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#F06B4F]">
+              <Zap aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              해결과제
+            </span>
             <span className="truncate font-semibold text-[#17212B]/90">
               {analyzed.aiExecutiveSummary.keyChallenge}
             </span>
@@ -869,7 +877,9 @@ export function SeniorHomePage() {
   const [isExperienceRecommendationApplied, setIsExperienceRecommendationApplied] = useState(false);
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
-  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(null);
+  const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(
+    null,
+  );
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   const hasLoadedRef = useRef(false);
@@ -1205,10 +1215,11 @@ export function SeniorHomePage() {
                 getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined),
               );
             }}
-            className="shrink-0 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] hover:text-[#0F2D2A] hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] transition-colors hover:text-[#0F2D2A] hover:underline"
             type="button"
           >
-            <span>전체 {recommendedProjectsCount}개 보기 →</span>
+            <span>전체 {recommendedProjectsCount}개 보기</span>
+            <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
           </button>
         </div>
 
@@ -1294,13 +1305,18 @@ export function SeniorHomePage() {
               type="button"
             >
               {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
-                <RefreshCw className="size-4" />
+                <RefreshCw aria-hidden="true" className="size-4" />
               ) : null}
-              {!user
-                ? '로그인 / 회원가입하기 ➔'
-                : hasProfileRecommendationCriteria(recommendationProfile)
-                  ? '다시 불러오기'
-                  : '내 정보 입력하기'}
+              <span>
+                {!user
+                  ? '로그인 / 회원가입하기'
+                  : hasProfileRecommendationCriteria(recommendationProfile)
+                    ? '다시 불러오기'
+                    : '내 정보 입력하기'}
+              </span>
+              {!user || !hasProfileRecommendationCriteria(recommendationProfile) ? (
+                <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+              ) : null}
             </button>
           </div>
         )}
@@ -1393,10 +1409,11 @@ export function ExperienceSelectionPage() {
         <p className="text-xs font-extrabold text-[#173F3A]">분야 선택</p>
         <button
           onClick={() => handleProceed('/senior/experience/interview')}
-          className="text-xs font-extrabold text-[#F06B4F] underline"
+          className="inline-flex min-h-11 items-center gap-1.5 text-xs font-extrabold text-[#B84734] underline"
           type="button"
         >
-          AI 경험 인터뷰 시작 →
+          <span>AI 경험 인터뷰 시작</span>
+          <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
         </button>
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">경험 분야를 선택하세요</h2>
@@ -1924,20 +1941,20 @@ export function ExperienceInterviewPage() {
                   <div className="flex justify-end gap-1.5">
                     <button
                       aria-label="답변 수정 취소"
-                      className="flex size-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
+                      className="flex size-11 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                       onClick={() => setEditingAnswer(null)}
                       type="button"
                     >
-                      <X className="size-4" />
+                      <X aria-hidden="true" className="size-4" />
                     </button>
                     <button
                       aria-label="수정한 답변 저장"
-                      className="flex size-8 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex size-11 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!editingAnswer.text.trim()}
                       onClick={saveEditedAnswer}
                       type="button"
                     >
-                      <Check className="size-4" />
+                      <Check aria-hidden="true" className="size-4" />
                     </button>
                   </div>
                 </div>
@@ -2030,10 +2047,7 @@ export function ExperienceInterviewPage() {
           onSubmit={handleTextSubmit}
           className="flex w-full flex-col gap-2.5 rounded-2xl bg-white p-4 shadow-xs"
         >
-          <label
-            className="text-[12px] font-bold text-[#173F3A]"
-            htmlFor="interview-text-answer"
-          >
+          <label className="text-[12px] font-bold text-[#173F3A]" htmlFor="interview-text-answer">
             직접 입력하기
           </label>
           <div className="flex items-stretch gap-2">
@@ -2277,7 +2291,8 @@ export function ExperienceCardPage() {
               {getExperienceCardCategoryLabel(experienceCard)} 인터뷰 완료
             </span>
             <span className="flex items-center gap-1 text-[11px] font-bold text-[#173F3A]">
-              ✓ 본인 확인
+              <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              <span>본인 확인</span>
             </span>
           </div>
 
@@ -2436,10 +2451,7 @@ export function ProjectDetailPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/projects"
-      contentClassName={cn(
-        'project-ui-readable flex flex-col',
-        isMobile ? 'gap-3' : 'gap-5',
-      )}
+      contentClassName={cn('project-ui-readable flex flex-col', isMobile ? 'gap-3' : 'gap-5')}
       role="senior"
       title="프로젝트 상세"
     >
@@ -2512,9 +2524,7 @@ export function ProjectDetailPage() {
         <ActionButton onClick={handleProposalEntry}>제안하기</ActionButton>
       ) : (
         <div className="sticky bottom-0 z-10 -mx-4 border-y border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm">
-          <ActionButton onClick={handleProposalEntry}>
-            이 프로젝트에 제안하기
-          </ActionButton>
+          <ActionButton onClick={handleProposalEntry}>이 프로젝트에 제안하기</ActionButton>
         </div>
       )}
 
@@ -2603,12 +2613,7 @@ export function ProposalPage() {
 
   if (!user?.uid) {
     return (
-      <MobilePage
-        activeNav="projects"
-        backTo="/senior/projects"
-        role="senior"
-        title="로그인 필요"
-      >
+      <MobilePage activeNav="projects" backTo="/senior/projects" role="senior" title="로그인 필요">
         <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
           제안하려면 먼저 로그인해 주세요.
         </div>
@@ -2734,8 +2739,8 @@ export function ProposalCompletePage() {
       showBack={false}
       title="제안 완료"
     >
-      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
-        ✓
+      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-white shadow-md">
+        <CircleCheck aria-hidden="true" className="size-9" strokeWidth={2.25} />
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">제안을 보냈어요</h2>
       <p className="text-sm font-medium text-slate-500">회사가 확인하면 알려드릴게요.</p>
@@ -2832,7 +2837,8 @@ export function MyProposalsPage() {
               onClick={() => void navigate('/senior/projects')}
               className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-xs md:text-sm font-extrabold text-white shadow-xs hover:bg-[#12332F] transition cursor-pointer"
             >
-              프로젝트 둘러보기 →
+              <span>프로젝트 둘러보기</span>
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
             </button>
           </div>
         ) : (
@@ -2977,7 +2983,9 @@ export function MyProposalDetailPage() {
           <ActionButton onClick={() => void navigate('/senior/projects')}>
             프로젝트 보기
           </ActionButton>
-          {cancelError ? <p className="text-xs font-semibold text-[#D85A3F]">{cancelError}</p> : null}
+          {cancelError ? (
+            <p className="text-xs font-semibold text-[#D85A3F]">{cancelError}</p>
+          ) : null}
           <ActionButton disabled={cancelled} onClick={() => void handleCancelProposal()} secondary>
             {cancelled ? '취소한 제안입니다' : '제안 취소'}
           </ActionButton>
@@ -3028,7 +3036,7 @@ export function CompanyHomePage() {
         company: latestProject.companyName,
         title: latestProject.title,
         meta: `받은 제안 ${latestProjectProposalCount}건 · ${latestProject.location}`,
-        action: '프로젝트 관리 →',
+        action: '프로젝트 관리',
       }
     : null;
   const companyName =
@@ -3070,25 +3078,29 @@ export function CompanyHomePage() {
       >
         <SummaryCard
           caption="등록 프로젝트 현황"
+          icon={BriefcaseBusiness}
           label="등록 프로젝트"
           role="company"
           value={`${companyProjects.length}개`}
         />
         <SummaryCard
           caption="시니어 지원서 누적"
+          icon={Send}
           label="받은 지원/제안"
           role="company"
           value={`${companyProposals.length}건`}
         />
         <SummaryCard
           caption="연 최대 720만원 혜택"
-          label="💰 장려금 대상"
+          icon={Coins}
+          label="장려금 대상"
           onClick={() => void navigate('/company/proposals?filter=subsidy')}
           role="company"
           value={`${companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명`}
         />
         <SummaryCard
           caption="지원서 검토 및 대화 상태"
+          icon={Route}
           label="후속 진행"
           role="company"
           value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중' && proposal.status !== '취소됨').length}건`}
@@ -3364,12 +3376,7 @@ export function ProjectRegisterPage() {
     }
   }
   return (
-    <MobilePage
-      activeNav="projects"
-      role="company"
-      showBack={false}
-      title="프로젝트 등록"
-    >
+    <MobilePage activeNav="projects" role="company" showBack={false} title="프로젝트 등록">
       <form className="flex flex-col gap-[11px]" onSubmit={submit}>
         <p className="text-xs font-extrabold text-[#173F3A]">회사 프로젝트 작성</p>
         <h2 className="text-[22px] font-extrabold text-[#17212B]">필요한 경험을 알려주세요</h2>
@@ -3480,7 +3487,7 @@ export function ProjectRegisterPage() {
                   </div>
                   <button
                     aria-label={`${attachment.file.name} 삭제`}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
                     onClick={() => removeAttachment(attachment.id)}
                     title="첨부 자료 삭제"
                     type="button"
@@ -3531,8 +3538,8 @@ export function ProjectCompletePage() {
       showBack={false}
       title="등록 완료"
     >
-      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
-        ✓
+      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-white shadow-md">
+        <CircleCheck aria-hidden="true" className="size-9" strokeWidth={2.25} />
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">프로젝트를 등록했어요</h2>
       <p className="text-sm font-medium text-slate-500">
@@ -3593,6 +3600,15 @@ function getEmploymentSubsidyInfoUrl(isMobileMode: boolean) {
     : EMPLOYMENT_SUBSIDY_WEB_INFO_URL;
 }
 
+const receivedProposalFilters = [
+  { id: 'all', label: '전체' },
+  { id: 'subsidy', label: '장려금 대상 (연 720만원)' },
+  { id: '검토 중', label: '검토 중' },
+  { id: '연락 받음', label: '연락 받음' },
+] as const;
+
+type ReceivedProposalFilter = (typeof receivedProposalFilters)[number]['id'];
+
 export function ReceivedProposalsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -3600,9 +3616,9 @@ export function ReceivedProposalsPage() {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
   const employmentSubsidyInfoUrl = getEmploymentSubsidyInfoUrl(isMobile);
-  const initialFilter =
-    searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
-  const [filter, setFilter] = useState(initialFilter);
+  const initialFilter: ReceivedProposalFilter =
+    searchParams.get('filter') === 'subsidy' ? 'subsidy' : 'all';
+  const [filter, setFilter] = useState<ReceivedProposalFilter>(initialFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
@@ -3612,10 +3628,10 @@ export function ReceivedProposalsPage() {
   const subsidyEligibleCount = proposals.filter((p) => p.employmentSubsidyTarget ?? true).length;
 
   const visible = useMemo(() => {
-    if (filter === '💰 장려금 대상 (연 720만원)') {
+    if (filter === 'subsidy') {
       return proposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true);
     }
-    if (filter === '전체') return proposals;
+    if (filter === 'all') return proposals;
     return proposals.filter((proposal) => proposal.status === filter);
   }, [filter, proposals]);
 
@@ -3679,27 +3695,33 @@ export function ReceivedProposalsPage() {
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
-        {['전체', '💰 장려금 대상 (연 720만원)', '검토 중', '연락 받음'].map((item) => (
+        {receivedProposalFilters.map((item) => (
           <Chip
-            key={item}
-            onClick={() => setFilter(item)}
+            key={item.id}
+            onClick={() => setFilter(item.id)}
             role="company"
-            selected={filter === item}
+            selected={filter === item.id}
           >
-            {item}
+            <span className="inline-flex items-center gap-1.5">
+              {item.id === 'subsidy' ? (
+                <Coins aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              ) : null}
+              <span>{item.label}</span>
+            </span>
           </Chip>
         ))}
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold text-[#17212B]">
-          {filter === '💰 장려금 대상 (연 720만원)'
+          {filter === 'subsidy'
             ? `장려금 지원 대상 지원자 ${visible.length}건`
             : `받은 제안 ${visible.length}건`}
         </h2>
-        {filter === '💰 장려금 대상 (연 720만원)' && (
-          <span className="shrink-0 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] sm:text-xs">
-            ✓ 채용 시 국가 지원금 신청 가능
+        {filter === 'subsidy' && (
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] sm:text-xs">
+            <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+            <span>채용 시 국가 지원금 신청 가능</span>
           </span>
         )}
       </div>
@@ -3714,8 +3736,8 @@ export function ReceivedProposalsPage() {
               project={{
                 company: proposal.applicantName || '지원 인재',
                 title: proposal.projectTitle,
-                meta: `${proposal.status} · ${proposal.appliedAt}${isSubsidy ? ' · 💰 연 720만원 지원 대상' : ''}`,
-                action: '지원서 확인 →',
+                meta: `${proposal.status} · ${proposal.appliedAt}${isSubsidy ? ' · 연 720만원 지원 대상' : ''}`,
+                action: '지원서 확인',
               }}
             />
           );
@@ -3783,7 +3805,13 @@ function ProposalProgress({
                     : 'border-[#D4CBB8] bg-white text-slate-400',
               )}
             >
-              {completed ? '✓' : active ? '●' : '○'}
+              {completed ? (
+                <Check aria-hidden="true" className="size-3.5" strokeWidth={2.75} />
+              ) : active ? (
+                <CircleDot aria-hidden="true" className="size-3.5" strokeWidth={2.5} />
+              ) : (
+                <Circle aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
+              )}
             </span>
             <span
               className={cn(
@@ -4210,7 +4238,9 @@ export function ReceivedProposalDetailPage() {
             : proposalStageHelper[processStage]}
         </p>
         {proposal.status === '취소됨' ? (
-          <p className="text-xs font-semibold text-slate-500">후속 진행 액션을 사용할 수 없습니다.</p>
+          <p className="text-xs font-semibold text-slate-500">
+            후속 진행 액션을 사용할 수 없습니다.
+          </p>
         ) : (
           <ProposalProgress
             current={processStage}
@@ -4293,7 +4323,7 @@ export function ReceivedProposalDetailPage() {
               </div>
               <button
                 aria-label="프로필·이력서 보기 닫기"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                 onClick={closeProfileResume}
                 ref={profileResumeCloseRef}
                 type="button"
@@ -4573,7 +4603,8 @@ export function SeniorProfilePage() {
             </span>
             {seniorProfile?.employmentSubsidyTarget ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
-                ✓ 연 720만원 지원 대상
+                <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+                <span>연 720만원 지원 대상</span>
               </span>
             ) : null}
           </div>

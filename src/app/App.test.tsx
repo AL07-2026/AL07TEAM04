@@ -224,7 +224,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: '수정한 답변 저장' }));
 
-    fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인 →' }));
+    fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인' }));
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
@@ -450,6 +450,57 @@ describe('Figma v2 통합 화면 라우팅', () => {
     proposalsSpy.mockRestore();
   });
 
+  it('받은 제안의 장려금 필터를 아이콘과 독립적인 상태값으로 적용한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
+    const proposals = [
+      {
+        id: 'eligible-1',
+        projectId: 'project-1',
+        projectOwnerId: 'company-test-uid',
+        userId: 'senior-eligible',
+        projectTitle: '장려금 대상 프로젝트',
+        status: '검토 중',
+        processStage: 'document_review',
+        appliedAt: '2026-09-09',
+        applicantName: '지원 대상자',
+        applicantEmail: 'eligible@example.com',
+        employmentSubsidyTarget: true,
+      },
+      {
+        id: 'ineligible-1',
+        projectId: 'project-2',
+        projectOwnerId: 'company-test-uid',
+        userId: 'senior-ineligible',
+        projectTitle: '일반 프로젝트',
+        status: '검토 중',
+        processStage: 'document_review',
+        appliedAt: '2026-09-09',
+        applicantName: '일반 지원자',
+        applicantEmail: 'ineligible@example.com',
+        employmentSubsidyTarget: false,
+      },
+    ] as proposalService.UserProposal[];
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue(proposals);
+    window.history.pushState({}, '', '/company/proposals?filter=subsidy');
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', { name: '장려금 지원 대상 지원자 1건' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('장려금 대상 프로젝트')).toBeInTheDocument();
+    expect(screen.queryByText('일반 프로젝트')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '장려금 대상 (연 720만원)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '전체' }));
+    expect(await screen.findByRole('heading', { name: '받은 제안 2건' })).toBeInTheDocument();
+    expect(screen.getByText('일반 프로젝트')).toBeInTheDocument();
+
+    proposalsSpy.mockRestore();
+  });
+
   it('취소된 받은 제안은 상태를 표시하고 후속 액션을 막는다', async () => {
     const proposal = {
       id: 'cancelled-1',
@@ -519,9 +570,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
 
-    expect(
-      await screen.findByText('✓ 프로필 정보가 성공적으로 저장되었습니다.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('프로필 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
     expect(screen.getByText('AI 서비스 개발')).toBeInTheDocument();
     expect(screen.getByText('15년')).toBeInTheDocument();
   });
@@ -537,7 +586,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('회사명'), { target: { value: '(주) 테크노바' } });
     fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
 
-    expect(await screen.findByText('✓ 회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
+    expect(await screen.findByText('회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
     expect(screen.getAllByText('(주) 테크노바').length).toBeGreaterThan(0);
   });
 

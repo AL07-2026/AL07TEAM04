@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
   Home,
@@ -159,7 +160,9 @@ function LoginRequiredToast({ message }: { message: string }) {
         <LogIn aria-hidden="true" className="size-[18px]" />
       </span>
       <span className="min-w-0">
-        <strong className="block text-[14px] font-extrabold leading-5">로그인이 필요한 서비스입니다</strong>
+        <strong className="block text-[14px] font-extrabold leading-5">
+          로그인이 필요한 서비스입니다
+        </strong>
         <span className="block text-[13px] font-semibold leading-5 text-white/85">{message}</span>
       </span>
     </div>
@@ -285,7 +288,8 @@ export function LoginPage() {
 
           <div className="flex flex-col gap-1.5">
             <span className="inline-flex self-center items-center gap-1 rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              ✓ 로그인 상태 유지 중
+              <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              로그인 상태 유지 중
             </span>
             <h2 className="text-lg sm:text-xl font-extrabold text-[#17212B] pt-1">
               이미 <span className="text-[#F06B4F]">{userRoleLabel}</span>으로 로그인되어 있습니다
@@ -301,8 +305,9 @@ export function LoginPage() {
               onClick={() => void navigate(homeUrl)}
               className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98]"
             >
-              <Home className="size-4.5" />
-              <span>{user.role === 'company' ? '기업 홈으로 이동' : '인재 홈으로 이동'} →</span>
+              <Home aria-hidden="true" className="size-4.5" />
+              <span>{user.role === 'company' ? '기업 홈으로 이동' : '인재 홈으로 이동'}</span>
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
             </button>
             <button
               type="button"
@@ -493,13 +498,16 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
-              {isSubmitting
-                ? '로그인 처리 중...'
-                : role === 'senior'
-                  ? '인재로 로그인 →'
-                  : '기업으로 로그인 →'}
+              {isSubmitting ? (
+                '로그인 처리 중...'
+              ) : (
+                <>
+                  <span>{role === 'senior' ? '인재로 로그인' : '기업으로 로그인'}</span>
+                  <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+                </>
+              )}
             </button>
 
             <div className="relative my-0.5 flex items-center justify-center">
@@ -692,13 +700,16 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
-              {isSubmitting
-                ? '로그인 처리 중...'
-                : role === 'senior'
-                  ? '인재로 로그인 →'
-                  : '기업으로 로그인 →'}
+              {isSubmitting ? (
+                '로그인 처리 중...'
+              ) : (
+                <>
+                  <span>{role === 'senior' ? '인재로 로그인' : '기업으로 로그인'}</span>
+                  <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+                </>
+              )}
             </button>
 
             <div className="relative my-1 flex items-center justify-center">

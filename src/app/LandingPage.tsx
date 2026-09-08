@@ -4,16 +4,15 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
-  CreditCard,
   FileText,
   Handshake,
   Home,
+  IdCard,
   Info,
   Landmark,
   LogOut,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   UserRound,
   X,
 } from 'lucide-react';
@@ -27,7 +26,7 @@ import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsSer
 const features = [
   {
     number: '01',
-    icon: CreditCard,
+    icon: IdCard,
     title: '경험 카드',
     description:
       '개인의 경험 및 경력을 음성 인터뷰 및 직접 입력 후 AI가 적절하게 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
@@ -57,16 +56,23 @@ export function LandingPage() {
 
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
-      <SiteHeader onProjectClick={() => trackButtonClick('nav_view_projects')} actions={
+      <SiteHeader
+        onProjectClick={() => trackButtonClick('nav_view_projects')}
+        actions={
           <nav className="ml-auto flex items-center gap-1.5 sm:gap-2" aria-label="빠른 이동">
             {user ? (
               <>
                 {/* 1. 회원 구분 뱃지 */}
                 <div
                   className="hidden sm:inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D5DDD8] bg-[#F2F7F5] px-3.5 text-xs font-bold text-[#173F3A]"
-                  aria-label={user.role === 'company' ? '기업 회원으로 로그인됨' : '인재 회원으로 로그인됨'}
+                  aria-label={
+                    user.role === 'company' ? '기업 회원으로 로그인됨' : '인재 회원으로 로그인됨'
+                  }
                 >
-                  <span className="size-2 rounded-full bg-[#10B981] ring-2 ring-[#10B981]/25" aria-hidden="true" />
+                  <span
+                    className="size-2 rounded-full bg-[#10B981] ring-2 ring-[#10B981]/25"
+                    aria-hidden="true"
+                  />
                   {user.role === 'company' ? (
                     <span className="flex items-center gap-1.5">
                       <Building2 className="size-3.5 shrink-0 text-[#173F3A]" aria-hidden="true" />
@@ -104,7 +110,11 @@ export function LandingPage() {
                     aria-label="관리자 페이지"
                     title="관리자 페이지"
                   >
-                    <ShieldCheck className="size-4.5 shrink-0 text-[#173F3A]" strokeWidth={1.8} aria-hidden="true" />
+                    <ShieldCheck
+                      className="size-4.5 shrink-0 text-[#173F3A]"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
                     <span className="hidden md:inline">관리자</span>
                   </button>
                 ) : null}
@@ -155,7 +165,8 @@ export function LandingPage() {
               </>
             )}
           </nav>
-      } />
+        }
+      />
 
       <main>
         <section className="bg-white pb-16 pt-14 sm:pb-20 sm:pt-18">
@@ -262,11 +273,7 @@ export function LandingPage() {
           <div className="site-rail flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-3 sm:gap-4">
               <span className="grid size-11 shrink-0 place-items-center text-[#F06B4F] sm:size-12">
-                <Sparkles
-                  className="size-9 motion-safe:animate-pulse sm:size-10"
-                  strokeWidth={1.8}
-                  aria-hidden="true"
-                />
+                <Landmark aria-hidden="true" className="size-9 sm:size-10" strokeWidth={1.8} />
               </span>
               <div>
                 <p className="text-[0.875rem] font-black text-[#F06B4F] sm:text-[1rem]">
@@ -353,10 +360,10 @@ export function LandingPage() {
               <button
                 type="button"
                 onClick={() => setShowSubsidyModal(false)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
-                aria-label="닫기"
+                className="inline-flex size-11 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                aria-label="고용촉진장려금 안내 닫기"
               >
-                <X className="size-5" />
+                <X aria-hidden="true" className="size-5" />
               </button>
             </div>
 
@@ -489,9 +496,10 @@ export function LandingPage() {
                   setShowSubsidyModal(false);
                   void navigate('/login?role=company');
                 }}
-                className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#173F3A] text-white text-xs font-semibold hover:bg-[#1E4E47] active:scale-[0.98] transition shadow-xs cursor-pointer"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-6 text-xs font-semibold text-white shadow-xs transition hover:bg-[#1E4E47] active:scale-[0.98] sm:w-auto"
               >
-                혜택 대상 인재 보러가기 (기업 로그인) ➔
+                <span>혜택 대상 인재 보러가기 (기업 로그인)</span>
+                <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
               </button>
             </div>
           </div>

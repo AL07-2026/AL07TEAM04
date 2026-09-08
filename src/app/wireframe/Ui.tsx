@@ -1,8 +1,10 @@
 import {
+  ArrowRight,
   Briefcase,
   Building2,
   ChevronLeft,
   ChevronRight,
+  CircleDot,
   FolderKanban,
   Home,
   Inbox,
@@ -13,6 +15,7 @@ import {
   User,
   Users,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import { createContext, useContext, useEffect, useRef, type ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -229,7 +232,11 @@ export function MobilePage({
         ) : null}
         <div className={cn('site-page-body', contentClassName)}>{children}</div>
       </main>
-      {role ? <div className="site-bottom-nav"><BottomNav active={activeNav} role={role} forceShow /></div> : null}
+      {role ? (
+        <div className="site-bottom-nav">
+          <BottomNav active={activeNav} role={role} forceShow />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -260,7 +267,10 @@ export function SiteHeader({
           <BrandLogo />
         </button>
         {role ? (
-          <nav className="site-primary-nav" aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}>
+          <nav
+            className="site-primary-nav"
+            aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
+          >
             {navItems[role].map((item) => {
               const selected = item.id === activeNav;
               const Icon = item.Icon;
@@ -272,7 +282,9 @@ export function SiteHeader({
                   onClick={() => void navigate(item.path)}
                   className={cn(
                     'flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-extrabold transition-colors',
-                    selected ? 'bg-[#F06B4F] text-white' : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+                    selected
+                      ? 'bg-[#B84734] text-white'
+                      : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
                   )}
                 >
                   <Icon aria-hidden="true" className="size-4 shrink-0" />
@@ -333,7 +345,7 @@ function BottomNav({
               aria-current={selected ? 'page' : undefined}
               className={cn(
                 'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition cursor-pointer',
-                selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
+                selected ? 'font-extrabold text-[#B84734]' : 'text-slate-400 hover:text-[#17212B]',
               )}
               key={item.id}
               onClick={() => void navigate(item.path)}
@@ -341,8 +353,8 @@ function BottomNav({
             >
               <IconComponent
                 className={cn(
-                  'size-5 transition-transform',
-                  selected ? 'scale-110 text-[#F06B4F]' : 'text-slate-400',
+                  'size-5 transition-colors',
+                  selected ? 'text-[#B84734]' : 'text-slate-400',
                 )}
               />
               <span className="whitespace-nowrap">{item.label}</span>
@@ -381,12 +393,23 @@ type ActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export function ActionButton({
   className,
+  children,
   role = 'senior',
   secondary,
   ...props
 }: ActionButtonProps) {
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
+  const textChildren = typeof children === 'string' ? children.trim() : null;
+  const hasTrailingArrow = textChildren ? /(?:→|➔)$/.test(textChildren) : false;
+  const content = hasTrailingArrow ? (
+    <span className="inline-flex min-w-0 items-center justify-center gap-2">
+      <span>{textChildren?.replace(/\s*(?:→|➔)$/, '')}</span>
+      <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+    </span>
+  ) : (
+    children
+  );
 
   return (
     <button
@@ -401,7 +424,9 @@ export function ActionButton({
         className,
       )}
       {...props}
-    />
+    >
+      {content}
+    </button>
   );
 }
 
@@ -494,9 +519,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
                       : 'bg-[#FFF2EE] text-[#F06B4F] border-[#FCD8CF]',
                 )}
               >
-                <span aria-hidden="true" className="mr-1 text-[8px]">
-                  ●
-                </span>
+                <CircleDot aria-hidden="true" className="mr-1 size-3 shrink-0" strokeWidth={2.5} />
                 {statusText}
               </span>
             ) : null}
@@ -564,6 +587,7 @@ export function ProjectCard({ onClick, project }: { onClick?: () => void; projec
 export function SummaryCard({
   actionHint,
   caption,
+  icon: Icon,
   interactiveLabel,
   label,
   onClick,
@@ -571,6 +595,7 @@ export function SummaryCard({
 }: {
   actionHint?: string;
   caption?: string;
+  icon?: LucideIcon;
   interactiveLabel?: string;
   label: string;
   onClick?: () => void;
@@ -591,16 +616,19 @@ export function SummaryCard({
       <span className="flex items-start justify-between gap-2 min-w-0">
         <span
           className={cn(
-            'font-bold text-[#4B5768] min-w-0 truncate',
+            'inline-flex min-w-0 items-center gap-1.5 truncate font-bold text-[#4B5768]',
             isMobile ? 'text-[13px]' : 'text-[16px]',
           )}
         >
-          {label}
+          {Icon ? <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} /> : null}
+          <span className="truncate">{label}</span>
         </span>
         {onClick ? (
-          <span aria-hidden="true" className="text-[#173F3A]">
-            →
-          </span>
+          <ArrowRight
+            aria-hidden="true"
+            className="size-4 shrink-0 text-[#173F3A]"
+            strokeWidth={2.25}
+          />
         ) : null}
       </span>
       <div className="mt-auto min-w-0">
@@ -707,8 +735,9 @@ export function TextAreaField({ className, label, ...props }: TextAreaFieldProps
 
 export function StatusBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="w-fit rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-3.5 py-1.5 text-[13px] md:text-[16px] font-extrabold text-[#173F3A]">
-      ● {children}
+    <span className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-3.5 py-1.5 text-[13px] font-extrabold text-[#173F3A] md:text-[16px]">
+      <CircleDot aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.5} />
+      {children}
     </span>
   );
 }

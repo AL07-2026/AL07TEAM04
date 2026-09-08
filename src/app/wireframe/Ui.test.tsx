@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 
 import {
+  ActionButton,
   BrandLogo,
   MobilePage,
   SiteMenu,
@@ -93,20 +94,25 @@ describe('공통 헤더', () => {
     expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
   });
 
-  it.each([undefined, 'senior', 'company'] as const)('역할 %s에도 같은 헤더와 본문 틀을 쓴다', (role) => {
-    const { container } = render(
-      <MemoryRouter>
-        <MobilePage backTo="/" role={role} title="상세">
-          <p>상세 본문</p>
-        </MobilePage>
-      </MemoryRouter>,
-    );
-    expect(container.querySelectorAll('.site-header')).toHaveLength(1);
-    expect(container.querySelector('.site-header .site-rail')).toBeInTheDocument();
-    expect(container.querySelector('main.site-rail.site-page-content')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header')).toBeNull();
-    expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
-  });
+  it.each([undefined, 'senior', 'company'] as const)(
+    '역할 %s에도 같은 헤더와 본문 틀을 쓴다',
+    (role) => {
+      const { container } = render(
+        <MemoryRouter>
+          <MobilePage backTo="/" role={role} title="상세">
+            <p>상세 본문</p>
+          </MobilePage>
+        </MemoryRouter>,
+      );
+      expect(container.querySelectorAll('.site-header')).toHaveLength(1);
+      expect(container.querySelector('.site-header .site-rail')).toBeInTheDocument();
+      expect(container.querySelector('main.site-rail.site-page-content')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header'),
+      ).toBeNull();
+      expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
+    },
+  );
 
   it('메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {
     render(
@@ -182,6 +188,17 @@ describe('SummaryCard', () => {
     fireEvent.click(card);
 
     expect(onClick).toHaveBeenCalledOnce();
+    expect(card.querySelector('.lucide-arrow-right')).toHaveAttribute('aria-hidden', 'true');
+  });
+});
+
+describe('공통 행동 아이콘', () => {
+  it('문자 화살표를 읽기 쉬운 버튼 이름과 Lucide 아이콘으로 분리한다', () => {
+    const { container } = render(<ActionButton>다음 단계로 이동 →</ActionButton>);
+
+    expect(screen.getByRole('button', { name: '다음 단계로 이동' })).toBeInTheDocument();
+    expect(container.querySelector('.lucide-arrow-right')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByText('→')).not.toBeInTheDocument();
   });
 });
 

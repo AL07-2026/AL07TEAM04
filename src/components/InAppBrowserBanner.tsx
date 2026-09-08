@@ -1,4 +1,4 @@
-import { ExternalLink, Sparkles, X } from 'lucide-react';
+import { ExternalLink, Globe2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
@@ -32,8 +32,8 @@ export function InAppBrowserBanner() {
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 border-b border-[#F06B4F]/30 bg-[#FFF5F2] px-4 py-2.5 text-[#173F3A] shadow-xs backdrop-blur-md"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 text-xs sm:text-sm">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F06B4F] text-white">
-          <Sparkles className="size-3.5" />
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#B84734] text-white">
+          <Globe2 aria-hidden="true" className="size-4" strokeWidth={2.25} />
         </span>
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
           <span className="font-bold text-[#E05A3E]">
@@ -48,20 +48,20 @@ export function InAppBrowserBanner() {
 
       <div className="flex shrink-0 items-center gap-2">
         <button
-          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#173F3A] px-3.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#235851] active:scale-95"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[#173F3A] px-3.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#235851] active:scale-95"
           onClick={handleOpenExternal}
           type="button"
         >
           <span>기본 브라우저로 열기</span>
-          <ExternalLink className="size-3.5" />
+          <ExternalLink aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
         </button>
         <button
-          aria-label="닫기"
-          className="flex size-7 items-center justify-center rounded-full text-[#7A8A99] hover:bg-black/5"
+          aria-label="인앱 브라우저 안내 닫기"
+          className="flex size-11 items-center justify-center rounded-full text-[#667684] hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
           onClick={handleDismiss}
           type="button"
         >
-          <X className="size-4" />
+          <X aria-hidden="true" className="size-4" strokeWidth={2.25} />
         </button>
       </div>
     </aside>

@@ -13,6 +13,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  UserRoundCog,
   Users,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -58,7 +59,7 @@ const adminSections = [
   { id: 'matches', path: '/admin/matches', label: '매칭 관리', Icon: Users },
   { id: 'settlements', path: '/admin/settlements', label: '계약·정산', Icon: CreditCard },
   { id: 'notifications', path: '/admin/notifications', label: '알림·메시지', Icon: Mail },
-  { id: 'users', path: '/admin/users', label: '회원 관리', Icon: Building2 },
+  { id: 'users', path: '/admin/users', label: '회원 관리', Icon: UserRoundCog },
   { id: 'settings', path: '/admin/settings', label: '관리자 설정', Icon: Settings },
 ] as const;
 
@@ -1711,12 +1712,13 @@ export function AdminPage() {
                 <p className="text-xs font-bold text-slate-500">{getAdminRoleLabel(adminRole)}</p>
               </div>
               <button
+                aria-label="로그아웃"
                 type="button"
                 onClick={async () => {
                   await signOut();
                   void navigate('/', { replace: true });
                 }}
-                className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[#E0D9C8] bg-white text-sm font-black text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 active:scale-[0.97] lg:h-11 lg:w-auto lg:gap-2 lg:px-4"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[#E0D9C8] bg-white text-sm font-black text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 active:scale-[0.97] lg:w-auto lg:gap-2 lg:px-4"
               >
                 <LogOut className="size-4" aria-hidden="true" />
                 <span className="hidden lg:inline">로그아웃</span>
