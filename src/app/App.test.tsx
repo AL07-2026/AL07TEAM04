@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
@@ -116,16 +116,19 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it.each([
-    ['내 제안', '/senior/proposals'],
-    ['내 정보', '/senior/profile'],
+    ['내 제안', '/senior/proposals', '인재 주요 메뉴'],
+    ['내 정보', '/senior/profile', '인재 주요 메뉴'],
+    ['내 제안', '/senior/proposals', '인재 하단 주요 메뉴'],
+    ['내 정보', '/senior/profile', '인재 하단 주요 메뉴'],
   ])(
     '비로그인 상태에서 공개 프로젝트 화면의 %s를 누르면 안내 후 로그인으로 이동한다',
-    async (label, destination) => {
+    async (label, destination, menuLabel) => {
       mockAuthState = { role: 'senior', user: null };
       window.history.pushState({}, '', '/senior/project-database');
       render(<App />);
 
-      fireEvent.click(await screen.findByRole('button', { name: label }));
+      const menu = await screen.findByRole('navigation', { name: menuLabel });
+      fireEvent.click(within(menu).getByRole('button', { name: label }));
 
       expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
       expect(await screen.findByText('로그인 후 이용할 수 있어요.')).toBeInTheDocument();

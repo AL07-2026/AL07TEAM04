@@ -96,7 +96,6 @@ export function CompanyInfoPage() {
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName={isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10'}
       role="company"
       showBack={false}
       title="회사 기본정보"

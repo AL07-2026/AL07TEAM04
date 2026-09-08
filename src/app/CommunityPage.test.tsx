@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type * as ReactRouter from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -104,10 +104,10 @@ describe('CommunityPage', () => {
     );
 
     await screen.findByText('아직 게시글이 없습니다.');
-    expect(screen.getByRole('button', { name: '프로젝트' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '홈' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내 제안' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내 정보' })).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: '프로젝트' })).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: '홈' })).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: '내 제안' })).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: '내 정보' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기 열기' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.queryByRole('menuitem', { name: /프로젝트 보러가기/ })).not.toBeInTheDocument();

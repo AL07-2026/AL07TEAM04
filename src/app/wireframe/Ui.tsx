@@ -208,188 +208,88 @@ export function MobilePage({
   title,
 }: MobilePageProps) {
   const navigate = useNavigate();
-  const { mode: viewportMode } = useViewportMode();
-
-  const isMobileMode = viewportMode === 'mobile';
-
   return (
-    <>
-      {isMobileMode ? (
-        <main className="fixed inset-0 sm:static h-full sm:h-dvh sm:max-h-dvh w-full overflow-hidden bg-[#F7F3EA] text-[#17212B] sm:flex sm:items-center sm:justify-center sm:p-6">
-          <section className="mx-auto flex h-full sm:h-[844px] sm:max-h-[calc(100dvh-3rem)] w-full max-w-full sm:max-w-[430px] flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border relative">
-            {/* Mobile header */}
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-3 shadow-2xs">
-              <div className="flex items-center gap-2">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA]"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5" />
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => void navigate('/')}
-                  className="flex items-center rounded-xl hover:opacity-85 transition"
-                >
-                  <BrandLogo />
-                </button>
-                <h1 className="sr-only">{title}</h1>
-              </div>
-
-              <div>
-                <SiteMenu compact showProjectLink={showProjectLink} />
-              </div>
-            </header>
-
-            {/* Content Container */}
-            <div
-              className={cn(
-                'min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full px-4 py-4',
-                contentClassName,
-              )}
-            >
-              {children}
-            </div>
-
-            {/* Bottom Navigation */}
-            {role ? <BottomNav active={activeNav} role={role} forceShow /> : null}
-          </section>
-        </main>
-      ) : !role ? (
-        /* Unauthenticated / Login / Signup Screen: Desktop Card Frame Layout */
-        <main className="min-h-dvh bg-[#F7F3EA] text-[#17212B] sm:p-4 md:p-6 lg:p-10 sm:flex sm:items-center sm:justify-center">
-          <section className="mx-auto flex w-full max-w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl flex-col overflow-hidden border-[#E0D9C8] bg-[#F7F3EA] shadow-2xl sm:rounded-[28px] sm:border min-h-[640px] md:min-h-[740px] lg:min-h-[820px]">
-            {/* Header */}
-            <header className="flex h-14 md:h-18 shrink-0 items-center justify-between border-b border-[#E0D9C8] bg-white px-4 md:px-7 shadow-2xs">
-              <div className="flex items-center gap-3">
-                {showBack ? (
-                  <button
-                    aria-label="이전 화면으로 돌아가기"
-                    className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#F7F3EA] hover:scale-105 active:scale-95"
-                    onClick={() => {
-                      if (backTo) void navigate(backTo);
-                      else void navigate(-1);
-                    }}
-                    type="button"
-                  >
-                    <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
-                  </button>
-                ) : null}
-
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => void navigate('/')}
-                    className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
-                  >
-                    <BrandLogo />
-                  </button>
-                  <h1 className="sr-only">{title}</h1>
-                </div>
-              </div>
-
-              <SiteMenu showProjectLink={showProjectLink} />
-            </header>
-
-            {/* Content Container */}
-            <div
-              className={cn(
-                'min-h-0 flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full',
-                contentClassName,
-              )}
-            >
-              {children}
-            </div>
-          </section>
-        </main>
-      ) : (
-        /* Logged-In Service Pages: Full Version Responsive Web Layout */
-        <main className="min-h-dvh bg-[#FAF7F2] text-[#17212B] flex flex-col w-full">
-          <section className="w-full min-h-dvh flex flex-col bg-[#FAF7F2]">
-            {/* Top Navbar */}
-            <header className="sticky top-0 z-30 h-16 w-full shrink-0 border-b border-[#E0D9C8] bg-white shadow-2xs md:h-18">
-              <div className="relative mx-auto flex h-full w-full max-w-7xl items-center justify-between px-6 md:px-8">
-                <div className="flex items-center gap-4">
-                  {showBack ? (
-                    <button
-                      aria-label="이전 화면으로 돌아가기"
-                      className="-ml-1 flex size-8 md:size-9 items-center justify-center rounded-full text-[#17212B] transition hover:bg-[#FAF7F2] hover:scale-105 active:scale-95"
-                      onClick={() => {
-                        if (backTo) void navigate(backTo);
-                        else void navigate(-1);
-                      }}
-                      type="button"
-                    >
-                      <ChevronLeft aria-hidden="true" className="size-5 md:size-6" />
-                    </button>
-                  ) : null}
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void navigate('/')}
-                      className="flex items-center gap-2 rounded-xl hover:opacity-85 transition"
-                    >
-                      <BrandLogo />
-                    </button>
-                    <h1 className="sr-only">{title}</h1>
-                  </div>
-                </div>
-
-                {/* Fixed Center Navigation Tabs (Pinned to Dead-Center on Desktop PC) */}
-                {role ? (
-                  <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-[#FAF7F2] p-1.5 rounded-full border border-[#E0D9C8] shadow-2xs">
-                    {navItems[role].map((item) => {
-                      const selected = item.id === activeNav;
-                      const IconComponent = item.Icon;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => void navigate(item.path)}
-                          className={cn(
-                            'flex items-center justify-center gap-2 h-9 min-w-[104px] px-3.5 rounded-full text-xs md:text-sm font-extrabold transition-[color,background-color,box-shadow] duration-150',
-                            selected
-                              ? 'bg-[#F06B4F] text-white shadow-xs'
-                              : 'text-slate-600 hover:text-[#17212B] hover:bg-white',
-                          )}
-                        >
-                          <IconComponent
-                            className={cn(
-                              'size-4 shrink-0',
-                              selected ? 'text-white' : 'text-slate-500',
-                            )}
-                          />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-
-                <SiteMenu showProjectLink={showProjectLink} />
-              </div>
-            </header>
-
-            {/* Main Content Area (Full Width Responsive) */}
-            <div className={cn('w-full max-w-7xl mx-auto flex-1 p-6 md:p-8', contentClassName)}>
-              {children}
-            </div>
-          </section>
-        </main>
-      )}
-    </>
+    <div className="site-page">
+      <SiteHeader role={role} activeNav={activeNav} showProjectLink={showProjectLink} />
+      <main className="site-rail site-page-content">
+        <h1 className="sr-only">{title}</h1>
+        {showBack ? (
+          <button
+            aria-label="이전 화면으로 돌아가기"
+            className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#173F3A] hover:bg-[#DDEBE7]"
+            onClick={() => {
+              if (backTo) void navigate(backTo);
+              else void navigate(-1);
+            }}
+            type="button"
+          >
+            <ChevronLeft aria-hidden="true" className="size-5" />
+            이전 화면
+          </button>
+        ) : null}
+        <div className={cn('site-page-body', contentClassName)}>{children}</div>
+      </main>
+      {role ? <div className="site-bottom-nav"><BottomNav active={activeNav} role={role} forceShow /></div> : null}
+    </div>
   );
 }
 
+export function SiteHeader({
+  activeNav,
+  role,
+  actions,
+  onProjectClick,
+  showProjectLink = !role,
+}: {
+  activeNav?: SeniorNav | CompanyNav;
+  role?: Role;
+  actions?: ReactNode;
+  onProjectClick?: () => void;
+  showProjectLink?: boolean;
+}): React.JSX.Element {
+  const navigate = useNavigate();
+  return (
+    <header className="site-header">
+      <div className="site-rail site-header-row">
+        <button
+          type="button"
+          aria-label="이어잡 첫 화면"
+          onClick={() => void navigate('/')}
+          className="site-brand inline-flex min-h-11 items-center rounded-lg hover:opacity-85"
+        >
+          <BrandLogo />
+        </button>
+        {role ? (
+          <nav className="site-primary-nav" aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}>
+            {navItems[role].map((item) => {
+              const selected = item.id === activeNav;
+              const Icon = item.Icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-current={selected ? 'page' : undefined}
+                  onClick={() => void navigate(item.path)}
+                  className={cn(
+                    'flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-extrabold transition-colors',
+                    selected ? 'bg-[#F06B4F] text-white' : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+                  )}
+                >
+                  <Icon aria-hidden="true" className="size-4 shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        ) : null}
+        <div className="site-header-actions">
+          {actions}
+          <SiteMenu onProjectClick={onProjectClick} showProjectLink={showProjectLink} />
+        </div>
+      </div>
+    </header>
+  );
+}
 const navItems = {
   senior: [
     { id: 'database', label: '프로젝트', path: '/senior/project-database', Icon: Briefcase },
@@ -418,7 +318,7 @@ function BottomNav({
 
   return (
     <nav
-      aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
+      aria-label={`${role === 'senior' ? '인재' : '회사'} 하단 주요 메뉴`}
       className={cn(
         'w-full shrink-0 border-t border-[#E0D9C8] bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg z-40',
         forceShow ? 'flex' : 'flex md:hidden',

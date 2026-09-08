@@ -75,7 +75,7 @@ describe('기기 화면 모드', () => {
 describe('공통 헤더', () => {
   beforeEach(() => mockDeviceMedia(false));
 
-  it('서비스 로고를 본문과 같은 max-w-7xl 기준선에 맞추고 화면 전환 UI를 표시하지 않는다', () => {
+  it('서비스 로고를 본문과 같은 공통 기준선에 맞추고 화면 전환 UI를 표시하지 않는다', () => {
     render(
       <MemoryRouter>
         <ViewportProvider>
@@ -89,8 +89,23 @@ describe('공통 헤더', () => {
     const headerRail = screen
       .getByRole('img', { name: '이어잡' })
       .closest('header')?.firstElementChild;
-    expect(headerRail).toHaveClass('max-w-7xl', 'px-6', 'md:px-8');
+    expect(headerRail).toHaveClass('site-rail', 'site-header-row');
     expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
+  });
+
+  it.each([undefined, 'senior', 'company'] as const)('역할 %s에도 같은 헤더와 본문 틀을 쓴다', (role) => {
+    const { container } = render(
+      <MemoryRouter>
+        <MobilePage backTo="/" role={role} title="상세">
+          <p>상세 본문</p>
+        </MobilePage>
+      </MemoryRouter>,
+    );
+    expect(container.querySelectorAll('.site-header')).toHaveLength(1);
+    expect(container.querySelector('.site-header .site-rail')).toBeInTheDocument();
+    expect(container.querySelector('main.site-rail.site-page-content')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header')).toBeNull();
+    expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
   });
 
   it('메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {

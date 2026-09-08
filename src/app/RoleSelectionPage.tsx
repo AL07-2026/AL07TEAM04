@@ -27,10 +27,7 @@ export function RoleSelectionPage() {
     <MobilePage
       activeNav="profile"
       backTo="/signup"
-      contentClassName={cn(
-        'flex flex-col gap-5',
-        isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10 max-w-4xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-5"
       role={selected}
       title="역할 선택"
     >

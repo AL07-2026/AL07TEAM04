@@ -20,7 +20,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { BrandLogo, SiteMenu } from '@/app/wireframe/Ui';
+import { SiteHeader } from '@/app/wireframe/Ui';
 import { useAuth } from '@/lib/authContext';
 import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsService';
 
@@ -57,17 +57,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
-      <header className="sticky top-0 z-50 border-b border-[#e7dfcb] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-5 sm:px-8">
-          <button
-            type="button"
-            onClick={() => void navigate('/')}
-            className="inline-flex items-center border-0 bg-transparent p-0 cursor-pointer"
-            aria-label="이어잡 첫 화면"
-          >
-            <BrandLogo />
-          </button>
-
+      <SiteHeader onProjectClick={() => trackButtonClick('nav_view_projects')} actions={
           <nav className="ml-auto flex items-center gap-1.5 sm:gap-2" aria-label="빠른 이동">
             {user ? (
               <>
@@ -102,7 +92,7 @@ export function LandingPage() {
                   title="내 홈으로 이동"
                 >
                   <Home className="size-4.5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                  <span>내 홈</span>
+                  <span className="hidden sm:inline">내 홈</span>
                 </button>
 
                 {/* 3. 관리자 버튼 (관리자일 때) */}
@@ -110,7 +100,7 @@ export function LandingPage() {
                   <button
                     type="button"
                     onClick={() => void navigate('/admin/dashboard')}
-                    className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-2.5 sm:px-3 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
+                    className="hidden sm:inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-2.5 sm:px-3 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
                     aria-label="관리자 페이지"
                     title="관리자 페이지"
                   >
@@ -164,18 +154,12 @@ export function LandingPage() {
                 </button>
               </>
             )}
-            <SiteMenu
-              compact
-              onProjectClick={() => trackButtonClick('nav_view_projects')}
-              showProjectLink
-            />
           </nav>
-        </div>
-      </header>
+      } />
 
       <main>
         <section className="bg-white pb-16 pt-14 sm:pb-20 sm:pt-18">
-          <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+          <div className="site-rail">
             <div className="pt-2 text-left">
               <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
@@ -231,7 +215,7 @@ export function LandingPage() {
         </section>
 
         <section className="bg-white py-16 sm:py-20" aria-labelledby="service-features-title">
-          <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+          <div className="site-rail">
             <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡의 서비스 특징
@@ -275,7 +259,7 @@ export function LandingPage() {
         </section>
 
         <section className="border-y border-[#FBE3DC] bg-[#FFF5F2] py-11">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="site-rail flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-3xl gap-3 sm:gap-4">
               <span className="grid size-11 shrink-0 place-items-center text-[#F06B4F] sm:size-12">
                 <Sparkles
@@ -325,7 +309,7 @@ export function LandingPage() {
         </section>
 
         <section className="bg-white py-14 sm:py-18">
-          <div className="mx-auto w-full max-w-6xl px-5 py-9 text-center sm:px-8 sm:py-12">
+          <div className="site-rail py-9 text-center sm:py-12">
             <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212B] sm:text-[1.875rem]">
               지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
             </h2>
@@ -515,7 +499,7 @@ export function LandingPage() {
       )}
 
       <footer className="border-t border-[#e7dfcb] bg-white py-7">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 text-[0.875rem] font-semibold text-[#667085] sm:px-8">
+        <div className="site-rail flex items-center justify-between gap-4 text-[0.875rem] font-semibold text-[#667085]">
           <a className="hover:text-[#173F3A]" href="mailto:ieojab2026@gmail.com">
             고객 문의 ieojab2026@gmail.com
           </a>

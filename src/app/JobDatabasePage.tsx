@@ -2635,10 +2635,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   return (
     <MobilePage
       activeNav="database"
-      contentClassName={cn(
-        'project-ui-readable flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4' : 'px-6 pb-6 pt-7 md:px-10 md:py-8',
-      )}
+      contentClassName="project-ui-readable flex flex-col gap-4"
       role={role}
       showBack={false}
       title={title ?? (role === 'company' ? '프로젝트 관리' : '프로젝트 목록')}

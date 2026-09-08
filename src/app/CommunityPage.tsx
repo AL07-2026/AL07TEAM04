@@ -12,7 +12,6 @@ export function CommunityPage() {
 
   return (
     <MobilePage
-      contentClassName="w-full pb-10"
       role={effectiveRole}
       showBack={false}
       showProjectLink={false}

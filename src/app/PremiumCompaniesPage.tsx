@@ -61,9 +61,8 @@ export function PremiumCompaniesPage() {
   return (
     <MobilePage
       activeNav="database"
-      contentClassName="px-4 py-5 sm:px-6 md:px-10 md:py-8"
       role={user?.role}
-      showBack
+      showBack={false}
       title="기업 디렉터리"
     >
       <div className="mx-auto w-full max-w-7xl">

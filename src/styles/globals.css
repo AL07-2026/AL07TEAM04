@@ -33,6 +33,10 @@ html {
 }
 
 :root {
+  --site-max-width: 72rem;
+  --site-gutter: 1rem;
+  --site-header-height: 4.5rem;
+  --site-page-space: 1.5rem;
   color-scheme: light;
   --background: #f7f3ea; /* Background: Warm Ivory */
   --foreground: #17212b; /* Text: Ink */
@@ -58,6 +62,106 @@ html {
 
 * {
   border-color: var(--border);
+}
+
+/* One shared alignment rail for landing, member menus and onboarding. */
+.site-rail {
+  width: 100%;
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding-inline: var(--site-gutter);
+}
+
+.site-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--surface-subtle);
+  color: var(--foreground);
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+.site-header-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--site-header-height);
+}
+
+.site-brand,
+.site-header-actions {
+  flex-shrink: 0;
+}
+
+.site-header button {
+  min-width: 44px;
+}
+
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.site-primary-nav {
+  display: none;
+}
+
+.site-page-content {
+  flex: 1;
+  min-width: 0;
+  padding-block: var(--site-page-space) 2.5rem;
+}
+
+.site-page-body {
+  width: 100%;
+  min-width: 0;
+}
+
+.site-bottom-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+.site-bottom-nav button {
+  min-height: 44px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --site-gutter: 2rem;
+    --site-page-space: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-primary-nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-subtle);
+  }
+
+  .site-bottom-nav {
+    display: none;
+  }
 }
 
 html,

@@ -272,10 +272,7 @@ export function LoginPage() {
 
     return (
       <MobilePage
-        contentClassName={cn(
-          'flex flex-col justify-center items-center min-h-0 flex-1',
-          isMobile ? 'px-4.5 py-6' : 'px-6 py-12 md:px-12',
-        )}
+        contentClassName="flex flex-col justify-center items-center min-h-0 flex-1"
         showBack={false}
         showProjectLink
         title="로그인 정보"
@@ -344,7 +341,7 @@ export function LoginPage() {
   if (isMobile) {
     return (
       <MobilePage
-        contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
+        contentClassName="flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
         showBack={false}
         showProjectLink
         title="경험매칭"
@@ -563,13 +560,13 @@ export function LoginPage() {
 
   return (
     <MobilePage
-      contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1"
+      contentClassName="flex items-center justify-center min-h-0 flex-1"
       showBack={false}
       showProjectLink
       title="경험매칭"
     >
       <LoginRequiredToast message={loginRequiredMessage} />
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center w-full mx-auto my-auto py-4 md:py-6">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">
           <div className="flex flex-col gap-2.5 items-start text-left">

@@ -28,10 +28,10 @@ describe('LandingPage alignment rail', () => {
       (section) => section.firstElementChild,
     );
 
-    expect(headerRail).toHaveClass('max-w-6xl', 'px-5', 'sm:px-8');
+    expect(headerRail).toHaveClass('site-rail');
     expect(sectionRails).toHaveLength(4);
     sectionRails.forEach((rail) => {
-      expect(rail).toHaveClass('max-w-6xl', 'px-5', 'sm:px-8');
+      expect(rail).toHaveClass('site-rail');
     });
   });
 
@@ -67,4 +67,3 @@ describe('LandingPage alignment rail', () => {
     expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
   });
 });
-

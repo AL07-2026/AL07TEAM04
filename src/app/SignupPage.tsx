@@ -132,7 +132,6 @@ export function SignupPage() {
   return (
     <MobilePage
       backTo="/login"
-      contentClassName={isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10'}
       title={step === 'verification' ? '이메일 인증' : '회원가입'}
     >
       <div

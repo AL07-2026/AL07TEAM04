@@ -1074,10 +1074,7 @@ export function SeniorHomePage() {
   return (
     <MobilePage
       activeNav="home"
-      contentClassName={cn(
-        'project-ui-readable flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="project-ui-readable flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="인재 홈"
@@ -1388,7 +1385,7 @@ export function ExperienceSelectionPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior"
-      contentClassName="flex flex-col gap-[18px] px-6 pb-6 pt-7"
+      contentClassName="flex flex-col gap-[18px]"
       role="senior"
       title="경험 선택"
     >
@@ -1861,7 +1858,7 @@ export function ExperienceInterviewPage() {
     <MobilePage
       activeNav="projects"
       backTo={applicationReturn?.path ?? '/senior/experience'}
-      contentClassName="project-ui-readable flex flex-col gap-3.5 px-5 pb-6 pt-3"
+      contentClassName="project-ui-readable flex flex-col gap-3.5"
       role="senior"
       title="AI 경험 인터뷰"
     >
@@ -2256,7 +2253,7 @@ export function ExperienceCardPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/experience/interview"
-      contentClassName="project-ui-readable flex flex-col gap-4 px-5 pb-6 pt-3"
+      contentClassName="project-ui-readable flex flex-col gap-4"
       role="senior"
       title="경험 카드 확인"
     >
@@ -2441,7 +2438,7 @@ export function ProjectDetailPage() {
       backTo="/senior/projects"
       contentClassName={cn(
         'project-ui-readable flex flex-col',
-        isMobile ? 'gap-3 px-4 pb-20 pt-4' : 'mx-auto w-full max-w-5xl gap-5 px-10 py-8',
+        isMobile ? 'gap-3' : 'gap-5',
       )}
       role="senior"
       title="프로젝트 상세"
@@ -2623,10 +2620,7 @@ export function ProposalPage() {
     <MobilePage
       activeNav="projects"
       backTo={`/senior/projects/${projectId}`}
-      contentClassName={cn(
-        'project-ui-readable',
-        isMobile ? 'px-4 pb-0 pt-4' : 'mx-auto w-full max-w-4xl px-10 py-8',
-      )}
+      contentClassName="project-ui-readable"
       role="senior"
       title="제안하기"
     >
@@ -2735,7 +2729,7 @@ export function ProposalCompletePage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col items-center justify-center gap-4 px-6 pb-8 pt-14"
+      contentClassName="flex flex-col items-center justify-center gap-4"
       role="senior"
       showBack={false}
       title="제안 완료"
@@ -2791,10 +2785,7 @@ export function MyProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="내 제안"
@@ -2946,7 +2937,7 @@ export function MyProposalDetailPage() {
     <MobilePage
       activeNav="proposals"
       backTo="/senior/proposals"
-      contentClassName="flex flex-col gap-[13px] px-6 pb-[18px] pt-5"
+      contentClassName="flex flex-col gap-[13px]"
       role="senior"
       title="내 제안 상세"
     >
@@ -3048,10 +3039,7 @@ export function CompanyHomePage() {
   return (
     <MobilePage
       activeNav="home"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="회사 홈"
@@ -3378,7 +3366,6 @@ export function ProjectRegisterPage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="px-6 pb-[18px] pt-5"
       role="company"
       showBack={false}
       title="프로젝트 등록"
@@ -3539,7 +3526,7 @@ export function ProjectCompletePage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="project-ui-readable flex flex-col items-center justify-center gap-4 px-6 pb-8 pt-14"
+      contentClassName="project-ui-readable flex flex-col items-center justify-center gap-4"
       role="company"
       showBack={false}
       title="등록 완료"
@@ -3635,10 +3622,7 @@ export function ReceivedProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="받은 제안"
@@ -4079,7 +4063,7 @@ export function ReceivedProposalDetailPage() {
     <MobilePage
       activeNav="proposals"
       backTo="/company/proposals"
-      contentClassName="flex flex-col gap-3.5 px-5 pb-6 pt-4"
+      contentClassName="flex flex-col gap-3.5"
       role="company"
       title="제안 상세"
     >
@@ -4288,8 +4272,7 @@ export function ReceivedProposalDetailPage() {
           aria-labelledby="profile-resume-dialog-title"
           aria-modal="true"
           className={cn(
-            'inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center sm:justify-center',
-            isMobile ? 'absolute' : 'fixed',
+            'fixed inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center sm:justify-center',
           )}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeProfileResume();
@@ -4429,9 +4412,7 @@ export function ReceivedProposalDetailPage() {
 
 export function SeniorProfilePage() {
   const navigate = useNavigate();
-  const { mode } = useViewportMode();
   const { isAdmin, user, signOut, deleteAccount } = useAuth();
-  const isMobile = mode === 'mobile';
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(() =>
     getLocalSeniorProfile(user?.uid),
   );
@@ -4572,10 +4553,7 @@ export function SeniorProfilePage() {
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="내 정보"
@@ -4755,8 +4733,6 @@ export function SeniorProfilePage() {
 export function CompanyProfilePage() {
   const navigate = useNavigate();
   const { isAdmin, user, signOut, deleteAccount } = useAuth();
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(
     () => getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile(),
   );
@@ -4815,10 +4791,7 @@ export function CompanyProfilePage() {
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="내 정보"
