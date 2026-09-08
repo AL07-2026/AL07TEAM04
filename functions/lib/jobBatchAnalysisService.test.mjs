@@ -102,6 +102,25 @@ describe('jobBatchAnalysisService', () => {
   });
 
   describe('runIncrementalJobAnalysis', () => {
+    it.each([401, 403, 404, 429, 500, 503])('AI 공통 HTTP %s 오류가 나면 다음 묶음은 호출하지 않는다', async (status) => {
+      mocks.generateContent.mockRejectedValue(Object.assign(new Error('SECRET payload'), { status }));
+      const result = await runIncrementalJobAnalysis(
+        Array.from({ length: 20 }, (_, i) => posting({ id: `job-${i}` })), { batchChunkSize: 5 },
+      );
+      expect(mocks.generateContent).toHaveBeenCalledTimes(5);
+      expect(result).toMatchObject({ attemptedCount: 5, failedCount: 5, deferredCount: 15,
+        stoppedReason: `AI_HTTP_${status}`, failureCodes: { [`AI_HTTP_${status}`]: 5 } });
+      expect(JSON.stringify(result)).not.toContain('SECRET');
+      expect(mocks.set.mock.calls.every(([, value]) => value.analysisErrorCode === `AI_HTTP_${status}`)).toBe(true);
+    });
+
+    it('개별 공고의 잘못된 JSON은 실패로 기록하되 다음 공고의 분석은 계속한다', async () => {
+      mocks.generateContent.mockResolvedValueOnce({ text: '{}' }).mockResolvedValue({ text: JSON.stringify(validAnalysis) });
+      const result = await runIncrementalJobAnalysis([posting(), posting({ id: 'job-2' })], { batchChunkSize: 1 });
+      expect(result).toMatchObject({ attemptedCount: 2, processedCount: 1, deferredCount: 0,
+        failureCodes: { AI_INVALID_RESPONSE: 1 } });
+      expect(mocks.set.mock.calls[1][1]).toMatchObject({ analysisStatus: 'COMPLETED', analysisErrorCode: null });
+    });
     it('dryRun 모드에서는 API 호출 없이 선별 모수만 반환한다', async () => {
       const mockPostings = [
         { id: '1', title: '경영전략 총괄 리드', companyName: 'A사', experienceYears: '10년' },

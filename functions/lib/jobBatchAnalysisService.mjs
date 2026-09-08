@@ -98,9 +98,9 @@ const ANALYSIS_PROMPT = `
 `;
 
 /**
- * Analyzes a single job posting using Gemini 1.5/2.5 Flash Structured Output.
+ * Analyzes a single job posting, returning only validated structured output.
  */
-export async function analyzeJobPostingWithAI(job, geminiClient = null) {
+export async function analyzeJobPostingWithAI(job, geminiClient = null, onFailure = null) {
   try {
     const client = geminiClient || createGeminiClient();
     const promptContent = `
@@ -131,9 +131,17 @@ ${textList(job.coreResponsibilities) || job.problemStatement || '공고 본문 �
     if (validAnalysis(parsed)) {
       return parsed;
     }
+    onFailure?.({ code: 'AI_INVALID_RESPONSE', stopBatch: false });
     return null;
   } catch (error) {
-    console.warn(`[jobBatchAnalysisService] AI analysis failed for ${job?.id}:`, error?.name || 'Error');
+    const status = Number(error?.status ?? error?.statusCode);
+    const invalidResponse = error instanceof SyntaxError;
+    const code = Number.isInteger(status) && status >= 400 && status <= 599 ? `AI_HTTP_${status}`
+      : invalidResponse ? 'AI_INVALID_RESPONSE'
+        : ['AbortError', 'TimeoutError'].includes(error?.name) ? 'AI_TIMEOUT' : 'AI_API_ERROR';
+    // Provider-wide errors stop subsequent chunks; no raw provider message/URL is retained.
+    onFailure?.({ code, stopBatch: !invalidResponse });
+    console.warn(`[jobBatchAnalysisService] AI analysis failed for ${job?.id}:`, code);
     return null;
   }
 }
@@ -202,6 +210,8 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
 
   let processedCount = 0;
   let attemptedCount = 0;
+  let stoppedReason = null;
+  const failureCodes = {};
   const nowStr = new Date().toISOString();
 
   for (let i = 0; i < candidates.length; i += chunkSize) {
@@ -211,15 +221,16 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
     const results = await Promise.all(
       chunk.map(async (job) => {
         attemptedCount++;
-        const aiResult = await analyzeJobPostingWithAI(job, client);
-        return { job, aiResult };
+        let failure = null;
+        const aiResult = await analyzeJobPostingWithAI(job, client, (value) => { failure = value; });
+        return { job, aiResult, failure };
       }),
     );
 
     const batch = adminDb.batch();
     let hasWrites = false;
 
-    for (const { job, aiResult } of results) {
+    for (const { job, aiResult, failure } of results) {
       if (aiResult) {
         const docRef = adminDb.collection(GLOBAL_COLLECTION).doc(job.id);
         batch.set(
@@ -228,6 +239,7 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
             analyzedContentHash: job.newContentHash,
             isSeniorTarget: true,
             analysisStatus: 'COMPLETED',
+            analysisErrorCode: null,
             analyzedAt: nowStr,
             aiExecutiveSummary: aiResult.aiExecutiveSummary,
             talentPersona: aiResult.talentPersona,
@@ -237,7 +249,12 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
         hasWrites = true;
         processedCount++;
       } else {
-        batch.set(adminDb.collection(GLOBAL_COLLECTION).doc(job.id), { analysisStatus: 'FAILED', analysisAttemptedAt: nowStr }, { merge: true });
+        const code = failure?.code || 'AI_INVALID_RESPONSE';
+        failureCodes[code] = (failureCodes[code] || 0) + 1;
+        if (failure?.stopBatch) stoppedReason ||= code;
+        batch.set(adminDb.collection(GLOBAL_COLLECTION).doc(job.id), {
+          analysisStatus: 'FAILED', analysisAttemptedAt: nowStr, analysisErrorCode: code,
+        }, { merge: true });
         hasWrites = true;
       }
     }
@@ -249,6 +266,7 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
     if (onProgress) {
       onProgress(processedCount, candidates.length);
     }
+    if (stoppedReason) break;
   }
 
   return {
@@ -256,6 +274,9 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
     processedCount,
     attemptedCount,
     failedCount: attemptedCount - processedCount,
+    deferredCount: candidates.length - attemptedCount,
+    failureCodes,
+    stoppedReason,
     status: processedCount === candidates.length ? 'success' : processedCount ? 'partial' : 'failed',
     skippedCount: records.length - candidates.length,
   };

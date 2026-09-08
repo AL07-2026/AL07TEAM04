@@ -44,7 +44,7 @@ export function buildPostingUpdate(posting, previous, nowStr) {
     sourceLastSeenAt: nowStr,
     sourceUpdatedAt: changed ? nowStr : previous?.sourceUpdatedAt || previous?.updatedAt || nowStr,
     updatedAt: changed ? nowStr : previous?.updatedAt || nowStr,
-    ...(analysisChanged ? { analysisStatus: 'PENDING', aiExecutiveSummary: null, talentPersona: null } : {}),
+    ...(analysisChanged ? { analysisStatus: 'PENDING', analysisErrorCode: null, aiExecutiveSummary: null, talentPersona: null } : {}),
     ...(!previous ? { sourceCreatedAt: nowStr } : {}),
     ...(recoverableHidden && !remainsHidden ? { catalogHiddenAt: null, catalogHiddenReason: null, canonicalJobId: null } : {}),
   };
