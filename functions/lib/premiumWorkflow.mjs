@@ -7,6 +7,19 @@ export class PremiumWorkflowError extends Error {
   }
 }
 
+function exposureEndAfterOneMonth(approvedAt) {
+  // Calendar month in Korea, preserving time-of-day and clamping to the next month's last day.
+  const koreaOffset = 9 * 60 * 60 * 1000;
+  const date = new Date(Date.parse(approvedAt) + koreaOffset);
+  if (!Number.isFinite(date.getTime())) throw new PremiumWorkflowError(500, '승인 시간을 확인하지 못했습니다.');
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  date.setUTCDate(Math.min(day, lastDay));
+  return new Date(date.getTime() - koreaOffset).toISOString();
+}
+
 export function applicationStatus(application, now = new Date().toISOString()) {
   if (application?.status === 'approved' && application.endsAt && application.endsAt <= now) return 'expired';
   return application?.status || 'pending';
@@ -41,7 +54,7 @@ export function submitPremium({ current, entitlement, input, revision, uid, now 
   };
 }
 
-export function reviewPremium({ current, entitlement, decision, revision, reviewNote, endsAt, reviewerId, now }) {
+export function reviewPremium({ current, entitlement, decision, revision, reviewNote, reviewerId, now }) {
   if (!current) throw new PremiumWorkflowError(404, '신청을 찾을 수 없습니다.');
   checkRevision(current, revision);
   if (decision === 'end') {
@@ -59,10 +72,8 @@ export function reviewPremium({ current, entitlement, decision, revision, review
   const benefit = premiumBenefit(current, entitlement);
   if (!benefit.remaining) throw new PremiumWorkflowError(409, '무료 노출 횟수가 남아 있지 않습니다.');
   if (!current.imageUrl) throw new PremiumWorkflowError(412, '기업 대표 사진을 보완한 후 승인해 주세요.');
-  const endDate = new Date(endsAt);
-  if (!Number.isFinite(endDate.getTime()) || endDate.toISOString() <= now) throw new PremiumWorkflowError(400, '미래의 노출 종료 일시를 지정해 주세요.');
   application.approvedAt = now;
-  application.endsAt = endDate.toISOString();
+  application.endsAt = exposureEndAfterOneMonth(now);
   return {
     application,
     entitlement: { used: benefit.used + 1, updatedAt: now },

@@ -71,7 +71,7 @@ export async function listPremiumApplications(cursor = ''): Promise<{ applicatio
 
 export async function reviewPremiumApplication(id: string, input: {
   decision: 'approved' | 'changes_requested' | 'rejected' | 'end';
-  revision: number; reviewNote: string; endsAt: string;
+  revision: number; reviewNote: string;
 }): Promise<PremiumApplication> {
   const result = await request<{ application: PremiumApplication }>(
     `/api/premium/admin/applications/${encodeURIComponent(id)}/review`,

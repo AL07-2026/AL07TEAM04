@@ -12,7 +12,6 @@ function ReviewForm({ application, onUpdated }: {
   onUpdated: (application: PremiumApplication) => void;
 }): React.JSX.Element {
   const [note, setNote] = useState('');
-  const [endsAt, setEndsAt] = useState('');
   const [decision, setDecision] = useState<'approved' | 'changes_requested' | 'rejected' | 'end'>(
     application.status === 'approved' ? 'end' : 'approved',
   );
@@ -27,7 +26,6 @@ function ReviewForm({ application, onUpdated }: {
     try {
       const result = await reviewPremiumApplication(application.id, {
         decision, revision: application.revision || 0, reviewNote: note,
-        endsAt: decision === 'approved' ? new Date(endsAt).toISOString() : '',
       });
       onUpdated(result);
     } catch (cause) {
@@ -45,7 +43,7 @@ function ReviewForm({ application, onUpdated }: {
       <p className="mt-2 whitespace-pre-wrap">{application.description}</p>
       <p className="mt-2">채용 분야: {application.hiringFocus || '미등록'}</p>
       {application.websiteUrl ? <a className="mt-2 inline-block underline" href={application.websiteUrl} target="_blank" rel="noopener noreferrer">기업 홈페이지</a> : null}
-      {application.endsAt ? <p className="mt-2">노출 종료: {new Date(application.endsAt).toLocaleString('ko-KR')}</p> : null}
+      {application.endsAt ? <p className="mt-2">노출 종료 (한국 시간): {new Date(application.endsAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p> : null}
       {application.reviewNote ? <p className="mt-3">검토 의견: {application.reviewNote}</p> : null}
       {editable ? (
         <form className="mt-4" onSubmit={(event) => void submit(event)}>
@@ -60,10 +58,7 @@ function ReviewForm({ application, onUpdated }: {
                 </>}
               </select>
             </label>
-            {decision === 'approved' ? <label className="grid gap-2 font-bold">
-              노출 종료 일시
-              <input className="min-h-11 rounded-lg border p-2" type="datetime-local" required value={endsAt} onChange={(event) => setEndsAt(event.target.value)} />
-            </label> : null}
+            {decision === 'approved' ? <p className="font-bold">승인일부터 1개월간 노출됩니다. 종료일은 한국 시간 기준으로 자동 계산됩니다.</p> : null}
             <label className="grid gap-2 font-bold">
               검토 의견
               <textarea className="min-h-24 rounded-lg border p-3" maxLength={500} required={decision === 'rejected' || decision === 'changes_requested'} value={note} onChange={(event) => setNote(event.target.value)} />
@@ -106,7 +101,7 @@ export function PremiumApplicationsAdmin({ canManage }: { canManage: boolean }):
         <h2 className="text-2xl font-bold">프리미엄 신청 관리</h2>
         <button type="button" className="min-h-11 rounded-xl border bg-white px-4 font-bold" disabled={loading} onClick={() => reload('')}>처음부터 새로고침</button>
       </div>
-      <p>기업회원별 무료 노출 3회. 승인 전에는 차감되지 않으며, 한 기업은 한 번에 하나의 노출을 진행합니다.</p>
+      <p>기업회원별 무료 노출 3회, 1회당 1개월. 승인 전에는 차감되지 않으며, 한 기업은 한 번에 하나의 노출을 진행합니다.</p>
       {notice ? <p role="status">{notice}</p> : null}
       {loading ? <p role="status">신청 목록을 불러오는 중입니다.</p> : error ? <p role="alert" className="text-rose-700">{error}</p> : <>
         {applications.length === 0 ? <p>접수된 신청이 없습니다.</p> : applications.map((application) => (

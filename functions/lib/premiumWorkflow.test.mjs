@@ -39,14 +39,28 @@ describe('free premium exposure workflow', () => {
   it('현재 노출 중에는 새 신청을 막고 종료 후에는 허용한다', () => {
     const approved = review().application;
     expect(() => submitPremium({ current: approved, entitlement: { used: 1 }, input: {}, revision: 3, uid: 'company', now })).toThrow('종료된 후');
-    const after = '2026-09-16T00:00:00.000Z';
+    const after = '2026-10-08T00:00:00.000Z';
     expect(applicationStatus(approved, after)).toBe('expired');
     expect(submitPremium({ current: approved, entitlement: { used: 1 }, input: {}, revision: 3, uid: 'company', now: after }).status).toBe('pending');
   });
-  it('사진 없음, 사유 없음, 지난 종료일은 승인 처리하지 않는다', () => {
+  it('사진 없음, 사유 없음은 승인 처리하지 않는다', () => {
     expect(() => review({ current: { ...pending, imageUrl: '' } })).toThrow('사진');
-    expect(() => review({ endsAt: now })).toThrow('미래');
     expect(() => review({ decision: 'rejected' })).toThrow('사유');
+  });
+  it.each([
+    ['2026-09-08T00:00:00.000Z', '2026-10-08T00:00:00.000Z'],
+    ['2026-01-30T15:30:00.123Z', '2026-02-27T15:30:00.123Z'],
+    ['2028-01-31T03:00:00.000Z', '2028-02-29T03:00:00.000Z'],
+    ['2026-12-31T03:00:00.000Z', '2027-01-31T03:00:00.000Z'],
+  ])('한국 시간 승인일 %s에서 한 달 뒤 %s까지 노출한다', (approvedAt, expected) => {
+    const result = review({ now: approvedAt, endsAt: '2099-12-31T00:00:00.000Z' });
+    expect(result.application.endsAt).toBe(expected);
+    expect(result.listing.endsAt).toBe(expected);
+    expect(applicationStatus(result.application, new Date(Date.parse(expected) - 1).toISOString())).toBe('approved');
+    expect(applicationStatus(result.application, expected)).toBe('expired');
+  });
+  it('종료일을 입력하지 않아도 서버가 한 달을 계산한다', () => {
+    expect(review({ endsAt: undefined }).application.endsAt).toBe('2026-10-08T00:00:00.000Z');
   });
   it('노출 중단은 횟수를 환급하거나 추가 차감하지 않는다', () => {
     const result = review({ current: review().application, decision: 'end', revision: 3 });

@@ -215,7 +215,7 @@ export function createPremiumCompanyHandlers({ repository, verifyIdToken, verify
       if (!uid || uid.includes('/')) throw new PremiumCompanyError(400, '기업 계정을 확인해 주세요.');
       const application = await repository.reviewApplication(uid, {
         decision: request.body?.decision, revision: request.body?.revision,
-        reviewNote: text(request.body?.reviewNote, 500), endsAt: text(request.body?.endsAt, 60),
+        reviewNote: text(request.body?.reviewNote, 500),
         reviewerId: admin.uid,
       });
       return { application: publicApplication(application) };

@@ -205,7 +205,7 @@ function PremiumApplicationForm({
         </label>
       </fieldset>
       <p className="mt-3 text-[12px] font-semibold text-[#6A4B43]">
-        기업회원 무료 노출 3회. 보완·반려·재제출에는 횟수가 차감되지 않습니다.
+        기업회원 무료 노출 3회, 1회당 승인일부터 1개월. 보완·반려·재제출에는 횟수가 차감되지 않습니다.
       </p>
       {error ? (
         <p className="mt-2 text-sm font-bold text-rose-700" role="alert">
@@ -319,7 +319,7 @@ function PremiumCompaniesSectionContent({
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           <p className="font-bold">무료 노출 {benefit ? `${benefit.remaining}/${benefit.limit}회 남음` : '확인 중'}</p>
           <button type="button" disabled={!applicationReady} className="min-h-11 rounded-lg px-3 font-bold underline disabled:opacity-60" onClick={() => { setFormOpen(false); setApplicationReady(false); setBenefit(null); setNotice(''); setRefreshKey((key) => key + 1); }}>신청 상태 새로고침</button>
-          {application?.endsAt ? <p>노출 종료: {new Date(application.endsAt).toLocaleString('ko-KR')}</p> : null}
+          {application?.endsAt ? <p>노출 종료 (한국 시간): {new Date(application.endsAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p> : null}
           {application?.reviewNote ? <p className="w-full rounded-xl bg-white p-3">검토 의견: {application.reviewNote}</p> : null}
           {application?.status === 'pending' ? <p>관리자가 신청 내용을 검토하고 있습니다.</p> : null}
         </div>
