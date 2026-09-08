@@ -32,6 +32,25 @@ function posting(id, overrides = {}) {
 }
 
 describe('full Firestore job database search', () => {
+  it('비공개 기업 공고는 채용 상태와 관계없이 검색·전체 건수에서 제외한다', () => {
+    const catalog = prepareCombinedJobCatalog(
+      [posting('source-public')],
+      [
+        posting('company-public', { isPublic: true }),
+        posting('company-legacy'),
+        posting('company-hidden', { isPublic: false }),
+        posting('company-hidden-legacy', { isPublic: false, hiringStage: undefined }),
+      ],
+      now,
+    );
+    const result = filterAndPaginatePreparedJobCatalog(catalog, { page: 1, pageSize: 10 });
+    expect(result.items.map((item) => item.id).sort()).toEqual([
+      'company-legacy', 'company-public', 'source-public',
+    ]);
+    expect(result.catalogTotal).toBe(3);
+    expect(result.total).toBe(3);
+  });
+
   it('공개 기업 프로젝트와 누적 채용공고를 서버에서 한 번만 합쳐 중복 제거한다', () => {
     const sharedPosting = posting('global-shared', {
       companyName: '같은 기업',

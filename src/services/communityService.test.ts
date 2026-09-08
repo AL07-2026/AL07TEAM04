@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { authState, getIdTokenMock } = vi.hoisted(() => ({
-  authState: { currentUser: null as null | { getIdToken: () => Promise<string> } },
+  authState: { currentUser: null as null | { uid?: string; getIdToken: () => Promise<string> } },
   getIdTokenMock: vi.fn(),
 }));
 
@@ -9,20 +9,25 @@ vi.mock('@/lib/firebase', () => ({ auth: authState }));
 
 import {
   createCommunityComment,
+  clearCommunityReadCache,
   createCommunityPost,
   deleteCommunityAccountData,
   getCommunityProfile,
   listCommunityPosts,
+  listCommunityComments,
+  deleteCommunityPost,
   reportCommunityPost,
   saveCommunityProfile,
   updateCommunityComment,
 } from '@/services/communityService';
 
 describe('communityService', () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     authState.currentUser = null;
     getIdTokenMock.mockReset().mockResolvedValue('community-token');
     vi.restoreAllMocks();
+    clearCommunityReadCache();
   });
 
   it('비로그인 상태에서도 게시글 목록을 조회한다', async () => {
@@ -35,6 +40,143 @@ describe('communityService', () => {
       '/api/community/posts',
       expect.objectContaining({ headers: {} }),
     );
+  });
+
+  it('같은 계정의 동시 목록 요청과 20초 이내 재방문은 한 번만 읽는다', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ posts: [] }), { status: 200 })));
+    await Promise.all([listCommunityPosts(), listCommunityPosts()]);
+    await listCommunityPosts();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('캐시가 만료되면 서버에서 최신 목록을 다시 읽는다', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ posts: [] }), { status: 200 })));
+    await listCommunityPosts();
+    now.mockReturnValue(21001);
+    await listCommunityPosts();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('계정 전환과 로그아웃 때 소유권·공감 캐시를 공유하지 않는다', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ posts: [] }), { status: 200 })));
+    authState.currentUser = { uid: 'a', getIdToken: getIdTokenMock };
+    await listCommunityPosts();
+    authState.currentUser = { uid: 'b', getIdToken: getIdTokenMock };
+    await listCommunityPosts();
+    authState.currentUser = null;
+    await listCommunityPosts();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(new Headers(fetchMock.mock.calls[2]?.[1]?.headers).has('Authorization')).toBe(false);
+  });
+
+  it('댓글은 게시글별로 캐시하고 글 삭제 후 목록·댓글 캐시를 비운다', async () => {
+    authState.currentUser = { uid: 'a', getIdToken: getIdTokenMock };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(
+      () => Promise.resolve(
+        new Response(JSON.stringify({ posts: [], comments: [], deleted: true }), { status: 200 })),
+      );
+    await listCommunityPosts();
+    await listCommunityComments('one');
+    await listCommunityComments('two');
+    await listCommunityComments('one');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    await deleteCommunityPost('one');
+    await listCommunityPosts();
+    await listCommunityComments('two');
+    expect(fetchMock).toHaveBeenCalledTimes(6);
+  });
+
+  it('서버 오류 응답은 캐시하지 않는다', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: '일시 오류' }), { status: 500 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    await expect(listCommunityPosts()).rejects.toThrow('일시 오류');
+    await expect(listCommunityPosts()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('응답 시간 제한 후 로딩을 끝내고 다음 읽기는 재시도할 수 있다', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementationOnce((_url, options) =>
+      new Promise((_resolve, reject) => options?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    const delayed = expect(listCommunityPosts()).rejects.toThrow('응답이 지연');
+    await vi.advanceTimersByTimeAsync(15000);
+    await delayed;
+    await expect(listCommunityPosts()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('활동명 저장 후 이전 프로필과 목록을 다시 사용하지 않는다', async () => {
+    authState.currentUser = { uid: 'owner', getIdToken: getIdTokenMock };
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ profile: { nickname: '이전활동명' } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ profile: { nickname: '새활동명' } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ profile: { nickname: '새활동명' } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    await getCommunityProfile();
+    await listCommunityPosts();
+    await saveCommunityProfile('새활동명');
+    await expect(getCommunityProfile()).resolves.toEqual({ nickname: '새활동명' });
+    await listCommunityPosts();
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it('진행 중 읽기보다 쓰기가 먼저 완료되면 오래된 응답을 화면과 캐시에 되살리지 않는다', async () => {
+    authState.currentUser = { uid: 'a', getIdToken: getIdTokenMock };
+    let finish!: (response: Response) => void;
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ deleted: true }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    const stale = listCommunityPosts();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await deleteCommunityPost('one');
+    finish(new Response(JSON.stringify({ posts: [{ id: 'one' }] }), { status: 200 }));
+    await expect(stale).rejects.toThrow('내용이 변경');
+    await expect(listCommunityPosts()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('이전 계정에서 늦게 도착한 응답을 새 계정의 캐시에 넣지 않는다', async () => {
+    let finish!: (response: Response) => void;
+    authState.currentUser = { uid: 'a', getIdToken: getIdTokenMock };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    const oldRequest = listCommunityPosts();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    authState.currentUser = { uid: 'b', getIdToken: getIdTokenMock };
+    await listCommunityPosts();
+    finish(
+      new Response(JSON.stringify({ posts: [{ id: 'a-only', ownedByMe: true }] }), { status: 200 }),
+    );
+    await expect(oldRequest).rejects.toThrow('로그인 상태가 변경');
+    await expect(listCommunityPosts()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('로그인 사용자의 글쓰기 요청에 인증 토큰을 포함한다', async () => {

@@ -26,7 +26,7 @@ export function CommunityPage() {
         <ArrowLeft aria-hidden="true" className="size-4" />
         이전 화면
       </button>
-      <CommunityBoard user={user} />
+      <CommunityBoard key={user?.uid || 'guest'} user={user} />
     </MobilePage>
   );
 }

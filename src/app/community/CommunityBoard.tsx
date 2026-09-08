@@ -23,6 +23,7 @@ import type { UserProfile } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import {
   createCommunityComment,
+  clearCommunityReadCache,
   createCommunityPost,
   deleteCommunityComment,
   deleteCommunityPost,
@@ -91,6 +92,11 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const [commentsLoadedFor, setCommentsLoadedFor] = useState('');
+  const [commentsError, setCommentsError] = useState('');
+  const [commentsReloadVersion, setCommentsReloadVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [communityProfile, setCommunityProfile] = useState<CommunityProfile | null>(null);
@@ -131,12 +137,12 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         setPosts(items);
         setSelectedId(items[0]?.id || '');
       })
-      .catch((error: Error) => active && setMessage(error.message))
+      .catch((error: Error) => active && setLoadError(error.message))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadVersion]);
 
   useEffect(() => {
     if (!categoryDropdownOpen && !reportDropdownOpen) return undefined;
@@ -181,18 +187,19 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, reloadVersion]);
 
   useEffect(() => {
     if (!selectedId) return;
     let active = true;
     listCommunityComments(selectedId)
-      .then((items) => active && setComments(items))
-      .catch((error: Error) => active && setMessage(error.message));
+      .then((items) => { if (active) { setComments(items); setCommentsError(''); } })
+      .catch((error: Error) => active && setCommentsError(error.message))
+      .finally(() => active && setCommentsLoadedFor(selectedId));
     return () => {
       active = false;
     };
-  }, [selectedId]);
+  }, [selectedId, commentsReloadVersion]);
 
   const moveToLogin = () => {
     void navigate(createLoginRedirectPath('/community'), {
@@ -254,7 +261,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const selectPost = (postId: string) => {
+    if (postId === selectedId) return;
     setComments([]);
+    setCommentsLoadedFor('');
+    setCommentsError('');
     cancelEditComment();
     cancelReply();
     setSelectedId(postId);
@@ -494,6 +504,12 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button className="min-h-11 rounded-xl px-3 text-sm font-bold text-[#53645F] disabled:opacity-50" type="button"
+            disabled={loading || saving} onClick={() => {
+              clearCommunityReadCache(); setLoadError(''); setLoading(true);
+              setReloadVersion((value) => value + 1); setCommentsLoadedFor('');
+              setCommentsReloadVersion((value) => value + 1);
+            }}>새로고침</button>
           {user ? (
             <button
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60 transition-all cursor-pointer"
@@ -734,6 +750,14 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           {loading ? (
             <div className="my-auto grid place-items-center p-6 text-sm font-bold text-[#53645F]" role="status">
               게시글을 불러오는 중입니다.
+            </div>
+          ) : loadError ? (
+            <div className="my-auto p-8 text-center" role="alert">
+              <p className="font-bold text-[#53645F]">{loadError}</p>
+              <button className="mt-3 min-h-11 px-3 font-bold text-[#173F3A] underline" type="button"
+                onClick={() => { setLoadError(''); setLoading(true); setReloadVersion((value) => value + 1); }}>
+                다시 불러오기
+              </button>
             </div>
           ) : visiblePosts.length === 0 ? (
             <div className="my-auto p-8 text-center">
@@ -977,7 +1001,16 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                   </button>
                 )}
                 <div className="mt-4">
-                  {comments.length === 0 ? (
+                  {commentsLoadedFor !== selectedId ? (
+                    <p className="py-5 text-sm font-semibold text-[#64716D]" role="status">댓글을 불러오는 중입니다.</p>
+                  ) : commentsError ? (
+                    <div className="py-5 text-sm font-semibold text-[#64716D]" role="alert">
+                      <p>{commentsError}</p>
+                      <button className="min-h-11 underline" type="button" onClick={() => {
+                        setCommentsLoadedFor(''); setCommentsReloadVersion((value) => value + 1);
+                      }}>댓글 다시 불러오기</button>
+                    </div>
+                  ) : comments.length === 0 ? (
                     <p className="py-5 text-sm font-semibold text-[#64716D]">
                       아직 댓글이 없습니다.
                     </p>

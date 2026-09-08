@@ -833,7 +833,7 @@ export function prepareCombinedJobCatalog(
   now = new Date(),
 ) {
   const publishedProjects = registeredProjects.filter(
-    (posting) => !posting?.hiringStage || posting.hiringStage === 'open',
+    (posting) => posting?.isPublic !== false && (!posting?.hiringStage || posting.hiringStage === 'open'),
   );
   return prepareJobCatalog([...publishedProjects, ...accumulatedPostings], now);
 }

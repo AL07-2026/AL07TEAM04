@@ -35,6 +35,20 @@ export interface CommunityComment {
 export type CommunityPostInput = Pick<CommunityPost, 'category' | 'content' | 'title'>;
 export type CommunityReportReason = 'spam' | 'abuse' | 'privacy' | 'other';
 
+const READ_CACHE_TTL_MS = 20_000;
+const MAX_CACHED_READS = 32;
+const readCache = new Map<string, { data: unknown; expiresAt: number }>();
+const pendingReads = new Map<string, Promise<unknown>>();
+let cacheOwner = '';
+let cacheVersion = 0;
+
+// Memory only: server data remains authoritative, and no identity data is persisted locally.
+export function clearCommunityReadCache() {
+  cacheVersion++;
+  readCache.clear();
+  pendingReads.clear();
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -49,18 +63,71 @@ async function request<T>(
   }
   const currentUser = auth.currentUser;
   if (authenticated && !currentUser) throw new Error('로그인 후 이용해 주세요.');
-  const token = currentUser ? await currentUser.getIdToken() : '';
-  const response = await fetch(path, {
-    ...options,
-    headers: {
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-  const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
-  if (!response.ok) throw new Error(payload.error || '커뮤니티 요청을 처리하지 못했습니다.');
-  return payload;
+  const owner = currentUser?.uid || '';
+  if (cacheOwner !== owner) {
+    clearCommunityReadCache();
+    cacheOwner = owner;
+  }
+  const isRead = !options.method || options.method === 'GET';
+  if (isRead) {
+    const cached = readCache.get(path);
+    if (cached && cached.expiresAt > Date.now()) return cached.data as T;
+    if (pendingReads.has(path)) return pendingReads.get(path) as Promise<T>;
+  } else clearCommunityReadCache();
+  const version = cacheVersion;
+  const ensureSameUser = () => {
+    if (auth.currentUser !== currentUser)
+      throw new Error('로그인 상태가 변경되었습니다. 다시 확인해 주세요.');
+  };
+  const operation = (async () => {
+    const token = currentUser ? await currentUser.getIdToken() : '';
+    ensureSameUser();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(path, {
+        ...options,
+        signal: controller.signal,
+        cache: 'no-store',
+        headers: {
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        },
+      });
+      const payload = (await response.json()) as T & { error?: string };
+      ensureSameUser();
+      if (!response.ok) throw new Error(payload.error || '커뮤니티 요청을 처리하지 못했습니다.');
+      if (isRead && version !== cacheVersion)
+        throw new Error('커뮤니티 내용이 변경되었습니다. 다시 불러와 주세요.');
+      if (isRead) {
+        if (readCache.size >= MAX_CACHED_READS) {
+          const oldest = readCache.keys().next().value;
+          if (oldest) readCache.delete(oldest);
+        }
+        readCache.set(path, { data: payload, expiresAt: Date.now() + READ_CACHE_TTL_MS });
+      }
+      return payload;
+    } catch (error) {
+      if (controller.signal.aborted)
+        throw new Error(
+          isRead
+            ? '응답이 지연되고 있습니다. 잠시 후 다시 불러와 주세요.'
+            : '응답이 지연되고 있습니다. 중복 등록을 피하려면 새로고침하여 저장 여부를 먼저 확인해 주세요.',
+          { cause: error },
+        );
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
+  if (isRead) pendingReads.set(path, operation);
+  try {
+    return await operation;
+  } finally {
+    if (!isRead) clearCommunityReadCache();
+    else if (pendingReads.get(path) === operation) pendingReads.delete(path);
+  }
 }
 
 export async function getCommunityProfile(): Promise<CommunityProfile | null> {
@@ -74,7 +141,9 @@ export async function getCommunityProfile(): Promise<CommunityProfile | null> {
   } catch (error) {
     if (
       error instanceof Error &&
-      (error.message.includes('로그인') || error.message.includes('401') || error.message.includes('인증'))
+      (error.message.includes('로그인') ||
+        error.message.includes('401') ||
+        error.message.includes('인증'))
     ) {
       return null;
     }

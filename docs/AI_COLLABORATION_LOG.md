@@ -16,6 +16,14 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-08] 커뮤니티 속도 개선 및 사용자 승인 운영 반영 준비
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **사용자 요청**: 미리보기 배포 후 운영 랜딩·수집 서버까지 모두 반영하여 업데이트하도록 명시 승인. 이번 운영 배포 예외는 이후 작업의 기본 미리보기 전용 정책을 변경하지 않음.
+- **수정 파일**: `functions/entry.mjs`, `functions/community-entry.mjs`, `functions/index.mjs`, `functions/package.json`, `functions/lib/community.mjs`, `src/services/communityService.ts`, `src/app/CommunityPage.tsx`, `src/app/community/CommunityBoard.tsx` 및 관련 테스트, `functions/lib/jobSearch.mjs`/테스트, 커뮤니티 검증 보고서.
+- **변경 내용**: 커뮤니티 경량 초기화, 활동명·공감 병렬 조회, 계정별 20초 메모리 캐시/동시 요청 공유, 쓰기·계정 변경 시 캐시 무효화, 로딩·오류·새로고침 처리. 공개 검색에서 `isPublic: false` 기업 공고를 제외하도록 화면 정책과 일치시킴.
+- **검증**: 비공개 공고 노출 회귀를 실패 테스트로 재현한 뒤 수정. 최종 타입 검사·린트·55개 파일/526개 테스트·빌드 통과(기존 번들 크기 안내 경고 유지). 운영 배포 결과는 후속 완료 항목으로 기록 예정.
+- **범위**: 운영 Hosting과 명시한 4개 함수 최신화. DB/보안 규칙 변경·수동 수집·AI/메일 발송 테스트는 하지 않음. 워크넷 원천 이용 권한과 AI 제공처 오류는 별도 미해결 항목.
+
 ### [2026-09-07] 사용자 요청에 따른 이전 버전(WDS 적용 이전) 롤백 완료
 - **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
 - **작업 내용**:

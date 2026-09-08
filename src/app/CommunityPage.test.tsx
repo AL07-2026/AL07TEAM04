@@ -21,6 +21,7 @@ vi.mock('react-router', async (importOriginal) => {
 
 vi.mock('@/lib/authContext', () => ({ useAuth: () => authState }));
 vi.mock('@/services/communityService', () => ({
+  clearCommunityReadCache: vi.fn(),
   createCommunityComment: vi.fn(),
   createCommunityPost: vi.fn(),
   deleteCommunityComment: vi.fn(),
@@ -39,6 +40,48 @@ describe('CommunityPage', () => {
   beforeEach(() => {
     authState.user = null;
     vi.clearAllMocks();
+  });
+
+  it('목록 실패를 빈 게시판으로 표시하지 않고 다시 불러올 수 있다', async () => {
+    vi.mocked(communityService.listCommunityPosts)
+      .mockRejectedValueOnce(new Error('연결이 지연됩니다.'))
+      .mockResolvedValueOnce([]);
+    render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    expect(await screen.findByRole('alert')).toHaveTextContent('연결이 지연됩니다.');
+    expect(screen.queryByText('아직 게시글이 없습니다.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '다시 불러오기' }));
+    expect(await screen.findByText('아직 게시글이 없습니다.')).toBeInTheDocument();
+  });
+
+  it('같은 글을 다시 눌러도 읽은 댓글을 지우거나 재요청하지 않는다', async () => {
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([{
+      id: 'post-same', title: '같은 게시글 제목', content: '게시글 내용입니다.', authorName: '익명', category: 'experience',
+      createdAt: '', updatedAt: '', commentCount: 1, likeCount: 0, likedByMe: false, ownedByMe: false,
+    }]);
+    vi.mocked(communityService.listCommunityComments).mockResolvedValueOnce([{
+      id: 'comment-same', authorName: '익명', content: '읽은 댓글 내용', createdAt: '', updatedAt: '', ownedByMe: false,
+    }]);
+    render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    expect(await screen.findByText('읽은 댓글 내용')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /같은 게시글 제목/ }));
+    expect(screen.getByText('읽은 댓글 내용')).toBeInTheDocument();
+    expect(communityService.listCommunityComments).toHaveBeenCalledTimes(1);
+  });
+
+  it('계정 변경 즉시 이전 글 소유권과 활동명을 지우고 새 계정으로 다시 조회한다', async () => {
+    authState.user = { uid: 'owner-a' };
+    vi.mocked(communityService.getCommunityProfile).mockResolvedValueOnce({ nickname: '이전활동명' }).mockResolvedValue(null);
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([{
+      id: 'owned-a', title: '이전 계정 게시글', content: '이전 계정 본문입니다.', authorName: '이전활동명', category: 'experience',
+      createdAt: '', updatedAt: '', commentCount: 0, likeCount: 0, likedByMe: true, ownedByMe: true,
+    }]).mockImplementationOnce(() => new Promise(() => {}));
+    const view = render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    expect(await screen.findByRole('button', { name: /이전 계정 게시글/ })).toBeInTheDocument();
+    authState.user = { uid: 'owner-b' };
+    view.rerender(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    expect(screen.queryByText('이전 계정 본문입니다.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '이전활동명' })).not.toBeInTheDocument();
+    await waitFor(() => expect(communityService.listCommunityPosts).toHaveBeenCalledTimes(2));
   });
 
   it('게시판 분류와 빈 상태를 표시한다', async () => {

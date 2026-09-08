@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 
-import { adminAuth, adminDb } from './firestoreAdmin.mjs';
+import { adminAuth, adminDb as defaultAdminDb } from './firestoreAdmin.mjs';
 
 const CATEGORIES = new Set(['experience', 'project', 'question']);
 const REPORT_REASONS = new Set(['spam', 'abuse', 'privacy', 'other']);
@@ -254,324 +254,335 @@ export function createCommunityHandlers({ repository, verifyIdToken }) {
   };
 }
 
-async function hydrateCommunityAuthors(items, viewerUserId = '') {
-  const authorIds = [...new Set(items.map((item) => text(item.authorId, 128)).filter(Boolean))];
-  if (authorIds.length === 0) {
-    return items.map((item) => publicCommunityItem(item, viewerUserId));
+export function createCommunityRepository(adminDb = defaultAdminDb) {
+  async function hydrateCommunityAuthors(items, viewerUserId = '') {
+    const authorIds = [...new Set(items.map((item) => text(item.authorId, 128)).filter(Boolean))];
+    if (authorIds.length === 0) {
+      return items.map((item) => publicCommunityItem(item, viewerUserId));
+    }
+    const snapshots = await adminDb.getAll(
+      ...authorIds.map((userId) => adminDb.collection('community_profiles').doc(userId)),
+    );
+    const nicknameByUserId = new Map(
+      snapshots
+        .filter((snapshot) => snapshot.exists && snapshot.data()?.nickname)
+        .map((snapshot) => [snapshot.id, snapshot.data().nickname]),
+    );
+    return items.map((item) => {
+      return publicCommunityItem(item, viewerUserId, nicknameByUserId.get(item.authorId));
+    });
   }
-  const snapshots = await adminDb.getAll(
-    ...authorIds.map((userId) => adminDb.collection('community_profiles').doc(userId)),
-  );
-  const nicknameByUserId = new Map(
-    snapshots
-      .filter((snapshot) => snapshot.exists && snapshot.data()?.nickname)
-      .map((snapshot) => [snapshot.id, snapshot.data().nickname]),
-  );
-  return items.map((item) => {
-    return publicCommunityItem(item, viewerUserId, nicknameByUserId.get(item.authorId));
-  });
-}
 
-const repository = {
-  async consumeRateLimit(userId, action, limit, windowMs) {
-    const reference = adminDb.collection('community_rate_limits').doc(`${userId}_${action}`);
-    await adminDb.runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(reference);
-      const now = Date.now();
-      const windowStartedAt = Number(snapshot.data()?.windowStartedAt || 0);
-      const inCurrentWindow = snapshot.exists && now - windowStartedAt < windowMs;
-      const count = inCurrentWindow ? Number(snapshot.data()?.count || 0) : 0;
-      if (count >= limit) {
-        throw new CommunityError(429, '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.');
-      }
-      transaction.set(reference, {
-        action,
-        count: count + 1,
-        updatedAt: new Date(now).toISOString(),
-        userId,
-        windowStartedAt: inCurrentWindow ? windowStartedAt : now,
-      });
-    });
-  },
-  async getCommunityProfile(userId) {
-    const snapshot = await adminDb.collection('community_profiles').doc(userId).get();
-    return snapshot.exists ? snapshot.data() : null;
-  },
-  async saveCommunityProfile(userId, { nickname, nicknameKey }) {
-    const profileReference = adminDb.collection('community_profiles').doc(userId);
-    const nicknameReference = adminDb.collection('community_nicknames').doc(nicknameKey);
-    const now = new Date().toISOString();
-    return adminDb.runTransaction(async (transaction) => {
-      const current = await transaction.get(profileReference);
-      const desiredNickname = await transaction.get(nicknameReference);
-      if (desiredNickname.exists && desiredNickname.data()?.userId !== userId) {
-        throw new CommunityError(409, '이미 사용 중인 활동명입니다.');
-      }
-
-      const previousNicknameKey = text(current.data()?.nicknameKey, 64);
-      let previousNickname = null;
-      if (previousNicknameKey && previousNicknameKey !== nicknameKey) {
-        previousNickname = await transaction.get(
-          adminDb.collection('community_nicknames').doc(previousNicknameKey),
-        );
-      }
-
-      if (previousNickname?.exists && previousNickname.data()?.userId === userId) {
-        transaction.delete(previousNickname.ref);
-      }
-      transaction.set(nicknameReference, { nickname, updatedAt: now, userId });
-      transaction.set(
-        profileReference,
-        {
-          createdAt: current.data()?.createdAt || now,
-          nickname,
-          nicknameKey,
-          updatedAt: now,
-        },
-        { merge: true },
-      );
-      return { nickname };
-    });
-  },
-  async listPosts(userId) {
-    const snapshot = await adminDb
-      .collection('community_posts')
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get();
-    const posts = await hydrateCommunityAuthors(
-      snapshot.docs.map((document) => serialize(document.id, document.data())),
-      userId,
-    );
-    if (!userId || posts.length === 0) return posts.map((post) => ({ ...post, likedByMe: false }));
-    const likes = await adminDb.getAll(
-      ...posts.map((post) =>
-        adminDb.collection('community_posts').doc(post.id).collection('likes').doc(userId),
-      ),
-    );
-    return posts.map((post, index) => ({ ...post, likedByMe: likes[index]?.exists === true }));
-  },
-  async createPost(data) {
-    const reference = adminDb.collection('community_posts').doc();
-    const now = new Date().toISOString();
-    const post = {
-      ...data,
-      commentCount: 0,
-      createdAt: now,
-      likeCount: 0,
-      status: 'active',
-      updatedAt: now,
-    };
-    await reference.set(post);
-    return serialize(reference.id, post);
-  },
-  async updatePost(postId, userId, updates) {
-    const reference = adminDb.collection('community_posts').doc(postId);
-    const snapshot = await reference.get();
-    if (!snapshot.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-    if (snapshot.data()?.authorId !== userId)
-      throw new CommunityError(403, '작성자만 수정할 수 있습니다.');
-    const updatedAt = new Date().toISOString();
-    await reference.update({ ...updates, updatedAt });
-    return serialize(postId, { ...snapshot.data(), ...updates, updatedAt });
-  },
-  async deletePost(postId, userId) {
-    const reference = adminDb.collection('community_posts').doc(postId);
-    const snapshot = await reference.get();
-    if (!snapshot.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-    if (snapshot.data()?.authorId !== userId)
-      throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
-    const reports = await adminDb.collection('community_reports').where('postId', '==', postId).get();
-    await adminDb.recursiveDelete(reference);
-    await deleteDocumentSnapshots(reports.docs);
-  },
-  async listComments(postId, userId) {
-    const snapshot = await adminDb
-      .collection('community_posts')
-      .doc(postId)
-      .collection('comments')
-      .orderBy('createdAt', 'asc')
-      .limit(100)
-      .get();
-    return hydrateCommunityAuthors(
-      snapshot.docs.map((document) => serialize(document.id, document.data())),
-      userId,
-    );
-  },
-  async createComment(postId, data) {
-    const postReference = adminDb.collection('community_posts').doc(postId);
-    const commentReference = postReference.collection('comments').doc();
-    const now = new Date().toISOString();
-    let commentData = { ...data, createdAt: now, updatedAt: now };
-
-    await adminDb.runTransaction(async (transaction) => {
-      const post = await transaction.get(postReference);
-      if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-
-      if (data.parentId) {
-        const parentReference = postReference.collection('comments').doc(data.parentId);
-        const parentComment = await transaction.get(parentReference);
-        if (!parentComment.exists) {
-          throw new CommunityError(404, '답글 대상 댓글을 찾을 수 없습니다.');
+  const repository = {
+    async consumeRateLimit(userId, action, limit, windowMs) {
+      const reference = adminDb.collection('community_rate_limits').doc(`${userId}_${action}`);
+      await adminDb.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(reference);
+        const now = Date.now();
+        const windowStartedAt = Number(snapshot.data()?.windowStartedAt || 0);
+        const inCurrentWindow = snapshot.exists && now - windowStartedAt < windowMs;
+        const count = inCurrentWindow ? Number(snapshot.data()?.count || 0) : 0;
+        if (count >= limit) {
+          throw new CommunityError(429, '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.');
         }
-        const parentData = parentComment.data() || {};
-        const normalizedParentId = parentData.parentId || data.parentId;
-        const normalizedReplyTo = data.replyToAuthorName || parentData.authorName || '작성자';
-        commentData = {
-          ...commentData,
-          parentId: normalizedParentId,
-          replyToAuthorName: normalizedReplyTo,
-        };
-      } else {
-        commentData = {
-          ...commentData,
-          parentId: null,
-          replyToAuthorName: null,
-        };
-      }
+        transaction.set(reference, {
+          action,
+          count: count + 1,
+          updatedAt: new Date(now).toISOString(),
+          userId,
+          windowStartedAt: inCurrentWindow ? windowStartedAt : now,
+        });
+      });
+    },
+    async getCommunityProfile(userId) {
+      const snapshot = await adminDb.collection('community_profiles').doc(userId).get();
+      return snapshot.exists ? snapshot.data() : null;
+    },
+    async saveCommunityProfile(userId, { nickname, nicknameKey }) {
+      const profileReference = adminDb.collection('community_profiles').doc(userId);
+      const nicknameReference = adminDb.collection('community_nicknames').doc(nicknameKey);
+      const now = new Date().toISOString();
+      return adminDb.runTransaction(async (transaction) => {
+        const current = await transaction.get(profileReference);
+        const desiredNickname = await transaction.get(nicknameReference);
+        if (desiredNickname.exists && desiredNickname.data()?.userId !== userId) {
+          throw new CommunityError(409, '이미 사용 중인 활동명입니다.');
+        }
 
-      transaction.set(commentReference, commentData);
-      transaction.update(postReference, { commentCount: FieldValue.increment(1), updatedAt: now });
-    });
-    return serialize(commentReference.id, commentData);
-  },
-  async updateComment(postId, commentId, userId, content) {
-    const reference = adminDb
-      .collection('community_posts')
-      .doc(postId)
-      .collection('comments')
-      .doc(commentId);
-    const snapshot = await reference.get();
-    if (!snapshot.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
-    if (snapshot.data()?.authorId !== userId)
-      throw new CommunityError(403, '작성자만 수정할 수 있습니다.');
-    const updatedAt = new Date().toISOString();
-    await reference.update({ content, updatedAt });
-    return serialize(commentId, { ...snapshot.data(), content, updatedAt });
-  },
-  async deleteComment(postId, commentId, userId) {
-    const postReference = adminDb.collection('community_posts').doc(postId);
-    const commentReference = postReference.collection('comments').doc(commentId);
-    const repliesSnapshot = await postReference
-      .collection('comments')
-      .where('parentId', '==', commentId)
-      .get();
+        const previousNicknameKey = text(current.data()?.nicknameKey, 64);
+        let previousNickname = null;
+        if (previousNicknameKey && previousNicknameKey !== nicknameKey) {
+          previousNickname = await transaction.get(
+            adminDb.collection('community_nicknames').doc(previousNicknameKey),
+          );
+        }
 
-    await adminDb.runTransaction(async (transaction) => {
-      const [post, comment, ...replies] = await Promise.all([
-        transaction.get(postReference),
-        transaction.get(commentReference),
-        ...repliesSnapshot.docs.map((document) => transaction.get(document.ref)),
+        if (previousNickname?.exists && previousNickname.data()?.userId === userId) {
+          transaction.delete(previousNickname.ref);
+        }
+        transaction.set(nicknameReference, { nickname, updatedAt: now, userId });
+        transaction.set(
+          profileReference,
+          {
+            createdAt: current.data()?.createdAt || now,
+            nickname,
+            nicknameKey,
+            updatedAt: now,
+          },
+          { merge: true },
+        );
+        return { nickname };
+      });
+    },
+    async listPosts(userId) {
+      const snapshot = await adminDb
+        .collection('community_posts')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+      const items = snapshot.docs.map((document) => serialize(document.id, document.data()));
+      const [posts, likes] = await Promise.all([
+        hydrateCommunityAuthors(items, userId),
+        userId && items.length
+          ? adminDb.getAll(
+              ...items.map((post) =>
+                adminDb.collection('community_posts').doc(post.id).collection('likes').doc(userId),
+              ),
+            )
+          : Promise.resolve([]),
       ]);
-      if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-      if (!comment.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
-      if (comment.data()?.authorId !== userId)
+      return posts.map((post, index) => ({ ...post, likedByMe: likes[index]?.exists === true }));
+    },
+    async createPost(data) {
+      const reference = adminDb.collection('community_posts').doc();
+      const now = new Date().toISOString();
+      const post = {
+        ...data,
+        commentCount: 0,
+        createdAt: now,
+        likeCount: 0,
+        status: 'active',
+        updatedAt: now,
+      };
+      await reference.set(post);
+      return serialize(reference.id, post);
+    },
+    async updatePost(postId, userId, updates) {
+      const reference = adminDb.collection('community_posts').doc(postId);
+      const snapshot = await reference.get();
+      if (!snapshot.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
+      if (snapshot.data()?.authorId !== userId)
+        throw new CommunityError(403, '작성자만 수정할 수 있습니다.');
+      const updatedAt = new Date().toISOString();
+      await reference.update({ ...updates, updatedAt });
+      return serialize(postId, { ...snapshot.data(), ...updates, updatedAt });
+    },
+    async deletePost(postId, userId) {
+      const reference = adminDb.collection('community_posts').doc(postId);
+      const snapshot = await reference.get();
+      if (!snapshot.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
+      if (snapshot.data()?.authorId !== userId)
         throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
-      transaction.delete(commentReference);
-      replies.forEach((reply) => {
-        if (reply.exists) transaction.delete(reply.ref);
-      });
-      const totalDeleted = 1 + replies.filter((reply) => reply.exists).length;
-      transaction.update(postReference, {
-        commentCount: Math.max(0, Number(post.data()?.commentCount || 0) - totalDeleted),
-      });
-    });
-  },
-  async toggleLike(postId, userId) {
-    const postReference = adminDb.collection('community_posts').doc(postId);
-    const likeReference = postReference.collection('likes').doc(userId);
-    return adminDb.runTransaction(async (transaction) => {
-      const [post, like] = await Promise.all([
-        transaction.get(postReference),
-        transaction.get(likeReference),
-      ]);
-      if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-      const liked = !like.exists;
-      if (liked) transaction.set(likeReference, { createdAt: new Date().toISOString(), userId });
-      else transaction.delete(likeReference);
-      const likeCount = Math.max(0, Number(post.data()?.likeCount || 0) + (liked ? 1 : -1));
-      transaction.update(postReference, { likeCount });
-      return { liked, likeCount };
-    });
-  },
-  async reportPost(postId, userId, reason) {
-    const post = await adminDb.collection('community_posts').doc(postId).get();
-    if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
-    await adminDb.collection('community_reports').doc(`${postId}_${userId}`).set({
-      createdAt: new Date().toISOString(),
-      postId,
-      reason,
-      reporterId: userId,
-      status: 'pending',
-    });
-  },
-  async deleteAccountData(userId) {
-    const profileReference = adminDb.collection('community_profiles').doc(userId);
-    const profile = await profileReference.get();
-    const authoredPosts = await adminDb
-      .collection('community_posts')
-      .where('authorId', '==', userId)
-      .get();
-
-    for (const post of authoredPosts.docs) {
       const reports = await adminDb
         .collection('community_reports')
-        .where('postId', '==', post.id)
+        .where('postId', '==', postId)
         .get();
-      await adminDb.recursiveDelete(post.ref);
+      await adminDb.recursiveDelete(reference);
       await deleteDocumentSnapshots(reports.docs);
-    }
+    },
+    async listComments(postId, userId) {
+      const snapshot = await adminDb
+        .collection('community_posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('createdAt', 'asc')
+        .limit(100)
+        .get();
+      return hydrateCommunityAuthors(
+        snapshot.docs.map((document) => serialize(document.id, document.data())),
+        userId,
+      );
+    },
+    async createComment(postId, data) {
+      const postReference = adminDb.collection('community_posts').doc(postId);
+      const commentReference = postReference.collection('comments').doc();
+      const now = new Date().toISOString();
+      let commentData = { ...data, createdAt: now, updatedAt: now };
 
-    const comments = await adminDb
-      .collectionGroup('comments')
-      .where('authorId', '==', userId)
-      .get();
-    for (const comment of comments.docs) {
-      const postId = comment.ref.parent.parent?.id;
-      if (postId) await repository.deleteComment(postId, comment.id, userId);
-    }
+      await adminDb.runTransaction(async (transaction) => {
+        const post = await transaction.get(postReference);
+        if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
 
-    const likes = await adminDb.collectionGroup('likes').where('userId', '==', userId).get();
-    for (const like of likes.docs) {
-      const postId = like.ref.parent.parent?.id;
-      if (postId) await repository.toggleLike(postId, userId);
-    }
+        if (data.parentId) {
+          const parentReference = postReference.collection('comments').doc(data.parentId);
+          const parentComment = await transaction.get(parentReference);
+          if (!parentComment.exists) {
+            throw new CommunityError(404, '답글 대상 댓글을 찾을 수 없습니다.');
+          }
+          const parentData = parentComment.data() || {};
+          const normalizedParentId = parentData.parentId || data.parentId;
+          const normalizedReplyTo = data.replyToAuthorName || parentData.authorName || '작성자';
+          commentData = {
+            ...commentData,
+            parentId: normalizedParentId,
+            replyToAuthorName: normalizedReplyTo,
+          };
+        } else {
+          commentData = {
+            ...commentData,
+            parentId: null,
+            replyToAuthorName: null,
+          };
+        }
 
-    const reports = await adminDb
-      .collection('community_reports')
-      .where('reporterId', '==', userId)
-      .get();
-    await deleteDocumentSnapshots(reports.docs);
+        transaction.set(commentReference, commentData);
+        transaction.update(postReference, {
+          commentCount: FieldValue.increment(1),
+          updatedAt: now,
+        });
+      });
+      return serialize(commentReference.id, commentData);
+    },
+    async updateComment(postId, commentId, userId, content) {
+      const reference = adminDb
+        .collection('community_posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId);
+      const snapshot = await reference.get();
+      if (!snapshot.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
+      if (snapshot.data()?.authorId !== userId)
+        throw new CommunityError(403, '작성자만 수정할 수 있습니다.');
+      const updatedAt = new Date().toISOString();
+      await reference.update({ content, updatedAt });
+      return serialize(commentId, { ...snapshot.data(), content, updatedAt });
+    },
+    async deleteComment(postId, commentId, userId) {
+      const postReference = adminDb.collection('community_posts').doc(postId);
+      const commentReference = postReference.collection('comments').doc(commentId);
+      const repliesSnapshot = await postReference
+        .collection('comments')
+        .where('parentId', '==', commentId)
+        .get();
 
-    await deleteDocumentSnapshots(
-      Object.values(RATE_LIMITS).map(({ action }) => ({
-        ref: adminDb.collection('community_rate_limits').doc(`${userId}_${action}`),
-      })),
-    );
+      await adminDb.runTransaction(async (transaction) => {
+        const [post, comment, ...replies] = await Promise.all([
+          transaction.get(postReference),
+          transaction.get(commentReference),
+          ...repliesSnapshot.docs.map((document) => transaction.get(document.ref)),
+        ]);
+        if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
+        if (!comment.exists) throw new CommunityError(404, '댓글을 찾을 수 없습니다.');
+        if (comment.data()?.authorId !== userId)
+          throw new CommunityError(403, '작성자만 삭제할 수 있습니다.');
+        transaction.delete(commentReference);
+        replies.forEach((reply) => {
+          if (reply.exists) transaction.delete(reply.ref);
+        });
+        const totalDeleted = 1 + replies.filter((reply) => reply.exists).length;
+        transaction.update(postReference, {
+          commentCount: Math.max(0, Number(post.data()?.commentCount || 0) - totalDeleted),
+        });
+      });
+    },
+    async toggleLike(postId, userId) {
+      const postReference = adminDb.collection('community_posts').doc(postId);
+      const likeReference = postReference.collection('likes').doc(userId);
+      return adminDb.runTransaction(async (transaction) => {
+        const [post, like] = await Promise.all([
+          transaction.get(postReference),
+          transaction.get(likeReference),
+        ]);
+        if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
+        const liked = !like.exists;
+        if (liked) transaction.set(likeReference, { createdAt: new Date().toISOString(), userId });
+        else transaction.delete(likeReference);
+        const likeCount = Math.max(0, Number(post.data()?.likeCount || 0) + (liked ? 1 : -1));
+        transaction.update(postReference, { likeCount });
+        return { liked, likeCount };
+      });
+    },
+    async reportPost(postId, userId, reason) {
+      const post = await adminDb.collection('community_posts').doc(postId).get();
+      if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
+      await adminDb.collection('community_reports').doc(`${postId}_${userId}`).set({
+        createdAt: new Date().toISOString(),
+        postId,
+        reason,
+        reporterId: userId,
+        status: 'pending',
+      });
+    },
+    async deleteAccountData(userId) {
+      const profileReference = adminDb.collection('community_profiles').doc(userId);
+      const profile = await profileReference.get();
+      const authoredPosts = await adminDb
+        .collection('community_posts')
+        .where('authorId', '==', userId)
+        .get();
 
-    const nicknameKey = text(profile.data()?.nicknameKey, 64);
-    await adminDb.runTransaction(async (transaction) => {
-      const nicknameReference = nicknameKey
-        ? adminDb.collection('community_nicknames').doc(nicknameKey)
-        : null;
-      const nickname = nicknameReference ? await transaction.get(nicknameReference) : null;
-      if (nickname?.exists && nickname.data()?.userId === userId) {
-        transaction.delete(nickname.ref);
+      for (const post of authoredPosts.docs) {
+        const reports = await adminDb
+          .collection('community_reports')
+          .where('postId', '==', post.id)
+          .get();
+        await adminDb.recursiveDelete(post.ref);
+        await deleteDocumentSnapshots(reports.docs);
       }
-      transaction.delete(profileReference);
-    });
-  },
-};
 
-async function deleteDocumentSnapshots(documents) {
-  if (documents.length === 0) return;
-  const writer = adminDb.bulkWriter();
-  documents.forEach((document) => writer.delete(document.ref));
-  await writer.close();
+      const comments = await adminDb
+        .collectionGroup('comments')
+        .where('authorId', '==', userId)
+        .get();
+      for (const comment of comments.docs) {
+        const postId = comment.ref.parent.parent?.id;
+        if (postId) await repository.deleteComment(postId, comment.id, userId);
+      }
+
+      const likes = await adminDb.collectionGroup('likes').where('userId', '==', userId).get();
+      for (const like of likes.docs) {
+        const postId = like.ref.parent.parent?.id;
+        if (postId) await repository.toggleLike(postId, userId);
+      }
+
+      const reports = await adminDb
+        .collection('community_reports')
+        .where('reporterId', '==', userId)
+        .get();
+      await deleteDocumentSnapshots(reports.docs);
+
+      await deleteDocumentSnapshots(
+        Object.values(RATE_LIMITS).map(({ action }) => ({
+          ref: adminDb.collection('community_rate_limits').doc(`${userId}_${action}`),
+        })),
+      );
+
+      const nicknameKey = text(profile.data()?.nicknameKey, 64);
+      await adminDb.runTransaction(async (transaction) => {
+        const nicknameReference = nicknameKey
+          ? adminDb.collection('community_nicknames').doc(nicknameKey)
+          : null;
+        const nickname = nicknameReference ? await transaction.get(nicknameReference) : null;
+        if (nickname?.exists && nickname.data()?.userId === userId) {
+          transaction.delete(nickname.ref);
+        }
+        transaction.delete(profileReference);
+      });
+    },
+  };
+
+  async function deleteDocumentSnapshots(documents) {
+    if (documents.length === 0) return;
+    const writer = adminDb.bulkWriter();
+    documents.forEach((document) => writer.delete(document.ref));
+    await writer.close();
+  }
+
+  return repository;
 }
 
 export const communityHandlers = createCommunityHandlers({
-  repository,
+  repository: createCommunityRepository(),
   verifyIdToken: (token) => adminAuth.verifyIdToken(token),
 });
 

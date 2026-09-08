@@ -2,7 +2,7 @@
   "name": "al07team04-functions",
   "private": true,
   "type": "module",
-  "main": "index.mjs",
+  "main": "entry.mjs",
   "engines": {
     "node": "22"
   },
