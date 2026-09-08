@@ -51,4 +51,12 @@ describe('bounded source collection', () => {
     expect(deps.fetchText).not.toHaveBeenCalled();
     expect(deps.upsert).not.toHaveBeenCalled();
   });
+  it('preserves safe transport failure diagnostics for operator investigation', async () => {
+    const deps = fixture();
+    deps.fetchText.mockRejectedValue(Object.assign(new JobSourceError('TIMEOUT', true), {
+      diagnostics: { phase: 'connect', elapsedMs: 25000, responseBytes: 0, addressFamily: 4 },
+    }));
+    const result = await collectJobSources(deps);
+    expect(result.sourceProgress.seoul.failureDiagnostics).toEqual({ phase: 'connect', elapsedMs: 25000, responseBytes: 0, addressFamily: 4 });
+  });
 });

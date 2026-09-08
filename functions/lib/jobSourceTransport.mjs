@@ -13,8 +13,12 @@ export class JobSourceError extends Error {
 }
 
 const transientCodes = new Set(['ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN', 'ECONNREFUSED']);
-function requestOnce(url, { get, timeoutMs, maxBytes }) {
+function requestOnce(url, { get, timeoutMs, maxBytes, secure }) {
   return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+    let phase = 'socket';
+    let addressFamily = 0;
+    let size = 0;
     let request;
     let response;
     let settled = false;
@@ -22,12 +26,19 @@ function requestOnce(url, { get, timeoutMs, maxBytes }) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      if (error) { response?.destroy(); request?.destroy(); reject(error); }
+      if (error) {
+        // Only enumerated phases/counts: never retain a URL, API key, address or response body.
+        error.diagnostics = { phase, elapsedMs: Date.now() - startedAt, responseBytes: size, addressFamily };
+        response?.destroy(); request?.destroy(); reject(error);
+      }
       else resolve(value);
     };
     const timer = setTimeout(() => finish(new JobSourceError('TIMEOUT', true)), timeoutMs);
     try {
-      request = get(url, { timeout: timeoutMs }, (res) => {
+      request = get(url, { timeout: timeoutMs, family: 4,
+        headers: { Accept: 'application/json, application/xml, text/xml, */*', 'User-Agent': 'Ieojab-JobSync/1.0' },
+      }, (res) => {
+        phase = 'body';
         response = res;
         res.on('error', () => finish(new JobSourceError('RESPONSE_ABORTED', true)));
         res.on('aborted', () => finish(new JobSourceError('RESPONSE_ABORTED', true)));
@@ -40,7 +51,6 @@ function requestOnce(url, { get, timeoutMs, maxBytes }) {
           finish(new JobSourceError('RESPONSE_TOO_LARGE')); return;
         }
         const chunks = [];
-        let size = 0;
         res.on('data', (chunk) => {
           if (settled) return;
           size += Buffer.byteLength(chunk);
@@ -48,6 +58,15 @@ function requestOnce(url, { get, timeoutMs, maxBytes }) {
           else chunks.push(chunk);
         });
         res.on('end', () => finish(null, decodeUtf8Chunks(chunks)));
+      });
+      request.on('socket', (socket) => {
+        phase = socket.connecting ? 'dns' : 'headers';
+        socket.once('lookup', (error, _address, family) => {
+          if (settled) return;
+          if (!error) { phase = 'connect'; addressFamily = family === 6 ? 6 : 4; }
+        });
+        socket.once('connect', () => { if (!settled) phase = secure ? 'tls' : 'headers'; });
+        socket.once('secureConnect', () => { if (!settled) phase = 'headers'; });
       });
       request.on('error', (error) => finish(new JobSourceError(
         transientCodes.has(error.code) ? error.code : 'NETWORK_ERROR', transientCodes.has(error.code),
@@ -67,7 +86,8 @@ export async function fetchJobSourceText(url, options = {}) {
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     options.onAttempt?.(attempt);
     try {
-      const text = await requestOnce(url, { get, timeoutMs: options.timeoutMs ?? 25000, maxBytes: options.maxBytes ?? 12 * 1024 * 1024 });
+      const text = await requestOnce(url, { get, timeoutMs: options.timeoutMs ?? 25000,
+        maxBytes: options.maxBytes ?? 12 * 1024 * 1024, secure: parsedUrl.protocol === 'https:' });
       return options.parse ? options.parse(text) : text;
     } catch (rawError) {
       const error = rawError instanceof JobSourceError ? rawError : new JobSourceError('INVALID_RESPONSE');

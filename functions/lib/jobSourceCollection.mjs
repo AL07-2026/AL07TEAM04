@@ -67,6 +67,7 @@ export async function collectJobSources({ state, dateKey, nowStr, transforms, up
       Object.assign(progress, { status: progress.activeUpserts ? 'partial' : 'failed',
         errorCode: error instanceof JobSourceError ? error.code : 'PERSISTENCE_ERROR',
         retryable: error instanceof JobSourceError ? error.retryable : true });
+      if (error instanceof JobSourceError && error.diagnostics) progress.failureDiagnostics = error.diagnostics;
     }
     sourceProgress[source] = progress;
     await onSourceResult?.(sourceProgress, statePatch);

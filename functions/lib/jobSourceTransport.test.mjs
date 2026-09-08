@@ -35,6 +35,34 @@ const successful = (text) => ({ callback, response }) => {
 afterEach(() => vi.useRealTimers());
 
 describe('bounded job source transport', () => {
+  it('uses an explicit IPv4 connection and identifies the collector without credentials in headers', async () => {
+    const transport = fakeTransport([successful('ok')]);
+    await fetchJobSourceText('https://source.test/SECRET', { get: transport.get });
+    const options = transport.get.mock.calls[0][1];
+    expect(options.family).toBe(4);
+    expect(options.headers['User-Agent']).toBe('Ieojab-JobSync/1.0');
+    expect(JSON.stringify(options)).not.toContain('SECRET');
+  });
+
+  it.each(['connect', 'headers', 'body'])('reports a %s timeout without including source URLs or response contents', async (phase) => {
+    vi.useFakeTimers();
+    const transport = fakeTransport([({ request, response, callback }) => {
+      const socket = new EventEmitter();
+      socket.connecting = true;
+      request.emit('socket', socket);
+      socket.emit('lookup', null, '192.0.2.1', 4, 'SECRET');
+      if (phase !== 'connect') socket.emit('connect');
+      if (phase === 'body') { callback(response); response.emit('data', Buffer.from('SECRET')); }
+    }]);
+    const result = expect(fetchJobSourceText('http://source.test/SECRET', {
+      get: transport.get, timeoutMs: 15, maxRetries: 0,
+    })).rejects.toMatchObject({ code: 'TIMEOUT', diagnostics: {
+      phase, elapsedMs: 15, responseBytes: phase === 'body' ? 6 : 0, addressFamily: 4,
+    } });
+    await vi.advanceTimersByTimeAsync(15);
+    await result;
+  });
+
   it('decodes split UTF-8 bytes without damaging Korean text', async () => {
     const source = Buffer.from('서울 채용');
     const transport = fakeTransport([({ callback, response }) => {
