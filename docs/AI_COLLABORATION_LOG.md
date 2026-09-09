@@ -16,6 +16,11 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-09] `leedongwook` 변경을 `develop`에 fast-forward 통합
+- **작업자/브랜치**: Codex, `develop`. `origin/develop`을 실제 pull해 `84f7cb9`가 최신임을 확인한 뒤 `origin/leedongwook`의 `3f7e2da`까지 충돌 없이 fast-forward 통합.
+- **검증**: 별도 임시 worktree에서 타입 검사·린트·59개 파일/630개 테스트·프로덕션 빌드 전부 통과. 통합 diff의 파일 끝 중복 빈 줄 1건을 정리했으며 새 시크릿·환경 파일·자동 배포 워크플로 추가가 없음을 확인.
+- **범위**: Git `develop` 브랜치 통합·원격 업로드만 수행. 운영 Hosting, 프리뷰 Hosting, Functions, Firestore 데이터/규칙은 이번 작업에서 배포하지 않음. 원래 `leedongwook` 작업공간의 사용자 `.fig` 및 로컬 Hosting 캐시는 변경하지 않음.
+
 ### [2026-09-09] 공통 내비게이션 활성 색상 오렌지 복원 및 프리뷰 배포
 - **작업자/브랜치**: Codex, `leedongwook`. 코드 `3c44033`(`fix(ui): restore orange active navigation`)을 `origin/leedongwook`에 업로드.
 - **원인**: Lucide 아이콘 표준화 커밋 `409a80e`에서 아이콘 외 범위인 공통 내비게이션 활성 색상까지 기존 이어잡 오렌지 `#F06B4F`에서 어두운 적갈색 `#B84734`로 함께 변경됐다.
