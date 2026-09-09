@@ -60,7 +60,7 @@ function stripRepeatedPeriod(value: string): string {
 
 /**
  * Formats source salary text for display without converting its pay period.
- * Annual, monthly, daily, and weekly whole-won amounts use exact man-won notation above 10,000 won.
+ * Annual, monthly, daily, and weekly whole-won amounts use exact man-won notation at 10,000 won or more.
  * Hourly and period-less amounts stay in won because converting them would obscure their meaning.
  */
 export function formatSalaryDisplay(rawSalary?: string): string {
