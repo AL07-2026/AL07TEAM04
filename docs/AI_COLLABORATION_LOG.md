@@ -16,6 +16,14 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-09] 회원탈퇴·Gmail 분리 안전 설정 메인 Hosting 배포 완료
+- **작업자/브랜치**: Codex, `leedongwook`. Gmail Secret이 없는 상태에서도 일괄 배포가 실패하지 않도록 미등록 `applicationEmailApi`의 활성 export·매니페스트·Hosting rewrite를 제거한 `9f511d1`을 `origin/leedongwook`에 업로드. 전용 메일 구현 파일은 후속 활성화를 위해 보존.
+- **검증**: `npm run validate`에서 타입 검사, ESLint, 63개 파일/651개 테스트, 프로덕션 빌드 전부 통과. 존재하지 않는 함수로 라우팅하지 않는 계약과 공통 API에서 Gmail Secret이 제거된 상태를 회귀 테스트로 고정.
+- **운영 배포**: 사용자의 명시적 요청에 따라 메인 Firebase Hosting `https://al07team04-bdfcd.web.app`에 57개 빌드 파일과 안전한 rewrite를 배포. 홈과 `/senior/project-database` HTTP 200, `/api/health` HTTP 200을 확인.
+- **회원탈퇴 확인**: 메인 `/api/account`가 신규 `accountApi`로 연결되며 인증 없는 DELETE를 HTTP 401 및 `private, no-store`로 안전하게 거부함을 확인. 실제 계정 삭제는 사용자 데이터가 소멸하므로 운영 테스트로 실행하지 않음.
+- **메일 상태**: 메인 `/api/applications/send`는 HTTP 503 JSON과 `private, no-store`로 “지원 이력은 저장되지만 메일 설정 준비 중”을 명시한다. Gmail 앱 비밀번호가 없으므로 실제 메일 발송은 아직 비활성. `communityApi`, `premiumApi`, `scheduledJobSync`, Firestore 데이터·규칙은 이번 메인 Hosting 배포에서 변경하지 않음.
+- **보존**: 사용자 `Wanted Design System (Community).fig`와 로컬 Hosting 캐시는 커밋에서 제외. Gmail 비밀번호를 소스·`.env`·로그에 저장하지 않음.
+
 ### [2026-09-09] 회원탈퇴 서버화 배포 및 Gmail Secret 의존성 분리 준비
 - **작업자/브랜치**: Codex, `leedongwook`. `origin/develop`의 최신 `3fd429a`를 선행 반영한 상태에서 회원탈퇴 수정 `c19d805`를 `origin/leedongwook`에 업로드.
 - **회원탈퇴 원인/개선**: 기존 브라우저 삭제는 Firestore의 서버 전용 `projects`·`user_proposals` 규칙에 막혀 커뮤니티/프리미엄 일부만 지우고 Auth 계정을 남길 수 있었다. 이를 Secret 없는 `DELETE /api/account` 전용 `accountApi`로 이동하고, 토큰 UID·최근 로그인 검증, lease/checkpoint 기반 재시도, Storage → Firestore → Auth 순서를 적용했다. 기업 탈퇴 때 타 지원자의 제안·이력서는 삭제하지 않고 기업 연결만 종료한다. 커뮤니티 좋아요 삭제도 반복 호출 시 다시 생성되지 않도록 멱등화했다.
