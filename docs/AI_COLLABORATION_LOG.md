@@ -16,6 +16,13 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-09] 더보기 메뉴 Google Forms 설문 연결 및 프리뷰 배포
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `5bf2f51`(`feat(ui): add survey link to site menu`)을 `origin/leedongwook`에 업로드.
+- **메뉴 변경**: 공통 `SiteMenu`의 커뮤니티와 문의하기 사이에 `설문 참여하기`를 추가. 요청받은 Google Forms 주소를 새 탭으로 열고 `noopener noreferrer`로 역탭내빙과 리퍼러 노출을 방지함.
+- **UI/접근성**: 기존 48px 메뉴 행과 포커스/활성 상태를 유지. Lucide `ClipboardCheck`/`ExternalLink`로 설문과 외부 이동을 구분하고 보조기기 접근성 이름에 `새 창에서 열림`을 명시.
+- **검증**: 실패 테스트를 먼저 확인한 후 href/target/rel/접근성 이름 회귀를 추가. `npm run validate` 통과(타입, 린트, 59개 파일/618개 테스트, 프로덕션 빌드). 설문 원본과 프리뷰 페이지 모두 HTTP 200, 배포 번들의 설문 식별자 포함을 확인.
+- **배포/범위**: Hosting은 `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`에만 배포. 운영 Hosting, Functions, Firestore 데이터/규칙은 변경하지 않음. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
 ### [2026-09-09] 급여 표시 통일 및 커뮤니티 콜드스타트 개선 배포 완료
 - **작업자/브랜치**: Codex, `leedongwook`. 코드 `7c2c0b9`(급여 표시 통일), `cde74b9`(커뮤니티 로딩 개선)을 `origin/leedongwook`에 업로드.
 - **급여 표시**: 원본 API·Firestore `salaryRange`는 변경하지 않고 화면 전용 공통 포맷터를 추가. `연봉/연간 → 연`, `월급/월간 → 월`, 천 단위 콤마, `만 원`, 범위 `~`를 통일했다. 월·연·시급·일급 간 환산은 하지 않으며 정확히 나누어지지 않는 원 단위 급여와 협의·상여 조건을 보존한다. 프로젝트 카드, 지원 확인, 직무 요약, 관리자 목록과 등록 예시를 같은 규칙으로 연결.
