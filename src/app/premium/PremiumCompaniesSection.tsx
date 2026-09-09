@@ -25,9 +25,10 @@ const emptyApplication: PremiumApplicationInput = {
 const applicationButtonLabels: Record<PremiumApplication['status'], string> = {
   approved: '프리미엄 노출 중',
   changes_requested: '정보 보완 필요',
-  pending: '신청 내용 수정',
+  pending: '신청 내용 확인',
   expired: '다음 무료 노출 신청',
   rejected: '수정 후 재신청',
+  suspended: '프리미엄 노출 정지됨',
 };
 
 export function PremiumCompanyCard({ company }: { company: PremiumCompany }) {
@@ -78,7 +79,14 @@ function PremiumApplicationForm({
   onCancel: () => void;
   onSaved: (application: PremiumApplication) => void;
 }) {
-  const [draft, setDraft] = useState<PremiumApplicationInput>(() => ({ ...emptyApplication, headline: application?.headline || '', description: application?.description || '', hiringFocus: application?.hiringFocus || '', websiteUrl: application?.websiteUrl || '', revision: application?.revision || 0 }));
+  const [draft, setDraft] = useState<PremiumApplicationInput>(() => ({
+    ...emptyApplication,
+    headline: application?.headline || '',
+    description: application?.description || '',
+    hiringFocus: application?.hiringFocus || '',
+    websiteUrl: application?.websiteUrl || '',
+    revision: application?.revision || 0,
+  }));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [readingPhoto, setReadingPhoto] = useState(false);
@@ -86,7 +94,10 @@ function PremiumApplicationForm({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (saving || readingPhoto) return;
-    if (!draft.imageData && !application?.imageUrl) { setError('기업 대표 사진을 등록해 주세요.'); return; }
+    if (!draft.imageData && !application?.imageUrl) {
+      setError('기업 대표 사진을 등록해 주세요.');
+      return;
+    }
     if (draft.headline.trim().length < 4 || draft.description.trim().length < 10) {
       setError('대표 문구는 4자 이상, 기업 소개는 10자 이상 입력해 주세요.');
       return;
@@ -120,7 +131,7 @@ function PremiumApplicationForm({
         <div>
           <h3 className="text-[17px] font-black text-[#17212B]">프리미엄 노출 신청</h3>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#53645F]">
-            저장된 기업 정보와 대표 사진으로 접수합니다. 승인되어 노출될 때 무료 이용권 1회가 사용됩니다.
+            대표 사진과 내용을 저장하면 바로 승인되어 무료 이용권 1회가 사용되고 1개월간 노출됩니다.
           </p>
         </div>
         <button
@@ -135,17 +146,30 @@ function PremiumApplicationForm({
       <fieldset disabled={saving || readingPhoto} className="mt-4 grid gap-4 sm:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold sm:col-span-2">
           기업 대표 사진 (JPG·PNG·WEBP, 2MB 이하)
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = '';
-            if (!file) return;
-            setReadingPhoto(true);
-            setError('');
-            void readPremiumPhoto(file).then((imageData) => setDraft((current) => ({ ...current, imageData })))
-              .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : '사진을 읽지 못했습니다.'))
-              .finally(() => setReadingPhoto(false));
-          }} />
-          {draft.imageData || application?.imageUrl ? <img className="aspect-video w-full max-w-sm rounded-xl object-cover" alt="등록할 기업 대표 사진" src={draft.imageData || application?.imageUrl} /> : null}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              if (!file) return;
+              setReadingPhoto(true);
+              setError('');
+              void readPremiumPhoto(file)
+                .then((imageData) => setDraft((current) => ({ ...current, imageData })))
+                .catch((cause: unknown) =>
+                  setError(cause instanceof Error ? cause.message : '사진을 읽지 못했습니다.'),
+                )
+                .finally(() => setReadingPhoto(false));
+            }}
+          />
+          {draft.imageData || application?.imageUrl ? (
+            <img
+              className="aspect-video w-full max-w-sm rounded-xl object-cover"
+              alt="등록할 기업 대표 사진"
+              src={draft.imageData || application?.imageUrl}
+            />
+          ) : null}
           {readingPhoto ? <span role="status">사진 확인 중</span> : null}
         </label>
         <label className="grid gap-2 text-[13px] font-extrabold text-[#17212B]">
@@ -154,7 +178,9 @@ function PremiumApplicationForm({
             className="h-12 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm placeholder:text-[#6C7773] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
             maxLength={60}
             minLength={4}
-            onChange={(event) => setDraft((current) => ({ ...current, headline: event.target.value }))}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, headline: event.target.value }))
+            }
             placeholder="기업이 찾는 경험을 한 문장으로 알려주세요"
             required
             value={draft.headline}
@@ -205,7 +231,8 @@ function PremiumApplicationForm({
         </label>
       </fieldset>
       <p className="mt-3 text-[12px] font-semibold text-[#6A4B43]">
-        기업회원 무료 노출 3회, 1회당 승인일부터 1개월. 보완·반려·재제출에는 횟수가 차감되지 않습니다.
+        기업회원 무료 노출 3회는 신청 즉시 자동 승인됩니다. 1회당 1개월이며 현재 노출이 끝난 후 다음
+        회차를 신청할 수 있습니다.
       </p>
       {error ? (
         <p className="mt-2 text-sm font-bold text-rose-700" role="alert">
@@ -225,20 +252,15 @@ function PremiumApplicationForm({
           disabled={saving || readingPhoto}
           type="submit"
         >
-          <Send aria-hidden="true" className="size-4" /> {saving ? '신청 중' : '신청 접수'}
+          <Send aria-hidden="true" className="size-4" />{' '}
+          {saving ? '노출 준비 중' : '신청하고 바로 노출'}
         </button>
       </div>
     </form>
   );
 }
 
-function PremiumCompaniesSectionContent({
-  role,
-  user,
-}: {
-  role: Role;
-  user: UserProfile | null;
-}) {
+function PremiumCompaniesSectionContent({ role, user }: { role: Role; user: UserProfile | null }) {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState(() => initialPremiumCompanies.slice(0, 4));
   const [benefit, setBenefit] = useState<PremiumBenefit | null>(null);
@@ -260,13 +282,18 @@ function PremiumCompaniesSectionContent({
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     if (role !== 'company' || !user) return;
     let active = true;
     getPremiumAccount()
-      .then((result) => { if (active) { setApplication(result.application); setBenefit(result.benefit); } })
+      .then((result) => {
+        if (active) {
+          setApplication(result.application);
+          setBenefit(result.benefit);
+        }
+      })
       .catch((error: Error) => active && setNotice(error.message))
       .finally(() => active && setApplicationReady(true));
     return () => {
@@ -280,13 +307,19 @@ function PremiumCompaniesSectionContent({
     : '프리미엄 노출 신청';
 
   return (
-    <section aria-labelledby="premium-companies-heading" className="rounded-2xl bg-[#EAF2EF] p-4 sm:p-5">
+    <section
+      aria-labelledby="premium-companies-heading"
+      className="rounded-2xl bg-[#EAF2EF] p-4 sm:p-5"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="inline-flex items-center gap-1.5 text-[12px] font-extrabold text-[#C85039]">
             <BadgeCheck aria-hidden="true" className="size-4" /> 기업 집중 소개
           </p>
-          <h2 className="mt-1 text-xl font-black tracking-[-0.02em] text-[#17212B]" id="premium-companies-heading">
+          <h2
+            className="mt-1 text-xl font-black tracking-[-0.02em] text-[#17212B]"
+            id="premium-companies-heading"
+          >
             프리미엄 기업
           </h2>
           <p className="mt-1 max-w-2xl text-[13px] font-medium leading-5 text-[#52645F]">
@@ -297,7 +330,14 @@ function PremiumCompaniesSectionContent({
           {companyCanApply ? (
             <button
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-[13px] font-extrabold text-white hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!applicationReady || !benefit || benefit.remaining < 1 || application?.status === 'approved'}
+              disabled={
+                !applicationReady ||
+                !benefit ||
+                benefit.suspended === true ||
+                benefit.remaining < 1 ||
+                application?.status === 'approved' ||
+                application?.status === 'suspended'
+              }
               onClick={() => setFormOpen(true)}
               type="button"
             >
@@ -317,15 +357,42 @@ function PremiumCompaniesSectionContent({
 
       {companyCanApply ? (
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <p className="font-bold">무료 노출 {benefit ? `${benefit.remaining}/${benefit.limit}회 남음` : '확인 중'}</p>
-          <button type="button" disabled={!applicationReady} className="min-h-11 rounded-lg px-3 font-bold underline disabled:opacity-60" onClick={() => { setFormOpen(false); setApplicationReady(false); setBenefit(null); setNotice(''); setRefreshKey((key) => key + 1); }}>신청 상태 새로고침</button>
-          {application?.endsAt ? <p>노출 종료 (한국 시간): {new Date(application.endsAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p> : null}
-          {application?.reviewNote ? <p className="w-full rounded-xl bg-white p-3">검토 의견: {application.reviewNote}</p> : null}
-          {application?.status === 'pending' ? <p>관리자가 신청 내용을 검토하고 있습니다.</p> : null}
+          <p className="font-bold">
+            무료 노출 {benefit ? `${benefit.remaining}/${benefit.limit}회 남음` : '확인 중'}
+          </p>
+          <button
+            type="button"
+            disabled={!applicationReady}
+            className="min-h-11 rounded-lg px-3 font-bold underline disabled:opacity-60"
+            onClick={() => {
+              setFormOpen(false);
+              setApplicationReady(false);
+              setBenefit(null);
+              setNotice('');
+              setRefreshKey((key) => key + 1);
+            }}
+          >
+            신청 상태 새로고침
+          </button>
+          {application?.endsAt ? (
+            <p>
+              노출 종료 (한국 시간):{' '}
+              {new Date(application.endsAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+            </p>
+          ) : null}
+          {application?.reviewNote ? (
+            <p className="w-full rounded-xl bg-white p-3">검토 의견: {application.reviewNote}</p>
+          ) : null}
+          {application?.status === 'pending' ? (
+            <p>기존 검토 대기 신청입니다. 내용을 확인해 다시 저장하면 자동 승인됩니다.</p>
+          ) : null}
         </div>
       ) : null}
       {notice ? (
-        <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-[#6A4B43]" role="status">
+        <p
+          className="mt-3 rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-[#6A4B43]"
+          role="status"
+        >
           {notice}
         </p>
       ) : null}
@@ -345,7 +412,12 @@ function PremiumCompaniesSectionContent({
             setApplication(saved);
             if (saved.benefit) setBenefit(saved.benefit);
             setFormOpen(false);
-            setNotice('프리미엄 노출 신청이 접수되었습니다. 검토 결과는 이 화면에서 확인할 수 있습니다.');
+            setRefreshKey((key) => key + 1);
+            setNotice(
+              saved.status === 'approved'
+                ? '신청이 자동 승인되어 1개월간 프리미엄 노출이 시작됐습니다.'
+                : '프리미엄 노출 신청 상태를 저장했습니다.',
+            );
           }}
         />
       ) : null}
@@ -353,6 +425,14 @@ function PremiumCompaniesSectionContent({
   );
 }
 
-export function PremiumCompaniesSection(props: { role: Role; user: UserProfile | null }): React.JSX.Element {
-  return <PremiumCompaniesSectionContent key={`${props.role}:${props.user?.uid || 'guest'}`} {...props} />;
+export function PremiumCompaniesSection(props: {
+  role: Role;
+  user: UserProfile | null;
+}): React.JSX.Element {
+  return (
+    <PremiumCompaniesSectionContent
+      key={`${props.role}:${props.user?.uid || 'guest'}`}
+      {...props}
+    />
+  );
 }
