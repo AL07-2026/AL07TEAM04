@@ -20,12 +20,12 @@
 - **작업자/브랜치**: Codex, `leedongwook`. `origin/develop`의 최신 `3fd429a`를 선행 반영한 상태에서 회원탈퇴 수정 `c19d805`를 `origin/leedongwook`에 업로드.
 - **회원탈퇴 원인/개선**: 기존 브라우저 삭제는 Firestore의 서버 전용 `projects`·`user_proposals` 규칙에 막혀 커뮤니티/프리미엄 일부만 지우고 Auth 계정을 남길 수 있었다. 이를 Secret 없는 `DELETE /api/account` 전용 `accountApi`로 이동하고, 토큰 UID·최근 로그인 검증, lease/checkpoint 기반 재시도, Storage → Firestore → Auth 순서를 적용했다. 기업 탈퇴 때 타 지원자의 제안·이력서는 삭제하지 않고 기업 연결만 종료한다. 커뮤니티 좋아요 삭제도 반복 호출 시 다시 생성되지 않도록 멱등화했다.
 - **회원탈퇴 배포/확인**: 공유 서버에는 신규 `accountApi` 하나만 범위 지정 배포했고 다른 기존 함수는 변경하지 않았다. Hosting은 `leedongwook` 채널만 배포했으며 `/api/account`가 전용 함수로 연결되고 인증 없는 DELETE를 HTTP 401, `Cache-Control: private, no-store`로 거부하는 것을 확인했다. 운영 Hosting은 변경하지 않았다.
-- **Gmail 결합 개선**: 실제 지원 메일 발송을 `applicationEmailApi`로 분리하고 이 함수에만 `GMAIL_APP_PASSWORD`를 바인딩했다. 공통 `api`의 코드/정적 매니페스트에서는 Gmail Secret과 실제 발송 모듈을 제거했으며 클라이언트 URL `/api/applications/send`는 유지했다. 공통 API는 이제 AssemblyAI·Gemini Secret만 요구한다.
+- **Gmail 결합 개선**: 실제 지원 메일 발송 구현은 `application-email-entry.mjs`에 분리해 이 함수만 `GMAIL_APP_PASSWORD`를 바인딩하도록 준비했다. Secret 준비 전에는 해당 함수를 활성 entry/export·정적 매니페스트·Hosting rewrite에 등록하지 않는다. 공통 `api`에서는 Gmail Secret과 실제 발송 모듈을 제거했으며 클라이언트 URL `/api/applications/send`는 유지했다. 공통 API는 이제 AssemblyAI·Gemini Secret만 요구한다.
 - **메일 실경로 확인/호환 처리**: 배포된 종전 공통 API의 `/api/applications/send`는 점검 당시 이미 HTTP 404로 실제 발송이 불가능했다. Gmail-free 공통 API에는 지원 이력이 저장된다는 명시적 안내와 함께 캐시되지 않는 HTTP 503을 반환하는 호환 핸들러를 추가해, 설정 누락과 일반 API 장애를 구분한다.
 - **공통 API 배포/확인**: 공유 `api` 함수 하나만 범위 지정 업데이트해 Gmail Secret 결합을 실제로 제거했다. `/api/health` HTTP 200, `/api/applications/send` HTTP 503 JSON·`private, no-store`, 회원탈퇴 전용 경로 HTTP 401을 확인했다. `communityApi`, `premiumApi`, `scheduledJobSync`와 운영 Hosting은 변경하지 않았다.
-- **중요한 미배포 상태**: 유효한 Gmail 앱 비밀번호 Secret 버전이 없어 `applicationEmailApi`와 메일 rewrite는 배포하지 않았다. 따라서 현재 `leedongwook` 채널은 회원탈퇴 전용 rewrite까지만 활성화되어 있다. 최신 브랜치의 Hosting 설정만 먼저 재배포하면 메일 함수가 없는 경로로 연결되므로 금지한다.
-- **검증**: 회원탈퇴 단계 실패·재시도·동시 lease·타 지원자 보존·Storage 선행 실패, 함수 경량 로딩, rewrite 우선순위, Secret 격리, 메일 미설정 호환 응답을 회귀로 고정. 최종 `npm run validate`에서 타입·린트·63개 파일/652개 테스트·프로덕션 빌드 통과. 기존 대형 번들 안내만 유지.
-- **후속 배포 순서**: `GMAIL_APP_PASSWORD` Secret 버전 등록 → `applicationEmailApi`만 배포 → 실제 테스트 기업/지원자로 수신 확인 → Hosting rewrite 배포. 비밀번호를 소스·`.env`·로그에 저장하지 않는다. 사용자 `.fig`와 생성 Hosting 캐시는 계속 제외·보존.
+- **중요한 미배포 상태**: 유효한 Gmail 앱 비밀번호 Secret 버전이 없어 `applicationEmailApi`는 비활성 상태다. 현재 Hosting은 `/api/applications/send`를 Gmail-free 공통 API의 안전한 503 호환 응답으로 보낸다. 따라서 일반 Hosting/Functions 배포가 존재하지 않는 메일 함수나 Gmail Secret 때문에 실패하지 않는다.
+- **검증**: 회원탈퇴 단계 실패·재시도·동시 lease·타 지원자 보존·Storage 선행 실패, 함수 경량 로딩, rewrite 우선순위, Secret 격리, 메일 미설정 호환 응답을 회귀로 고정. 최종 `npm run validate`에서 타입·린트·63개 파일/651개 테스트·프로덕션 빌드 통과. 기존 대형 번들 안내만 유지.
+- **후속 배포 순서**: `GMAIL_APP_PASSWORD` Secret 버전 등록 → `applicationEmailApi` entry/export·매니페스트 등록 → 전용 함수만 배포 → 실제 테스트 기업/지원자로 직접 수신 확인 → Hosting rewrite 추가·배포. 비밀번호를 소스·`.env`·로그에 저장하지 않는다. 사용자 `.fig`와 생성 Hosting 캐시는 계속 제외·보존.
 
 ### [2026-09-09] `leedongwook` 변경을 `develop`에 fast-forward 통합
 - **작업자/브랜치**: Codex, `develop`. `origin/develop`을 실제 pull해 `84f7cb9`가 최신임을 확인한 뒤 `origin/leedongwook`의 `3f7e2da`까지 충돌 없이 fast-forward 통합.

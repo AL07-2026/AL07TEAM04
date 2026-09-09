@@ -6,21 +6,17 @@ if (functionTarget === 'communityApi') {
   endpoints = await import('./community-entry.mjs');
 } else if (functionTarget === 'accountApi') {
   endpoints = await import('./account-entry.mjs');
-} else if (functionTarget === 'applicationEmailApi') {
-  endpoints = await import('./application-email-entry.mjs');
 } else if (!functionTarget) {
-  const [coreEndpoints, accountEndpoints, applicationEmailEndpoints] = await Promise.all([
+  const [coreEndpoints, accountEndpoints] = await Promise.all([
     import('./index.mjs'),
     import('./account-entry.mjs'),
-    import('./application-email-entry.mjs'),
   ]);
-  endpoints = { ...coreEndpoints, ...accountEndpoints, ...applicationEmailEndpoints };
+  endpoints = { ...coreEndpoints, ...accountEndpoints };
 } else {
   endpoints = await import('./index.mjs');
 }
 
 export const accountApi = endpoints.accountApi;
-export const applicationEmailApi = endpoints.applicationEmailApi;
 export const communityApi = endpoints.communityApi;
 export const api = endpoints.api;
 export const premiumApi = endpoints.premiumApi;
