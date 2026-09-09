@@ -114,7 +114,7 @@ describe('공통 헤더', () => {
     },
   );
 
-  it('메뉴에서 소개, 커뮤니티, 문의하기를 제공한다', () => {
+  it('메뉴에서 소개, 커뮤니티, 설문 참여, 문의하기를 제공한다', () => {
     render(
       <MemoryRouter>
         <SiteMenu />
@@ -124,6 +124,15 @@ describe('공통 헤더', () => {
     fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /커뮤니티/ })).toBeInTheDocument();
+    const surveyLink = screen.getByRole('menuitem', {
+      name: '설문 참여하기 (새 창에서 열림)',
+    });
+    expect(surveyLink).toHaveAttribute(
+      'href',
+      'https://docs.google.com/forms/d/e/1FAIpQLScx3laaemzgvyd3YxWzaUA2Blx36en5E-06zveHA60ONbs_Eg/viewform',
+    );
+    expect(surveyLink).toHaveAttribute('target', '_blank');
+    expect(surveyLink).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.getByRole('menuitem', { name: /문의하기/ })).toHaveAttribute(
       'href',
       'mailto:ieojab2026@gmail.com',

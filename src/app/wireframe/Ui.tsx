@@ -5,6 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
+  ClipboardCheck,
+  ExternalLink,
   FolderKanban,
   Home,
   Inbox,
@@ -35,6 +37,9 @@ type ViewportContextType = {
 const ViewportContext = createContext<ViewportContextType>({
   mode: 'pc',
 });
+
+const SURVEY_FORM_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLScx3laaemzgvyd3YxWzaUA2Blx36en5E-06zveHA60ONbs_Eg/viewform';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useViewportMode = () => useContext(ViewportContext);
@@ -174,6 +179,19 @@ export function SiteMenu({
             <Users aria-hidden="true" className="size-5 text-[#173F3A]" />
             <span>커뮤니티</span>
           </button>
+          <a
+            aria-label="설문 참여하기 (새 창에서 열림)"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
+            href={SURVEY_FORM_URL}
+            onClick={() => setOpen(false)}
+            rel="noopener noreferrer"
+            role="menuitem"
+            target="_blank"
+          >
+            <ClipboardCheck aria-hidden="true" className="size-5 text-[#173F3A]" />
+            <span className="flex-1">설문 참여하기</span>
+            <ExternalLink aria-hidden="true" className="size-4 text-[#61716F]" />
+          </a>
           <a
             className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
             href="mailto:ieojab2026@gmail.com"
