@@ -809,8 +809,8 @@ export function PostingCard({
       </div>
 
       {/* Metadata & Salary Footer */}
-      <div className="mt-3 flex items-center justify-between border-t border-[#E0D9C8]/60 pt-2.5 text-[12px]">
-        <div className="flex items-center gap-1.5 text-slate-500 truncate min-w-0">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-[#E0D9C8]/60 pt-2.5 text-[12px]">
+        <div className="flex min-w-48 flex-1 items-center gap-1.5 truncate text-slate-500">
           <span className="truncate">{simpleLocation}</span>
           <span className="text-slate-300">·</span>
           <span className="shrink-0">
@@ -820,7 +820,7 @@ export function PostingCard({
           <span className="shrink-0">마감 {getDeadlineText(posting)}</span>
         </div>
 
-        <span className="shrink-0 font-black text-[13.5px] text-[#F06B4F] ml-2">
+        <span className="ml-auto shrink-0 text-[13.5px] font-black text-[#F06B4F]">
           {simpleSalary}
         </span>
       </div>
@@ -2986,7 +2986,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   <input
                     name="salaryRange"
                     defaultValue={editingProject?.salaryRange ?? ''}
-                    placeholder="예: 월 600만-900만"
+                    placeholder="예: 월 600만 원 ~ 900만 원"
                     className="h-10 rounded-xl border border-[#E0D9C8] bg-white px-3 text-xs outline-none focus:border-[#173F3A]"
                   />
                 </label>
@@ -3207,7 +3207,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   </p>
                   <p className="mt-1.5 text-[13px] font-semibold leading-5 text-[#53645F] md:text-[14px]">
                     {getPostingOccupationLabel(applyingPosting)} · {applyingPosting.location} ·{' '}
-                    {applyingPosting.salaryRange}
+                    {formatSimpleSalary(applyingPosting.salaryRange)}
                   </p>
                 </div>
                 <span

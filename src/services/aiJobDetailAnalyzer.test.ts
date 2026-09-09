@@ -55,7 +55,7 @@ describe('aiJobDetailAnalyzer', () => {
     expect(result.talentPersona.interviewPrepFocus.length).toBeGreaterThanOrEqual(2);
 
     expect(result.keyJobFacts.roleTitle).toBeTruthy();
-    expect(result.keyJobFacts.salaryLabel).toContain('800만');
+    expect(result.keyJobFacts.salaryLabel).toBe('월 800만 원 ~ 1,200만 원');
     expect(result.keyJobFacts.locationLabel).toContain('서울 영등포구');
 
     expect(result.structuredDuties.length).toBeGreaterThan(0);

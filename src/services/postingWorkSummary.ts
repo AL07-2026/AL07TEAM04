@@ -1,4 +1,5 @@
 import { employmentTypeLabels, type JobPosting } from '@/data/jobPostings';
+import { formatSalaryDisplay } from '@/services/salaryFormat';
 
 export type PostingWorkSummary = {
   duties: string[];
@@ -165,7 +166,7 @@ export function getPostingWorkSummary(posting: JobPosting): PostingWorkSummary {
     { label: '근무 지역', value: usableValue(posting.location) },
     { label: '고용형태', value: employmentTypeLabels[posting.employmentType] },
     { label: '근무 일정', value: usableValue(posting.workSchedule) },
-    { label: '급여', value: usableValue(posting.salaryRange) },
+    { label: '급여', value: usableValue(formatSalaryDisplay(posting.salaryRange)) },
   ].filter((fact) => Boolean(fact.value));
 
   const hasSourceBackedWork = duties.length > 0;

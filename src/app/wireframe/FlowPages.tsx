@@ -3429,7 +3429,7 @@ export function ProjectRegisterPage() {
         <Field
           label="보수/급여"
           onChange={(e) => update('salaryRange')(e.target.value)}
-          placeholder="예: 월 300만원 · 협의 가능"
+          placeholder="예: 월 300만 원 · 협의 가능"
           value={form.salaryRange}
         />
         <section aria-labelledby="project-attachment-title" className="flex flex-col gap-2 pt-1">

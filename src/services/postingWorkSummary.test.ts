@@ -113,6 +113,7 @@ describe('posting work summary provenance guard', () => {
         { label: '모집 역할', value: '상품기획 PM' },
         { label: '경력 조건', value: '경력 10년' },
         { label: '근무 지역', value: '서울' },
+        { label: '급여', value: '연 6,000만 원' },
       ]),
     );
   });

@@ -17,6 +17,7 @@ import {
   occupationToProjectCategory,
 } from '@/data/occupationCategories';
 import { db } from '@/lib/firebase';
+import { formatSalaryDisplay } from '@/services/salaryFormat';
 
 const GLOBAL_JOB_POSTINGS_COLLECTION = 'global_job_postings';
 
@@ -259,26 +260,7 @@ export function formatSimpleWorkSchedule(rawSchedule?: string): string {
     .trim();
 }
 
-export function formatSimpleSalary(rawSalary?: string): string {
-  if (!rawSalary || typeof rawSalary !== 'string') return '';
-  let sal = rawSalary.trim();
-
-  // Pattern: "최소연봉 / 2600만원" or "최소연봉 / 3000만원 - 면접 후 협의가능"
-  const minAnnualMatch = sal.match(/최소연봉\s*\/\s*(\d+)만원(?:\s*-\s*(.*))?/);
-  if (minAnnualMatch) {
-    const amount = parseInt(minAnnualMatch[1] || '0', 10).toLocaleString('ko-KR');
-    const note = minAnnualMatch[2] ? minAnnualMatch[2].trim() : '';
-    if (note.includes('면접 후 협의') || note.includes('협의')) {
-      return `연 ${amount}만원 (협의가능)`;
-    }
-    return `연 ${amount}만원 이상`;
-  }
-
-  sal = sal.replace(/월\s*(\d+(?:,\d+)?)\s*만원\s*~\s*(\d+(?:,\d+)?)\s*만원/g, '월 $1만 ~ $2만원');
-  sal = sal.replace(/^최소연봉\s*\/\s*/g, '');
-
-  return sal;
-}
+export const formatSimpleSalary = formatSalaryDisplay;
 
 /**
  * Firestore may contain older/API-created postings that predate newer detail fields.

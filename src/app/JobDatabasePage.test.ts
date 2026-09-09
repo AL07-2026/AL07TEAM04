@@ -234,6 +234,9 @@ describe('프로젝트 첫 진입 안정성', () => {
     fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
 
     expect(screen.getByRole('heading', { name: '지원 내용을 확인해 주세요' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: '지원 내용을 확인해 주세요' })).toHaveTextContent(
+      '월 300만 원',
+    );
     expect(screen.getByText('실제 지원은 공식 채용 페이지에서 완료해야 합니다.')).toBeTruthy();
     expect(screen.getByRole('button', { name: '지원 내용 저장하기' })).toBeTruthy();
     expect(screen.queryByText(/이메일로 실시간 지원서 알림이 자동 전송/)).toBeNull();
@@ -624,6 +627,7 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
     );
 
     expect(screen.getByText(`${posting.seniorFitScore}점`)).toBeTruthy();
+    expect(screen.getByText('월 300만 원')).toBeTruthy();
   });
 
   it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {

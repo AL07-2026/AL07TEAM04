@@ -57,7 +57,7 @@ const dashboardData = {
       companyName: '이어잡 기업',
       category: 'operations',
       workType: '하이브리드',
-      salaryRange: '협의',
+      salaryRange: '연봉 5,000만원',
       postedAt: new Date().toISOString().slice(0, 10),
       reviewStatus: 'pending',
     },
@@ -128,6 +128,7 @@ describe('관리자 페이지', () => {
     );
 
     fireEvent.click(await screen.findByRole('button', { name: '승인' }));
+    expect(screen.getByText('연 5,000만 원')).toBeInTheDocument();
     await waitFor(() => {
       expect(adminMocks.updateProject).toHaveBeenCalledWith(
         'PROJECT-1',

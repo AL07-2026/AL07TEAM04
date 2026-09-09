@@ -50,6 +50,7 @@ import {
 } from '@/services/adminService';
 import { updateProposalStatus, type UserProposal } from '@/services/proposalService';
 import { PremiumApplicationsAdmin } from '@/app/premium/PremiumApplicationsAdmin';
+import { formatSalaryDisplay } from '@/services/salaryFormat';
 
 const adminSections = [
   { id: 'dashboard', path: '/admin/dashboard', label: '대시보드', Icon: LayoutDashboard },
@@ -614,7 +615,7 @@ function ProjectsSection({
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-600">{project.workType}</td>
                     <td className="px-4 py-3 font-semibold text-slate-600">
-                      {project.salaryRange}
+                      {formatSalaryDisplay(project.salaryRange)}
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-600">{project.postedAt}</td>
                     <td className="px-4 py-3">
