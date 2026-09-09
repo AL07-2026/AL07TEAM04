@@ -13,6 +13,7 @@ import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator
 import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
 import { adminDb } from './lib/firestoreAdmin.mjs';
 import { handleApplicationContact } from './lib/applicationContact.mjs';
+import { handleApplicationEmailUnavailable } from './lib/applicationEmailUnavailable.mjs';
 import { registerCommunityRoutes } from './community-entry.mjs';
 export { communityApi } from './community-entry.mjs';
 import { createPremiumCompanyHandlers, premiumRepository } from './lib/premiumCompanies.mjs';
@@ -145,6 +146,10 @@ app.get('/api/public/jobs', (_req, res) => {
 app.post('/api/applications/contact', (req, res) => {
   return handleApplicationContact(req, res);
 });
+
+// Compatibility fallback until applicationEmailApi is activated with its Gmail Secret.
+// Hosting routes the same URL to the dedicated function after that deployment.
+app.post('/api/applications/send', handleApplicationEmailUnavailable);
 
 registerCommunityRoutes(app);
 function normalizeEmail(value) {
