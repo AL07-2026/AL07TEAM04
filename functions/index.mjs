@@ -13,7 +13,6 @@ import { getAccumulatedStats, runBackendJobSync } from './lib/backendAccumulator
 import { clearJobCatalogCache, searchAccumulatedJobPostings } from './lib/jobSearch.mjs';
 import { adminDb } from './lib/firestoreAdmin.mjs';
 import { handleApplicationContact } from './lib/applicationContact.mjs';
-import { handleApplicationEmail } from './lib/applicationEmail.mjs';
 import { registerCommunityRoutes } from './community-entry.mjs';
 export { communityApi } from './community-entry.mjs';
 import { createPremiumCompanyHandlers, premiumRepository } from './lib/premiumCompanies.mjs';
@@ -145,10 +144,6 @@ app.get('/api/public/jobs', (_req, res) => {
 
 app.post('/api/applications/contact', (req, res) => {
   return handleApplicationContact(req, res);
-});
-
-app.post('/api/applications/send', (req, res) => {
-  return handleApplicationEmail(req, res);
 });
 
 registerCommunityRoutes(app);
@@ -623,7 +618,7 @@ export const api = onRequest(
     region: 'asia-northeast3',
     timeoutSeconds: 120,
     memory: '1GiB',
-    secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY', 'GMAIL_APP_PASSWORD'],
+    secrets: ['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY'],
   },
   app,
 );

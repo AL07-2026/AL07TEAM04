@@ -64,6 +64,13 @@
         }
       },
       {
+        "source": "/api/applications/send",
+        "function": {
+          "functionId": "applicationEmailApi",
+          "region": "asia-northeast3"
+        }
+      },
+      {
         "source": "/api/premium/**",
         "function": {
           "functionId": "premiumApi",

@@ -51,3 +51,47 @@ describe('accountApi deployment contract', () => {
     expect(manifest.endpoints.accountApi).not.toHaveProperty('secretEnvironmentVariables');
   });
 });
+
+describe('applicationEmailApi deployment contract', () => {
+  it('지원 메일 경로를 catch-all보다 먼저 전용 함수로 전달한다', async () => {
+    const firebaseConfig = await readJson(path.join(projectDirectory, 'firebase.json'));
+    const rewrites = firebaseConfig.hosting.rewrites;
+    const emailRewrite = {
+      source: '/api/applications/send',
+      function: {
+        functionId: 'applicationEmailApi',
+        region: 'asia-northeast3',
+      },
+    };
+
+    expect(rewrites).toContainEqual(emailRewrite);
+    expect(rewrites.indexOf(rewrites.find(({ source }) => source === emailRewrite.source))).toBeLessThan(
+      rewrites.findIndex(({ source }) => source === '/api/**'),
+    );
+  });
+
+  it('Gmail Secret을 메일 함수에만 격리한다', async () => {
+    const manifest = await readJson(path.join(functionsDirectory, 'functions.yaml'));
+    const { api } = await import('./index.mjs');
+    const emailEndpoint = manifest.endpoints.applicationEmailApi;
+    const commonSecretKeys = (manifest.endpoints.api.secretEnvironmentVariables || []).map(
+      ({ key }) => key,
+    );
+    const runtimeCommonSecretKeys = (api.__endpoint.secretEnvironmentVariables || []).map(
+      ({ key }) => key,
+    );
+
+    expect(emailEndpoint).toMatchObject({
+      availableMemoryMb: 512,
+      concurrency: 4,
+      entryPoint: 'applicationEmailApi',
+      maxInstances: 10,
+      platform: 'gcfv2',
+      region: ['asia-northeast3'],
+      secretEnvironmentVariables: [{ key: 'GMAIL_APP_PASSWORD' }],
+      timeoutSeconds: 120,
+    });
+    expect(commonSecretKeys).toEqual(['ASSEMBLYAI_API_KEY', 'GEMINI_API_KEY']);
+    expect(runtimeCommonSecretKeys).toEqual(commonSecretKeys);
+  });
+});
