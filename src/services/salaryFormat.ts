@@ -22,20 +22,30 @@ function formatNumber(value: string): string {
   return match[2] ? `${integer}.${match[2]}` : integer;
 }
 
+function formatWholeWonAsManWon(value: string): string {
+  const amount = BigInt(value);
+  const wholeManWon = amount / 10_000n;
+  const remainder = (amount % 10_000n)
+    .toString()
+    .padStart(4, '0')
+    .replace(/0+$/, '');
+  const decimal = remainder ? `.${remainder}` : '';
+
+  return `${formatNumber(wholeManWon.toString())}${decimal}만 원`;
+}
+
 function formatAmount(value: string, unit: string, convertWholeWonToManWon: boolean): string {
   const normalizedValue = value.replaceAll(',', '');
-  const amount = Number(normalizedValue);
-  const isWholeSafeAmount = /^\d+$/.test(normalizedValue) && Number.isSafeInteger(amount);
+  const isWholeAmount = /^\d+$/.test(normalizedValue);
   const normalizedUnit = unit.replaceAll(' ', '');
 
   if (
     convertWholeWonToManWon &&
     normalizedUnit === '원' &&
-    isWholeSafeAmount &&
-    amount >= 10_000 &&
-    amount % 10_000 === 0
+    isWholeAmount &&
+    BigInt(normalizedValue) >= 10_000n
   ) {
-    return `${(amount / 10_000).toLocaleString('ko-KR')}만 원`;
+    return formatWholeWonAsManWon(normalizedValue);
   }
 
   if (normalizedUnit !== '원') return `${formatNumber(value)}만 원`;
@@ -50,7 +60,8 @@ function stripRepeatedPeriod(value: string): string {
 
 /**
  * Formats source salary text for display without converting its pay period.
- * Monthly project fees must not be annualized because that would change their meaning.
+ * Annual, monthly, daily, and weekly whole-won amounts use exact man-won notation above 10,000 won.
+ * Hourly and period-less amounts stay in won because converting them would obscure their meaning.
  */
 export function formatSalaryDisplay(rawSalary?: string): string {
   if (typeof rawSalary !== 'string') return '';
