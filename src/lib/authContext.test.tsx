@@ -9,18 +9,12 @@ type MockFirebaseUser = {
 
 type MockAuthStateCallback = (user: MockFirebaseUser | null) => void;
 
-const communityMocks = vi.hoisted(() => ({
-  deleteCommunityAccountData: vi.fn(() => Promise.resolve(undefined)),
-}));
-const premiumMocks = vi.hoisted(() => ({
-  deletePremiumCompanyAccountData: vi.fn(() => Promise.resolve(undefined)),
+const accountMocks = vi.hoisted(() => ({
+  deleteCurrentAccountData: vi.fn(() => Promise.resolve(undefined)),
 }));
 
-vi.mock('@/services/communityService', () => ({
-  deleteCommunityAccountData: communityMocks.deleteCommunityAccountData,
-}));
-vi.mock('@/services/premiumCompanyService', () => ({
-  deletePremiumCompanyAccountData: premiumMocks.deletePremiumCompanyAccountData,
+vi.mock('@/services/accountService', () => ({
+  deleteCurrentAccountData: accountMocks.deleteCurrentAccountData,
 }));
 
 const authMocks = vi.hoisted(() => ({
@@ -33,13 +27,13 @@ const authMocks = vi.hoisted(() => ({
     },
   ),
   signInWithPopup: vi.fn(),
+  signOut: vi.fn(() => Promise.resolve(undefined)),
 }));
 
 vi.mock('firebase/auth', () => ({
   browserLocalPersistence: 'LOCAL',
   browserSessionPersistence: 'SESSION',
   createUserWithEmailAndPassword: vi.fn(),
-  deleteUser: authMocks.deleteUser,
   getAuth: vi.fn(() => authMocks.auth),
   getRedirectResult: vi.fn(() => Promise.resolve(null)),
   GoogleAuthProvider: class MockGoogleAuthProvider {
@@ -51,11 +45,10 @@ vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: vi.fn(),
   signInWithPopup: authMocks.signInWithPopup,
   signInWithRedirect: vi.fn(() => Promise.resolve(undefined)),
-  signOut: vi.fn(() => Promise.resolve(undefined)),
+  signOut: authMocks.signOut,
 }));
 
-import { deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
-import { deleteObject } from 'firebase/storage';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { AuthProvider, useAuth } from './authContext';
 
@@ -74,7 +67,7 @@ function AuthHarness() {
       >
         세션 전용 로그인
       </button>
-      <button type="button" onClick={() => void deleteAccount()}>
+      <button type="button" onClick={() => void deleteAccount().catch(() => undefined)}>
         회원 탈퇴
       </button>
     </div>
@@ -89,20 +82,14 @@ function userDocument(data: Record<string, unknown>) {
   };
 }
 
-function queryDocument(path: string, data: Record<string, unknown>) {
-  return {
-    data: () => data,
-    id: path.split('/').pop(),
-    ref: { path },
-  };
-}
-
 describe('AuthProvider 계정 데이터 처리', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
     authMocks.auth.currentUser = null;
+    authMocks.signOut.mockResolvedValue(undefined);
+    accountMocks.deleteCurrentAccountData.mockResolvedValue(undefined);
     authMocks.onAuthStateChanged.mockImplementation((_auth, callback) => {
       callback(null);
       return vi.fn();
@@ -110,7 +97,6 @@ describe('AuthProvider 계정 데이터 처리', () => {
     vi.mocked(doc).mockImplementation(((_db: unknown, collectionName: string, documentId: string) => ({
       path: `${collectionName}/${documentId}`,
     })) as typeof doc);
-    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
   });
 
   it('기존 구글 계정은 선택한 회원유형으로 role을 덮어쓰지 않는다', async () => {
@@ -149,7 +135,7 @@ describe('AuthProvider 계정 데이터 처리', () => {
     );
   });
 
-  it('회원 탈퇴 시 사용자 프로필, 프로젝트, 제안, 경험카드, 첨부 스토리지를 함께 삭제한다', async () => {
+  it('회원 탈퇴 시 단일 서버 API가 전체 데이터를 삭제한 뒤 로컬 로그아웃한다', async () => {
     authMocks.auth.currentUser = { uid: 'user-1' };
     authMocks.onAuthStateChanged.mockImplementation((_auth, callback) => {
       callback({ email: 'user@example.com', uid: 'user-1' });
@@ -162,30 +148,6 @@ describe('AuthProvider 계정 데이터 처리', () => {
         role: 'senior',
       }) as never,
     );
-    vi.mocked(getDocs)
-      .mockResolvedValueOnce({
-        docs: [queryDocument('experience_cards/card-1', { uid: 'user-1' })],
-      } as never)
-      .mockResolvedValueOnce({
-        docs: [
-          queryDocument('projects/project-1', {
-            attachments: [{ storagePath: 'project-attachments/project-1/file.pdf' }],
-            ownerId: 'user-1',
-          }),
-        ],
-      } as never)
-      .mockResolvedValueOnce({
-        docs: [
-          queryDocument('user_proposals/proposal-1', {
-            resumeFiles: [{ storagePath: 'resumes/user-1/proposal-1/resume.pdf' }],
-            userId: 'user-1',
-          }),
-        ],
-      } as never)
-      .mockResolvedValueOnce({
-        docs: [queryDocument('user_proposals/proposal-1', { projectOwnerId: 'user-1' })],
-      } as never);
-
     render(
       <AuthProvider>
         <AuthHarness />
@@ -195,16 +157,35 @@ describe('AuthProvider 계정 데이터 처리', () => {
     await waitFor(() => expect(screen.getByTestId('role')).toHaveTextContent('senior'));
     fireEvent.click(screen.getByRole('button', { name: '회원 탈퇴' }));
 
-    await waitFor(() => expect(authMocks.deleteUser).toHaveBeenCalledWith(authMocks.auth.currentUser));
-    expect(communityMocks.deleteCommunityAccountData).toHaveBeenCalledTimes(1);
-    expect(premiumMocks.deletePremiumCompanyAccountData).toHaveBeenCalledTimes(1);
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'users/user-1' }));
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'senior_profiles/user-1' }));
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'company_profiles/user-1' }));
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'experience_cards/card-1' }));
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'projects/project-1' }));
-    expect(deleteDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'user_proposals/proposal-1' }));
-    expect(deleteObject).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(accountMocks.deleteCurrentAccountData).toHaveBeenCalledTimes(1));
+    expect(authMocks.signOut).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem('eojob_current_user')).toBeNull();
+  });
+
+  it('서버 탈퇴가 실패하면 로그인과 로컬 데이터를 유지한다', async () => {
+    authMocks.auth.currentUser = { uid: 'user-1' };
+    authMocks.onAuthStateChanged.mockImplementation((_auth, callback) => {
+      callback({ email: 'user@example.com', uid: 'user-1' });
+      return vi.fn();
+    });
+    vi.mocked(getDoc).mockResolvedValueOnce(
+      userDocument({ email: 'user@example.com', name: '탈퇴 사용자', role: 'senior' }) as never,
+    );
+    accountMocks.deleteCurrentAccountData.mockRejectedValue(
+      new Error('보안을 위해 다시 로그인한 후 회원 탈퇴를 진행해 주세요.'),
+    );
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('role')).toHaveTextContent('senior'));
+    fireEvent.click(screen.getByRole('button', { name: '회원 탈퇴' }));
+
+    await waitFor(() => expect(accountMocks.deleteCurrentAccountData).toHaveBeenCalledTimes(1));
+    expect(authMocks.signOut).not.toHaveBeenCalled();
+    expect(screen.getByTestId('role')).toHaveTextContent('senior');
   });
 
   it('rememberMe가 false일 때 session_only 플래그와 sessionStorage를 사용한다', async () => {

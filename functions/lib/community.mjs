@@ -502,6 +502,21 @@ export function createCommunityRepository(adminDb = defaultAdminDb) {
         return { liked, likeCount };
       });
     },
+    async deleteAccountLike(postId, userId) {
+      const postReference = adminDb.collection('community_posts').doc(postId);
+      const likeReference = postReference.collection('likes').doc(userId);
+      await adminDb.runTransaction(async (transaction) => {
+        const [post, like] = await Promise.all([
+          transaction.get(postReference),
+          transaction.get(likeReference),
+        ]);
+        if (!post.exists || !like.exists) return;
+        transaction.delete(likeReference);
+        transaction.update(postReference, {
+          likeCount: Math.max(0, Number(post.data()?.likeCount || 0) - 1),
+        });
+      });
+    },
     async reportPost(postId, userId, reason) {
       const post = await adminDb.collection('community_posts').doc(postId).get();
       if (!post.exists) throw new CommunityError(404, '게시글을 찾을 수 없습니다.');
@@ -536,13 +551,17 @@ export function createCommunityRepository(adminDb = defaultAdminDb) {
         .get();
       for (const comment of comments.docs) {
         const postId = comment.ref.parent.parent?.id;
-        if (postId) await repository.deleteComment(postId, comment.id, userId);
+        if (postId) {
+          await repository.deleteComment(postId, comment.id, userId).catch((error) => {
+            if (error?.status !== 404) throw error;
+          });
+        }
       }
 
       const likes = await adminDb.collectionGroup('likes').where('userId', '==', userId).get();
       for (const like of likes.docs) {
         const postId = like.ref.parent.parent?.id;
-        if (postId) await repository.toggleLike(postId, userId);
+        if (postId) await repository.deleteAccountLike(postId, userId);
       }
 
       const reports = await adminDb
@@ -581,8 +600,10 @@ export function createCommunityRepository(adminDb = defaultAdminDb) {
   return repository;
 }
 
+export const communityRepository = createCommunityRepository();
+
 export const communityHandlers = createCommunityHandlers({
-  repository: createCommunityRepository(),
+  repository: communityRepository,
   verifyIdToken: (token) => adminAuth.verifyIdToken(token),
 });
 

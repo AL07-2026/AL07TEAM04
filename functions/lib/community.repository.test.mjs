@@ -24,8 +24,12 @@ function database(initialDocuments = {}) {
     update: vi.fn(async (reference, data) => {
       documents.set(reference.path, { ...documents.get(reference.path), ...data });
     }),
-    set: vi.fn(),
-    remove: vi.fn(),
+    set: vi.fn(async (reference, data) => {
+      documents.set(reference.path, { ...documents.get(reference.path), ...data });
+    }),
+    remove: vi.fn(async (reference) => {
+      documents.delete(reference.path);
+    }),
     recursiveDelete: vi.fn(),
     bulkWriter: vi.fn(),
     getAll: vi.fn(async (...references) => references.map(snapshot)),
@@ -251,5 +255,20 @@ describe('community repository', () => {
       await repository.updateComment('post-1', 'comment-1', 'author-a', '수정한 댓글'),
     ).toMatchObject({ content: '수정한 댓글' });
     expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('회원탈퇴용 좋아요 정리는 반복 호출해도 좋아요를 다시 만들지 않는다', async () => {
+    const db = database(fixtures());
+    const repository = createCommunityRepository(db);
+
+    await repository.deleteAccountLike('post-1', 'author-a');
+    await repository.deleteAccountLike('post-1', 'author-a');
+
+    expect(db.remove).toHaveBeenCalledTimes(1);
+    expect(db.set).not.toHaveBeenCalled();
+    expect(db.update).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'community_posts/post-1' }),
+      { likeCount: 0 },
+    );
   });
 });

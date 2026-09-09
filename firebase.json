@@ -57,6 +57,13 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
+        "source": "/api/account{,/**}",
+        "function": {
+          "functionId": "accountApi",
+          "region": "asia-northeast3"
+        }
+      },
+      {
         "source": "/api/premium/**",
         "function": {
           "functionId": "premiumApi",

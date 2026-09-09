@@ -2,7 +2,6 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
-  deleteUser,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
@@ -14,27 +13,14 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  setDoc,
-  where,
-  type DocumentData,
-  type QueryDocumentSnapshot,
-} from 'firebase/firestore';
-import { deleteObject, ref } from 'firebase/storage';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { getAdminRoleForEmail, resolveCurrentAdminRole, type AdminRole } from '@/lib/adminAccess';
-import { auth, db, storage } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
-import { deleteCommunityAccountData } from '@/services/communityService';
-import { deletePremiumCompanyAccountData } from '@/services/premiumCompanyService';
+import { deleteCurrentAccountData } from '@/services/accountService';
 
 export type UserRole = 'senior' | 'company';
 
@@ -73,19 +59,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
 const REMEMBER_ME_STORAGE_KEY = 'eojob_remember_me';
 const SESSION_ONLY_STORAGE_KEY = 'eojob_session_only';
-const USER_ROOT_COLLECTIONS = [
-  'users',
-  'senior_profiles',
-  'company_profiles',
-  'companies',
-] as const;
-const USER_QUERY_COLLECTIONS = [
-  { collectionName: 'experience_cards', field: 'uid' },
-  { collectionName: 'projects', field: 'ownerId' },
-  { collectionName: 'user_proposals', field: 'userId' },
-  { collectionName: 'user_proposals', field: 'projectOwnerId' },
-] as const;
-
 function readInitialUser(): UserProfile | null {
   if (typeof window === 'undefined') return null;
 
@@ -115,63 +88,6 @@ function readInitialUser(): UserProfile | null {
 
 function canUseDemoAuth() {
   return import.meta.env.MODE === 'test';
-}
-
-function collectStoragePaths(value: unknown, paths: Set<string>) {
-  if (!value || typeof value !== 'object') return;
-
-  Object.entries(value as Record<string, unknown>).forEach(([key, fieldValue]) => {
-    if (key === 'storagePath' && typeof fieldValue === 'string' && fieldValue.trim()) {
-      paths.add(fieldValue.trim());
-      return;
-    }
-
-    if (Array.isArray(fieldValue)) {
-      fieldValue.forEach((item) => collectStoragePaths(item, paths));
-      return;
-    }
-
-    collectStoragePaths(fieldValue, paths);
-  });
-}
-
-async function getUserScopedDocuments(uid: string) {
-  const documents = new Map<string, QueryDocumentSnapshot<DocumentData>>();
-
-  for (const { collectionName, field } of USER_QUERY_COLLECTIONS) {
-    const snapshot = await getDocs(query(collection(db, collectionName), where(field, '==', uid)));
-
-    snapshot.docs.forEach((documentSnapshot) => {
-      if (!documents.has(documentSnapshot.ref.path)) {
-        documents.set(documentSnapshot.ref.path, documentSnapshot);
-      }
-    });
-  }
-
-  return [...documents.values()];
-}
-
-async function deleteUserRemoteData(uid: string) {
-  const storagePaths = new Set<string>();
-  const scopedDocuments = await getUserScopedDocuments(uid);
-
-  scopedDocuments.forEach((documentSnapshot) => {
-    collectStoragePaths(documentSnapshot.data(), storagePaths);
-  });
-
-  await Promise.all([
-    ...USER_ROOT_COLLECTIONS.map((collectionName) => deleteDoc(doc(db, collectionName, uid))),
-    deleteDoc(doc(db, 'experience_cards', uid)),
-    ...scopedDocuments.map((documentSnapshot) => deleteDoc(documentSnapshot.ref)),
-  ]);
-
-  await Promise.all(
-    [...storagePaths].map((storagePath) =>
-      deleteObject(ref(storage, storagePath)).catch((error) => {
-        console.warn(`Storage cleanup failed for ${storagePath}:`, error);
-      }),
-    ),
-  );
 }
 
 function clearDeletedUserLocalData(uid?: string) {
@@ -617,37 +533,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const uid = user?.uid || currentFirebaseUser?.uid;
     isLoggingOutRef.current = true;
 
-    if (uid) {
-      try {
-        if (currentFirebaseUser) {
-          await Promise.all([
-            deleteCommunityAccountData(),
-            deletePremiumCompanyAccountData(),
-          ]);
-        }
-        await deleteUserRemoteData(uid);
-      } catch (err) {
-        console.warn('Firestore deletion during account delete:', err);
-        isLoggingOutRef.current = false;
-        const msg = '회원 데이터를 모두 삭제하지 못했습니다. 네트워크 확인 후 다시 시도해 주세요.';
-        setError(msg);
-        throw new Error(msg, { cause: err });
-      }
+    try {
+      await deleteCurrentAccountData();
+    } catch (err) {
+      isLoggingOutRef.current = false;
+      const msg =
+        err instanceof Error
+          ? err.message
+          : '회원 탈퇴를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      setError(msg);
+      throw new Error(msg, { cause: err });
     }
 
-    if (currentFirebaseUser) {
-      try {
-        await deleteUser(currentFirebaseUser);
-      } catch (err: unknown) {
-        const authErr = err as { code?: string; message?: string };
-        if (authErr?.code === 'auth/requires-recent-login') {
-          isLoggingOutRef.current = false;
-          const msg = '보안을 위해 다시 로그인한 후 회원 탈퇴를 진행해 주세요.';
-          setError(msg);
-          throw new Error(msg, { cause: err });
-        }
-        console.warn('Firebase deleteUser warning:', err);
-      }
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      console.warn('Deleted account local signout warning:', err);
     }
 
     clearDeletedUserLocalData(uid);
