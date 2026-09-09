@@ -301,7 +301,7 @@ export function SiteHeader({
                   className={cn(
                     'flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-extrabold transition-colors',
                     selected
-                      ? 'bg-[#B84734] text-white'
+                      ? 'bg-[#F06B4F] text-white'
                       : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
                   )}
                 >
@@ -363,7 +363,7 @@ function BottomNav({
               aria-current={selected ? 'page' : undefined}
               className={cn(
                 'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium transition cursor-pointer',
-                selected ? 'font-extrabold text-[#B84734]' : 'text-slate-400 hover:text-[#17212B]',
+                selected ? 'font-extrabold text-[#F06B4F]' : 'text-slate-400 hover:text-[#17212B]',
               )}
               key={item.id}
               onClick={() => void navigate(item.path)}
@@ -372,7 +372,7 @@ function BottomNav({
               <IconComponent
                 className={cn(
                   'size-5 transition-colors',
-                  selected ? 'text-[#B84734]' : 'text-slate-400',
+                  selected ? 'text-[#F06B4F]' : 'text-slate-400',
                 )}
               />
               <span className="whitespace-nowrap">{item.label}</span>

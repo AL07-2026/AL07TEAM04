@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 
@@ -92,6 +92,30 @@ describe('공통 헤더', () => {
       .closest('header')?.firstElementChild;
     expect(headerRail).toHaveClass('site-rail', 'site-header-row');
     expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { label: '인재', role: 'senior' as const },
+    { label: '회사', role: 'company' as const },
+  ])('$label 상단·하단 현재 메뉴를 이어잡 오렌지로 표시한다', ({ label, role }) => {
+    render(
+      <MemoryRouter>
+        <MobilePage activeNav="database" role={role} title="프로젝트">
+          본문
+        </MobilePage>
+      </MemoryRouter>,
+    );
+
+    const primaryProject = within(
+      screen.getByRole('navigation', { name: `${label} 주요 메뉴` }),
+    ).getByRole('button', { name: '프로젝트' });
+    const bottomProject = within(
+      screen.getByRole('navigation', { name: `${label} 하단 주요 메뉴` }),
+    ).getByRole('button', { name: '프로젝트' });
+
+    expect(primaryProject).toHaveClass('bg-[#F06B4F]', 'text-white');
+    expect(bottomProject).toHaveClass('text-[#F06B4F]');
+    expect(bottomProject.querySelector('svg')).toHaveClass('text-[#F06B4F]');
   });
 
   it.each([undefined, 'senior', 'company'] as const)(
