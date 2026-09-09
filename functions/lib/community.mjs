@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 
-import { adminAuth, adminDb as defaultAdminDb } from './firestoreAdmin.mjs';
+import { adminAuth, adminDb as defaultAdminDb } from './communityAdmin.mjs';
 
 const CATEGORIES = new Set(['experience', 'project', 'question']);
 const REPORT_REASONS = new Set(['spam', 'abuse', 'privacy', 'other']);

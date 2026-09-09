@@ -34,6 +34,6 @@ communityApp.use(express.json({ limit: '256kb' }));
 registerCommunityRoutes(communityApp);
 
 export const communityApi = onRequest(
-  { region: 'asia-northeast3', timeoutSeconds: 30, memory: '256MiB' },
+  { region: 'asia-northeast3', timeoutSeconds: 30, memory: '256MiB', minInstances: 1 },
   communityApp,
 );

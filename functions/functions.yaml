@@ -31,7 +31,7 @@
     "communityApi": {
       "availableMemoryMb": 256,
       "timeoutSeconds": 30,
-      "minInstances": null,
+      "minInstances": 1,
       "maxInstances": null,
       "ingressSettings": null,
       "concurrency": null,

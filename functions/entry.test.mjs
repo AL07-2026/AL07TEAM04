@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.doUnmock('./index.mjs');
+  vi.doUnmock('firebase-admin/storage');
   vi.resetModules();
 });
 
@@ -13,10 +14,14 @@ describe('target-aware function loading', () => {
     vi.doMock('./index.mjs', () => {
       throw new Error('Heavy index must not load.');
     });
+    vi.doMock('firebase-admin/storage', () => {
+      throw new Error('Community runtime must not load Admin Storage.');
+    });
     const entry = await import('./entry.mjs');
     expect(typeof entry.communityApi).toBe('function');
     expect(entry.communityApi.__endpoint).toMatchObject({
       availableMemoryMb: 256,
+      minInstances: 1,
       timeoutSeconds: 30,
     });
     expect(entry.api).toBeUndefined();

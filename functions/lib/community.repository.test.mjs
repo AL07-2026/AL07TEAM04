@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./firestoreAdmin.mjs', () => ({ adminDb: {}, adminAuth: {} }));
+vi.mock('./communityAdmin.mjs', () => ({ adminDb: {}, adminAuth: {} }));
 
 import { createCommunityRepository } from './community.mjs';
 

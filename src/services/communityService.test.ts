@@ -1,9 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authState, getIdTokenMock } = vi.hoisted(() => ({
-  authState: { currentUser: null as null | { uid?: string; getIdToken: () => Promise<string> } },
-  getIdTokenMock: vi.fn(),
-}));
+const { authState, authStateReadyMock, getIdTokenMock } = vi.hoisted(() => {
+  const authStateReady = vi.fn();
+  return {
+    authState: {
+      authStateReady,
+      currentUser: null as null | { uid?: string; getIdToken: () => Promise<string> },
+    },
+    authStateReadyMock: authStateReady,
+    getIdTokenMock: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/firebase', () => ({ auth: authState }));
 
@@ -25,6 +32,7 @@ describe('communityService', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     authState.currentUser = null;
+    authStateReadyMock.mockReset().mockResolvedValue(undefined);
     getIdTokenMock.mockReset().mockResolvedValue('community-token');
     vi.restoreAllMocks();
     clearCommunityReadCache();
@@ -115,6 +123,73 @@ describe('communityService', () => {
     await delayed;
     await expect(listCommunityPosts()).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('인증 복원 대기부터 전체 요청 시간 제한을 시작한다', async () => {
+    vi.useFakeTimers();
+    let finishAuth!: () => void;
+    authStateReadyMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishAuth = resolve;
+        }),
+    );
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+
+    const request = listCommunityPosts();
+    await Promise.resolve();
+    try {
+      expect(vi.getTimerCount()).toBe(1);
+    } finally {
+      finishAuth();
+      await request;
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('인증 복원이 끝나지 않아도 전체 시간 제한으로 종료한다', async () => {
+    vi.useFakeTimers();
+    authStateReadyMock.mockImplementationOnce(() => new Promise<void>(() => {}));
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    const delayed = expect(listCommunityPosts()).rejects.toThrow('응답이 지연');
+    await vi.advanceTimersByTimeAsync(15_000);
+    await delayed;
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('인증 토큰 발급이 지연되어도 전체 시간 제한으로 종료한다', async () => {
+    vi.useFakeTimers();
+    authState.currentUser = { uid: 'slow-user', getIdToken: getIdTokenMock };
+    getIdTokenMock.mockImplementationOnce(() => new Promise<string>(() => {}));
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    const delayed = expect(listCommunityPosts()).rejects.toThrow('응답이 지연');
+    await vi.advanceTimersByTimeAsync(15_000);
+    await delayed;
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('같은 지연 읽기에 합류한 호출도 사용자용 시간 제한 오류를 받는다', async () => {
+    vi.useFakeTimers();
+    authState.currentUser = { uid: 'slow-user', getIdToken: getIdTokenMock };
+    getIdTokenMock.mockImplementationOnce(() => new Promise<string>(() => {}));
+
+    const first = listCommunityPosts().catch((error: unknown) => error);
+    await Promise.resolve();
+    await Promise.resolve();
+    const joined = listCommunityPosts().catch((error: unknown) => error);
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    const [firstError, joinedError] = await Promise.all([first, joined]);
+    expect(firstError).toBeInstanceOf(Error);
+    expect(joinedError).toBeInstanceOf(Error);
+    expect((firstError as Error).message).toContain('응답이 지연');
+    expect((joinedError as Error).message).toContain('응답이 지연');
+    expect(getIdTokenMock).toHaveBeenCalledTimes(1);
   });
 
   it('활동명 저장 후 이전 프로필과 목록을 다시 사용하지 않는다', async () => {
