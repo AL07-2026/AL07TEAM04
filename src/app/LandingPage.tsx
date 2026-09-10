@@ -29,21 +29,21 @@ const features = [
     icon: IdCard,
     title: '경험 카드',
     description:
-      '개인의 경험 및 경력을 음성 인터뷰 및 직접 입력 후 AI가 적절하게 정리합니다. AI가 문제 해결 역량을 명확하게 추출해 한눈에 보는 경험 카드로 완성합니다.',
+      '음성 인터뷰와 직접 입력 내용을 AI가 정리해, 문제 해결 역량이 한눈에 보이는 경험 카드로 완성합니다.',
   },
   {
     number: '02',
     icon: Handshake,
     title: 'AI 맞춤 매칭',
     description:
-      '인재가 선택한 1·2·3순위 희망 분야로 필터링하고, 경험 및 경력 내용을 함께 반영해 AI가 인재와 기업의 프로젝트를 맞춤 연결합니다.',
+      '희망 분야 1-3순위와 경험·경력을 함께 분석해, 인재와 기업에 맞는 프로젝트를 연결합니다.',
   },
   {
     number: '03',
     icon: Clock3,
     title: '유연 근무',
     description:
-      '전일제·반일제·시간 근무제부터 직장·재택·하이브리드까지, 원하는 시간과 장소에서 자유롭게 프로젝트를 수행합니다.',
+      '전일제, 반일제, 시간제부터 직장 근무, 재택, 하이브리드까지 원하는 방식으로 프로젝트를 수행합니다.',
   },
 ] as const;
 
@@ -225,7 +225,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-white py-16 sm:py-20" aria-labelledby="service-features-title">
+        <section className="bg-white py-12 sm:py-16 md:py-20" aria-labelledby="service-features-title">
           <div className="site-rail">
             <div>
               <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
@@ -243,26 +243,30 @@ export function LandingPage() {
               </h2>
             </div>
 
-            <div className="mt-10 grid gap-7 md:grid-cols-3">
+            <div className="mt-7 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
               {features.map(({ number, icon: Icon, title, description }) => (
                 <article
                   key={number}
-                  className="min-h-[320px] rounded-2xl bg-[#DDEBE7]/70 p-7 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-8 transition-transform hover:-translate-y-1"
+                  className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 rounded-2xl bg-[#DDEBE7]/70 p-5 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-6 md:block md:min-h-[320px] md:p-7"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[0.95rem] font-black text-[#F06B4F]">{number}</span>
+                  <div className="flex flex-col items-center gap-2 md:flex-row md:justify-between md:gap-4">
+                    <span className="order-2 text-[0.8125rem] font-black text-[#F06B4F] md:order-1 md:text-[0.95rem]">
+                      {number}
+                    </span>
                     <Icon
-                      className="size-[3.25rem] text-[#173F3A]"
+                      className="order-1 size-9 text-[#173F3A] md:order-2 md:size-[3.25rem]"
                       strokeWidth={1.8}
                       aria-hidden="true"
                     />
                   </div>
-                  <h3 className="mt-8 text-[1.75rem] font-black leading-tight text-[#17212B]">
-                    {title}
-                  </h3>
-                  <p className="mt-4 text-[1.0625rem] font-semibold leading-[1.75] text-[#2C3E3A]">
-                    {description}
-                  </p>
+                  <div className="min-w-0">
+                    <h3 className="text-[1.375rem] font-black leading-tight text-[#17212B] [text-wrap:balance] md:mt-8 md:text-[1.75rem]">
+                      {title}
+                    </h3>
+                    <p className="mt-2 text-[1rem] font-semibold leading-[1.65] text-[#2C3E3A] [text-wrap:pretty] md:mt-4 md:text-[1.0625rem] md:leading-[1.75]">
+                      {description}
+                    </p>
+                  </div>
                 </article>
               ))}
             </div>
