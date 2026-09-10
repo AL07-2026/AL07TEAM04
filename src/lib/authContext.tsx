@@ -19,7 +19,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { readVersionedStorage, writeVersionedStorage } from '@/lib/browserStorage';
 import { getAdminRoleForEmail, resolveCurrentAdminRole, type AdminRole } from '@/lib/adminAccess';
 import { auth, db } from '@/lib/firebase';
-import { isInAppBrowser, isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
+import { isKakaoTalk, openInExternalBrowser } from '@/lib/inAppBrowser';
 import { deleteCurrentAccountData } from '@/services/accountService';
 
 export type UserRole = 'senior' | 'company';
@@ -38,6 +38,7 @@ type AuthContextType = {
   deleteAccount: () => Promise<void>;
   error: string | null;
   loading: boolean;
+  oauthRedirectCompleted: boolean;
   isAdmin: boolean;
   adminRole: AdminRole | null;
   refreshAdminAccess: () => Promise<AdminRole | null>;
@@ -59,16 +60,113 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const CURRENT_USER_STORAGE_KEY = 'eojob_current_user';
 const REMEMBER_ME_STORAGE_KEY = 'eojob_remember_me';
 const SESSION_ONLY_STORAGE_KEY = 'eojob_session_only';
+const OAUTH_TARGET_ROLE_STORAGE_KEY = 'eojob_oauth_target_role';
+
+function readSessionValue(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionValue(key: string, value: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    window.sessionStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeSessionValue(key: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    // 저장소가 제한된 WebView에서는 메모리의 인증 상태만 사용한다.
+  }
+}
+
+function isUserRole(value: unknown): value is UserRole {
+  return value === 'senior' || value === 'company';
+}
+
+async function resolveGoogleUserProfile(
+  googleUser: User,
+  requestedRole: UserRole,
+): Promise<UserProfile> {
+  const computedName =
+    googleUser.displayName ||
+    (googleUser.email === 'sehddnr2@gmail.com'
+      ? '이동욱'
+      : googleUser.email?.split('@')[0] || '이동욱');
+  const now = new Date().toISOString();
+  let profileRole = requestedRole;
+  let profileName = computedName;
+  let createdAt = now;
+  let canPersistRole = true;
+
+  try {
+    const userSnapshot = await getDoc(doc(db, 'users', googleUser.uid));
+    if (userSnapshot.exists()) {
+      const data = userSnapshot.data() as Partial<UserProfile>;
+      if (isUserRole(data.role)) profileRole = data.role;
+      if (data.name) profileName = data.name;
+      if (data.createdAt) createdAt = data.createdAt;
+    }
+  } catch (firestoreError) {
+    // 조회가 실패한 상태에서 요청 역할을 덮어쓰면 기존 계정 유형이 바뀔 수 있다.
+    canPersistRole = false;
+    console.warn('Firestore getDoc failed during Google sign in:', firestoreError);
+  }
+
+  const profile: UserProfile = {
+    uid: googleUser.uid,
+    email: googleUser.email || '',
+    name: profileName,
+    role: profileRole,
+    createdAt,
+  };
+
+  try {
+    const userDocument: Record<string, unknown> = {
+      uid: googleUser.uid,
+      email: googleUser.email,
+      name: profile.name,
+      createdAt: profile.createdAt,
+      lastLoginAt: now,
+    };
+    if (canPersistRole) userDocument.role = profileRole;
+    await setDoc(doc(db, 'users', googleUser.uid), userDocument, { merge: true });
+  } catch (firestoreError) {
+    console.warn('Firestore setDoc failed during Google sign in:', firestoreError);
+  }
+
+  return profile;
+}
+
 function readInitialUser(): UserProfile | null {
   if (typeof window === 'undefined') return null;
 
-  const isSessionOnly = localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true';
+  let isSessionOnly: boolean;
+  try {
+    isSessionOnly = window.localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true';
+  } catch {
+    return null;
+  }
   if (isSessionOnly) {
     try {
-      const sessionUserRaw = sessionStorage.getItem(CURRENT_USER_STORAGE_KEY);
+      const sessionUserRaw = readSessionValue(CURRENT_USER_STORAGE_KEY);
       if (sessionUserRaw) {
         const parsed = JSON.parse(sessionUserRaw) as UserProfile;
-        if (parsed?.uid && parsed.email && (parsed.role === 'senior' || parsed.role === 'company')) {
+        if (
+          parsed?.uid &&
+          parsed.email &&
+          (parsed.role === 'senior' || parsed.role === 'company')
+        ) {
           return parsed;
         }
       }
@@ -76,7 +174,11 @@ function readInitialUser(): UserProfile | null {
       // ignore JSON parse error
     }
     // 브라우저 세션(창/탭)이 닫혀 sessionStorage가 비었으므로 자동 로그아웃 처리
-    localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+    try {
+      window.localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+    } catch {
+      // 이미 저장소 접근이 제한된 상태이므로 무시한다.
+    }
     return null;
   }
 
@@ -126,6 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(() => readInitialUser());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [oauthRedirectCompleted, setOauthRedirectCompleted] = useState(false);
   const [resolvedAdminRole, setResolvedAdminRole] = useState<AdminRole | null>(() => {
     const saved = readInitialUser();
     return getAdminRoleForEmail(saved?.email);
@@ -135,40 +238,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(profile);
     if (typeof window === 'undefined') return;
 
-    if (profile) {
-      const isExplicitSessionOnly =
-        rememberMe === false ||
-        (rememberMe === undefined &&
-          (sessionStorage.getItem(REMEMBER_ME_STORAGE_KEY) === 'false' ||
-            localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true'));
+    try {
+      if (profile) {
+        const isExplicitSessionOnly =
+          rememberMe === false ||
+          (rememberMe === undefined &&
+            (readSessionValue(REMEMBER_ME_STORAGE_KEY) === 'false' ||
+              localStorage.getItem(SESSION_ONLY_STORAGE_KEY) === 'true'));
 
-      if (isExplicitSessionOnly) {
-        sessionStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(profile));
-        sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'false');
-        localStorage.setItem(SESSION_ONLY_STORAGE_KEY, 'true');
-        localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
-        localStorage.removeItem(`v1_${CURRENT_USER_STORAGE_KEY}`);
-        localStorage.removeItem('eojob_current_user');
+        if (isExplicitSessionOnly) {
+          sessionStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(profile));
+          sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'false');
+          localStorage.setItem(SESSION_ONLY_STORAGE_KEY, 'true');
+          localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+          localStorage.removeItem(`v1_${CURRENT_USER_STORAGE_KEY}`);
+          localStorage.removeItem('eojob_current_user');
+        } else {
+          writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
+          sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'true');
+          sessionStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+          localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+        }
       } else {
-        writeVersionedStorage(CURRENT_USER_STORAGE_KEY, profile);
-        sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, 'true');
-        sessionStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+        localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+        localStorage.removeItem('eojob_current_user');
+        localStorage.removeItem('v1_eojob_current_user');
+        localStorage.removeItem('eojob_senior_profile');
+        localStorage.removeItem('eojob_company_profile');
+        localStorage.removeItem('eojob_experience_card');
         localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
+        sessionStorage.clear();
       }
-    } else {
-      localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
-      localStorage.removeItem('eojob_current_user');
-      localStorage.removeItem('v1_eojob_current_user');
-      localStorage.removeItem('eojob_senior_profile');
-      localStorage.removeItem('eojob_company_profile');
-      localStorage.removeItem('eojob_experience_card');
-      localStorage.removeItem(SESSION_ONLY_STORAGE_KEY);
-      sessionStorage.clear();
+    } catch (storageError) {
+      console.warn('Browser storage is unavailable; keeping auth state in memory:', storageError);
     }
   };
 
   useEffect(() => {
     let isMounted = true;
+    // onAuthStateChanged의 초기 null 콜백이 sessionStorage를 비우기 전에 redirect 요청값을 보존한다.
+    const pendingOauthRole = readSessionValue(OAUTH_TARGET_ROLE_STORAGE_KEY);
+    const pendingOauthRememberMe = readSessionValue(REMEMBER_ME_STORAGE_KEY);
 
     // 모바일 리디렉션 로그인(signInWithRedirect) 결과 수신 처리 (브라우저 환경)
     if (typeof window !== 'undefined' && auth) {
@@ -176,48 +286,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .then(async (result) => {
           if (!isMounted || !result?.user) return;
           const googleUser = result.user;
-          const targetRole: UserRole =
-            (typeof sessionStorage !== 'undefined' &&
-              (sessionStorage.getItem('eojob_oauth_target_role') as UserRole)) ||
-            'senior';
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.removeItem('eojob_oauth_target_role');
-          }
-
-          const computedName =
-            googleUser.displayName ||
-            (googleUser.email === 'sehddnr2@gmail.com'
-              ? '이동욱'
-              : googleUser.email?.split('@')[0] || '이동욱');
-          const profile: UserProfile = {
-            uid: googleUser.uid,
-            email: googleUser.email || '',
-            name: computedName,
-            role: targetRole,
-            createdAt: new Date().toISOString(),
-          };
-
-          try {
-            await setDoc(
-              doc(db, 'users', googleUser.uid),
-              {
-                uid: googleUser.uid,
-                email: googleUser.email,
-                name: profile.name,
-                role: targetRole,
-                createdAt: profile.createdAt,
-              },
-              { merge: true },
-            );
-          } catch (fsErr) {
-            console.warn('Firestore setDoc failed during Google redirect sign in:', fsErr);
-          }
-          const rememberMe =
-            typeof sessionStorage !== 'undefined' &&
-            sessionStorage.getItem(REMEMBER_ME_STORAGE_KEY) === 'false'
-              ? false
-              : true;
+          const targetRole: UserRole = isUserRole(pendingOauthRole) ? pendingOauthRole : 'senior';
+          removeSessionValue(OAUTH_TARGET_ROLE_STORAGE_KEY);
+          const profile = await resolveGoogleUserProfile(googleUser, targetRole);
+          const rememberMe = pendingOauthRememberMe === 'false' ? false : true;
           saveUserLocal(profile, rememberMe);
+          setResolvedAdminRole(await resolveCurrentAdminRole());
+          setOauthRedirectCompleted(true);
         })
         .catch((err: unknown) => {
           const authErr = err as { code?: string };
@@ -571,16 +646,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
 
-    // 1. 카카오톡/인앱 브라우저 환경 감지 시: 구글 403 정책 회피를 위해 기본 외부 브라우저(Chrome/Safari)로 즉시 전환
-    if (typeof window !== 'undefined' && isInAppBrowser()) {
-      const opened = openInExternalBrowser(window.location.href);
-      if (opened && isKakaoTalk()) {
-        const msg = '카카오톡 보안 정책으로 인해 크롬/사파리 브라우저로 전환하여 구글 로그인을 진행합니다.';
-        setError(msg);
-        setLoading(false);
-        // 외부 브라우저 호출 후 리턴 대기
-        return new Promise(() => {});
-      }
+    // Google OAuth는 카카오 WebView 내부에서 차단될 수 있어 시스템 브라우저로 넘긴다.
+    // 스킴 할당은 실제 전환 성공을 보장하지 않으므로 Promise를 무한 대기시키지 않는다.
+    if (typeof window !== 'undefined' && isKakaoTalk()) {
+      const externalTarget = new URL(window.location.href);
+      externalTarget.searchParams.set('role', targetRole);
+      const opened = openInExternalBrowser(externalTarget.toString());
+      const message = opened
+        ? '기본 브라우저 열기를 시도했습니다. 전환되지 않으면 카카오톡 메뉴에서 다른 브라우저로 열어 주세요.'
+        : '카카오톡 메뉴에서 다른 브라우저로 연 뒤 구글 로그인을 진행해 주세요.';
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
     }
 
     try {
@@ -603,68 +680,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         result = await signInWithPopup(auth, provider);
       } catch (popupErr: unknown) {
         const pErr = popupErr as { code?: string };
-        // 팝업이 차단된 모바일 환경인 경우 signInWithRedirect로 안전하게 폴백
-        if (pErr?.code === 'auth/popup-blocked') {
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('eojob_oauth_target_role', targetRole);
-            sessionStorage.setItem(REMEMBER_ME_STORAGE_KEY, String(rememberMe));
-          }
+        // 팝업을 사용할 수 없는 모바일 브라우저는 redirect 방식으로 폴백한다.
+        if (
+          pErr?.code === 'auth/popup-blocked' ||
+          pErr?.code === 'auth/operation-not-supported-in-this-environment'
+        ) {
+          writeSessionValue(OAUTH_TARGET_ROLE_STORAGE_KEY, targetRole);
+          writeSessionValue(REMEMBER_ME_STORAGE_KEY, String(rememberMe));
           await signInWithRedirect(auth, provider);
-          return new Promise(() => {});
+          const message = '구글 로그인 화면으로 이동하지 못했습니다. 다시 시도해 주세요.';
+          throw Object.assign(new Error(message), { code: 'auth/redirect-not-started' });
         }
         throw popupErr;
       }
 
       const googleUser = result.user;
-      const computedName =
-        googleUser.displayName ||
-        (googleUser.email === 'sehddnr2@gmail.com'
-          ? '이동욱'
-          : googleUser.email?.split('@')[0] || '이동욱');
-      const now = new Date().toISOString();
-      let profileRole = targetRole;
-      let profileName = computedName;
-      let createdAt = now;
-      let canPersistRole = true;
-
-      try {
-        const userSnapshot = await getDoc(doc(db, 'users', googleUser.uid));
-        if (userSnapshot.exists()) {
-          const data = userSnapshot.data() as Partial<UserProfile>;
-          if (data.role === 'senior' || data.role === 'company') {
-            profileRole = data.role;
-          }
-          if (data.name) profileName = data.name;
-          if (data.createdAt) createdAt = data.createdAt;
-        }
-      } catch (fsErr) {
-        console.warn('Firestore getDoc failed during Google sign in:', fsErr);
-        canPersistRole = false;
-      }
-
-      const profile: UserProfile = {
-        uid: googleUser.uid,
-        email: googleUser.email || '',
-        name: profileName,
-        role: profileRole,
-        createdAt,
-      };
-      try {
-        const userDocument: Record<string, unknown> = {
-          uid: googleUser.uid,
-          email: googleUser.email,
-          name: profile.name,
-          createdAt: profile.createdAt,
-          lastLoginAt: now,
-        };
-        if (canPersistRole) {
-          userDocument.role = profileRole;
-        }
-
-        await setDoc(doc(db, 'users', googleUser.uid), userDocument, { merge: true });
-      } catch (fsErr) {
-        console.warn('Firestore setDoc failed during Google sign in:', fsErr);
-      }
+      const profile = await resolveGoogleUserProfile(googleUser, targetRole);
       saveUserLocal(profile, rememberMe);
       setLoading(false);
       return profile;
@@ -679,6 +710,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (authErr.code === 'auth/cancelled-popup-request') {
         const msg = '구글 로그인 요청이 취소되었습니다.';
+        setError(msg);
+        throw new Error(msg, { cause: err });
+      }
+      if (authErr.code === 'auth/redirect-not-started') {
+        const msg = authErr.message || '구글 로그인 화면으로 이동하지 못했습니다.';
         setError(msg);
         throw new Error(msg, { cause: err });
       }
@@ -714,6 +750,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         adminRole,
         refreshAdminAccess,
         loading,
+        oauthRedirectCompleted,
         error,
         signUp,
         signIn,

@@ -63,6 +63,7 @@ import {
   OTHER_OCCUPATION_PREFERENCE,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
+import { copyTextToClipboard, getSafeWebUrl, openExternalUrl } from '@/lib/browserActions';
 import {
   beginApplicationInterview,
   cancelApplicationInterview,
@@ -963,6 +964,7 @@ export function DetailPanel({
   const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
 
   const analyzed = useMemo(() => analyzeJobPostingForDetail(posting), [posting]);
+  const safeSourceUrl = useMemo(() => getSafeWebUrl(posting.sourceUrl), [posting.sourceUrl]);
 
   return (
     <article
@@ -1241,14 +1243,14 @@ export function DetailPanel({
             </dl>
           </div>
 
-          {posting.sourceUrl ? (
+          {safeSourceUrl ? (
             <a
               className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-[#173F3A] bg-white text-[12.5px] font-extrabold text-[#173F3A] transition hover:bg-[#F8FCFB]"
-              href={posting.sourceUrl}
+              href={safeSourceUrl}
               onClick={() =>
                 trackJobApply(posting.id, posting.companyName, posting.title, 'external_redirect')
               }
-              rel="noreferrer"
+              rel="noopener noreferrer"
               target="_blank"
             >
               <span>공식 채용 상세 원문 보기</span>
@@ -1483,7 +1485,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     recipientEmail: string;
     sourceUrl?: string;
   } | null>(null);
-  const [copiedSummaryToast, setCopiedSummaryToast] = useState(false);
+  const completedApplicationSourceUrl = useMemo(
+    () => getSafeWebUrl(completedApplication?.sourceUrl),
+    [completedApplication?.sourceUrl],
+  );
+  const [summaryCopyFeedback, setSummaryCopyFeedback] = useState<'error' | 'success' | null>(null);
+  const summaryCopyFeedbackTimerRef = useRef<number | null>(null);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isDetailFiltersExpanded, setIsDetailFiltersExpanded] = useState(false);
   const categoryPickerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -1505,6 +1512,15 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     (isMobile && isMobileDetailOpen);
 
   useDocumentScrollLock(isModalOpen);
+
+  useEffect(
+    () => () => {
+      if (summaryCopyFeedbackTimerRef.current !== null) {
+        window.clearTimeout(summaryCopyFeedbackTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const interviewMatch = useMemo(
     () =>
@@ -1994,6 +2010,38 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     setIsInterviewBypassConfirmOpen(false);
     setApplyingPosting(null);
     setApplicationError('');
+  }
+
+  function handleCloseCompletedApplication() {
+    setCompletedApplication(null);
+    setSummaryCopyFeedback(null);
+    if (summaryCopyFeedbackTimerRef.current !== null) {
+      window.clearTimeout(summaryCopyFeedbackTimerRef.current);
+      summaryCopyFeedbackTimerRef.current = null;
+    }
+  }
+
+  async function handleCopyApplicationSummary() {
+    if (!completedApplication) return;
+
+    const textToCopy = `[이음잡 40+ AI 경험 인터뷰 검증 요약]\n지원 공고: ${completedApplication.posting.title} (${completedApplication.posting.companyName})\n\n■ AI 검증 역량 분석:\n${completedApplication.interviewSummary}\n\n■ 한 줄 지원 소신:\n"${completedApplication.coverNote || '10년 이상 실무 노하우를 발휘하겠습니다.'}"`;
+    setSummaryCopyFeedback(null);
+
+    try {
+      await copyTextToClipboard(textToCopy);
+      setSummaryCopyFeedback('success');
+    } catch (error) {
+      console.error('Failed to copy application summary:', error);
+      setSummaryCopyFeedback('error');
+    }
+
+    if (summaryCopyFeedbackTimerRef.current !== null) {
+      window.clearTimeout(summaryCopyFeedbackTimerRef.current);
+    }
+    summaryCopyFeedbackTimerRef.current = window.setTimeout(() => {
+      setSummaryCopyFeedback(null);
+      summaryCopyFeedbackTimerRef.current = null;
+    }, 4000);
   }
 
   async function handleConfirmSubmitApplication({
@@ -3584,7 +3632,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <button
                 aria-label="지원 완료 창 닫기"
                 className="flex size-11 items-center justify-center rounded-xl text-slate-500 transition-colors duration-150 hover:bg-[#EAF2EF] hover:text-[#17212B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:bg-[#DDEBE7]"
-                onClick={() => setCompletedApplication(null)}
+                onClick={handleCloseCompletedApplication}
                 type="button"
               >
                 <X aria-hidden="true" className="size-5" />
@@ -3617,40 +3665,48 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 <div className="flex flex-col gap-2.5 pt-2">
                   <button
                     className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 py-3 text-[15px] font-extrabold text-white shadow-md transition-colors duration-150 hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
-                    onClick={() => {
-                      const textToCopy = `[이음잡 40+ AI 경험 인터뷰 검증 요약]\n지원 공고: ${completedApplication.posting.title} (${completedApplication.posting.companyName})\n\n■ AI 검증 역량 분석:\n${completedApplication.interviewSummary}\n\n■ 한 줄 지원 소신:\n"${completedApplication.coverNote || '10년 이상 실무 노하우를 발휘하겠습니다.'}"`;
-                      void navigator.clipboard.writeText(textToCopy);
-                      setCopiedSummaryToast(true);
-                      setTimeout(() => setCopiedSummaryToast(false), 4000);
-                    }}
+                    onClick={() => void handleCopyApplicationSummary()}
                     type="button"
                   >
                     <Copy className="size-4 shrink-0" />
                     <span>AI 경험 요약 복사하기</span>
                   </button>
 
-                  {copiedSummaryToast && (
+                  {summaryCopyFeedback && (
                     <p
                       aria-live="polite"
-                      className="inline-flex items-start justify-center gap-1.5 text-center text-[13px] font-extrabold text-[#2E7D32] animate-in fade-in"
-                      role="status"
+                      className={cn(
+                        'inline-flex items-start justify-center gap-1.5 text-center text-[13px] font-extrabold animate-in fade-in',
+                        summaryCopyFeedback === 'success' ? 'text-[#2E7D32]' : 'text-[#B84B36]',
+                      )}
+                      role={summaryCopyFeedback === 'success' ? 'status' : 'alert'}
                     >
-                      <CheckCircle2
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0"
-                        strokeWidth={2.25}
-                      />
+                      {summaryCopyFeedback === 'success' ? (
+                        <CheckCircle2
+                          aria-hidden="true"
+                          className="mt-0.5 size-4 shrink-0"
+                          strokeWidth={2.25}
+                        />
+                      ) : (
+                        <CircleAlert
+                          aria-hidden="true"
+                          className="mt-0.5 size-4 shrink-0"
+                          strokeWidth={2.25}
+                        />
+                      )}
                       <span>
-                        클립보드에 복사되었습니다! (원문 접수처 자소서/지원동기 칸에 붙여넣으세요)
+                        {summaryCopyFeedback === 'success'
+                          ? '클립보드에 복사되었습니다! (원문 접수처 자소서/지원동기 칸에 붙여넣으세요)'
+                          : '자동 복사가 차단되었습니다. 브라우저 권한을 확인한 뒤 다시 시도해 주세요.'}
                       </span>
                     </p>
                   )}
 
-                  {completedApplication.sourceUrl ? (
+                  {completedApplicationSourceUrl ? (
                     <button
                       className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#173F3A] bg-white px-4 py-3 text-[15px] font-extrabold text-[#173F3A] transition-colors duration-150 hover:bg-[#F4F9F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98]"
                       onClick={() => {
-                        window.open(completedApplication.sourceUrl, '_blank');
+                        openExternalUrl(completedApplicationSourceUrl);
                       }}
                       type="button"
                     >
@@ -3690,7 +3746,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
             <div className="mt-6 border-t border-[#E0D9C8] pt-4">
               <button
                 className="min-h-12 w-full rounded-xl bg-[#EAF2EF] px-4 py-3 text-[15px] font-extrabold text-[#173F3A] transition-colors duration-150 hover:bg-[#DDEBE7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:scale-[0.98]"
-                onClick={() => setCompletedApplication(null)}
+                onClick={handleCloseCompletedApplication}
                 type="button"
               >
                 닫기

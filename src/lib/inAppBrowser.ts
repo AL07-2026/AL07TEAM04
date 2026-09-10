@@ -74,12 +74,15 @@ export function getExternalBrowserUrl(
 export function openInExternalBrowser(
   targetUrl: string = typeof window !== 'undefined' ? window.location.href : '',
   customUa?: string,
+  locationTarget?: { href: string },
 ): boolean {
-  if (typeof window === 'undefined' || !targetUrl) return false;
+  const browserLocation =
+    locationTarget ?? (typeof window !== 'undefined' ? window.location : undefined);
+  if (!browserLocation || !targetUrl) return false;
 
   const externalUrl = getExternalBrowserUrl(targetUrl, customUa);
   try {
-    window.location.href = externalUrl;
+    browserLocation.href = externalUrl;
     return true;
   } catch {
     return false;

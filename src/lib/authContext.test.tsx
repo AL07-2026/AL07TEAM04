@@ -18,24 +18,31 @@ vi.mock('@/services/accountService', () => ({
 }));
 
 const authMocks = vi.hoisted(() => ({
-  auth: { currentUser: null as (MockFirebaseUser | null) },
+  auth: { currentUser: null as MockFirebaseUser | null },
   deleteUser: vi.fn(() => Promise.resolve(undefined)),
-  onAuthStateChanged: vi.fn(
-    (_auth: unknown, callback: MockAuthStateCallback) => {
-      callback(null);
-      return vi.fn();
-    },
-  ),
+  getRedirectResult: vi.fn(() => Promise.resolve(null as unknown)),
+  onAuthStateChanged: vi.fn((_auth: unknown, callback: MockAuthStateCallback) => {
+    callback(null);
+    return vi.fn();
+  }),
   signInWithPopup: vi.fn(),
+  signInWithRedirect: vi.fn(() => Promise.resolve(undefined)),
   signOut: vi.fn(() => Promise.resolve(undefined)),
 }));
+
+const inAppMocks = vi.hoisted(() => ({
+  isKakaoTalk: vi.fn(() => false),
+  openInExternalBrowser: vi.fn(() => true),
+}));
+
+vi.mock('@/lib/inAppBrowser', () => inAppMocks);
 
 vi.mock('firebase/auth', () => ({
   browserLocalPersistence: 'LOCAL',
   browserSessionPersistence: 'SESSION',
   createUserWithEmailAndPassword: vi.fn(),
   getAuth: vi.fn(() => authMocks.auth),
-  getRedirectResult: vi.fn(() => Promise.resolve(null)),
+  getRedirectResult: authMocks.getRedirectResult,
   GoogleAuthProvider: class MockGoogleAuthProvider {
     setCustomParameters = vi.fn();
   },
@@ -44,7 +51,7 @@ vi.mock('firebase/auth', () => ({
   setPersistence: vi.fn(() => Promise.resolve(undefined)),
   signInWithEmailAndPassword: vi.fn(),
   signInWithPopup: authMocks.signInWithPopup,
-  signInWithRedirect: vi.fn(() => Promise.resolve(undefined)),
+  signInWithRedirect: authMocks.signInWithRedirect,
   signOut: authMocks.signOut,
 }));
 
@@ -53,18 +60,19 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './authContext';
 
 function AuthHarness() {
-  const { deleteAccount, signIn, signInWithGoogle, user } = useAuth();
+  const { deleteAccount, error, loading, oauthRedirectCompleted, signIn, signInWithGoogle, user } =
+    useAuth();
 
   return (
     <div>
       <p data-testid="role">{user?.role ?? 'none'}</p>
-      <button type="button" onClick={() => void signInWithGoogle('senior')}>
+      <p data-testid="auth-error">{error ?? ''}</p>
+      <p data-testid="auth-loading">{String(loading)}</p>
+      <p data-testid="oauth-completed">{String(oauthRedirectCompleted)}</p>
+      <button type="button" onClick={() => void signInWithGoogle('senior').catch(() => undefined)}>
         구글 로그인
       </button>
-      <button
-        type="button"
-        onClick={() => void signIn('test@example.com', 'pw', 'senior', false)}
-      >
+      <button type="button" onClick={() => void signIn('test@example.com', 'pw', 'senior', false)}>
         세션 전용 로그인
       </button>
       <button type="button" onClick={() => void deleteAccount().catch(() => undefined)}>
@@ -82,19 +90,35 @@ function userDocument(data: Record<string, unknown>) {
   };
 }
 
+function missingUserDocument() {
+  return {
+    data: () => ({}),
+    exists: () => false,
+    id: 'missing-user',
+  };
+}
+
 describe('AuthProvider 계정 데이터 처리', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
     authMocks.auth.currentUser = null;
+    authMocks.getRedirectResult.mockResolvedValue(null);
+    authMocks.signInWithRedirect.mockResolvedValue(undefined);
     authMocks.signOut.mockResolvedValue(undefined);
+    inAppMocks.isKakaoTalk.mockReturnValue(false);
+    inAppMocks.openInExternalBrowser.mockReturnValue(true);
     accountMocks.deleteCurrentAccountData.mockResolvedValue(undefined);
     authMocks.onAuthStateChanged.mockImplementation((_auth, callback) => {
       callback(null);
       return vi.fn();
     });
-    vi.mocked(doc).mockImplementation(((_db: unknown, collectionName: string, documentId: string) => ({
+    vi.mocked(doc).mockImplementation(((
+      _db: unknown,
+      collectionName: string,
+      documentId: string,
+    ) => ({
       path: `${collectionName}/${documentId}`,
     })) as typeof doc);
   });
@@ -133,6 +157,124 @@ describe('AuthProvider 계정 데이터 처리', () => {
       }),
       { merge: true },
     );
+  });
+
+  it('리디렉션으로 돌아온 기존 기업 계정의 역할과 가입 정보를 보존한다', async () => {
+    sessionStorage.setItem('eojob_oauth_target_role', 'senior');
+    authMocks.getRedirectResult.mockResolvedValueOnce({
+      user: {
+        displayName: '구글 표시 이름',
+        email: 'company@example.com',
+        uid: 'redirect-company-1',
+      },
+    });
+    vi.mocked(getDoc).mockResolvedValueOnce(
+      userDocument({
+        createdAt: '2025-02-03T00:00:00.000Z',
+        name: '저장된 회사명',
+        role: 'company',
+      }) as never,
+    );
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('role')).toHaveTextContent('company'));
+    expect(screen.getByTestId('oauth-completed')).toHaveTextContent('true');
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        createdAt: '2025-02-03T00:00:00.000Z',
+        name: '저장된 회사명',
+        role: 'company',
+      }),
+      { merge: true },
+    );
+  });
+
+  it('리디렉션 신규 사용자는 초기 인증 콜백이 저장소를 비워도 선택한 역할을 유지한다', async () => {
+    sessionStorage.setItem('eojob_oauth_target_role', 'company');
+    sessionStorage.setItem('eojob_remember_me', 'false');
+    authMocks.getRedirectResult.mockResolvedValueOnce({
+      user: {
+        displayName: '신규 회사',
+        email: 'new-company@example.com',
+        uid: 'redirect-company-new',
+      },
+    });
+    vi.mocked(getDoc).mockResolvedValueOnce(missingUserDocument() as never);
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('role')).toHaveTextContent('company'));
+    expect(sessionStorage.getItem('eojob_current_user')).toContain('redirect-company-new');
+    expect(localStorage.getItem('eojob_session_only')).toBe('true');
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ role: 'company' }),
+      { merge: true },
+    );
+  });
+
+  it('카카오톡 외부 브라우저 전환 후 요청을 유한하게 종료하고 로딩을 해제한다', async () => {
+    window.history.replaceState({}, '', '/login?role=senior&redirect=%2Fsenior%2Fprofile');
+    inAppMocks.isKakaoTalk.mockReturnValue(true);
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '구글 로그인' }));
+
+    await waitFor(() => expect(screen.getByTestId('auth-loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('auth-error')).toHaveTextContent('기본 브라우저 열기를 시도했습니다');
+    expect(inAppMocks.openInExternalBrowser).toHaveBeenCalledWith(
+      expect.stringMatching(/role=senior/),
+    );
+    expect(authMocks.signInWithPopup).not.toHaveBeenCalled();
+  });
+
+  it('팝업을 지원하지 않는 모바일 브라우저에서는 역할을 보존해 redirect를 시도한다', async () => {
+    authMocks.signInWithPopup.mockRejectedValueOnce({
+      code: 'auth/operation-not-supported-in-this-environment',
+    });
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '구글 로그인' }));
+
+    await waitFor(() => expect(authMocks.signInWithRedirect).toHaveBeenCalledTimes(1));
+    expect(sessionStorage.getItem('eojob_oauth_target_role')).toBe('senior');
+    await waitFor(() => expect(screen.getByTestId('auth-loading')).toHaveTextContent('false'));
+  });
+
+  it('WebView가 브라우저 저장소를 차단해도 앱 인증 영역을 렌더링한다', () => {
+    const storageRead = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('storage denied', 'SecurityError');
+    });
+
+    expect(() =>
+      render(
+        <AuthProvider>
+          <AuthHarness />
+        </AuthProvider>,
+      ),
+    ).not.toThrow();
+
+    storageRead.mockRestore();
   });
 
   it('회원 탈퇴 시 단일 서버 API가 전체 데이터를 삭제한 뒤 로컬 로그아웃한다', async () => {

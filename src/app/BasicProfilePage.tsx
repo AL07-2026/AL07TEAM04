@@ -27,6 +27,8 @@ import {
   OTHER_OCCUPATION_PREFERENCE,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
+import { prepareAsyncNavigation } from '@/lib/browserActions';
+import { isInAppBrowser } from '@/lib/inAppBrowser';
 import { cn } from '@/lib/utils';
 import {
   getLocalSeniorProfile,
@@ -278,10 +280,12 @@ export function BasicProfilePage() {
     if (!form.resumeFile || isOpeningResume) return;
     setIsOpeningResume(true);
     setMessage('');
+    const pendingNavigation = prepareAsyncNavigation({ preferSameTab: isInAppBrowser() });
     try {
       const url = await resolveSeniorResumeUrl(form.resumeFile);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      pendingNavigation.navigate(url);
     } catch (err) {
+      pendingNavigation.cancel();
       console.error('Failed to open resume:', err);
       setMessage('이력서 파일을 열지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {

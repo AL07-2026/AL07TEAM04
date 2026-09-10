@@ -7,16 +7,33 @@ function readPublicEnv(value: unknown, fallback: string) {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+const firebaseProjectId = readPublicEnv(
+  import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  'al07team04-bdfcd',
+);
+const configuredAuthDomain = readPublicEnv(
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  `${firebaseProjectId}.firebaseapp.com`,
+);
+
+function resolveAuthDomain() {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname === `${firebaseProjectId}.web.app`
+  ) {
+    // 운영 Hosting에서는 redirect helper도 동일 출처로 사용해 모바일 저장소 차단을 피한다.
+    return window.location.hostname;
+  }
+  return configuredAuthDomain;
+}
+
 const firebaseConfig = {
   apiKey: readPublicEnv(
     import.meta.env.VITE_FIREBASE_API_KEY,
     'AIzaSyDgcna1VHRdEj8e6QBD15G_7j__kbM2qzk',
   ),
-  authDomain: readPublicEnv(
-    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    'al07team04-bdfcd.firebaseapp.com',
-  ),
-  projectId: readPublicEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'al07team04-bdfcd'),
+  authDomain: resolveAuthDomain(),
+  projectId: firebaseProjectId,
   storageBucket: readPublicEnv(
     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     'al07team04-bdfcd.firebasestorage.app',
@@ -29,10 +46,7 @@ const firebaseConfig = {
     import.meta.env.VITE_FIREBASE_APP_ID,
     '1:1079118700560:web:44f649f95d7e3f22f2aa95',
   ),
-  measurementId: readPublicEnv(
-    import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-    'G-X8DB6JPJPY',
-  ),
+  measurementId: readPublicEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'G-X8DB6JPJPY'),
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

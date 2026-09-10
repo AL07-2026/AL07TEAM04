@@ -1,5 +1,5 @@
 import { CheckCircle2, CircleX, Mail } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { ActionButton, Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
@@ -16,9 +16,16 @@ function isValidEmail(email: string): boolean {
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
-  const { signUp, signInWithGoogle, sendVerificationEmail, checkEmailVerified } = useAuth();
+  const {
+    checkEmailVerified,
+    oauthRedirectCompleted,
+    sendVerificationEmail,
+    signInWithGoogle,
+    signUp,
+    user,
+  } = useAuth();
 
   const [step, setStep] = useState<'form' | 'verification'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,6 +41,23 @@ export function SignupPage() {
     agreed: false,
   });
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!oauthRedirectCompleted || !user) return;
+    void navigate(user.role === 'company' ? '/company-info' : '/basic-profile', { replace: true });
+  }, [navigate, oauthRedirectCompleted, user]);
+
+  const selectRole = (nextRole: 'senior' | 'company') => {
+    setSelectedRole(nextRole);
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('role', nextRole);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const update = (key: 'name' | 'email' | 'password' | 'confirmPassword') => (value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -203,9 +227,10 @@ export function SignupPage() {
             <div className="flex w-full rounded-full border border-[#E0D9C8] bg-[#FAF7F2] p-1 shadow-2xs mb-1">
               <button
                 type="button"
-                onClick={() => setSelectedRole('senior')}
+                aria-pressed={selectedRole === 'senior'}
+                onClick={() => selectRole('senior')}
                 className={cn(
-                  'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
+                  'flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full px-3 py-2 text-[13px] font-extrabold transition-[background-color,color,box-shadow]',
                   selectedRole === 'senior'
                     ? 'bg-[#F06B4F] text-white shadow-md'
                     : 'text-slate-500 hover:text-[#17212B]',
@@ -215,9 +240,10 @@ export function SignupPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedRole('company')}
+                aria-pressed={selectedRole === 'company'}
+                onClick={() => selectRole('company')}
                 className={cn(
-                  'flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-[13px] font-extrabold transition-all',
+                  'flex min-h-11 flex-1 items-center justify-center gap-1 rounded-full px-3 py-2 text-[13px] font-extrabold transition-[background-color,color,box-shadow]',
                   selectedRole === 'company'
                     ? 'bg-[#F06B4F] text-white shadow-md'
                     : 'text-slate-500 hover:text-[#17212B]',

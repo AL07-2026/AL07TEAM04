@@ -153,7 +153,7 @@ function LoginRequiredToast({ message }: { message: string }) {
     <div
       aria-atomic="true"
       aria-live="polite"
-      className="pointer-events-none fixed left-1/2 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#2E625B] bg-[#173F3A] px-4 py-3 text-white shadow-[0_12px_32px_rgba(23,63,58,0.28)] sm:top-6"
+      className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#2E625B] bg-[#173F3A] px-4 py-3 text-white shadow-[0_12px_32px_rgba(23,63,58,0.28)] sm:bottom-auto sm:top-[max(1.5rem,env(safe-area-inset-top))]"
       role="status"
     >
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/12">
@@ -174,7 +174,15 @@ export function LoginPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
-  const { isAdmin, refreshAdminAccess, user, signIn, signInWithGoogle, signOut } = useAuth();
+  const {
+    isAdmin,
+    oauthRedirectCompleted,
+    refreshAdminAccess,
+    user,
+    signIn,
+    signInWithGoogle,
+    signOut,
+  } = useAuth();
   const [userSelectedRole, setUserSelectedRole] = useState<'senior' | 'company' | null>(null);
   const roleParam = searchParams.get('role');
   const role: 'senior' | 'company' =
@@ -208,6 +216,19 @@ export function LoginPage() {
     const timer = window.setTimeout(() => setDismissedLoginNoticeKey(noticeLocationKey), 3600);
     return () => window.clearTimeout(timer);
   }, [location.key, routeLoginRequiredMessage]);
+
+  useEffect(() => {
+    if (!oauthRedirectCompleted || !user) return;
+
+    const redirectTo = searchParams.get('redirect');
+    if (redirectTo?.startsWith('/') && !redirectTo.startsWith('//')) {
+      void navigate(redirectTo, { replace: true });
+    } else if (isAdmin || isSuperAdminEmail(user.email)) {
+      void navigate('/admin/dashboard', { replace: true });
+    } else {
+      void navigate(user.role === 'company' ? '/company' : '/senior', { replace: true });
+    }
+  }, [isAdmin, navigate, oauthRedirectCompleted, searchParams, user]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();

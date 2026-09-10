@@ -58,6 +58,7 @@ import {
   normalizeOccupationCategory,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
+import { getAudioUploadFilename, selectSupportedAudioMimeType } from '@/lib/audioRecording';
 import {
   beginExperienceFollowUp,
   clearExperienceProfileDraft,
@@ -1473,7 +1474,7 @@ export function ExperienceInterviewPage() {
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
-  const recordingMimeTypeRef = useRef('audio/webm');
+  const recordingMimeTypeRef = useRef('');
   const [messages, setMessages] = useState<InterviewMessage[]>([
     { id: 1, sender: 'ai', text: interviewQuestions[0]!.prompt },
   ]);
@@ -1516,12 +1517,6 @@ export function ExperienceInterviewPage() {
     streamRef.current = null;
   }
 
-  function getSupportedAudioMimeType() {
-    if (typeof MediaRecorder === 'undefined') return '';
-    const candidates = ['audio/webm;codecs=opus', 'audio/webm'];
-    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? '';
-  }
-
   function formatRecordingTime(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60)
       .toString()
@@ -1553,7 +1548,8 @@ export function ExperienceInterviewPage() {
 
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'interview-answer.webm');
+      const audioMimeType = audioBlob.type || recordingMimeTypeRef.current;
+      formData.append('audio', audioBlob, getAudioUploadFilename(audioMimeType));
 
       const response = await fetch('/api/interview/transcribe', {
         method: 'POST',
@@ -1634,10 +1630,12 @@ export function ExperienceInterviewPage() {
       return;
     }
 
-    const mimeType = getSupportedAudioMimeType();
+    const mimeType = selectSupportedAudioMimeType((candidate) =>
+      MediaRecorder.isTypeSupported(candidate),
+    );
     if (!mimeType) {
       setVoiceNotice(
-        '이 브라우저에서는 webm 녹음을 지원하지 않을 수 있습니다. 모바일 Chrome에서 다시 시도하거나 텍스트 입력을 이용해 주세요.',
+        '이 브라우저에서는 지원하는 음성 녹음 형식을 찾지 못했습니다. 브라우저를 최신 버전으로 업데이트하거나 텍스트 입력을 이용해 주세요.',
       );
       return;
     }
@@ -1648,11 +1646,12 @@ export function ExperienceInterviewPage() {
 
       streamRef.current = stream;
       mediaRecorderRef.current = recorder;
-      recordingMimeTypeRef.current = mimeType;
+      recordingMimeTypeRef.current = recorder.mimeType || mimeType;
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          if (event.data.type) recordingMimeTypeRef.current = event.data.type;
           audioChunksRef.current.push(event.data);
         }
       };
