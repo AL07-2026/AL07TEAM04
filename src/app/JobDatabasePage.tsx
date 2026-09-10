@@ -2701,7 +2701,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
           <div className="flex flex-wrap items-center gap-2">
             <p className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEBE7] px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
               <Sparkles className="size-3.5" />
-              {role === 'senior' ? '시니어 맞춤 채용 공고' : '회사 등록 프로젝트'}
+              {role === 'senior' ? '시니어 채용' : '회사 등록 프로젝트'}
             </p>
           </div>
           {role === 'company' && (
@@ -2717,12 +2717,12 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
         <h1 className="mt-2.5 text-lg sm:text-xl md:text-2xl font-black leading-snug text-[#17212B]">
           {role === 'senior'
-            ? '경력과 전문성을 살릴 수 있는 맞춤 채용 공고'
+            ? '내 경험에 맞는 공고를 확인해 보세요'
             : '등록한 프로젝트에 맞는 추천 인재를 검토하세요'}
         </h1>
         <p className="mt-1.5 text-[13px] sm:text-[14px] font-medium leading-relaxed text-[#53606E]">
           {role === 'senior'
-            ? '내 정보의 1순위 희망 직종을 먼저 적용하고, 경력·핵심 역량과 AI 경험 인터뷰 결과로 추천 순서를 계산합니다.'
+            ? '희망 직종과 경력·핵심 역량, AI 경험 인터뷰 결과를 바탕으로 추천 순서를 계산합니다.'
             : '프로젝트 요구조건과 직무 유형을 바탕으로 바로 제안할 수 있는 시니어 인재를 카드로 보여드립니다.'}
         </p>
       </section>
@@ -2734,17 +2734,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
               <div>
                 <p className="text-[13.5px] sm:text-[14.5px] font-extrabold text-[#17212B] flex items-center gap-1.5">
                   <Sparkles className="size-4 text-[#F06B4F] shrink-0" />
-                  <span>
-                    로그인하시면 내 직종·경험 기반 AI 맞춤 프로젝트 추천을 받을 수 있습니다!
-                  </span>
+                  <span>로그인하면 내 정보 기반 추천 순서와 적합도를 확인할 수 있습니다.</span>
                 </p>
                 <p className="mt-1 text-[12px] font-medium text-slate-600">
-                  비로그인 상태에서도 전체 프로젝트를 둘러보실 수 있으며, 로그인 시 1순위 희망 직종
-                  정밀 적합도 점수가 표출됩니다.
+                  로그인하지 않아도 전체 채용 공고를 둘러볼 수 있습니다.
                 </p>
               </div>
               <button
-                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#B84734] px-4 text-[13px] font-extrabold text-white shadow-xs transition-all hover:bg-[#9F3D2D] active:scale-[0.98] sm:self-auto"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#F06B4F] px-4 text-[13px] font-extrabold text-white shadow-xs transition-[background-color,transform] hover:bg-[#D85A3F] active:scale-[0.98] sm:self-auto"
                 onClick={() => void navigate('/login')}
                 type="button"
               >

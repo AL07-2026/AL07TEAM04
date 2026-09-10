@@ -407,6 +407,7 @@ export function StepProgressBar({ current, total }: { current: number; total: nu
 type ActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   role?: Role;
   secondary?: boolean;
+  tone?: 'brand' | 'role';
 };
 
 export function ActionButton({
@@ -414,6 +415,7 @@ export function ActionButton({
   children,
   role = 'senior',
   secondary,
+  tone = 'role',
   ...props
 }: ActionButtonProps) {
   const { mode } = useViewportMode();
@@ -436,7 +438,7 @@ export function ActionButton({
         isMobile ? 'h-[50px] min-h-[50px] px-5 text-[15px]' : 'h-14 min-h-14 px-6 text-[16px]',
         secondary
           ? 'border border-[#D4CBB8] bg-gradient-to-b from-white via-[#FAF7F2] to-[#F2EDE2] text-[#17212B] shadow-[0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-[#173F3A] hover:from-white hover:to-[#E8F2EF] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98]'
-          : role === 'company'
+          : tone === 'brand' || role === 'company'
             ? 'border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] text-white shadow-[0_4px_14px_rgba(240,107,79,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(240,107,79,0.4)] active:translate-y-0 active:scale-[0.98]'
             : 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_14px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]',
         className,

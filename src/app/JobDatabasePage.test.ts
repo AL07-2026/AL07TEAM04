@@ -134,6 +134,35 @@ describe('비로그인 추천 건수', () => {
     await screen.findByRole('button', { name: '비로그인 추천 테스트' });
     expect(screen.getByText('추천 건수').parentElement).toHaveTextContent('0건');
   });
+
+  it('중복 없는 소개 문구와 오렌지 로그인·회원가입 버튼을 표시한다', async () => {
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedProjects.mockResolvedValueOnce([]);
+    mockedExperienceCard.mockReset().mockResolvedValue(null);
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      catalogTotal: 1,
+      closingSoonTotal: 0,
+      items: [{ ...companyProject, id: 'guest-copy-project', title: '문구 확인 공고' }],
+      page: 1,
+      pageSize: 5,
+      partTimeTotal: 0,
+      preferredTotal: 0,
+      status: 'success' as const,
+      total: 1,
+      totalPages: 1,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '문구 확인 공고' });
+    expect(screen.getByText('시니어 채용')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '내 경험에 맞는 공고를 확인해 보세요' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('경력과 전문성을 살릴 수 있는 맞춤 채용 공고')).toBeNull();
+    expect(screen.getByRole('button', { name: '로그인 / 회원가입' })).toHaveClass('bg-[#F06B4F]');
+  });
 });
 
 describe('지원 접근 및 완료 경로', () => {

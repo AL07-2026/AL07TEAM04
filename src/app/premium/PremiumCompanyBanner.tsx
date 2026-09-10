@@ -11,7 +11,11 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const controlClassName =
   'grid size-11 shrink-0 place-items-center rounded-xl text-[#173F3A] hover:bg-[#EAF2EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100';
 
-function CompanyBannerImage({ company, compact, priority }: {
+function CompanyBannerImage({
+  company,
+  compact,
+  priority,
+}: {
   company: PremiumCompany;
   compact: boolean;
   priority: boolean;
@@ -19,11 +23,16 @@ function CompanyBannerImage({ company, compact, priority }: {
   const [failed, setFailed] = useState(false);
   const imageClassName = cn(
     'w-full bg-[#EAF2EF] object-cover object-[center_30%]',
-    compact ? 'aspect-[16/9]' : 'aspect-[16/9] sm:aspect-auto sm:h-[clamp(250px,32vw,380px)]',
+    compact ? 'aspect-[160/99]' : 'aspect-[160/99] sm:aspect-auto sm:h-[clamp(275px,35.2vw,418px)]',
   );
 
   return failed ? (
-    <div className={cn(imageClassName, 'flex flex-col items-center justify-center gap-2 text-[#52645F]')}>
+    <div
+      className={cn(
+        imageClassName,
+        'flex flex-col items-center justify-center gap-2 text-[#52645F]',
+      )}
+    >
       <Building2 aria-hidden="true" className="size-8" />
       <span className="text-sm font-semibold">기업 이미지 준비 중</span>
     </div>
@@ -44,7 +53,8 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
   const [companies, setCompanies] = useState(() => initialPremiumCompanies.slice(0, 4));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(
-    () => typeof window.matchMedia === 'function' && window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    () =>
+      typeof window.matchMedia === 'function' && window.matchMedia(REDUCED_MOTION_QUERY).matches,
   );
   const [playing, setPlaying] = useState(() => !reducedMotion);
   const [hovered, setHovered] = useState(false);
@@ -52,7 +62,8 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
   const [pageHidden, setPageHidden] = useState(() => document.hidden);
   const [animated, setAnimated] = useState(false);
   const canRotate = companies.length > 1;
-  const rotating = canRotate && playing && !reducedMotion && !hovered && !focusWithin && !pageHidden;
+  const rotating =
+    canRotate && playing && !reducedMotion && !hovered && !focusWithin && !pageHidden;
 
   useEffect(() => {
     let active = true;
@@ -62,15 +73,16 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       setCurrentIndex(0);
       setAnimated(false);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
     const onVisibilityChange = () => setPageHidden(document.hidden);
     document.addEventListener('visibilitychange', onVisibilityChange);
-    const media = typeof window.matchMedia === 'function'
-      ? window.matchMedia(REDUCED_MOTION_QUERY)
-      : null;
+    const media =
+      typeof window.matchMedia === 'function' ? window.matchMedia(REDUCED_MOTION_QUERY) : null;
     const onMotionChange = (event: MediaQueryListEvent) => {
       setReducedMotion(event.matches);
       if (event.matches) {
@@ -109,7 +121,9 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         if (!event.currentTarget.contains(event.relatedTarget)) setFocusWithin(false);
       }}
       onFocus={() => setFocusWithin(true)}
-      onPointerEnter={(event) => { if (event.pointerType !== 'touch') setHovered(true); }}
+      onPointerEnter={(event) => {
+        if (event.pointerType !== 'touch') setHovered(true);
+      }}
       onPointerLeave={() => setHovered(false)}
     >
       <div aria-atomic="true" aria-live={rotating ? 'off' : 'polite'} className="grid">
@@ -132,11 +146,18 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               tabIndex={selected ? 0 : -1}
               to={`/premium-companies?company=${encodeURIComponent(company.companyName)}`}
             >
-              <CompanyBannerImage company={company} compact={isCompact} key={company.imageUrl} priority={index === 0} />
-              <div className={cn(
-                'flex min-h-28 items-center justify-between gap-4 px-4 py-4 sm:px-6',
-                !isCompact && 'sm:pr-[232px]',
-              )}>
+              <CompanyBannerImage
+                company={company}
+                compact={isCompact}
+                key={company.imageUrl}
+                priority={index === 0}
+              />
+              <div
+                className={cn(
+                  'flex min-h-28 items-center justify-between gap-4 px-4 py-4 sm:px-6',
+                  !isCompact && 'sm:pr-[232px]',
+                )}
+              >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold">
                     <span className="text-[#AD412D]">프리미엄 기업</span>
@@ -145,7 +166,9 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                   <h3 className="mt-1 text-lg font-extrabold leading-snug text-[#173F3A] [text-wrap:balance] sm:text-xl">
                     {company.companyName}
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#52645F]">{company.headline}</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#52645F]">
+                    {company.headline}
+                  </p>
                 </div>
                 <ArrowUpRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
               </div>
@@ -172,15 +195,35 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
           title={reducedMotion ? '동작 줄이기 설정으로 자동 재생이 꺼져 있습니다.' : undefined}
           type="button"
         >
-          {playing && !reducedMotion ? <Pause aria-hidden="true" className="size-4" /> : <Play aria-hidden="true" className="size-4" />}
+          {playing && !reducedMotion ? (
+            <Pause aria-hidden="true" className="size-4" />
+          ) : (
+            <Play aria-hidden="true" className="size-4" />
+          )}
         </button>
-        <span aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`} className="min-w-12 text-center text-sm font-semibold tabular-nums text-[#52645F]">
-          <span className="font-extrabold text-[#173F3A]">{currentIndex + 1}</span> / {companies.length}
+        <span
+          aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`}
+          className="min-w-12 text-center text-sm font-semibold tabular-nums text-[#52645F]"
+        >
+          <span className="font-extrabold text-[#173F3A]">{currentIndex + 1}</span> /{' '}
+          {companies.length}
         </span>
-        <button aria-label="이전 기업" className={controlClassName} disabled={!canRotate} onClick={(event) => move(-1, event.detail > 0)} type="button">
+        <button
+          aria-label="이전 기업"
+          className={controlClassName}
+          disabled={!canRotate}
+          onClick={(event) => move(-1, event.detail > 0)}
+          type="button"
+        >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </button>
-        <button aria-label="다음 기업" className={controlClassName} disabled={!canRotate} onClick={(event) => move(1, event.detail > 0)} type="button">
+        <button
+          aria-label="다음 기업"
+          className={controlClassName}
+          disabled={!canRotate}
+          onClick={(event) => move(1, event.detail > 0)}
+          type="button"
+        >
           <ChevronRight aria-hidden="true" className="size-5" />
         </button>
       </div>

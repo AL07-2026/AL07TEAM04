@@ -46,7 +46,11 @@ describe('CommunityPage', () => {
     vi.mocked(communityService.listCommunityPosts)
       .mockRejectedValueOnce(new Error('연결이 지연됩니다.'))
       .mockResolvedValueOnce([]);
-    render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent('연결이 지연됩니다.');
     expect(screen.queryByText('아직 게시글이 없습니다.')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '다시 불러오기' }));
@@ -54,14 +58,36 @@ describe('CommunityPage', () => {
   });
 
   it('같은 글을 다시 눌러도 읽은 댓글을 지우거나 재요청하지 않는다', async () => {
-    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([{
-      id: 'post-same', title: '같은 게시글 제목', content: '게시글 내용입니다.', authorName: '익명', category: 'experience',
-      createdAt: '', updatedAt: '', commentCount: 1, likeCount: 0, likedByMe: false, ownedByMe: false,
-    }]);
-    vi.mocked(communityService.listCommunityComments).mockResolvedValueOnce([{
-      id: 'comment-same', authorName: '익명', content: '읽은 댓글 내용', createdAt: '', updatedAt: '', ownedByMe: false,
-    }]);
-    render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([
+      {
+        id: 'post-same',
+        title: '같은 게시글 제목',
+        content: '게시글 내용입니다.',
+        authorName: '익명',
+        category: 'experience',
+        createdAt: '',
+        updatedAt: '',
+        commentCount: 1,
+        likeCount: 0,
+        likedByMe: false,
+        ownedByMe: false,
+      },
+    ]);
+    vi.mocked(communityService.listCommunityComments).mockResolvedValueOnce([
+      {
+        id: 'comment-same',
+        authorName: '익명',
+        content: '읽은 댓글 내용',
+        createdAt: '',
+        updatedAt: '',
+        ownedByMe: false,
+      },
+    ]);
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('읽은 댓글 내용')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /같은 게시글 제목/ }));
     expect(screen.getByText('읽은 댓글 내용')).toBeInTheDocument();
@@ -70,15 +96,38 @@ describe('CommunityPage', () => {
 
   it('계정 변경 즉시 이전 글 소유권과 활동명을 지우고 새 계정으로 다시 조회한다', async () => {
     authState.user = { uid: 'owner-a' };
-    vi.mocked(communityService.getCommunityProfile).mockResolvedValueOnce({ nickname: '이전활동명' }).mockResolvedValue(null);
-    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([{
-      id: 'owned-a', title: '이전 계정 게시글', content: '이전 계정 본문입니다.', authorName: '이전활동명', category: 'experience',
-      createdAt: '', updatedAt: '', commentCount: 0, likeCount: 0, likedByMe: true, ownedByMe: true,
-    }]).mockImplementationOnce(() => new Promise(() => {}));
-    const view = render(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    vi.mocked(communityService.getCommunityProfile)
+      .mockResolvedValueOnce({ nickname: '이전활동명' })
+      .mockResolvedValue(null);
+    vi.mocked(communityService.listCommunityPosts)
+      .mockResolvedValueOnce([
+        {
+          id: 'owned-a',
+          title: '이전 계정 게시글',
+          content: '이전 계정 본문입니다.',
+          authorName: '이전활동명',
+          category: 'experience',
+          createdAt: '',
+          updatedAt: '',
+          commentCount: 0,
+          likeCount: 0,
+          likedByMe: true,
+          ownedByMe: true,
+        },
+      ])
+      .mockImplementationOnce(() => new Promise(() => {}));
+    const view = render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByRole('button', { name: /이전 계정 게시글/ })).toBeInTheDocument();
     authState.user = { uid: 'owner-b' };
-    view.rerender(<MemoryRouter><CommunityPage /></MemoryRouter>);
+    view.rerender(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
     expect(screen.queryByText('이전 계정 본문입니다.')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '이전활동명' })).not.toBeInTheDocument();
     await waitFor(() => expect(communityService.listCommunityPosts).toHaveBeenCalledTimes(2));
@@ -96,6 +145,43 @@ describe('CommunityPage', () => {
     expect(await screen.findByText('아직 게시글이 없습니다.')).toBeInTheDocument();
   });
 
+  it('모바일에서는 목록과 상세를 한 단계씩 전환하고 PC에서는 두 영역을 함께 유지한다', async () => {
+    vi.mocked(communityService.listCommunityPosts).mockResolvedValueOnce([
+      {
+        id: 'responsive-post',
+        title: '화면별 커뮤니티 확인',
+        content: '모바일 상세 화면을 확인하는 본문입니다.',
+        authorName: '익명',
+        category: 'experience',
+        createdAt: '',
+        updatedAt: '',
+        commentCount: 0,
+        likeCount: 0,
+        likedByMe: false,
+        ownedByMe: false,
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>,
+    );
+
+    const postButton = await screen.findByRole('button', { name: /화면별 커뮤니티 확인/ });
+    const list = screen.getByRole('region', { name: '게시글 목록' });
+    const detail = screen.getByRole('region', { name: '게시글 내용' });
+    expect(list).toHaveClass('flex', 'lg:flex');
+    expect(detail).toHaveClass('hidden', 'lg:flex');
+
+    fireEvent.click(postButton);
+    expect(list).toHaveClass('hidden', 'lg:flex');
+    expect(detail).toHaveClass('flex', 'lg:flex');
+    fireEvent.click(screen.getByRole('button', { name: '게시글 목록으로' }));
+    expect(list).toHaveClass('flex', 'lg:flex');
+    expect(detail).toHaveClass('hidden', 'lg:flex');
+  });
+
   it('프로젝트보기 화면과 통일된 상단 헤더 네비게이션을 표시한다', async () => {
     render(
       <MemoryRouter>
@@ -104,10 +190,18 @@ describe('CommunityPage', () => {
     );
 
     await screen.findByText('아직 게시글이 없습니다.');
-    expect(within(screen.getByRole('banner')).getByRole('button', { name: '프로젝트' })).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByRole('button', { name: '홈' })).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByRole('button', { name: '내 제안' })).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByRole('button', { name: '내 정보' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', { name: '프로젝트' }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', { name: '홈' }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', { name: '내 제안' }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', { name: '내 정보' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기 열기' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.queryByRole('menuitem', { name: /프로젝트 보러가기/ })).not.toBeInTheDocument();
@@ -131,13 +225,17 @@ describe('CommunityPage', () => {
         },
       }),
     );
-    expect(screen.queryByText('글쓰기와 참여는 로그인 후 이용할 수 있습니다.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('글쓰기와 참여는 로그인 후 이용할 수 있습니다.'),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(communityService.createCommunityPost).not.toHaveBeenCalled());
   });
 
   it('로그인 사용자가 프로필 조회 실패 시에도 로그인 유도 배너를 표시하지 않는다', async () => {
     authState.user = { uid: 'user-1' };
-    vi.mocked(communityService.getCommunityProfile).mockRejectedValue(new Error('로그인 후 이용해 주세요.'));
+    vi.mocked(communityService.getCommunityProfile).mockRejectedValue(
+      new Error('로그인 후 이용해 주세요.'),
+    );
 
     render(
       <MemoryRouter>

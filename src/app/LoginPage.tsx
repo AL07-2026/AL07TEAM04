@@ -498,7 +498,7 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D85A3F] bg-[#F06B4F] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#D85A3F] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
               {isSubmitting ? (
                 '로그인 처리 중...'
@@ -700,7 +700,7 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D85A3F] bg-[#F06B4F] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#D85A3F] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
               {isSubmitting ? (
                 '로그인 처리 중...'

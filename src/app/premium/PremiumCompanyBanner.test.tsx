@@ -15,7 +15,11 @@ let motionListener: ((event: MediaQueryListEvent) => void) | undefined;
 
 async function renderBanner() {
   await act(async () => {
-    render(<MemoryRouter><PremiumCompanyBanner isCompact /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <PremiumCompanyBanner isCompact />
+      </MemoryRouter>,
+    );
     await Promise.resolve();
   });
 }
@@ -25,7 +29,9 @@ function activeCompany(name: string) {
 }
 
 async function advance(milliseconds: number) {
-  await act(async () => { await vi.advanceTimersByTimeAsync(milliseconds); });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(milliseconds);
+  });
 }
 
 describe('PremiumCompanyBanner', () => {
@@ -34,13 +40,18 @@ describe('PremiumCompanyBanner', () => {
     reducedMotion = false;
     motionListener = undefined;
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
-    vi.stubGlobal('matchMedia', vi.fn(() => ({
-      get matches() { return reducedMotion; },
-      addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
-        motionListener = listener;
-      },
-      removeEventListener: vi.fn(),
-    })));
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        get matches() {
+          return reducedMotion;
+        },
+        addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+          motionListener = listener;
+        },
+        removeEventListener: vi.fn(),
+      })),
+    );
     vi.mocked(listPremiumCompaniesWithFallback).mockResolvedValue([...initialPremiumCompanies]);
   });
 
@@ -84,20 +95,26 @@ describe('PremiumCompanyBanner', () => {
     expect(activeCompany('담은생활연구소')).toBeInTheDocument();
     fireEvent.pointerLeave(banner);
     const companyLink = activeCompany('담은생활연구소');
-    act(() => { companyLink.focus(); });
+    act(() => {
+      companyLink.focus();
+    });
     await advance(10_000);
     expect(activeCompany('담은생활연구소')).toBeInTheDocument();
     fireEvent.keyDown(companyLink, { key: 'ArrowRight' });
     expect(activeCompany('담은생활연구소')).toBeInTheDocument();
     expect(document.activeElement).toBe(companyLink);
     const nextButton = screen.getByRole('button', { name: '다음 기업' });
-    act(() => { nextButton.focus(); });
+    act(() => {
+      nextButton.focus();
+    });
     fireEvent.keyDown(nextButton, { key: 'ArrowRight' });
     expect(activeCompany('한결바이오연구소')).toHaveStyle({ transitionDuration: '0ms' });
     expect(document.activeElement).toBe(nextButton);
     fireEvent.click(screen.getByRole('button', { name: '이전 기업' }), { detail: 0 });
     expect(activeCompany('담은생활연구소')).toHaveStyle({ transitionDuration: '0ms' });
-    act(() => { nextButton.blur(); });
+    act(() => {
+      nextButton.blur();
+    });
     await advance(6_500);
     expect(activeCompany('한결바이오연구소')).toBeInTheDocument();
   });
@@ -126,7 +143,9 @@ describe('PremiumCompanyBanner', () => {
 
   it('사용 중 동작 줄이기 설정이 켜져도 즉시 자동 재생을 중단한다', async () => {
     await renderBanner();
-    act(() => { motionListener?.({ matches: true } as MediaQueryListEvent); });
+    act(() => {
+      motionListener?.({ matches: true } as MediaQueryListEvent);
+    });
     await advance(20_000);
     expect(activeCompany('담은생활연구소')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '배너 자동 재생' })).toBeDisabled();
@@ -134,9 +153,11 @@ describe('PremiumCompanyBanner', () => {
 
   it('서버에서 등록 기업이 도착하면 샘플을 교체하고 해당 기업 주소로 연결한다', async () => {
     let resolveCompanies: (companies: PremiumCompany[]) => void = () => undefined;
-    vi.mocked(listPremiumCompaniesWithFallback).mockReturnValue(new Promise((resolve) => {
-      resolveCompanies = resolve;
-    }));
+    vi.mocked(listPremiumCompaniesWithFallback).mockReturnValue(
+      new Promise((resolve) => {
+        resolveCompanies = resolve;
+      }),
+    );
     await renderBanner();
     expect(activeCompany('담은생활연구소')).toBeInTheDocument();
     const registeredCompany: PremiumCompany = {
@@ -150,10 +171,32 @@ describe('PremiumCompanyBanner', () => {
       await Promise.resolve();
     });
     expect(activeCompany(registeredCompany.companyName)).toHaveAttribute(
-      'href', `/premium-companies?company=${encodeURIComponent(registeredCompany.companyName)}`,
+      'href',
+      `/premium-companies?company=${encodeURIComponent(registeredCompany.companyName)}`,
     );
     expect(screen.queryByText('샘플 노출')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음 기업' })).toBeDisabled();
     expect(listPremiumCompaniesWithFallback).toHaveBeenCalledWith(4);
+  });
+
+  it('웹과 모바일 배너 이미지 영역을 기존보다 10% 높게 표시한다', async () => {
+    await renderBanner();
+    expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
+      'aspect-[160/99]',
+    );
+
+    cleanup();
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <PremiumCompanyBanner />
+        </MemoryRouter>,
+      );
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
+      'aspect-[160/99]',
+      'sm:h-[clamp(275px,35.2vw,418px)]',
+    );
   });
 });

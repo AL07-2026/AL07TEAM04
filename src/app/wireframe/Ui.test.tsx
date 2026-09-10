@@ -233,6 +233,15 @@ describe('공통 행동 아이콘', () => {
     expect(container.querySelector('.lucide-arrow-right')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByText('→')).not.toBeInTheDocument();
   });
+
+  it('인증 화면용 브랜드 행동 버튼은 역할과 무관하게 오렌지 색상을 사용한다', () => {
+    render(<ActionButton tone="brand">회원가입</ActionButton>);
+
+    expect(screen.getByRole('button', { name: '회원가입' })).toHaveClass(
+      'border-[#D85A3F]',
+      'via-[#F06B4F]',
+    );
+  });
 });
 
 describe('ExperienceSummaryCard', () => {

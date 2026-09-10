@@ -1,12 +1,14 @@
 import {
   Check,
   ChevronDown,
+  ChevronLeft,
   CornerDownRight,
   Flag,
   Heart,
   MessageCircle,
   Pencil,
   PenLine,
+  RefreshCw,
   Send,
   Trash2,
   UserRound,
@@ -97,6 +99,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   const [commentsLoadedFor, setCommentsLoadedFor] = useState('');
   const [commentsError, setCommentsError] = useState('');
   const [commentsReloadVersion, setCommentsReloadVersion] = useState(0);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [communityProfile, setCommunityProfile] = useState<CommunityProfile | null>(null);
@@ -193,7 +196,12 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     if (!selectedId) return;
     let active = true;
     listCommunityComments(selectedId)
-      .then((items) => { if (active) { setComments(items); setCommentsError(''); } })
+      .then((items) => {
+        if (active) {
+          setComments(items);
+          setCommentsError('');
+        }
+      })
       .catch((error: Error) => active && setCommentsError(error.message))
       .finally(() => active && setCommentsLoadedFor(selectedId));
     return () => {
@@ -261,6 +269,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   const selectPost = (postId: string) => {
+    setMobileDetailOpen(true);
     if (postId === selectedId) return;
     setComments([]);
     setCommentsLoadedFor('');
@@ -272,6 +281,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
   const chooseCategory = (nextCategory: 'all' | CommunityCategory) => {
     setCategory(nextCategory);
+    setMobileDetailOpen(false);
     const currentSelectionIsVisible = posts.some(
       (post) =>
         post.id === selectedId && (nextCategory === 'all' || post.category === nextCategory),
@@ -280,6 +290,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     selectPost(
       posts.find((post) => nextCategory === 'all' || post.category === nextCategory)?.id || '',
     );
+    setMobileDetailOpen(false);
   };
 
   const openComposer = (post?: CommunityPost) => {
@@ -311,6 +322,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           : [saved, ...current],
       );
       setSelectedId(saved.id);
+      setMobileDetailOpen(true);
       setComposerOpen(false);
       setMessage(editingId ? '게시글을 수정했습니다.' : '게시글을 등록했습니다.');
     } catch (error) {
@@ -328,6 +340,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
       const remaining = posts.filter((post) => post.id !== selectedPost.id);
       setPosts(remaining);
       setSelectedId(remaining[0]?.id || '');
+      setMobileDetailOpen(false);
       setComments([]);
       setDeletePending(false);
       setMessage('게시글을 삭제했습니다.');
@@ -425,9 +438,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
       await deleteCommunityComment(selectedPost.id, commentId);
       const targetComment = comments.find((item) => item.id === commentId);
       const isRoot = !targetComment?.parentId;
-      const childCount = isRoot
-        ? comments.filter((item) => item.parentId === commentId).length
-        : 0;
+      const childCount = isRoot ? comments.filter((item) => item.parentId === commentId).length : 0;
       const totalDeleted = 1 + childCount;
 
       setComments((current) =>
@@ -469,9 +480,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
     setSaving(true);
     try {
       const updated = await updateCommunityComment(selectedPost.id, commentId, content);
-      setComments((current) =>
-        current.map((item) => (item.id === commentId ? updated : item)),
-      );
+      setComments((current) => current.map((item) => (item.id === commentId ? updated : item)));
       cancelEditComment();
       setMessage('댓글을 수정했습니다.');
     } catch (error) {
@@ -493,26 +502,42 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
   };
 
   return (
-    <>
-      <div className="flex flex-wrap items-end justify-between gap-5 border-b border-[#D8D1C2] pb-7">
-        <div>
-          <h1 className="text-3xl font-black tracking-[-0.025em] text-[#173F3A] sm:text-4xl">
+    <section aria-labelledby="community-board-heading" className="min-w-0">
+      <div className="flex flex-col items-stretch gap-5 border-b border-[#D8D1C2] pb-6 sm:flex-row sm:items-end sm:justify-between sm:pb-7">
+        <div className="min-w-0">
+          <h1
+            className="text-[1.75rem] font-black tracking-[-0.025em] text-[#173F3A] [text-wrap:balance] sm:text-4xl"
+            id="community-board-heading"
+          >
             이어잡 커뮤니티
           </h1>
-          <p className="mt-2 text-sm font-medium text-[#53645F] sm:text-base">
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#53645F] sm:text-base">
             경험을 나누고 프로젝트에 관해 묻고 답하는 공간입니다.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="min-h-11 rounded-xl px-3 text-sm font-bold text-[#53645F] disabled:opacity-50" type="button"
-            disabled={loading || saving} onClick={() => {
-              clearCommunityReadCache(); setLoadError(''); setLoading(true);
-              setReloadVersion((value) => value + 1); setCommentsLoadedFor('');
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
+          <button
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold text-[#53645F] transition-colors hover:bg-[#F2F7F5] hover:text-[#173F3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50"
+            disabled={loading || saving}
+            onClick={() => {
+              clearCommunityReadCache();
+              setLoadError('');
+              setLoading(true);
+              setReloadVersion((value) => value + 1);
+              setCommentsLoadedFor('');
               setCommentsReloadVersion((value) => value + 1);
-            }}>새로고침</button>
+            }}
+            type="button"
+          >
+            <RefreshCw
+              aria-hidden="true"
+              className={cn('size-4', loading && 'animate-spin motion-reduce:animate-none')}
+            />
+            새로고침
+          </button>
           {user ? (
             <button
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60 transition-all cursor-pointer"
+              className="inline-flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#C9D6D2] bg-white px-3 text-sm font-extrabold text-[#173F3A] transition-[background-color,transform] hover:bg-[#F2F7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
               disabled={!profileReady}
               onClick={() => {
                 setNicknameDraft(communityProfile?.nickname || '');
@@ -526,7 +551,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             </button>
           ) : null}
           <button
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] transition-all cursor-pointer"
+            className={cn(
+              'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#F06B4F] px-4 text-sm font-extrabold text-white transition-[background-color,transform] hover:bg-[#D85A3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] sm:col-span-1',
+              user && 'col-span-2',
+            )}
             onClick={() => openComposer()}
             type="button"
           >
@@ -578,7 +606,9 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                 aria-invalid={Boolean(nicknameError)}
                 className={cn(
                   'h-12 rounded-xl border bg-white px-3.5 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none transition-all',
-                  nicknameError ? 'border-rose-600 focus:border-rose-600' : 'border-[#D8D1C2] focus:border-[#B8AF9C]',
+                  nicknameError
+                    ? 'border-rose-600 focus:border-rose-600'
+                    : 'border-[#D8D1C2] focus:border-[#B8AF9C]',
                 )}
                 id="community-nickname"
                 maxLength={12}
@@ -615,7 +645,9 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           aria-label={editingId ? '게시글 수정' : '새 글 작성'}
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black text-[#17212B]">{editingId ? '게시글 수정' : '새 글 작성'}</h2>
+            <h2 className="text-xl font-black text-[#17212B]">
+              {editingId ? '게시글 수정' : '새 글 작성'}
+            </h2>
             <button
               aria-label="글쓰기 닫기"
               className="grid size-11 place-items-center rounded-xl hover:bg-[#F2F7F5] focus:outline-none transition-colors cursor-pointer"
@@ -629,7 +661,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             </button>
           </div>
           <div className="mt-4 grid gap-4">
-            <div className="grid gap-2 text-sm font-extrabold text-[#17212B]" ref={categoryDropdownRef}>
+            <div
+              className="grid gap-2 text-sm font-extrabold text-[#17212B]"
+              ref={categoryDropdownRef}
+            >
               <span>게시판</span>
               <div className="relative">
                 <button
@@ -645,7 +680,10 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                     categoryDropdownOpen && 'border-[#B8AF9C] shadow-2xs',
                   )}
                 >
-                  <span>{categories.find((item) => item.id === draft.category)?.label || '경험과 노하우'}</span>
+                  <span>
+                    {categories.find((item) => item.id === draft.category)?.label ||
+                      '경험과 노하우'}
+                  </span>
                   <ChevronDown
                     className={cn(
                       'size-4 text-slate-500 transition-transform duration-200',
@@ -728,11 +766,14 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         </section>
       ) : null}
 
-      <nav aria-label="커뮤니티 게시판" className="mt-6 flex gap-2 overflow-x-auto pb-2">
+      <nav
+        aria-label="커뮤니티 게시판"
+        className="-mx-4 mt-5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 overscroll-x-contain [scrollbar-width:none] sm:mx-0 sm:mt-6 sm:px-0 [&::-webkit-scrollbar]:hidden"
+      >
         {categories.map((item) => (
           <button
             aria-current={category === item.id ? 'page' : undefined}
-            className={`min-h-11 shrink-0 rounded-xl px-4 text-sm font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] transition-all cursor-pointer ${category === item.id ? 'bg-[#173F3A] text-white shadow-2xs' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
+            className={`min-h-11 shrink-0 snap-start rounded-xl px-4 text-sm font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] ${category === item.id ? 'bg-[#173F3A] text-white shadow-2xs' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
             key={item.id}
             onClick={() => chooseCategory(item.id)}
             type="button"
@@ -742,20 +783,33 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
         ))}
       </nav>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.4fr)]">
+      <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(19rem,0.82fr)_minmax(0,1.45fr)] lg:items-start lg:gap-5 xl:gap-6">
         <section
           aria-label="게시글 목록"
-          className="flex min-h-[420px] md:min-h-[500px] flex-col overflow-hidden rounded-2xl border border-[#E8E2D6] bg-white shadow-2xs"
+          className={cn(
+            'min-h-[420px] flex-col overflow-x-hidden overflow-y-auto rounded-2xl border border-[#E8E2D6] bg-white shadow-2xs md:min-h-[500px] lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7.5rem)]',
+            mobileDetailOpen ? 'hidden' : 'flex',
+          )}
         >
           {loading ? (
-            <div className="my-auto grid place-items-center p-6 text-sm font-bold text-[#53645F]" role="status">
+            <div
+              className="my-auto grid place-items-center p-6 text-sm font-bold text-[#53645F]"
+              role="status"
+            >
               게시글을 불러오는 중입니다.
             </div>
           ) : loadError ? (
             <div className="my-auto p-8 text-center" role="alert">
               <p className="font-bold text-[#53645F]">{loadError}</p>
-              <button className="mt-3 min-h-11 px-3 font-bold text-[#173F3A] underline" type="button"
-                onClick={() => { setLoadError(''); setLoading(true); setReloadVersion((value) => value + 1); }}>
+              <button
+                className="mt-3 min-h-11 px-3 font-bold text-[#173F3A] underline"
+                type="button"
+                onClick={() => {
+                  setLoadError('');
+                  setLoading(true);
+                  setReloadVersion((value) => value + 1);
+                }}
+              >
                 다시 불러오기
               </button>
             </div>
@@ -774,7 +828,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             visiblePosts.map((post) => (
               <button
                 aria-current={post.id === selectedId ? 'true' : undefined}
-                className={`block w-full border-b border-[#E8E2D6] p-5 text-left last:border-b-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B8AF9C] transition-colors cursor-pointer ${post.id === selectedId ? 'bg-[#EAF2EF]' : 'hover:bg-[#FAF7F2]'}`}
+                className={`block w-full min-w-0 border-b border-[#E8E2D6] p-4 text-left transition-colors last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B8AF9C] sm:p-5 ${post.id === selectedId ? 'bg-[#EAF2EF]' : 'hover:bg-[#FAF7F2]'}`}
                 key={post.id}
                 onClick={() => selectPost(post.id)}
                 type="button"
@@ -782,8 +836,8 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                 <span className="text-xs font-extrabold text-[#C85039]">
                   {categories.find((item) => item.id === post.category)?.label}
                 </span>
-                <strong className="mt-1 block line-clamp-2">{post.title}</strong>
-                <span className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-[#64716D]">
+                <strong className="mt-1 block line-clamp-2 break-words">{post.title}</strong>
+                <span className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-[#64716D]">
                   <span>{authorLabel(post)}</span>
                   <span>{dateLabel(post.createdAt)}</span>
                   <span>공감 {post.likeCount}</span>
@@ -796,26 +850,39 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
         <section
           aria-label="게시글 내용"
-          className="flex min-h-[420px] md:min-h-[500px] flex-col rounded-2xl border border-[#E8E2D6] bg-white p-5 sm:p-7 shadow-2xs"
+          className={cn(
+            'min-h-[420px] min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E8E2D6] bg-white p-4 shadow-2xs sm:p-7 md:min-h-[500px] lg:flex',
+            mobileDetailOpen ? 'flex' : 'hidden',
+          )}
         >
+          <button
+            className="mb-4 inline-flex min-h-11 w-fit items-center gap-1 rounded-xl px-2 text-sm font-extrabold text-[#173F3A] transition-colors hover:bg-[#EAF2EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] lg:hidden"
+            onClick={() => setMobileDetailOpen(false)}
+            type="button"
+          >
+            <ChevronLeft aria-hidden="true" className="size-5" />
+            게시글 목록으로
+          </button>
           {!selectedPost ? (
             <div className="my-auto grid min-h-64 place-items-center text-sm font-bold text-[#64716D]">
               게시글을 선택해 주세요.
             </div>
           ) : (
             <>
-              <div className="flex items-start justify-between gap-4 border-b border-[#E8E2D6] pb-5">
-                <div>
+              <div className="flex min-w-0 flex-col gap-3 border-b border-[#E8E2D6] pb-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0">
                   <span className="text-xs font-extrabold text-[#C85039]">
                     {categories.find((item) => item.id === selectedPost.category)?.label}
                   </span>
-                  <h2 className="mt-1 text-2xl font-black">{selectedPost.title}</h2>
+                  <h2 className="mt-1 break-words text-xl font-black leading-snug [text-wrap:balance] sm:text-2xl">
+                    {selectedPost.title}
+                  </h2>
                   <p className="mt-2 text-sm font-semibold text-[#64716D]">
                     {authorLabel(selectedPost)} · {dateLabel(selectedPost.createdAt)}
                   </p>
                 </div>
                 {selectedPost.ownedByMe ? (
-                  <div className="flex">
+                  <div className="flex shrink-0 self-end sm:self-start">
                     <button
                       aria-label="게시글 수정"
                       className="grid size-11 place-items-center rounded-lg hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C]"
@@ -856,7 +923,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                   </div>
                 </div>
               ) : null}
-              <p className="min-h-32 whitespace-pre-wrap py-7 text-[15px] font-medium leading-7">
+              <p className="min-h-32 break-words whitespace-pre-wrap py-6 text-[15px] font-medium leading-7 sm:py-7 [overflow-wrap:anywhere]">
                 {selectedPost.content}
               </p>
               <div className="flex flex-wrap items-center gap-2 border-y border-[#E8E2D6] py-3">
@@ -907,7 +974,9 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                         reportDropdownOpen && 'border-[#B8AF9C] shadow-2xs',
                       )}
                     >
-                      <span>{reportReasons.find((r) => r.id === reportReason)?.label || '사유 선택'}</span>
+                      <span>
+                        {reportReasons.find((r) => r.id === reportReason)?.label || '사유 선택'}
+                      </span>
                       <ChevronDown
                         className={cn(
                           'size-4 text-slate-500 transition-transform duration-200',
@@ -975,7 +1044,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                       댓글 내용
                     </label>
                     <input
-                      className="h-12 min-w-0 flex-1 rounded-xl border border-[#D8D1C2] bg-white px-4 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#B8AF9C] transition-all"
+                      className="h-12 min-w-0 flex-1 rounded-xl border border-[#D8D1C2] bg-white px-4 text-sm font-medium text-[#17212B] transition-colors placeholder:text-slate-400 focus:border-[#B8AF9C] focus:outline-none"
                       id="community-comment"
                       maxLength={500}
                       onChange={(event) => setComment(event.target.value)}
@@ -984,7 +1053,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                     />
                     <button
                       aria-label="댓글 등록"
-                      className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#173F3A] text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-all cursor-pointer"
+                      className="grid size-12 shrink-0 cursor-pointer place-items-center rounded-xl bg-[#F06B4F] text-white transition-colors hover:bg-[#D85A3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2"
                       onClick={() => void saveComment()}
                       type="button"
                     >
@@ -1002,13 +1071,22 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                 )}
                 <div className="mt-4">
                   {commentsLoadedFor !== selectedId ? (
-                    <p className="py-5 text-sm font-semibold text-[#64716D]" role="status">댓글을 불러오는 중입니다.</p>
+                    <p className="py-5 text-sm font-semibold text-[#64716D]" role="status">
+                      댓글을 불러오는 중입니다.
+                    </p>
                   ) : commentsError ? (
                     <div className="py-5 text-sm font-semibold text-[#64716D]" role="alert">
                       <p>{commentsError}</p>
-                      <button className="min-h-11 underline" type="button" onClick={() => {
-                        setCommentsLoadedFor(''); setCommentsReloadVersion((value) => value + 1);
-                      }}>댓글 다시 불러오기</button>
+                      <button
+                        className="min-h-11 underline"
+                        type="button"
+                        onClick={() => {
+                          setCommentsLoadedFor('');
+                          setCommentsReloadVersion((value) => value + 1);
+                        }}
+                      >
+                        댓글 다시 불러오기
+                      </button>
                     </div>
                   ) : comments.length === 0 ? (
                     <p className="py-5 text-sm font-semibold text-[#64716D]">
@@ -1020,14 +1098,14 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                       const isReplying = replyingToCommentId === root.id;
                       return (
                         <article className="border-t border-[#E8E2D6] py-4" key={root.id}>
-                          <div className="flex items-start justify-between">
-                            <div>
+                          <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                            <div className="min-w-0">
                               <strong className="text-sm">{authorLabel(root)}</strong>
                               <span className="ml-2 text-xs text-[#64716D]">
                                 {dateLabel(root.createdAt)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex shrink-0 items-center gap-1 self-end sm:self-start">
                               <button
                                 className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
                                 onClick={() => startReply(root)}
@@ -1087,20 +1165,24 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                               </div>
                             </div>
                           ) : (
-                            <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#17212B]">{root.content}</p>
+                            <p className="mt-1 break-words whitespace-pre-wrap text-sm leading-6 text-[#17212B] [overflow-wrap:anywhere]">
+                              {root.content}
+                            </p>
                           )}
 
                           {replies.length > 0 ? (
-                            <div className="mt-3 space-y-2.5 border-l-2 border-[#D8D1C2] pl-3.5 sm:pl-4 sm:ml-2">
+                            <div className="mt-3 space-y-2.5 border-l-2 border-[#D8D1C2] pl-2.5 sm:ml-2 sm:pl-4">
                               {replies.map((reply) => (
-                                <div
-                                  key={reply.id}
-                                  className="rounded-xl bg-[#F7F5F0] p-3 text-sm"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <CornerDownRight aria-hidden="true" className="size-3.5 text-[#53645F] shrink-0" />
-                                      <strong className="text-xs font-bold sm:text-sm">{authorLabel(reply)}</strong>
+                                <div key={reply.id} className="rounded-xl bg-[#F7F5F0] p-3 text-sm">
+                                  <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                      <CornerDownRight
+                                        aria-hidden="true"
+                                        className="size-3.5 text-[#53645F] shrink-0"
+                                      />
+                                      <strong className="text-xs font-bold sm:text-sm">
+                                        {authorLabel(reply)}
+                                      </strong>
                                       {reply.replyToAuthorName ? (
                                         <span className="rounded bg-[#E6F0ED] px-1.5 py-0.5 text-xs font-bold text-[#173F3A]">
                                           @{reply.replyToAuthorName}
@@ -1110,9 +1192,9 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                         {dateLabel(reply.createdAt)}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex shrink-0 items-center gap-1 self-end sm:self-start">
                                       <button
-                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] sm:min-h-9"
                                         onClick={() => startReply(root, reply)}
                                         type="button"
                                       >
@@ -1122,14 +1204,14 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                       {reply.ownedByMe ? (
                                         <>
                                           <button
-                                            className="min-h-9 rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] cursor-pointer"
+                                            className="min-h-11 cursor-pointer rounded-lg px-2 text-xs font-bold text-[#173F3A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] sm:min-h-9"
                                             onClick={() => startEditComment(reply)}
                                             type="button"
                                           >
                                             수정
                                           </button>
                                           <button
-                                            className="min-h-9 rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 cursor-pointer"
+                                            className="min-h-11 cursor-pointer rounded-lg px-2 text-xs font-bold text-rose-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 sm:min-h-9"
                                             onClick={() => void removeComment(reply.id)}
                                             type="button"
                                           >
@@ -1142,14 +1224,19 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
                                   {editingCommentId === reply.id ? (
                                     <div className="mt-2 space-y-2">
-                                      <label className="sr-only" htmlFor={`edit-comment-${reply.id}`}>
+                                      <label
+                                        className="sr-only"
+                                        htmlFor={`edit-comment-${reply.id}`}
+                                      >
                                         답글 수정 내용
                                       </label>
                                       <input
                                         className="h-10 w-full rounded-xl border border-[#D8D1C2] bg-white px-3 text-sm font-medium text-[#17212B] focus:outline-none focus:border-[#B8AF9C] transition-all"
                                         id={`edit-comment-${reply.id}`}
                                         maxLength={500}
-                                        onChange={(event) => setEditingCommentContent(event.target.value)}
+                                        onChange={(event) =>
+                                          setEditingCommentContent(event.target.value)
+                                        }
                                         value={editingCommentContent}
                                       />
                                       <div className="flex gap-2">
@@ -1171,7 +1258,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                       </div>
                                     </div>
                                   ) : (
-                                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-[#17212B]">
+                                    <p className="mt-1.5 break-words whitespace-pre-wrap text-sm leading-6 text-[#17212B] [overflow-wrap:anywhere]">
                                       {reply.content}
                                     </p>
                                   )}
@@ -1181,7 +1268,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                           ) : null}
 
                           {isReplying ? (
-                            <div className="mt-3 border-l-2 border-[#173F3A] pl-3.5 sm:pl-4 sm:ml-2">
+                            <div className="mt-3 border-l-2 border-[#173F3A] pl-2.5 sm:ml-2 sm:pl-4">
                               <div className="rounded-xl bg-[#EBF2F0] p-3">
                                 <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#173F3A]">
                                   <span>@{replyTargetAuthor} 님에게 답글 작성</span>
@@ -1193,13 +1280,13 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                     취소
                                   </button>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col gap-2 sm:flex-row">
                                   <label className="sr-only" htmlFor={`reply-input-${root.id}`}>
                                     답글 내용
                                   </label>
                                   <input
                                     autoFocus
-                                    className="h-11 min-w-0 flex-1 rounded-xl border border-[#C9D6D2] bg-white px-3.5 text-sm font-medium text-[#17212B] placeholder:text-slate-400 focus:outline-none focus:border-[#173F3A] transition-all"
+                                    className="h-11 min-w-0 flex-1 rounded-xl border border-[#C9D6D2] bg-white px-3.5 text-sm font-medium text-[#17212B] transition-colors placeholder:text-slate-400 focus:border-[#173F3A] focus:outline-none"
                                     id={`reply-input-${root.id}`}
                                     maxLength={500}
                                     onChange={(event) => setReplyContent(event.target.value)}
@@ -1214,7 +1301,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
                                   />
                                   <button
                                     aria-label="답글 등록"
-                                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-xl bg-[#173F3A] px-3.5 text-xs font-bold text-white hover:bg-[#21544E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-50"
+                                    className="inline-flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-1 rounded-xl bg-[#F06B4F] px-3.5 text-xs font-bold text-white transition-colors hover:bg-[#D85A3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 disabled:opacity-50 sm:w-auto"
                                     disabled={saving}
                                     onClick={() => void saveReply(root.id)}
                                     type="button"
@@ -1236,6 +1323,6 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
           )}
         </section>
       </div>
-    </>
+    </section>
   );
 }

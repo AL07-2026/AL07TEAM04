@@ -187,6 +187,7 @@ export function SignupPage() {
                 onClick={() => void handleVerifyComplete()}
                 role={selectedRole}
                 disabled={isSubmitting}
+                tone="brand"
               >
                 {isSubmitting ? '인증 확인 중...' : '이메일 인증 완료 및 다음 단계 →'}
               </ActionButton>
@@ -306,7 +307,7 @@ export function SignupPage() {
                 {message}
               </p>
             ) : null}
-            <ActionButton type="submit" role={selectedRole} disabled={isSubmitting}>
+            <ActionButton type="submit" role={selectedRole} disabled={isSubmitting} tone="brand">
               {isSubmitting ? '인증 메일 발송 중...' : '인증 메일 받기 및 다음 단계 →'}
             </ActionButton>
 
