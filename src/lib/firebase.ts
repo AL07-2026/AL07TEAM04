@@ -16,23 +16,14 @@ const configuredAuthDomain = readPublicEnv(
   `${firebaseProjectId}.firebaseapp.com`,
 );
 
-function resolveAuthDomain() {
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname === `${firebaseProjectId}.web.app`
-  ) {
-    // 운영 Hosting에서는 redirect helper도 동일 출처로 사용해 모바일 저장소 차단을 피한다.
-    return window.location.hostname;
-  }
-  return configuredAuthDomain;
-}
-
 const firebaseConfig = {
   apiKey: readPublicEnv(
     import.meta.env.VITE_FIREBASE_API_KEY,
     'AIzaSyDgcna1VHRdEj8e6QBD15G_7j__kbM2qzk',
   ),
-  authDomain: resolveAuthDomain(),
+  // Google OAuth에 등록된 Firebase 관리 콜백을 유지한다.
+  // web.app 도메인을 사용하려면 Google OAuth에 /__/auth/handler를 먼저 추가해야 한다.
+  authDomain: configuredAuthDomain,
   projectId: firebaseProjectId,
   storageBucket: readPublicEnv(
     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
