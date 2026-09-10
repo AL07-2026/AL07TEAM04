@@ -768,12 +768,12 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
 
       <nav
         aria-label="커뮤니티 게시판"
-        className="-mx-4 mt-5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2 overscroll-x-contain [scrollbar-width:none] sm:mx-0 sm:mt-6 sm:px-0 [&::-webkit-scrollbar]:hidden"
+        className="mt-5 flex justify-between gap-1.5 overflow-x-auto pb-2 overscroll-x-contain [scrollbar-width:none] sm:mt-6 sm:justify-start sm:gap-2 [&::-webkit-scrollbar]:hidden"
       >
         {categories.map((item) => (
           <button
             aria-current={category === item.id ? 'page' : undefined}
-            className={`min-h-11 shrink-0 snap-start rounded-xl px-4 text-sm font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] ${category === item.id ? 'bg-[#173F3A] text-white shadow-2xs' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
+            className={`min-h-11 shrink-0 cursor-pointer rounded-xl px-3 text-sm font-extrabold transition-[background-color,color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.97] sm:px-4 ${category === item.id ? 'bg-[#173F3A] text-white shadow-2xs' : 'bg-white text-[#53645F] hover:bg-[#E6F0ED]'}`}
             key={item.id}
             onClick={() => chooseCategory(item.id)}
             type="button"
