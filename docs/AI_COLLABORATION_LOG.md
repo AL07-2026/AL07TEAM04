@@ -31,12 +31,13 @@
 - **검증 & 결과**:
   - 병합 전 `npm run validate` 통과: 테스트 33개 파일 / 302개 테스트 통과, Vite 프로덕션 빌드 성공
   - 최신 `origin/develop` 병합 후 `npm run validate` 통과: 테스트 68개 파일 / 688개 테스트 통과, Vite 프로덕션 빌드 성공
+  - Firebase 배포 완료: Hosting `https://al07team04-bdfcd.web.app`, API health HTTP 200 확인
 - **변경 파일**:
   - [MODIFY] `src/app/JobDatabasePage.tsx`
   - [MODIFY] `src/app/JobDatabasePage.test.ts`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **미해결/전달 사항**:
-  - 검증된 병합 결과를 `origin/develop` 및 Firebase 배포에 반영 예정.
+  - 없음.
 
 ### [2026-09-10] 커뮤니티 반응형 UX·배너 높이·인증 CTA·채용 문구 정리
 - **작업자/브랜치**: Codex, `leedongwook`. 운영 화면과 Functions·Firestore는 건드리지 않고 프런트엔드 표시와 상호작용만 정리.
