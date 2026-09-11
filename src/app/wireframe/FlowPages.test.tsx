@@ -62,10 +62,12 @@ describe('HomeRecommendationRow narrow-width fallback', () => {
       'md:border-0',
     );
     expect(screen.getByText('월 750만 원 ~ 1,100만 원')).toHaveClass(
-      'max-w-[60%]',
+      'max-w-[72%]',
       'shrink-0',
-      'truncate',
+      'break-keep',
+      'text-right',
       'md:max-w-none',
+      'md:whitespace-nowrap',
     );
   });
 
@@ -81,6 +83,11 @@ describe('HomeRecommendationRow narrow-width fallback', () => {
     );
     expect(screen.getByRole('heading', { name: '시니어 브랜드 프로젝트 리드' })).toHaveClass(
       'break-words',
+    );
+    expect(screen.getByText('월 750만 원 ~ 1,100만 원')).toHaveClass(
+      'max-w-[72%]',
+      'break-keep',
+      'text-right',
     );
   });
 });

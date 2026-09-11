@@ -769,7 +769,7 @@ export function HomeRecommendationRow({
           <span className="truncate">
             {analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}
           </span>
-          <span className="shrink-0 text-[#F06B4F] font-black text-[13px]">
+          <span className="max-w-[72%] shrink-0 break-keep text-right text-[13px] font-black leading-tight text-[#F06B4F]">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
         </div>
@@ -828,7 +828,7 @@ export function HomeRecommendationRow({
           <span className="min-w-0 truncate">
             {analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}
           </span>
-          <span className="max-w-[60%] shrink-0 truncate text-[13.5px] font-black text-[#F06B4F] md:max-w-none">
+          <span className="max-w-[72%] shrink-0 break-keep text-right text-[13.5px] font-black leading-tight text-[#F06B4F] md:max-w-none md:whitespace-nowrap">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
         </div>
