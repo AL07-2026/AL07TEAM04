@@ -13,11 +13,11 @@ vi.mock('@/services/premiumCompanyService', () => ({
 let reducedMotion = false;
 let motionListener: ((event: MediaQueryListEvent) => void) | undefined;
 
-async function renderBanner() {
+async function renderBanner(isCompact = true) {
   await act(async () => {
     render(
       <MemoryRouter>
-        <PremiumCompanyBanner isCompact />
+        <PremiumCompanyBanner isCompact={isCompact} />
       </MemoryRouter>,
     );
     await Promise.resolve();
@@ -179,7 +179,7 @@ describe('PremiumCompanyBanner', () => {
     expect(listPremiumCompaniesWithFallback).toHaveBeenCalledWith(4);
   });
 
-  it('모바일은 세로 공간을 유지하고 웹은 프로젝트 카드와 같은 16:10 사진 비율을 사용한다', async () => {
+  it('모바일은 세로 공간을 유지하고 웹은 16:10보다 높이가 5% 낮은 사진 비율을 사용한다', async () => {
     await renderBanner();
     const compactImage = screen.getByRole('img', { name: '담은생활연구소 업무 현장' });
     expect(compactImage).toHaveClass('aspect-[400/297]', 'object-center');
@@ -197,7 +197,7 @@ describe('PremiumCompanyBanner', () => {
     });
     expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
       'aspect-[400/297]',
-      'sm:aspect-[16/10]',
+      'sm:aspect-[32/19]',
       'object-center',
     );
   });
@@ -215,19 +215,26 @@ describe('PremiumCompanyBanner', () => {
 
     expect(glassPanel).toHaveClass(
       '-mt-24',
-      'bg-[#FFFEFC]/77',
+      'bg-[#FFFEFC]/62',
       'backdrop-blur-[2px]',
-      'supports-[backdrop-filter]:bg-[#FFFEFC]/67',
+      'supports-[backdrop-filter]:bg-[#FFFEFC]/52',
     );
-    expect(glassPanel).not.toHaveClass('mb-3', 'sm:mb-4');
     expect(primaryLine).toHaveClass('flex', 'items-center');
-    expect(activeBanner.getByText('프리미엄 기업')).toHaveClass('text-[#6F281B]');
-    expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass(
-      'truncate',
-    );
+    expect(activeBanner.getByText('프리미엄 기업')).toHaveClass('text-[#2F0C08]');
+    expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass('truncate');
     expect(activeBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass('line-clamp-1');
     expect(linkIndicator).toHaveClass('bottom-5');
     expect(controls).toHaveClass('absolute', 'bottom-5', 'z-20');
     expect(banner).toContainElement(glassPanel);
+
+    cleanup();
+    await renderBanner(false);
+
+    const desktopBanner = within(activeCompany('담은생활연구소'));
+    const desktopGlassPanel = desktopBanner.getByTestId('premium-company-glass-panel');
+    expect(desktopGlassPanel).toHaveClass('sm:mx-4', 'sm:-mt-28', 'sm:mb-4', 'sm:min-h-24');
+    expect(screen.getByRole('button', { name: '배너 일시정지' }).parentElement).toHaveClass(
+      'sm:bottom-[2.625rem]',
+    );
   });
 });

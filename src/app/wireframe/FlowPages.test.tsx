@@ -1,7 +1,89 @@
 import { render, screen } from '@testing-library/react';
 
-import { ExperienceSummaryView } from './FlowPages';
+import type { JobPosting } from '@/data/jobPostings';
+
+import { ExperienceSummaryView, HomeRecommendationRow } from './FlowPages';
 import { ViewportProvider } from './Ui';
+
+const narrowRecommendation: JobPosting = {
+  id: 'responsive-recommendation',
+  companyName: '스튜디오 크리에이티브',
+  industry: '디자인',
+  companySize: '중소기업',
+  title: '시니어 브랜드 프로젝트 리드',
+  category: 'design-brand',
+  seniority: 'lead',
+  employmentType: 'project',
+  hiringStage: 'open',
+  workType: 'hybrid',
+  location: '서울 강남구',
+  experienceYears: '10년 이상',
+  salaryRange: '월 750만 원 ~ 1,100만 원',
+  deadline: '2026-10-31',
+  projectDuration: '6개월',
+  collaborationTargets: [],
+  coreResponsibilities: [],
+  qualifications: [],
+  benefits: [],
+  problemStatement: '',
+  projectGoal: '',
+  successMetrics: [],
+  requiredSkills: [],
+  preferredSkills: [],
+  matchingSignals: [],
+  recommendedTalentType: '',
+  matchingScoreCriteria: [],
+  interviewFocus: [],
+  seniorFitScore: 97,
+  postedAt: '2026-09-12',
+};
+
+describe('HomeRecommendationRow narrow-width fallback', () => {
+  it('stacks the desktop-mode row below the small breakpoint instead of squeezing columns', () => {
+    render(
+      <HomeRecommendationRow
+        isMobile={false}
+        job={narrowRecommendation}
+        onClick={() => {}}
+        rank={1}
+      />,
+    );
+
+    expect(screen.getByTestId('home-recommendation-row-desktop')).toHaveClass(
+      'flex-col',
+      'items-stretch',
+      'md:flex-row',
+      'md:items-center',
+    );
+    expect(screen.getByTestId('home-recommendation-row-summary')).toHaveClass(
+      'w-full',
+      'border-t',
+      'md:w-auto',
+      'md:border-0',
+    );
+    expect(screen.getByText('월 750만 원 ~ 1,100만 원')).toHaveClass(
+      'max-w-[60%]',
+      'shrink-0',
+      'truncate',
+      'md:max-w-none',
+    );
+  });
+
+  it('keeps the touch-mobile card clipped to its own width and allows long titles to wrap', () => {
+    render(
+      <HomeRecommendationRow isMobile job={narrowRecommendation} onClick={() => {}} rank={1} />,
+    );
+
+    expect(screen.getByTestId('home-recommendation-row-mobile')).toHaveClass(
+      'w-full',
+      'min-w-0',
+      'overflow-hidden',
+    );
+    expect(screen.getByRole('heading', { name: '시니어 브랜드 프로젝트 리드' })).toHaveClass(
+      'break-words',
+    );
+  });
+});
 
 describe('ExperienceSummaryView responsive ownership', () => {
   const snapshot = {

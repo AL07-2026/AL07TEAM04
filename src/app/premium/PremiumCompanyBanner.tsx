@@ -9,7 +9,7 @@ import { listPremiumCompaniesWithFallback } from '@/services/premiumCompanyServi
 const ROTATION_INTERVAL_MS = 6_500;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const controlClassName =
-  'grid size-11 shrink-0 place-items-center rounded-xl text-[#173F3A] transition-colors hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100';
+  'grid size-11 shrink-0 place-items-center rounded-xl text-[#061C1A] transition-colors hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100';
 
 function CompanyBannerImage({
   company,
@@ -23,9 +23,7 @@ function CompanyBannerImage({
   const [failed, setFailed] = useState(false);
   const imageClassName = cn(
     'w-full bg-[#EAF2EF] object-cover object-center',
-    compact
-      ? 'aspect-[400/297]'
-      : 'aspect-[400/297] sm:aspect-[16/10]',
+    compact ? 'aspect-[400/297]' : 'aspect-[400/297] sm:aspect-[32/19]',
   );
 
   return failed ? (
@@ -159,9 +157,8 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'relative z-10 mx-3 -mt-24 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/77 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/67',
-                  !isCompact &&
-                    'sm:mx-4 sm:-mt-24 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
+                  'relative z-10 mx-3 -mt-24 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/62 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
+                  !isCompact && 'sm:mx-4 sm:-mt-28 sm:mb-4 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
                 <div className="min-w-0">
@@ -170,18 +167,18 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                     data-testid="premium-company-primary-line"
                   >
                     <div className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
-                      <span className="text-[#6F281B]">프리미엄 기업</span>
+                      <span className="text-[#2F0C08]">프리미엄 기업</span>
                       {company.isSample ? (
-                        <span className={cn('text-[#173F3A]', isCompact && 'sr-only')}>
+                        <span className={cn('text-[#061C1A]', isCompact && 'sr-only')}>
                           샘플 노출
                         </span>
                       ) : null}
                     </div>
-                    <h3 className="min-w-0 truncate text-lg font-extrabold leading-snug text-[#173F3A] sm:text-xl">
+                    <h3 className="min-w-0 truncate text-lg font-extrabold leading-snug text-[#061C1A] sm:text-xl">
                       {company.companyName}
                     </h3>
                   </div>
-                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-[#173F3A]">
+                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-[#0F1917]">
                     {company.headline}
                   </p>
                 </div>
@@ -189,7 +186,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <span
                 aria-hidden="true"
                 className={cn(
-                  'absolute right-[13.5rem] bottom-5 z-20 grid size-11 place-items-center text-[#173F3A]',
+                  'absolute right-[13.5rem] bottom-5 z-20 grid size-11 place-items-center text-[#061C1A]',
                   !isCompact && 'sm:right-[14.25rem] sm:bottom-[2.625rem]',
                 )}
                 data-testid="premium-company-link-indicator"
@@ -227,9 +224,9 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         </button>
         <span
           aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`}
-          className="min-w-12 text-center text-sm font-semibold tabular-nums text-[#354B46]"
+          className="min-w-12 text-center text-sm font-semibold tabular-nums text-[#0F1917]"
         >
-          <span className="font-extrabold text-[#173F3A]">{currentIndex + 1}</span> /{' '}
+          <span className="font-extrabold text-[#061C1A]">{currentIndex + 1}</span> /{' '}
           {companies.length}
         </span>
         <button

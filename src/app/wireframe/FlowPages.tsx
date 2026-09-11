@@ -689,7 +689,7 @@ export function ProcessOverviewGraphicCard() {
   );
 }
 
-function HomeRecommendationRow({
+export function HomeRecommendationRow({
   isMobile = false,
   job,
   onClick,
@@ -707,8 +707,9 @@ function HomeRecommendationRow({
   if (isMobile) {
     return (
       <article
+        data-testid="home-recommendation-row-mobile"
         onClick={onClick}
-        className="group relative flex flex-col gap-2.5 rounded-2xl p-4 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer w-full min-w-0"
+        className="group relative flex w-full min-w-0 flex-col gap-2.5 overflow-hidden rounded-2xl bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
       >
         {/* Top: Rank + Company Name + Badges + Score */}
         <div className="flex items-center justify-between gap-2 w-full min-w-0">
@@ -749,7 +750,7 @@ function HomeRecommendationRow({
 
         {/* Middle: Title & AI Challenge */}
         <div className="flex flex-col gap-1 w-full min-w-0">
-          <h4 className="text-[15px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] break-keep">
+          <h4 className="break-words text-[15px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A]">
             {analyzed.keyJobFacts.roleTitle}
           </h4>
           <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-slate-600 truncate">
@@ -778,11 +779,12 @@ function HomeRecommendationRow({
 
   return (
     <article
+      data-testid="home-recommendation-row-desktop"
       onClick={onClick}
-      className="group relative flex items-center justify-between gap-4 rounded-2xl px-5 py-4 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer w-full min-w-0"
+      className="group relative flex w-full min-w-0 flex-col items-stretch gap-2.5 overflow-hidden rounded-2xl bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer md:flex-row md:items-center md:justify-between md:gap-4 md:px-5 md:py-4"
     >
       {/* Left: Rank + Company + Title + AI 1-line Challenge */}
-      <div className="flex items-start gap-3.5 min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-start gap-2.5 md:gap-3.5">
         {/* Rank Number */}
         <span className="flex size-6.5 shrink-0 items-center justify-center rounded-lg bg-[#FAF7F2] text-[12px] font-black text-[#173F3A] group-hover:bg-[#173F3A] group-hover:text-white transition-colors mt-0.5">
           {rank}
@@ -790,7 +792,7 @@ function HomeRecommendationRow({
 
         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
           {/* Company & Category */}
-          <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-bold text-slate-500">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11.5px] font-bold text-slate-500">
             <span className="font-extrabold text-[#173F3A]">{job.companyName}</span>
             <span className="text-slate-300">·</span>
             <span>{analyzed.keyJobFacts.workTypeLabel}</span>
@@ -799,12 +801,12 @@ function HomeRecommendationRow({
           </div>
 
           {/* Position Title */}
-          <h4 className="text-[16px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] truncate">
+          <h4 className="line-clamp-2 text-[16px] font-black leading-snug text-[#17212B] transition-colors group-hover:text-[#173F3A] md:line-clamp-1">
             {analyzed.keyJobFacts.roleTitle}
           </h4>
 
           {/* AI 1-line Challenge */}
-          <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-600 truncate mt-0.5">
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[12px] font-medium text-slate-600">
             <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#F06B4F]">
               <Zap aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
               해결과제
@@ -817,13 +819,16 @@ function HomeRecommendationRow({
       </div>
 
       {/* Right: Conditions, Salary, Fit Score Pill, Arrow */}
-      <div className="flex items-center justify-end gap-4 shrink-0">
+      <div
+        data-testid="home-recommendation-row-summary"
+        className="flex w-full min-w-0 items-center justify-between gap-2 border-t border-[#F0ECE1]/60 pt-2 md:w-auto md:shrink-0 md:justify-end md:gap-4 md:border-0 md:pt-0"
+      >
         {/* Location & Experience & Salary */}
-        <div className="flex flex-col items-end text-[11.5px] text-slate-500 font-bold">
-          <span>
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-[11.5px] font-bold text-slate-500 md:flex-none md:flex-col md:items-end md:gap-0">
+          <span className="min-w-0 truncate">
             {analyzed.keyJobFacts.locationLabel} · {analyzed.keyJobFacts.experienceRequired}
           </span>
-          <span className="text-[#F06B4F] font-black text-[13.5px]">
+          <span className="max-w-[60%] shrink-0 truncate text-[13.5px] font-black text-[#F06B4F] md:max-w-none">
             {analyzed.keyJobFacts.salaryLabel}
           </span>
         </div>
@@ -847,7 +852,7 @@ function HomeRecommendationRow({
           </span>
         ) : null}
 
-        <ArrowRight className="size-4 text-slate-300 group-hover:text-[#173F3A] group-hover:translate-x-0.5 transition-all shrink-0 hidden sm:block" />
+        <ArrowRight className="hidden size-4 shrink-0 text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-[#173F3A] md:block" />
       </div>
     </article>
   );
