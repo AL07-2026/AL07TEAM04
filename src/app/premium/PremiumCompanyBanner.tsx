@@ -23,7 +23,7 @@ function CompanyBannerImage({
   const [failed, setFailed] = useState(false);
   const imageClassName = cn(
     'w-full bg-[#EAF2EF] object-cover object-center',
-    compact ? 'aspect-[400/297]' : 'aspect-[400/297] sm:aspect-[32/19]',
+    compact ? 'aspect-[400/297]' : 'aspect-[400/297] sm:aspect-[1600/893]',
   );
 
   return failed ? (

@@ -179,7 +179,7 @@ describe('PremiumCompanyBanner', () => {
     expect(listPremiumCompaniesWithFallback).toHaveBeenCalledWith(4);
   });
 
-  it('모바일은 세로 공간을 유지하고 웹은 16:10보다 높이가 5% 낮은 사진 비율을 사용한다', async () => {
+  it('모바일 비율은 유지하고 웹 배너는 직전 높이에서 위아래 3%씩 줄인다', async () => {
     await renderBanner();
     const compactImage = screen.getByRole('img', { name: '담은생활연구소 업무 현장' });
     expect(compactImage).toHaveClass('aspect-[400/297]', 'object-center');
@@ -197,7 +197,7 @@ describe('PremiumCompanyBanner', () => {
     });
     expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
       'aspect-[400/297]',
-      'sm:aspect-[32/19]',
+      'sm:aspect-[1600/893]',
       'object-center',
     );
   });
