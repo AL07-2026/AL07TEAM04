@@ -385,6 +385,32 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
     expect(screen.queryByText(`${posting.seniorFitScore}점`)).toBeNull();
   });
 
+  it('선택 직종과 분류가 달라도 시니어 프로젝트 카드에는 점수를 표시한다', () => {
+    const posting = {
+      ...companyProject,
+      category: 'hr-strategy' as const,
+      industry: 'HR Data',
+      occupationCategory: 'hr-labor-hrd' as const,
+      occupationClassificationStatus: 'ambiguous' as const,
+      seniorFitScore: 96,
+      title: '시니어 데이터 모델러',
+    };
+
+    render(
+      createElement(PostingCard, {
+        activePrimaryCategory: 'it-data',
+        posting,
+        role: 'senior',
+        selected: false,
+        useServerScore: true,
+        onSelect: vi.fn(),
+      }),
+    );
+
+    expect(screen.getByText('96점')).toBeTruthy();
+    expect(screen.queryByText('검증 공고')).toBeNull();
+  });
+
   it('선택된 카드에만 현재 항목 semantic과 inset accent를 적용하고 제목 button의 focus ring을 유지한다', () => {
     const { container, rerender } = render(
       createElement(PostingCard, {
@@ -436,6 +462,8 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
       }),
     );
 
+    expect(screen.getByText('90점')).toBeTruthy();
+    expect(screen.queryByText('직종 탐색')).toBeNull();
     expect(screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.')).toBeTruthy();
   });
 });

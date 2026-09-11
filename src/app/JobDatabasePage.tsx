@@ -593,39 +593,6 @@ export function PostingWorkSummaryContent({ summary }: { summary: PostingWorkSum
   );
 }
 
-function shouldShowScoreBadge(
-  posting: JobPosting,
-  profile?: SeniorProfileData | null,
-  activePrimaryCategory?: string | null,
-): boolean {
-  if (!profile) return false;
-  const preferredPreferences = getProfilePreferredPreferences(profile);
-  const preferredCategories = getProfilePreferredCategories(profile);
-  const isDirectOccupationMatch =
-    preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE) &&
-    doesPostingMatchDesiredOccupationText(posting, profile.desiredOccupationText);
-  if (posting.occupationClassificationStatus === 'ambiguous' && !isDirectOccupationMatch) {
-    return false;
-  }
-  if (preferredPreferences.length === 0) return false;
-
-  const postingCategory = getPostingOccupationCategory(posting);
-  const isPostingPreferred =
-    preferredCategories.includes(postingCategory) || isDirectOccupationMatch;
-
-  const isNonPreferredFilterActive =
-    activePrimaryCategory &&
-    activePrimaryCategory !== all &&
-    activePrimaryCategory !== customOccupationMatch &&
-    !preferredCategories.includes(activePrimaryCategory as unknown as OccupationCategory);
-
-  if (isNonPreferredFilterActive) {
-    return false;
-  }
-
-  return isPostingPreferred;
-}
-
 export function PostingCard({
   activePrimaryCategory,
   experienceCard,
@@ -660,7 +627,7 @@ export function PostingCard({
         ? posting.seniorFitScore || 75
         : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
-  const showScore = role === 'senior' && shouldShowScoreBadge(posting, profile, activePrimaryCategory);
+  const showScore = role === 'senior' && Number.isFinite(displayScore);
 
   const cleanPositionTitle = extractCleanPositionTitle(posting.title, posting.companyName);
   const simpleLocation = formatSimpleLocation(posting.location);
@@ -925,7 +892,7 @@ export function DetailPanel({
         ? posting.seniorFitScore || 75
         : posting.seniorFitScore || 75;
   const fitTone = getFitScoreTone(displayScore);
-  const showScore = shouldShowScoreBadge(posting, profile, activePrimaryCategory);
+  const showScore = role === 'senior' && Number.isFinite(displayScore);
 
   const analyzed = useMemo(() => analyzeJobPostingForDetail(posting), [posting]);
 

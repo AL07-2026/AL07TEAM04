@@ -16,6 +16,29 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-11] 프로젝트 목록/상세 점수 배지 일괄 표시 수정
+- **작업자**: Codex (`develop` 브랜치)
+- **작업 전 확인**:
+  - 인재 홈에서는 같은 프로젝트가 개인화 점수로 표시되지만, 프로젝트 목록/상세에서는 `검증 공고`/`직종 탐색` 배지로 표시되는 현상 확인.
+  - 최근 작업 기록에서 2026-09-03 “추천 프로젝트 점수 표시 기준 통일” 변경 내역 확인.
+- **작업 내용**:
+  1. **점수 표시 정책 통일**:
+     - 프로젝트 목록 카드와 상세 패널에서 직종 분류/희망 직종 매칭 여부로 점수 배지를 숨기던 `shouldShowScoreBadge` 조건을 제거.
+     - 시니어 화면에서는 계산된 `displayScore`가 유효하면 홈과 동일하게 점수 배지를 표시하도록 수정.
+  2. **회귀 테스트 추가**:
+     - 선택 직종과 공고 분류가 달라 `검증 공고`/`직종 탐색`으로 보이던 케이스에서도 점수가 표시되는지 테스트 추가.
+- **검증 & 결과**:
+  - `npm run typecheck` 통과
+  - `npx vitest run src/app/JobDatabasePage.test.ts` 통과
+  - `npm run lint` 통과
+  - `npm run validate` 통과: 테스트 33개 파일 / 302개 테스트 통과, Vite 프로덕션 빌드 성공
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+- **미해결/전달 사항**:
+  - 전체 검증 후 필요 시 `origin/develop` 및 배포 반영 가능.
+
 ### [2026-09-03] 인재 데이터 표시 정합성 수정 Firebase 배포 완료
 - **작업자**: Codex (`develop` 브랜치)
 - **작업 전 확인**:
