@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -198,5 +198,27 @@ describe('PremiumCompanyBanner', () => {
       'aspect-[160/99]',
       'sm:h-[clamp(275px,35.2vw,418px)]',
     );
+  });
+
+  it('하단 정보와 조작 영역을 사진 위 반투명 글래스 패널로 표시한다', async () => {
+    await renderBanner();
+
+    const banner = screen.getByRole('region', { name: '프리미엄 기업 소개' });
+    const glassPanel = within(activeCompany('담은생활연구소')).getByTestId(
+      'premium-company-glass-panel',
+    );
+
+    expect(glassPanel).toHaveClass(
+      '-mt-24',
+      'bg-[#FFFEFC]/92',
+      'backdrop-blur-sm',
+      'supports-[backdrop-filter]:bg-[#FFFEFC]/82',
+    );
+    expect(screen.getByRole('button', { name: '배너 일시정지' }).parentElement).toHaveClass(
+      'absolute',
+      'bottom-5',
+      'z-20',
+    );
+    expect(banner).toContainElement(glassPanel);
   });
 });
