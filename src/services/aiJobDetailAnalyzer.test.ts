@@ -55,7 +55,7 @@ describe('aiJobDetailAnalyzer', () => {
     expect(result.talentPersona.interviewPrepFocus.length).toBeGreaterThanOrEqual(2);
 
     expect(result.keyJobFacts.roleTitle).toBeTruthy();
-    expect(result.keyJobFacts.salaryLabel).toContain('800만');
+    expect(result.keyJobFacts.salaryLabel).toBe('월 800만 원 ~ 1,200만 원');
     expect(result.keyJobFacts.locationLabel).toContain('서울 영등포구');
 
     expect(result.structuredDuties.length).toBeGreaterThan(0);
@@ -78,5 +78,17 @@ describe('aiJobDetailAnalyzer', () => {
     expect(result.qualifications).toContain('15년 이상 HR 실무 총괄');
     expect(result.benefits).toContain('원격 자문 지원');
     expect(result.talentPersona.headline).toBe('15년 이상 HR CHRO 출신 시니어');
+  });
+
+  it('홈 추천과 상세에 쓰는 원 단위 연봉 범위를 만 원으로 통일한다', () => {
+    const posting = createMockPosting({
+      salaryRange: '연봉36,000,000원 이상 ~ 40,000,000원 이하, 면접 후 재조정 가능',
+    });
+
+    const result = analyzeJobPostingForDetail(posting);
+
+    expect(result.keyJobFacts.salaryLabel).toBe(
+      '연 3,600만 원 이상 ~ 4,000만 원 이하, 면접 후 재조정 가능',
+    );
   });
 });

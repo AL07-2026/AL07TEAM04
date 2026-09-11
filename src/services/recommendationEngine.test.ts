@@ -162,6 +162,29 @@ describe('profile-based recommendations', () => {
     ).toBe(true);
   });
 
+  it('같은 희망 직종 안에서는 자격증과 원하는 근무 형태가 맞는 공고를 더 높게 평가한다', () => {
+    const detailedProfile: SeniorProfileData = {
+      ...profile,
+      certifications: '정보처리기사',
+      desiredWorkType: '시간제·파트타임 (오전/오후)',
+    };
+    const genericPosting = createPosting('generic-full-time', 'dev-engineering', '백엔드 개발자');
+    const matchedPosting = createPosting('matched-part-time', 'dev-engineering', '시간제 백엔드 개발자');
+    matchedPosting.employmentType = 'part-time';
+    matchedPosting.qualifications = ['정보처리기사 자격증'];
+
+    const genericMatch = calculatePersonalizedMatch(genericPosting, detailedProfile);
+    const detailedMatch = calculatePersonalizedMatch(matchedPosting, detailedProfile);
+
+    expect(detailedMatch.personalizedScore).toBeGreaterThan(genericMatch.personalizedScore);
+    expect(detailedMatch.matchReasons).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('정보처리기사'),
+        expect.stringContaining('근무 형태'),
+      ]),
+    );
+  });
+
   it('프로필의 UX/UI·브랜딩 전문 분야가 일치하는 디자인 공고를 먼저 추천한다', () => {
     const designProfile: SeniorProfileData = {
       ...profile,
@@ -197,6 +220,68 @@ describe('profile-based recommendations', () => {
     expect(
       ranked[0]?.matchResult.matchReasons.some((reason) => reason.includes('전문 분야')),
     ).toBe(true);
+  });
+
+  it('대분류만 같은 영상·인테리어 공고에는 UX/UI 경력 고득점을 부여하지 않는다', () => {
+    const designProfile: SeniorProfileData = {
+      ...profile,
+      desiredCategory: 'design',
+      desiredCategory2: 'marketing-pr-research',
+      desiredCategory3: 'planning-strategy',
+      desiredWorkType: '전체 무관 (시간제/계약직/정규직)',
+      experience: '',
+      field: 'UX/UI 및 브랜딩',
+      keySkills: '다수 브랜딩 시각관련 자료 고도화, UX/UI디자인 설계 및 서비스 런칭',
+      period: '12년',
+      solvedExperiences: '다수 브랜딩 시각관련 자료 고도화, UX/UI디자인 설계 및 서비스 런칭',
+    };
+    const uxPosting = createPosting(
+      'ux-ui-director',
+      'design-brand',
+      'UX/UI 디자인 시스템 총괄 디렉터',
+    );
+    uxPosting.industry = '디자인/글로벌 브랜딩';
+    uxPosting.occupationCategory = 'design';
+    uxPosting.requiredSkills = ['UX/UI', '브랜딩', '디자인 시스템'];
+
+    const videoPosting = createPosting(
+      'video-poster-designer',
+      'design-brand',
+      '영화 드라마 광고 포스터 그래픽 영상 디자이너',
+    );
+    videoPosting.industry = '영상 디자인';
+    videoPosting.occupationCategory = 'design';
+    videoPosting.problemStatement =
+      '영화·드라마·광고 영상의 모션그래픽 연출과 시각 콘텐츠를 제작합니다.';
+    videoPosting.coreResponsibilities = [
+      '영화·드라마·OTT 홍보영상 모션그래픽과 VFX·CG를 제작하며 타이틀, 모니터 UI/UX, 자막 효과를 일부 다룹니다.',
+    ];
+    videoPosting.requiredSkills = ['그래픽', '영상 편집'];
+
+    const interiorPosting = createPosting(
+      'interior-designer',
+      'design-brand',
+      '인테리어 디자이너',
+    );
+    interiorPosting.industry = '실내 인테리어';
+    interiorPosting.occupationCategory = 'design';
+    interiorPosting.problemStatement = '인테리어 도면 설계와 현장 시공 품질을 관리합니다.';
+    interiorPosting.requiredSkills = ['CAD', '3D', '공간 설계'];
+
+    const ranked = getProfileMatchedRankedProjects(
+      [videoPosting, interiorPosting, uxPosting],
+      designProfile,
+    );
+    const scores = Object.fromEntries(
+      ranked.map(({ matchResult, posting }) => [posting.id, matchResult.personalizedScore]),
+    );
+
+    expect(ranked[0]?.posting.id).toBe('ux-ui-director');
+    expect(scores).toMatchObject({
+      'interior-designer': 53,
+      'ux-ui-director': 85,
+      'video-poster-designer': 62,
+    });
   });
 
   it('프로필이 명시적으로 제공되지 않아도 시니어 공고 피드를 기본 제공한다', () => {

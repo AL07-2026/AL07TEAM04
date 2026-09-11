@@ -1,15 +1,20 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
   Home,
+  LogIn,
   LogOut,
   Pause,
   Play,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { Field, MobilePage, useViewportMode } from '@/app/wireframe/Ui';
+import { getLoginRequiredMessage } from '@/app/authRequiredNavigation';
+import { isSuperAdminEmail } from '@/lib/adminAccess';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
@@ -141,11 +146,43 @@ export function RollingBanner({
   );
 }
 
+function LoginRequiredToast({ message }: { message: string }) {
+  if (!message) return null;
+
+  return (
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#2E625B] bg-[#173F3A] px-4 py-3 text-white shadow-[0_12px_32px_rgba(23,63,58,0.28)] sm:bottom-auto sm:top-[max(1.5rem,env(safe-area-inset-top))]"
+      role="status"
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/12">
+        <LogIn aria-hidden="true" className="size-[18px]" />
+      </span>
+      <span className="min-w-0">
+        <strong className="block text-[14px] font-extrabold leading-5">
+          로그인이 필요한 서비스입니다
+        </strong>
+        <span className="block text-[13px] font-semibold leading-5 text-white/85">{message}</span>
+      </span>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { mode } = useViewportMode();
-  const { user, signIn, signInWithGoogle, signOut } = useAuth();
+  const {
+    isAdmin,
+    oauthRedirectCompleted,
+    refreshAdminAccess,
+    user,
+    signIn,
+    signInWithGoogle,
+    signOut,
+  } = useAuth();
   const [userSelectedRole, setUserSelectedRole] = useState<'senior' | 'company' | null>(null);
   const roleParam = searchParams.get('role');
   const role: 'senior' | 'company' =
@@ -165,8 +202,33 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const routeLoginRequiredMessage = getLoginRequiredMessage(location.state);
+  const [dismissedLoginNoticeKey, setDismissedLoginNoticeKey] = useState('');
+  const loginRequiredMessage =
+    dismissedLoginNoticeKey === location.key ? '' : routeLoginRequiredMessage;
+
+  useEffect(() => {
+    if (!routeLoginRequiredMessage) return;
+    const noticeLocationKey = location.key;
+    const timer = window.setTimeout(() => setDismissedLoginNoticeKey(noticeLocationKey), 3600);
+    return () => window.clearTimeout(timer);
+  }, [location.key, routeLoginRequiredMessage]);
+
+  useEffect(() => {
+    if (!oauthRedirectCompleted || !user) return;
+
+    const redirectTo = searchParams.get('redirect');
+    if (redirectTo?.startsWith('/') && !redirectTo.startsWith('//')) {
+      void navigate(redirectTo, { replace: true });
+    } else if (isAdmin || isSuperAdminEmail(user.email)) {
+      void navigate('/admin/dashboard', { replace: true });
+    } else {
+      void navigate(user.role === 'company' ? '/company' : '/senior', { replace: true });
+    }
+  }, [isAdmin, navigate, oauthRedirectCompleted, searchParams, user]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -177,11 +239,19 @@ export function LoginPage() {
     }
     setIsSubmitting(true);
     try {
-      const userProfile = await signIn(email, password, role);
-      if (userProfile.role === 'company') {
-        void navigate('/company');
+      const userProfile = await signIn(email, password, role, rememberMe);
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo && redirectTo.startsWith('/')) {
+        void navigate(redirectTo);
       } else {
-        void navigate('/senior');
+        const signedInAdminRole = await refreshAdminAccess();
+        if (signedInAdminRole || isSuperAdminEmail(userProfile.email)) {
+          void navigate('/admin/dashboard');
+        } else if (userProfile.role === 'company') {
+          void navigate('/company');
+        } else {
+          void navigate('/senior');
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -195,11 +265,19 @@ export function LoginPage() {
     setErrorMessage('');
     setIsSubmitting(true);
     try {
-      const userProfile = await signInWithGoogle(role);
-      if (userProfile.role === 'company') {
-        void navigate('/company');
+      const userProfile = await signInWithGoogle(role, rememberMe);
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo && redirectTo.startsWith('/')) {
+        void navigate(redirectTo);
       } else {
-        void navigate('/senior');
+        const signedInAdminRole = await refreshAdminAccess();
+        if (signedInAdminRole || isSuperAdminEmail(userProfile.email)) {
+          void navigate('/admin/dashboard');
+        } else if (userProfile.role === 'company') {
+          void navigate('/company');
+        } else {
+          void navigate('/senior');
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -218,13 +296,12 @@ export function LoginPage() {
 
     return (
       <MobilePage
-        contentClassName={cn(
-          'flex flex-col justify-center items-center min-h-0 flex-1',
-          isMobile ? 'px-4.5 py-6' : 'px-6 py-12 md:px-12',
-        )}
+        contentClassName="flex flex-col justify-center items-center min-h-0 flex-1"
         showBack={false}
+        showProjectLink
         title="로그인 정보"
       >
+        <LoginRequiredToast message={loginRequiredMessage} />
         <div className="flex flex-col gap-5 w-full max-w-md mx-auto my-auto rounded-3xl border border-[#E0D9C8] bg-white p-6 sm:p-8 shadow-sm text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#DDEBE7] text-[#173F3A]">
             <CheckCircle2 className="size-7" />
@@ -232,7 +309,8 @@ export function LoginPage() {
 
           <div className="flex flex-col gap-1.5">
             <span className="inline-flex self-center items-center gap-1 rounded-full bg-[#DDEBE7] px-3 py-1 text-xs font-extrabold text-[#173F3A] border border-[#BBD5CE]">
-              ✓ 로그인 상태 유지 중
+              <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              로그인 상태 유지 중
             </span>
             <h2 className="text-lg sm:text-xl font-extrabold text-[#17212B] pt-1">
               이미 <span className="text-[#F06B4F]">{userRoleLabel}</span>으로 로그인되어 있습니다
@@ -248,8 +326,9 @@ export function LoginPage() {
               onClick={() => void navigate(homeUrl)}
               className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-[#21544E] active:scale-[0.98]"
             >
-              <Home className="size-4.5" />
-              <span>{user.role === 'company' ? '기업 홈으로 이동' : '인재 홈으로 이동'} →</span>
+              <Home aria-hidden="true" className="size-4.5" />
+              <span>{user.role === 'company' ? '기업 홈으로 이동' : '인재 홈으로 이동'}</span>
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
             </button>
             <button
               type="button"
@@ -259,6 +338,16 @@ export function LoginPage() {
               <BriefcaseBusiness className="size-4.5 text-[#173F3A]" />
               <span>프로젝트 둘러보기</span>
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => void navigate('/admin/dashboard')}
+                className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#BBD5CE] bg-[#DDEBE7] px-4 text-sm font-extrabold text-[#173F3A] shadow-2xs transition hover:bg-[#CFE3DD] active:scale-[0.98]"
+              >
+                <ShieldCheck className="size-4.5" />
+                <span>관리자 페이지</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={async () => {
@@ -278,10 +367,12 @@ export function LoginPage() {
   if (isMobile) {
     return (
       <MobilePage
-        contentClassName="px-4.5 py-4 flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
+        contentClassName="flex flex-col justify-center min-h-0 flex-1 overflow-y-auto"
         showBack={false}
+        showProjectLink
         title="경험매칭"
       >
+        <LoginRequiredToast message={loginRequiredMessage} />
         <div className="flex flex-col gap-4 w-full max-w-sm mx-auto my-auto py-2">
           {/* Initial Role Choice Tabs */}
           <div
@@ -396,6 +487,28 @@ export function LoginPage() {
               />
             </div>
 
+            <div className="flex flex-col gap-1 py-0.5 text-left">
+              <label
+                htmlFor="remember-me-mobile"
+                className="group flex cursor-pointer select-none items-center gap-2"
+              >
+                <input
+                  id="remember-me-mobile"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="size-4.5 cursor-pointer rounded border border-[#D4CBB8] accent-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
+                />
+                <span className="text-xs font-extrabold text-[#17212B] transition-colors group-hover:text-[#173F3A] sm:text-[13px]">
+                  로그인 상태 유지
+                </span>
+              </label>
+              <p className="pl-6.5 text-[11px] font-medium leading-tight text-[#62748E]">
+                공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요.
+              </p>
+            </div>
+
             {errorMessage ? (
               <p aria-live="polite" className="text-xs font-bold text-rose-700">
                 {errorMessage}
@@ -406,13 +519,16 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D85A3F] bg-[#F06B4F] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#D85A3F] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
-              {isSubmitting
-                ? '로그인 처리 중...'
-                : role === 'senior'
-                  ? '인재로 로그인 →'
-                  : '기업으로 로그인 →'}
+              {isSubmitting ? (
+                '로그인 처리 중...'
+              ) : (
+                <>
+                  <span>{role === 'senior' ? '인재로 로그인' : '기업으로 로그인'}</span>
+                  <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+                </>
+              )}
             </button>
 
             <div className="relative my-0.5 flex items-center justify-center">
@@ -473,11 +589,13 @@ export function LoginPage() {
 
   return (
     <MobilePage
-      contentClassName="px-6 py-8 md:px-12 md:py-12 lg:py-16 flex items-center justify-center min-h-0 flex-1"
+      contentClassName="flex items-center justify-center min-h-0 flex-1"
       showBack={false}
+      showProjectLink
       title="경험매칭"
     >
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center max-w-5xl w-full mx-auto my-auto py-4 md:py-6">
+      <LoginRequiredToast message={loginRequiredMessage} />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center w-full mx-auto my-auto py-4 md:py-6">
         {/* Left Side: Pitch Title & Borderless Rolling Banner (PC: col-span-7) */}
         <div className="md:col-span-7 flex flex-col justify-center gap-5 py-2">
           <div className="flex flex-col gap-2.5 items-start text-left">
@@ -571,6 +689,28 @@ export function LoginPage() {
               value={password}
             />
 
+            <div className="flex flex-col gap-1 py-1 text-left">
+              <label
+                htmlFor="remember-me-desktop"
+                className="group flex cursor-pointer select-none items-center gap-2"
+              >
+                <input
+                  id="remember-me-desktop"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="size-4.5 cursor-pointer rounded border border-[#D4CBB8] accent-[#173F3A] focus:ring-2 focus:ring-[#173F3A]/20"
+                />
+                <span className="text-xs font-extrabold text-[#17212B] transition-colors group-hover:text-[#173F3A] sm:text-sm">
+                  로그인 상태 유지
+                </span>
+              </label>
+              <p className="pl-6.5 text-[11px] font-medium leading-tight text-[#62748E] sm:text-xs">
+                공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요.
+              </p>
+            </div>
+
             {errorMessage ? (
               <p aria-live="polite" className="text-xs font-bold text-rose-700">
                 {errorMessage}
@@ -581,13 +721,16 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-[#173F3A] bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#21544E] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-[#D85A3F] bg-[#F06B4F] px-4 text-xs font-extrabold text-white shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-[#D85A3F] hover:shadow-md active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none sm:text-sm"
             >
-              {isSubmitting
-                ? '로그인 처리 중...'
-                : role === 'senior'
-                  ? '인재로 로그인 →'
-                  : '기업으로 로그인 →'}
+              {isSubmitting ? (
+                '로그인 처리 중...'
+              ) : (
+                <>
+                  <span>{role === 'senior' ? '인재로 로그인' : '기업으로 로그인'}</span>
+                  <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+                </>
+              )}
             </button>
 
             <div className="relative my-1 flex items-center justify-center">

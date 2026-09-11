@@ -9,7 +9,6 @@ import multer from 'multer';
 import { generateGeminiConnectionTest, getGeminiLogDetails } from '../functions/lib/gemini.mjs';
 import { generateExperienceCard } from '../functions/lib/experienceCard.mjs';
 import { generateNextInterviewQuestion } from '../functions/lib/interviewQuestion.mjs';
-import { proxyWorknetJobs } from '../functions/lib/worknetProxy.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDirectory = path.resolve(__dirname, '..');
@@ -59,13 +58,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/worknet/jobs', (req, res) =>
-  proxyWorknetJobs(
-    req,
-    res,
-    process.env.WORKNET_JOB_API_KEY ?? process.env.VITE_WORKNET_JOB_API_KEY,
-  ),
-);
+app.get('/api/worknet/jobs', (_req, res) => {
+  res.type('application/xml');
+  return res
+    .status(200)
+    .send('<?xml version="1.0" encoding="UTF-8"?><wantedRoot><total>0</total></wantedRoot>');
+});
 
 app.get('/api/ai/test', async (_req, res) => {
   try {

@@ -12,45 +12,9 @@ import {
   occupationCategoryLabels,
   occupationToProjectCategory,
 } from '@/data/occupationCategories';
-import { fetchSeoulJobFeed } from './seoulJobService';
-import { fetchPublicJobFeed } from './publicJobService';
 import { fetchAccumulatedJobPostingsFromFirestore } from './dataSyncService';
 
-
-
-const WORKNET_PROXY_ENDPOINT = '/api/worknet/jobs';
-const WORKNET_REQUEST_TIMEOUT_MS = 8_000;
 const WORKNET_FEED_CACHE_TTL_MS = 10 * 60 * 1_000;
-
-export const WORKNET_JOB_API_KEY =
-  (import.meta.env.VITE_WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_JOB_API_KEY as string | undefined)?.trim() ??
-  'a5dea206-9134-412d-a2f4-8f4998a6321f';
-
-export const WORKNET_TRAINING_API_KEY =
-  (import.meta.env.VITE_WORKNET_TRAINING_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_TRAINING_API_KEY as string | undefined)?.trim() ??
-  '9a75ee7b-06ad-4ee7-aa18-776090cf5102';
-
-export const WORKNET_DUTY_API_KEY =
-  (import.meta.env.VITE_WORKNET_DUTY_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_DUTY_API_KEY as string | undefined)?.trim() ??
-  '820aa395-647d-41b8-aecb-19bc889ea890';
-
-export const WORKNET_JOB_INFO_API_KEY =
-  (import.meta.env.VITE_WORKNET_JOB_INFO_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_JOB_INFO_API_KEY as string | undefined)?.trim() ??
-  '32661c53-854b-4afd-99bc-dad3f6f851f6';
-
-export const WORKNET_CODE_API_KEY =
-  (import.meta.env.VITE_WORKNET_CODE_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_CODE_API_KEY as string | undefined)?.trim() ??
-  'ccc1d069-84e3-4fb8-bc24-5fbe3f616cd8';
-
-export const WORKNET_GIANT_API_KEY =
-  (import.meta.env.VITE_WORKNET_GIANT_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.WORKNET_GIANT_API_KEY as string | undefined)?.trim() ??
-  'dd79d00d-261f-4b03-aca9-1dbb3c997050';
 
 export type WorknetJobRaw = {
   addresses?: string;
@@ -107,7 +71,6 @@ type WorknetFeedCacheEntry = {
 };
 
 const worknetFeedCache = new Map<string, WorknetFeedCacheEntry>();
-const worknetRequestsInFlight = new Map<string, Promise<WorknetProjectFeed>>();
 
 function readText(node: Element, tagName: keyof WorknetJobRaw) {
   return node.querySelector(tagName)?.textContent?.trim() || undefined;
@@ -199,12 +162,6 @@ function formatSalary(raw: WorknetJobRaw) {
   if (raw.minSal) return `최소 ${raw.minSal}`;
   if (raw.maxSal) return `최대 ${raw.maxSal}`;
   return '임금 정보 미제공';
-}
-
-function isExpiredPosting(raw: WorknetJobRaw, now: Date) {
-  const closeDate = normalizeWorknetDate(raw.closeDt);
-  if (!closeDate) return false;
-  return startOfDay(new Date(`${closeDate}T00:00:00`)) < startOfDay(now);
 }
 
 export function transformWorknetToSeniorProject(
@@ -626,129 +583,6 @@ export function getDefaultSeniorJobPostings(): JobPosting[] {
   return fallbackWorknetJobs.map((item, index) => transformWorknetToSeniorProject(item, index, now));
 }
 
-export async function fetchWorknetXml(params: URLSearchParams): Promise<string> {
-  const paramStr = params.toString();
-  const worknetDirectUrl = `https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do?${paramStr}`;
-
-  // 1. Primary Proxy Endpoint (/api/worknet/jobs)
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WORKNET_REQUEST_TIMEOUT_MS);
-    const response = await fetch(`${WORKNET_PROXY_ENDPOINT}?${paramStr}`, {
-      headers: { Accept: 'application/xml,text/xml' },
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (response.ok) {
-      const body = await response.text();
-      if (body.includes('<wantedRoot') || body.includes('<message')) return body;
-    }
-  } catch (err) {
-    console.warn('Primary Worknet proxy endpoint failed, attempting CORS fallback proxies...', err);
-  }
-
-  // 2. Direct fetch
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WORKNET_REQUEST_TIMEOUT_MS);
-    const response = await fetch(worknetDirectUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (response.ok) {
-      const body = await response.text();
-      if (body.includes('<wantedRoot') || body.includes('<message')) return body;
-    }
-  } catch (err) {
-    console.warn('Direct Worknet fetch failed or blocked by CORS, trying proxy endpoints...', err);
-  }
-
-  // 3. AllOrigins CORS Proxy
-  try {
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(worknetDirectUrl)}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WORKNET_REQUEST_TIMEOUT_MS);
-    const response = await fetch(proxyUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (response.ok) {
-      const body = await response.text();
-      if (body.includes('<wantedRoot') || body.includes('<message')) return body;
-    }
-  } catch (err) {
-    console.warn('AllOrigins CORS proxy failed:', err);
-  }
-
-  // 4. CorsProxy.io
-  try {
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(worknetDirectUrl)}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WORKNET_REQUEST_TIMEOUT_MS);
-    const response = await fetch(proxyUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (response.ok) {
-      const body = await response.text();
-      if (body.includes('<wantedRoot') || body.includes('<message')) return body;
-    }
-  } catch (err) {
-    console.warn('CorsProxy.io failed:', err);
-  }
-
-  throw new Error('All Worknet fetch endpoints failed');
-}
-
-function loadWorknetSeniorProjectFeed(
-  params: URLSearchParams,
-  now = new Date(),
-): Promise<WorknetProjectFeed> {
-  const pageRequests = [1, 2].map((page) => {
-    const p = new URLSearchParams(params);
-    p.set('startPage', String(page));
-    p.set('display', '100');
-    return fetchWorknetXml(p).catch(() => '');
-  });
-
-  return Promise.all(pageRequests)
-    .then((xmlTexts) => {
-      const allItems: WorknetJobRaw[] = [];
-      const seenAuthNos = new Set<string>();
-
-      for (const xmlText of xmlTexts) {
-        if (!xmlText) continue;
-        const parsed = parseWorknetJobXml(xmlText);
-        for (const item of parsed.items) {
-          if (item.wantedAuthNo && !seenAuthNos.has(item.wantedAuthNo)) {
-            seenAuthNos.add(item.wantedAuthNo);
-            allItems.push(item);
-          }
-        }
-      }
-
-      const apiProjects = allItems
-        .filter((item) => item.wantedAuthNo && item.title && item.company)
-        .filter((item) => !isExpiredPosting(item, now))
-        .map((item, index) => transformWorknetToSeniorProject(item, index, now));
-
-      const combinedProjects = apiProjects.length > 0 ? apiProjects : fallbackWorknetJobs.map((item, index) =>
-        transformWorknetToSeniorProject(item, index, now),
-      );
-
-      return {
-        projects: combinedProjects,
-        status: 'success' as const,
-        isFallback: apiProjects.length === 0,
-      };
-    })
-    .catch((error: unknown) => {
-      console.warn('Worknet API request failed, using silent fallback feed:', error);
-      const fallbackProjects = fallbackWorknetJobs.map((item, index) =>
-        transformWorknetToSeniorProject(item, index, now),
-      );
-      return {
-        projects: fallbackProjects,
-        status: 'success' as const,
-        isFallback: true,
-      };
-    });
-}
-
 export function clearWorknetFeedCache(): void {
   worknetFeedCache.clear();
   if (typeof window === 'undefined') return;
@@ -756,7 +590,7 @@ export function clearWorknetFeedCache(): void {
     const sessionKeys: string[] = [];
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);
-      if (key && (key.startsWith('eojob_feed_') || key.startsWith('eojob_projects'))) {
+      if (key?.startsWith('eojob_feed_')) {
         sessionKeys.push(key);
       }
     }
@@ -765,7 +599,7 @@ export function clearWorknetFeedCache(): void {
     const localKeys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('eojob_feed_') || key.startsWith('eojob_projects'))) {
+      if (key?.startsWith('eojob_feed_')) {
         localKeys.push(key);
       }
     }
@@ -841,80 +675,12 @@ export async function fetchWorknetSeniorProjectFeed(
     console.warn('Failed to load Firestore feed:', err);
   }
 
-  const params = new URLSearchParams({
-    authKey: WORKNET_JOB_API_KEY,
-    callTp: 'L',
-    returnType: 'XML',
-    startPage: '1',
-    display: '100',
-    sortOrderBy: 'DESC',
-  });
-  if (options.keywords && options.keywords.length > 0) {
-    params.set('keyword', options.keywords[0] || '');
-  }
-  const cacheKey = options.keywords?.[0] ?? 'default_db_feed';
-  return fetchFreshMultiSourceFeed(params, cacheKey, now);
-}
-
-async function fetchFreshMultiSourceFeed(
-  params: URLSearchParams,
-  cacheKey: string,
-  now: Date,
-): Promise<WorknetProjectFeed> {
-  const activeRequest = worknetRequestsInFlight.get(cacheKey);
-  if (activeRequest) return activeRequest;
-
-  const request = (async () => {
-    const firestorePromise = fetchAccumulatedJobPostingsFromFirestore(2000).catch(() => []);
-
-    const [worknetFeed, seoulJobs, publicJobs, firestoreJobs] = await Promise.all([
-      loadWorknetSeniorProjectFeed(params).catch(() => ({
-        projects: fallbackWorknetJobs.map((item, index) =>
-          transformWorknetToSeniorProject(item, index, now),
-        ),
-        status: 'success' as const,
-        isFallback: true,
-      })),
-      fetchSeoulJobFeed().catch(() => []),
-      fetchPublicJobFeed().catch(() => []),
-      firestorePromise,
-    ]);
-
-    const apiJobs = [...(worknetFeed.projects || []), ...seoulJobs, ...publicJobs];
-    const seenIds = new Set<string>();
-    const mergedProjects: JobPosting[] = [];
-
-    // Deduplicate API jobs first, then append accumulated Firestore jobs
-    for (const job of [...apiJobs, ...firestoreJobs]) {
-      if (job.id && job.title && !seenIds.has(job.id)) {
-        seenIds.add(job.id);
-        mergedProjects.push(job);
-      }
-    }
-
-    const finalProjects = deduplicateJobPostings(mergedProjects);
-
-    const mergedFeed: WorknetProjectFeed = {
-      projects: finalProjects,
-      status: 'success',
-      isFallback: worknetFeed.isFallback && finalProjects.length === 0,
-    };
-
-    worknetFeedCache.set(cacheKey, {
-      expiresAt: Date.now() + WORKNET_FEED_CACHE_TTL_MS,
-      feed: mergedFeed,
-    });
-    setSessionCachedFeed(cacheKey, mergedFeed);
-
-    return mergedFeed;
-  })();
-
-  worknetRequestsInFlight.set(cacheKey, request);
-  try {
-    return await request;
-  } finally {
-    if (worknetRequestsInFlight.get(cacheKey) === request) {
-      worknetRequestsInFlight.delete(cacheKey);
-    }
-  }
+  const fallbackFeed: WorknetProjectFeed = {
+    projects: getDefaultSeniorJobPostings(),
+    status: 'success',
+    isFallback: true,
+    message: '저장된 채용공고를 불러오지 못해 임시 목록을 표시합니다.',
+  };
+  setSessionCachedFeed('default_db_feed', fallbackFeed);
+  return fallbackFeed;
 }

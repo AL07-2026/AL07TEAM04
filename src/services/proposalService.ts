@@ -401,7 +401,9 @@ export async function saveProposal(
     );
     return savedLocal;
   } catch (error) {
-    if (options.requireRemote) throw error;
+    if (options.requireRemote) {
+      throw new Error('기업에 지원 내용을 전달하지 못했습니다.', { cause: error });
+    }
     console.warn('Failed to save proposal to Firestore, using local storage:', error);
     return savedLocal;
   }

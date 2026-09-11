@@ -1,79 +1,93 @@
 import type { JobPosting } from '@/data/jobPostings';
+import { auth } from '@/lib/firebase';
 
 export interface EmailDispatchResult {
-  mailtoLink: string;
+  deliveryMethod: 'server-email' | 'external-application' | 'in-app';
+  emailSent: boolean;
   message: string;
   recipientEmail: string;
-  success: boolean;
 }
 
-export interface ApplicantPayload {
-  applicantEmail?: string;
-  applicantName?: string;
-  attachedResumeName?: string;
-  coverNote?: string;
-  interviewSummary?: string;
+type ApplicationEmailResponse = {
+  alreadySent?: boolean;
+  deliveryMethod?: 'server-email';
+  emailSent?: boolean;
+  error?: string;
+  recipientEmail?: string;
+};
+
+export function usesExternalApplication(posting: JobPosting): boolean {
+  if (
+    posting.source === 'worknet' ||
+    posting.source === 'seoul' ||
+    posting.source === 'public'
+  ) {
+    return true;
+  }
+  return !posting.ownerId && posting.source !== 'internal';
 }
 
-const configuredReceiverEmail =
-  (import.meta.env.VITE_JOB_APPLICATION_RECEIVER_EMAIL as string | undefined)?.trim() ||
-  (import.meta.env.VITE_MANAGER_EMAIL as string | undefined)?.trim() ||
-  undefined;
-
-export function sendApplicationEmailToManager(
+export async function sendApplicationToManager(
   posting: JobPosting,
-  applicant: ApplicantPayload,
-): EmailDispatchResult {
-  const hasCustomContactEmail = Boolean(posting.contactEmail?.trim());
-  const managerEmail = posting.contactEmail?.trim() || configuredReceiverEmail || '';
+): Promise<EmailDispatchResult> {
+  if (usesExternalApplication(posting)) {
+    return {
+      deliveryMethod: 'external-application',
+      emailSent: false,
+      message: '이어잡 지원 이력이 저장되었습니다. 실제 접수는 공식 채용 페이지에서 완료해야 합니다.',
+      recipientEmail:
+        posting.contactEmail?.trim() || posting.sourceProvider || '공식 채용 접수처',
+    };
+  }
 
-  const subject = encodeURIComponent(
-    `[이어잡 지원] ${applicant.applicantName || '지원자'} 님의 '${posting.title}' (${posting.companyName}) 지원서`,
-  );
+  if (!posting.ownerId) {
+    return {
+      deliveryMethod: 'in-app',
+      emailSent: false,
+      message: '지원 이력은 저장되었지만 등록 기업 계정을 확인할 수 없습니다.',
+      recipientEmail: '이어잡 기업 담당자',
+    };
+  }
 
-  const bodyText = `안녕하세요, ${posting.companyName} 채용 매칭 담당자님.
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('로그인 정보가 없습니다.');
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch('/api/applications/send', {
+      body: JSON.stringify({ projectId: posting.id }),
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    });
+    const payload = (await response.json().catch(() => ({}))) as ApplicationEmailResponse;
+    if (!response.ok || !payload.emailSent || !payload.recipientEmail) {
+      return {
+        deliveryMethod: 'in-app',
+        emailSent: false,
+        message:
+          payload.error ||
+          '지원 이력은 저장되었지만 담당자 이메일 알림은 발송하지 못했습니다.',
+        recipientEmail: '이어잡 기업 담당자',
+      };
+    }
 
-경험인재 연결 서비스 이어잡을 통해 작성된 지원서 정보입니다.
-
-■ 지원 프로젝트: ${posting.title}
-■ 지원 대상 기업: ${posting.companyName}
-■ 이어잡 매칭 적합도: ${posting.seniorFitScore}점
-${posting.sourceUrl ? `■ 공식 공고 원문 URL: ${posting.sourceUrl}\n` : ''}
-[ 지원자 정보 ]
-- 성함: ${applicant.applicantName || '지원자'}
-- 이메일: ${applicant.applicantEmail || '미등록'}
-- 첨부 이력서/포트폴리오: ${applicant.attachedResumeName || '미등록'}
-
-[ 경험 인터뷰 요약 ]
-${applicant.interviewSummary || '등록된 경험 요약이 없습니다.'}
-
-[ 전달 메시지 ]
-"${applicant.coverNote || '등록된 전달 메시지가 없습니다.'}"
-
---------------------------------------------------
-이 메일은 이어잡에 저장된 지원 정보를 바탕으로 작성되었습니다.
-제출된 지원서 내역을 확인하시고 지원자 및 기업 매칭 인터뷰를 진행하세요.`;
-
-  const body = encodeURIComponent(bodyText);
-  const mailtoLink = managerEmail ? `mailto:${managerEmail}?subject=${subject}&body=${body}` : '';
-
-  console.log(`[EmailService] Application email draft generated for: ${managerEmail}`, {
-    posting,
-    applicant,
-  });
-
-  const recipientEmail = hasCustomContactEmail
-    ? managerEmail
-    : posting.sourceProvider || '공식 채용 접수처';
-
-  const message = managerEmail
-    ? '지원서가 저장되었습니다. 담당자에게 이메일을 보내려면 작성 창을 열어 주세요.'
-    : '지원서가 이어잡에 저장되었습니다. 등록된 담당자 이메일이 없습니다.';
-
-  return {
-    success: true,
-    recipientEmail,
-    message,
-    mailtoLink,
-  };
+    return {
+      deliveryMethod: 'server-email',
+      emailSent: true,
+      message: payload.alreadySent
+        ? '이미 담당자에게 전달된 지원서입니다.'
+        : '지원서와 첨부파일을 기업 담당자에게 전송했습니다.',
+      recipientEmail: payload.recipientEmail,
+    };
+  } catch {
+    return {
+      deliveryMethod: 'in-app',
+      emailSent: false,
+      message:
+        '지원 이력은 저장되었지만 담당자 이메일 알림은 발송하지 못했습니다.',
+      recipientEmail: '이어잡 기업 담당자',
+    };
+  }
 }

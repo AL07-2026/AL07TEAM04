@@ -19,7 +19,7 @@ export function generateJobContentHash(job) {
   const problem = String(job?.problemStatement || '').trim();
   const exp = String(job?.experienceYears || '').trim();
 
-  const payload = [title, company, duties, quals, problem, exp].join('::');
+  const payload = [title, company, duties, quals, problem, exp, job?.industry || '', job?.location || '', job?.workType || ''].join('::');
   return createHash('sha256').update(payload).digest('hex');
 }
 
@@ -66,6 +66,9 @@ const ANALYSIS_PROMPT = `
 1) [기업의 현재 당면 과제 및 본질적인 문제]를 정확히 진단하고,
 2) 그 문제를 해결하기 위해 시니어 구직자에게 [실제로 요구되는 구체적인 실무 및 리딩 경험]을 명확하게 도출하세요.
 
+공고에 없는 회사 상황, 긴급성, 성과 수치나 경력 연수를 사실처럼 만들지 마세요.
+직무에서 추론한 내용은 추론임을 명시하고, 근거가 없는 항목은 정보 미제공이라고 작성하세요.
+
 반드시 다음 JSON 형식으로만 응답하세요:
 {
   "aiExecutiveSummary": {
@@ -95,9 +98,9 @@ const ANALYSIS_PROMPT = `
 `;
 
 /**
- * Analyzes a single job posting using Gemini 1.5/2.5 Flash Structured Output.
+ * Analyzes a single job posting, returning only validated structured output.
  */
-export async function analyzeJobPostingWithAI(job, geminiClient = null) {
+export async function analyzeJobPostingWithAI(job, geminiClient = null, onFailure = null) {
   try {
     const client = geminiClient || createGeminiClient();
     const promptContent = `
@@ -107,9 +110,9 @@ export async function analyzeJobPostingWithAI(job, geminiClient = null) {
 [요구 경력]: ${job.experienceYears || '경력 우대'}
 [근무지/형태]: ${job.location || '지역 협의'} (${job.workType || '상근'})
 [자격 요건]:
-${(job.qualifications || []).join('\n') || '공고 본문 참조'}
+${textList(job.qualifications) || '공고 본문 참조'}
 [주요 업무 / 과제]:
-${(job.coreResponsibilities || []).join('\n') || job.problemStatement || '공고 본문 참조'}
+${textList(job.coreResponsibilities) || job.problemStatement || '공고 본문 참조'}
 `;
 
     const response = await client.models.generateContent({
@@ -118,25 +121,39 @@ ${(job.coreResponsibilities || []).join('\n') || job.problemStatement || '공고
       config: {
         responseMimeType: 'application/json',
         temperature: 0.2,
+        httpOptions: { timeout: 25000, retryOptions: { attempts: 1 } },
       },
     });
 
     const rawText = response.text?.trim() || '{}';
     const parsed = JSON.parse(rawText);
 
-    if (
-      parsed.aiExecutiveSummary &&
-      parsed.aiExecutiveSummary.overview &&
-      parsed.talentPersona &&
-      parsed.talentPersona.headline
-    ) {
+    if (validAnalysis(parsed)) {
       return parsed;
     }
+    onFailure?.({ code: 'AI_INVALID_RESPONSE', stopBatch: false });
     return null;
   } catch (error) {
-    console.warn(`[jobBatchAnalysisService] AI analysis skipped/failed for ${job.id}:`, error?.message || error);
+    const status = Number(error?.status ?? error?.statusCode);
+    const invalidResponse = error instanceof SyntaxError;
+    const code = Number.isInteger(status) && status >= 400 && status <= 599 ? `AI_HTTP_${status}`
+      : invalidResponse ? 'AI_INVALID_RESPONSE'
+        : ['AbortError', 'TimeoutError'].includes(error?.name) ? 'AI_TIMEOUT' : 'AI_API_ERROR';
+    // Provider-wide errors stop subsequent chunks; no raw provider message/URL is retained.
+    onFailure?.({ code, stopBatch: !invalidResponse });
+    console.warn(`[jobBatchAnalysisService] AI analysis failed for ${job?.id}:`, code);
     return null;
   }
+}
+
+function textList(value) { return Array.isArray(value) ? value.join('\n') : String(value || ''); }
+function validAnalysis(value) {
+  const summary = value?.aiExecutiveSummary;
+  const persona = value?.talentPersona;
+  const text = (item) => typeof item === 'string' && item.trim().length > 0;
+  const list = (item) => Array.isArray(item) && item.length > 0 && item.every(text);
+  return summary && ['overview', 'keyChallenge', 'expectedImpact'].every((field) => text(summary[field])) &&
+    persona && text(persona.headline) && ['experienceHighlights', 'competencyTags', 'interviewPrepFocus'].every((field) => list(persona[field]));
 }
 
 /**
@@ -146,37 +163,34 @@ ${(job.coreResponsibilities || []).join('\n') || job.problemStatement || '공고
 export async function runIncrementalJobAnalysis(postings, options = {}) {
   const {
     batchChunkSize = 10,
-    maxToProcess = 500,
+    maxToProcess = 100,
     dryRun = false,
     onProgress = null,
   } = options;
 
-  let client = null;
-  if (!dryRun) {
-    try {
-      client = createGeminiClient();
-    } catch (e) {
-      console.warn('[jobBatchAnalysisService] Gemini client unavailable, skipping LLM calls:', e?.message || e);
-      return { totalCandidates: 0, processedCount: 0, skippedCount: postings.length, errors: [e?.message] };
-    }
-  }
+  const records = Array.isArray(postings) ? postings : [];
+  const limit = Math.max(0, Math.min(100, Number.isNaN(Number(maxToProcess)) ? 100 : Number(maxToProcess)));
+  const chunkSize = Math.max(1, Math.min(10, Math.floor(Number(batchChunkSize) || 1)));
 
   // 1. Filter candidates for senior analysis
   const candidates = [];
-  for (const job of postings) {
+  const seen = new Set();
+  for (const job of records) {
+    if (candidates.length >= limit) break;
+    if (!job?.id || seen.has(job.id) || job.catalogStatus === 'hidden') continue;
+    seen.add(job.id);
     if (!isCandidateForSeniorAnalysis(job)) continue;
     const contentHash = generateJobContentHash(job);
     
     // Check if already analyzed with same hash
-    if (job.contentHash === contentHash && job.aiExecutiveSummary && job.analysisStatus === 'COMPLETED') {
+    if (job.analyzedContentHash === contentHash && validAnalysis(job) && job.analysisStatus === 'COMPLETED') {
       continue;
     }
 
     candidates.push({ ...job, newContentHash: contentHash });
-    if (candidates.length >= maxToProcess) break;
   }
 
-  console.log(`[jobBatchAnalysisService] Total scanned: ${postings.length}, Analysis targets: ${candidates.length}`);
+  console.log(`[jobBatchAnalysisService] Total scanned: ${records.length}, Analysis targets: ${candidates.length}`);
 
   if (dryRun) {
     return {
@@ -187,40 +201,61 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
     };
   }
 
+  if (!candidates.length) return { totalCandidates: 0, processedCount: 0, attemptedCount: 0, status: 'success' };
+  let client;
+  try { client = createGeminiClient(); }
+  catch {
+    return { totalCandidates: candidates.length, processedCount: 0, attemptedCount: 0, status: 'unavailable', errors: ['GEMINI_NOT_CONFIGURED'] };
+  }
+
   let processedCount = 0;
+  let attemptedCount = 0;
+  let stoppedReason = null;
+  const failureCodes = {};
   const nowStr = new Date().toISOString();
 
-  for (let i = 0; i < candidates.length; i += batchChunkSize) {
-    const chunk = candidates.slice(i, i + batchChunkSize);
+  for (let i = 0; i < candidates.length; i += chunkSize) {
+    if (options.deadlineAt && Date.now() >= options.deadlineAt) break;
+    const chunk = candidates.slice(i, i + chunkSize);
     
     const results = await Promise.all(
       chunk.map(async (job) => {
-        const aiResult = await analyzeJobPostingWithAI(job, client);
-        return { job, aiResult };
+        attemptedCount++;
+        let failure = null;
+        const aiResult = await analyzeJobPostingWithAI(job, client, (value) => { failure = value; });
+        return { job, aiResult, failure };
       }),
     );
 
     const batch = adminDb.batch();
     let hasWrites = false;
 
-    for (const { job, aiResult } of results) {
+    for (const { job, aiResult, failure } of results) {
       if (aiResult) {
         const docRef = adminDb.collection(GLOBAL_COLLECTION).doc(job.id);
         batch.set(
           docRef,
           {
-            contentHash: job.newContentHash,
+            analyzedContentHash: job.newContentHash,
             isSeniorTarget: true,
             analysisStatus: 'COMPLETED',
+            analysisErrorCode: null,
             analyzedAt: nowStr,
             aiExecutiveSummary: aiResult.aiExecutiveSummary,
             talentPersona: aiResult.talentPersona,
-            updatedAt: nowStr,
           },
           { merge: true },
         );
         hasWrites = true;
         processedCount++;
+      } else {
+        const code = failure?.code || 'AI_INVALID_RESPONSE';
+        failureCodes[code] = (failureCodes[code] || 0) + 1;
+        if (failure?.stopBatch) stoppedReason ||= code;
+        batch.set(adminDb.collection(GLOBAL_COLLECTION).doc(job.id), {
+          analysisStatus: 'FAILED', analysisAttemptedAt: nowStr, analysisErrorCode: code,
+        }, { merge: true });
+        hasWrites = true;
       }
     }
 
@@ -231,11 +266,18 @@ export async function runIncrementalJobAnalysis(postings, options = {}) {
     if (onProgress) {
       onProgress(processedCount, candidates.length);
     }
+    if (stoppedReason) break;
   }
 
   return {
     totalCandidates: candidates.length,
     processedCount,
-    skippedCount: postings.length - candidates.length,
+    attemptedCount,
+    failedCount: attemptedCount - processedCount,
+    deferredCount: candidates.length - attemptedCount,
+    failureCodes,
+    stoppedReason,
+    status: processedCount === candidates.length ? 'success' : processedCount ? 'partial' : 'failed',
+    skippedCount: records.length - candidates.length,
   };
 }

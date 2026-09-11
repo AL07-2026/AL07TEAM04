@@ -30,3 +30,6 @@ pnpm-debug.log*
 
 # Firebase local cache
 .firebase/
+
+# local web research outputs
+.firecrawl/

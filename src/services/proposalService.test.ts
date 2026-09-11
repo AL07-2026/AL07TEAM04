@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { setDoc } from 'firebase/firestore';
 import { uploadBytes } from 'firebase/storage';
+import { createMockJobPosting } from '@/test/harness';
 import {
+  createProposalFromPosting,
   getLocalProposals,
   isUsableProposalResumeFile,
   saveProposal,
@@ -10,6 +11,45 @@ import {
   type UserProposal,
   updateProposalStatus,
 } from './proposalService';
+
+describe('기업 지원 이력 서버 저장', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('로그인 지원자의 Firestore 저장이 실패하면 기업 전달 완료로 처리하지 않는다', async () => {
+    vi.mocked(setDoc).mockRejectedValueOnce(new Error('network unavailable'));
+
+    await expect(
+      createProposalFromPosting(
+        createMockJobPosting({ ownerId: 'company-owner', source: 'internal' }),
+        'resume.pdf',
+        '서비스 운영 경험',
+        '지원합니다.',
+        'senior-user',
+        { email: 'senior@example.com', name: '지원자' },
+      ),
+    ).rejects.toThrow('기업에 지원 내용을 전달하지 못했습니다.');
+  });
+
+  it('로그인 지원자의 지원 이력을 서버에 저장한 후 반환한다', async () => {
+    vi.mocked(setDoc).mockResolvedValueOnce(undefined);
+
+    const proposal = await createProposalFromPosting(
+      createMockJobPosting({ ownerId: 'company-owner', source: 'internal' }),
+      'resume.pdf',
+      '서비스 운영 경험',
+      '지원합니다.',
+      'senior-user',
+      { email: 'senior@example.com', name: '지원자' },
+    );
+
+    expect(setDoc).toHaveBeenCalledTimes(1);
+    expect(proposal.projectOwnerId).toBe('company-owner');
+    expect(proposal.userId).toBe('senior-user');
+  });
+});
 
 const storedProposal: Omit<UserProposal, 'id'> = {
   appliedAt: '2026-09-03',

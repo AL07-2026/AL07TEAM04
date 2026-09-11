@@ -20,25 +20,1110 @@
 - **작업자**: Codex (`develop` 브랜치)
 - **작업 전 확인**:
   - 인재 홈에서는 같은 프로젝트가 개인화 점수로 표시되지만, 프로젝트 목록/상세에서는 `검증 공고`/`직종 탐색` 배지로 표시되는 현상 확인.
-  - 최근 작업 기록에서 2026-09-03 “추천 프로젝트 점수 표시 기준 통일” 변경 내역 확인.
+  - 최신 `origin/develop`의 추천/인증/커뮤니티 관련 변경과 AI 협업 로그를 확인하고 병합 대상으로 반영.
 - **작업 내용**:
   1. **점수 표시 정책 통일**:
-     - 프로젝트 목록 카드와 상세 패널에서 직종 분류/희망 직종 매칭 여부로 점수 배지를 숨기던 `shouldShowScoreBadge` 조건을 제거.
+     - 프로젝트 목록 카드와 상세 패널에서 직종 분류/희망 직종 매칭 여부로 점수 배지를 숨기던 조건을 제거.
      - 시니어 화면에서는 계산된 `displayScore`가 유효하면 홈과 동일하게 점수 배지를 표시하도록 수정.
+     - 원격의 `preferServerFitScore` 정책은 유지해 서버 검색 결과에서는 서버가 내려준 정렬 점수를 우선 표시.
   2. **회귀 테스트 추가**:
      - 선택 직종과 공고 분류가 달라 `검증 공고`/`직종 탐색`으로 보이던 케이스에서도 점수가 표시되는지 테스트 추가.
 - **검증 & 결과**:
-  - `npm run typecheck` 통과
-  - `npx vitest run src/app/JobDatabasePage.test.ts` 통과
-  - `npm run lint` 통과
-  - `npm run validate` 통과: 테스트 33개 파일 / 302개 테스트 통과, Vite 프로덕션 빌드 성공
+  - 병합 전 `npm run validate` 통과: 테스트 33개 파일 / 302개 테스트 통과, Vite 프로덕션 빌드 성공
+  - 최신 `origin/develop` 병합 후 `npm run validate` 통과: 테스트 68개 파일 / 688개 테스트 통과, Vite 프로덕션 빌드 성공
 - **변경 파일**:
   - [MODIFY] `src/app/JobDatabasePage.tsx`
   - [MODIFY] `src/app/JobDatabasePage.test.ts`
   - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 - **미해결/전달 사항**:
-  - 전체 검증 후 필요 시 `origin/develop` 및 배포 반영 가능.
+  - 검증된 병합 결과를 `origin/develop` 및 Firebase 배포에 반영 예정.
 
+### [2026-09-10] 커뮤니티 반응형 UX·배너 높이·인증 CTA·채용 문구 정리
+- **작업자/브랜치**: Codex, `leedongwook`. 운영 화면과 Functions·Firestore는 건드리지 않고 프런트엔드 표시와 상호작용만 정리.
+- **커뮤니티 반응형**: PC는 게시글 목록과 상세를 나란히 유지하고 목록을 화면 안에서 탐색할 수 있게 했으며, 모바일은 목록과 상세를 한 단계씩 전환하고 `게시글 목록으로` 동선을 추가. 상단 행동·가로 분류 탭·긴 제목/본문/댓글/답글·모바일 터치 영역과 줄바꿈을 화면 폭에 맞게 보완하고 글쓰기·댓글 등록 행동을 브랜드 오렌지로 통일.
+- **홈 배너**: 프리미엄 기업 이미지 높이를 모바일·PC 모두 기존 대비 정확히 10% 확대. 모바일 비율은 `16:9`에서 `160:99`, PC 높이는 `clamp(250px, 32vw, 380px)`에서 `clamp(275px, 35.2vw, 418px)`로 조정.
+- **인증·채용 화면**: 로그인과 회원가입의 기본 행동 버튼을 이어잡 오렌지 `#F06B4F` 기준으로 통일. 시니어 공고 소개는 `시니어 채용` / `내 경험에 맞는 공고를 확인해 보세요`로 간결하게 바꾸고, 비로그인 안내도 중복 없이 전체 공고 열람과 로그인 혜택을 분리해 설명.
+- **검증**: 변경 회귀 76개 테스트 통과. 전체 테스트는 서버 모킹 간 병렬 간섭을 피하기 위해 단일 워커로 실행해 63개 파일/656개 전부 통과. 타입 검사·ESLint·프로덕션 빌드 통과. 브라우저에서 PC와 390×844 모바일 화면을 직접 확인했으며 기존 대형 번들 안내만 유지.
+- **배포 범위/확인**: Hosting은 `leedongwook` 미리보기 채널만 갱신. `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`에서 커뮤니티 공개 글 로딩, 모바일 목록→상세→목록 전환, PC 목록+상세 2열, 채용·로그인 오렌지 CTA를 실제 확인. 운영 Hosting, Functions, Firestore 데이터·규칙은 변경하지 않음. 사용자 `Wanted Design System (Community).fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-09] 회원탈퇴·Gmail 분리 안전 설정 메인 Hosting 배포 완료
+- **작업자/브랜치**: Codex, `leedongwook`. Gmail Secret이 없는 상태에서도 일괄 배포가 실패하지 않도록 미등록 `applicationEmailApi`의 활성 export·매니페스트·Hosting rewrite를 제거한 `9f511d1`을 `origin/leedongwook`에 업로드. 전용 메일 구현 파일은 후속 활성화를 위해 보존.
+- **검증**: `npm run validate`에서 타입 검사, ESLint, 63개 파일/651개 테스트, 프로덕션 빌드 전부 통과. 존재하지 않는 함수로 라우팅하지 않는 계약과 공통 API에서 Gmail Secret이 제거된 상태를 회귀 테스트로 고정.
+- **운영 배포**: 사용자의 명시적 요청에 따라 메인 Firebase Hosting `https://al07team04-bdfcd.web.app`에 57개 빌드 파일과 안전한 rewrite를 배포. 홈과 `/senior/project-database` HTTP 200, `/api/health` HTTP 200을 확인.
+- **회원탈퇴 확인**: 메인 `/api/account`가 신규 `accountApi`로 연결되며 인증 없는 DELETE를 HTTP 401 및 `private, no-store`로 안전하게 거부함을 확인. 실제 계정 삭제는 사용자 데이터가 소멸하므로 운영 테스트로 실행하지 않음.
+- **메일 상태**: 메인 `/api/applications/send`는 HTTP 503 JSON과 `private, no-store`로 “지원 이력은 저장되지만 메일 설정 준비 중”을 명시한다. Gmail 앱 비밀번호가 없으므로 실제 메일 발송은 아직 비활성. `communityApi`, `premiumApi`, `scheduledJobSync`, Firestore 데이터·규칙은 이번 메인 Hosting 배포에서 변경하지 않음.
+- **보존**: 사용자 `Wanted Design System (Community).fig`와 로컬 Hosting 캐시는 커밋에서 제외. Gmail 비밀번호를 소스·`.env`·로그에 저장하지 않음.
+
+### [2026-09-09] 회원탈퇴 서버화 배포 및 Gmail Secret 의존성 분리 준비
+- **작업자/브랜치**: Codex, `leedongwook`. `origin/develop`의 최신 `3fd429a`를 선행 반영한 상태에서 회원탈퇴 수정 `c19d805`를 `origin/leedongwook`에 업로드.
+- **회원탈퇴 원인/개선**: 기존 브라우저 삭제는 Firestore의 서버 전용 `projects`·`user_proposals` 규칙에 막혀 커뮤니티/프리미엄 일부만 지우고 Auth 계정을 남길 수 있었다. 이를 Secret 없는 `DELETE /api/account` 전용 `accountApi`로 이동하고, 토큰 UID·최근 로그인 검증, lease/checkpoint 기반 재시도, Storage → Firestore → Auth 순서를 적용했다. 기업 탈퇴 때 타 지원자의 제안·이력서는 삭제하지 않고 기업 연결만 종료한다. 커뮤니티 좋아요 삭제도 반복 호출 시 다시 생성되지 않도록 멱등화했다.
+- **회원탈퇴 배포/확인**: 공유 서버에는 신규 `accountApi` 하나만 범위 지정 배포했고 다른 기존 함수는 변경하지 않았다. Hosting은 `leedongwook` 채널만 배포했으며 `/api/account`가 전용 함수로 연결되고 인증 없는 DELETE를 HTTP 401, `Cache-Control: private, no-store`로 거부하는 것을 확인했다. 운영 Hosting은 변경하지 않았다.
+- **Gmail 결합 개선**: 실제 지원 메일 발송 구현은 `application-email-entry.mjs`에 분리해 이 함수만 `GMAIL_APP_PASSWORD`를 바인딩하도록 준비했다. Secret 준비 전에는 해당 함수를 활성 entry/export·정적 매니페스트·Hosting rewrite에 등록하지 않는다. 공통 `api`에서는 Gmail Secret과 실제 발송 모듈을 제거했으며 클라이언트 URL `/api/applications/send`는 유지했다. 공통 API는 이제 AssemblyAI·Gemini Secret만 요구한다.
+- **메일 실경로 확인/호환 처리**: 배포된 종전 공통 API의 `/api/applications/send`는 점검 당시 이미 HTTP 404로 실제 발송이 불가능했다. Gmail-free 공통 API에는 지원 이력이 저장된다는 명시적 안내와 함께 캐시되지 않는 HTTP 503을 반환하는 호환 핸들러를 추가해, 설정 누락과 일반 API 장애를 구분한다.
+- **공통 API 배포/확인**: 공유 `api` 함수 하나만 범위 지정 업데이트해 Gmail Secret 결합을 실제로 제거했다. `/api/health` HTTP 200, `/api/applications/send` HTTP 503 JSON·`private, no-store`, 회원탈퇴 전용 경로 HTTP 401을 확인했다. `communityApi`, `premiumApi`, `scheduledJobSync`와 운영 Hosting은 변경하지 않았다.
+- **중요한 미배포 상태**: 유효한 Gmail 앱 비밀번호 Secret 버전이 없어 `applicationEmailApi`는 비활성 상태다. 현재 Hosting은 `/api/applications/send`를 Gmail-free 공통 API의 안전한 503 호환 응답으로 보낸다. 따라서 일반 Hosting/Functions 배포가 존재하지 않는 메일 함수나 Gmail Secret 때문에 실패하지 않는다.
+- **검증**: 회원탈퇴 단계 실패·재시도·동시 lease·타 지원자 보존·Storage 선행 실패, 함수 경량 로딩, rewrite 우선순위, Secret 격리, 메일 미설정 호환 응답을 회귀로 고정. 최종 `npm run validate`에서 타입·린트·63개 파일/651개 테스트·프로덕션 빌드 통과. 기존 대형 번들 안내만 유지.
+- **후속 배포 순서**: `GMAIL_APP_PASSWORD` Secret 버전 등록 → `applicationEmailApi` entry/export·매니페스트 등록 → 전용 함수만 배포 → 실제 테스트 기업/지원자로 직접 수신 확인 → Hosting rewrite 추가·배포. 비밀번호를 소스·`.env`·로그에 저장하지 않는다. 사용자 `.fig`와 생성 Hosting 캐시는 계속 제외·보존.
+
+### [2026-09-09] `leedongwook` 변경을 `develop`에 fast-forward 통합
+- **작업자/브랜치**: Codex, `develop`. `origin/develop`을 실제 pull해 `84f7cb9`가 최신임을 확인한 뒤 `origin/leedongwook`의 `3f7e2da`까지 충돌 없이 fast-forward 통합.
+- **검증**: 별도 임시 worktree에서 타입 검사·린트·59개 파일/630개 테스트·프로덕션 빌드 전부 통과. 통합 diff의 파일 끝 중복 빈 줄 1건을 정리했으며 새 시크릿·환경 파일·자동 배포 워크플로 추가가 없음을 확인.
+- **범위**: Git `develop` 브랜치 통합·원격 업로드만 수행. 운영 Hosting, 프리뷰 Hosting, Functions, Firestore 데이터/규칙은 이번 작업에서 배포하지 않음. 원래 `leedongwook` 작업공간의 사용자 `.fig` 및 로컬 Hosting 캐시는 변경하지 않음.
+
+### [2026-09-09] 공통 내비게이션 활성 색상 오렌지 복원 및 프리뷰 배포
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `3c44033`(`fix(ui): restore orange active navigation`)을 `origin/leedongwook`에 업로드.
+- **원인**: Lucide 아이콘 표준화 커밋 `409a80e`에서 아이콘 외 범위인 공통 내비게이션 활성 색상까지 기존 이어잡 오렌지 `#F06B4F`에서 어두운 적갈색 `#B84734`로 함께 변경됐다.
+- **복원 범위**: 시니어·기업 화면의 데스크톱 활성 메뉴 배경과 모바일 하단 활성 메뉴 글자·아이콘을 모두 `#F06B4F`로 복원. 다른 경고·CTA 등 의미가 다른 `#B84734` 사용처는 변경하지 않음.
+- **회귀 방지/검증**: 시니어·기업 공통 헤더의 상단·하단 활성 프로젝트 색상을 고정하는 테스트를 추가. `npm run validate` 통과(타입, 린트, 59개 파일/630개 테스트, 프로덕션 빌드). 기존 500kB 초과 청크 안내만 유지.
+- **배포/확인**: `leedongwook` Hosting 채널만 배포하고 HTTP 200과 최신 CSS `index-BJU8SuR-.css` 반영을 확인. 운영 Hosting, Functions, Firestore 데이터/규칙은 변경하지 않음. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-09] 급여 원 단위를 정밀한 만 원 표시로 통일 및 프리뷰 배포
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `4953ac6`(`fix(ui): normalize exact salaries to man won`)을 `origin/leedongwook`에 업로드.
+- **원인**: 공통 포맷터가 10,000원으로 정확히 나누어지는 금액만 `만 원`으로 바꾸고 나머지는 `원`으로 되돌려 표시 단위가 섞였다. 첨부 화면의 원문 출력은 운영 Hosting의 구 번들에서 재현되고, 기존 `leedongwook` 프리뷰는 해당 3,600만~4,000만 케이스를 이미 정상 변환했다.
+- **정책/구현**: 연·월·일·주 급여의 10,000원 이상 정수 원 금액을 모두 `만 원`으로 표시. `BigInt`로 못 다 나누는 금액도 최대 소수 넷째 자리로 원 단위까지 반올림 없이 보존. 시급과 급여 주기가 없는 금액은 의미 혼동을 막기 위해 `원` 유지.
+- **표시 예**: `연봉36,000,000원 이상 ~ 40,000,000원 이하` → `연 3,600만 원 이상 ~ 4,000만 원 이하`; `월급 2,096,271원` → `월 209.6271만 원`.
+- **검증**: 실패 테스트 3건을 먼저 확인한 후 실제 스크린샷 입력, 9,999/10,000/10,001원 경계, 선행·후행 0, `MAX_SAFE_INTEGER` 초과, 멱등성, 시급·무주기 예외를 회귀로 고정. `npm run validate` 통과(타입, 린트, 59개 파일/628개 테스트, 프로덕션 빌드).
+- **배포/범위**: `leedongwook` Hosting 채널만 배포했고 HTTP 200 및 배포 `salaryFormat` 번들의 정밀 변환 코드를 확인. 운영 Hosting, Functions, Firestore 데이터/규칙은 변경하지 않음. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-09] 더보기 메뉴 Google Forms 설문 연결 및 프리뷰 배포
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `5bf2f51`(`feat(ui): add survey link to site menu`)을 `origin/leedongwook`에 업로드.
+- **메뉴 변경**: 공통 `SiteMenu`의 커뮤니티와 문의하기 사이에 `설문 참여하기`를 추가. 요청받은 Google Forms 주소를 새 탭으로 열고 `noopener noreferrer`로 역탭내빙과 리퍼러 노출을 방지함.
+- **UI/접근성**: 기존 48px 메뉴 행과 포커스/활성 상태를 유지. Lucide `ClipboardCheck`/`ExternalLink`로 설문과 외부 이동을 구분하고 보조기기 접근성 이름에 `새 창에서 열림`을 명시.
+- **검증**: 실패 테스트를 먼저 확인한 후 href/target/rel/접근성 이름 회귀를 추가. `npm run validate` 통과(타입, 린트, 59개 파일/618개 테스트, 프로덕션 빌드). 설문 원본과 프리뷰 페이지 모두 HTTP 200, 배포 번들의 설문 식별자 포함을 확인.
+- **배포/범위**: Hosting은 `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`에만 배포. 운영 Hosting, Functions, Firestore 데이터/규칙은 변경하지 않음. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-09] 급여 표시 통일 및 커뮤니티 콜드스타트 개선 배포 완료
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `7c2c0b9`(급여 표시 통일), `cde74b9`(커뮤니티 로딩 개선)을 `origin/leedongwook`에 업로드.
+- **급여 표시**: 원본 API·Firestore `salaryRange`는 변경하지 않고 화면 전용 공통 포맷터를 추가. `연봉/연간 → 연`, `월급/월간 → 월`, 천 단위 콤마, `만 원`, 범위 `~`를 통일했다. 월·연·시급·일급 간 환산은 하지 않으며 정확히 나누어지지 않는 원 단위 급여와 협의·상여 조건을 보존한다. 프로젝트 카드, 지원 확인, 직무 요약, 관리자 목록과 등록 예시를 같은 규칙으로 연결.
+- **커뮤니티 원인/개선**: 공개 글 2개·1,394B인데 유휴 후 첫 응답 2.88초, 웜 응답 0.24~0.35초로 측정되어 데이터량이 아닌 `communityApi` 콜드스타트를 원인으로 확정. 최소 인스턴스 1개를 적용하고 인증 복원·토큰·fetch·JSON 처리 전체에 15초 상한을 적용했다. 동시 중복 읽기도 같은 사용자용 지연 오류를 반환한다. 커뮤니티 전용 Admin 초기화에서 사용하지 않는 Storage import를 제거해 새 프로세스 import 중앙값을 약 0.60초로 줄였다.
+- **검증**: TDD로 최소 인스턴스, Storage 미로딩, 인증/토큰 지연, 중복 읽기 오류 정규화 회귀를 추가. 최종 `npm run validate`에서 타입·린트·59개 파일/618개 테스트·프로덕션 빌드 통과. 기존 대형 번들 안내만 유지.
+- **배포**: 공유 `communityApi`만 범위 지정 배포하고 ACTIVE·Node.js 22·256MiB·`minInstances: 1`을 확인. 다른 `api`, `premiumApi`, `scheduledJobSync` 및 운영 Hosting은 변경하지 않음. Hosting은 `leedongwook` 채널만 배포.
+- **배포 후 확인**: 커뮤니티 API 4회 HTTP 200, 배포 직후 0.765초 및 이후 0.240~0.271초, 응답 1,394B. 프로젝트 페이지 HTTP 200/0.149초. 확인 주소 `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`(채널 만료 2026-10-08 13:07:18).
+- **비용/제외**: 최소 인스턴스 1개는 호출 수를 인위적으로 늘리지 않지만 공용 커뮤니티 함수의 상시 소액 컴퓨팅 비용이 발생한다. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-09] 무료 프리미엄 3회 자동 승인·1개월 노출 및 Lucide 아이콘 배포 완료
+- **작업자/브랜치**: Codex, `leedongwook`. 코드 `409a80e`(Lucide 아이콘 표준화), `3f40920`(프리미엄 자동 승인)까지 `origin/leedongwook`에 업로드.
+- **정책**: 이메일 인증을 완료한 기업회원은 무료 프리미엄 노출을 총 3회 신청할 수 있으며, 각 신청은 즉시 자동 승인되어 한국 시간 달력 기준 1개월간 공개된다. 현재 노출이 끝난 뒤 다음 회차를 신청할 수 있고 3회 소진 후에는 서버가 차단한다.
+- **원자성/보안**: 신청 저장·자동 승인·무료 횟수 1회 차감·공개 목록 생성·`system:auto-premium-v1` 감사 기록을 하나의 Firestore 트랜잭션으로 처리. 동시 중복 신청과 낡은 revision을 차단. 운영 관리자는 자동 승인 기업을 사유와 함께 정지/해제할 수 있으며, 정지 상태는 신청 데이터 삭제 후에도 유지된다. 사진 교체 성공 시 이전 파일, 회원 탈퇴 시 현재 프리미엄 사진을 정리한다.
+- **화면**: 신청 버튼과 안내를 즉시 노출 흐름에 맞춰 수정하고 성공 직후 목록/잔여 횟수를 새로고침. 주요 상태·행동 아이콘은 Lucide 라인 아이콘으로 통일하고 아이콘 전용 버튼 접근성 크기를 보완했다.
+- **검증**: `npm run validate` 타입·린트·58개 파일/582개 테스트·프로덕션 빌드 통과. 동시성, 트랜잭션 실패 롤백, 1~3회/4회 차단, 이미지 누락, 이메일 미인증, 정지/해제, 사진 삭제 회귀 포함. 기존 Vite 대형 청크 안내만 유지.
+- **배포**: Hosting은 `leedongwook` 채널만 배포하고 운영 Hosting은 변경하지 않음. 공용 `premiumApi` 함수는 자동 승인 서버 로직 때문에 범위 지정 배포했으므로 운영과 미리보기 API에 함께 반영됨. `api`, `communityApi`, `scheduledJobSync`, Firestore 규칙은 변경·배포하지 않음.
+- **확인 주소**: `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app` 및 `/api/premium/companies?limit=4` 모두 HTTP 200, 공개 기업 4개 응답 확인. 채널 만료 표시는 2026-10-08 13:07:18.
+- **제외/잔여**: 실제 기업 계정의 무료 횟수를 소모하는 실신청은 수행하지 않음. 원본 이미지 재인코딩/EXIF 제거와 계정 역할 불변성 강화는 계정·Storage 정책 전반을 함께 바꿔야 하므로 이번 범위에서 제외. 사용자 `.fig`와 생성 Hosting 캐시는 커밋에서 제외·보존.
+
+### [2026-09-08] 프리미엄 3회·1개월 정책 및 공통 화면 정렬 배포 완료
+- **대상**: 코드 `1510755`까지 `origin/leedongwook` 업로드. Hosting은 `leedongwook` 채널만 배포. 운영 Hosting은 변경하지 않음.
+- **공유 서버 반영**: 범위 지정으로 `premiumApi`와 `firestore.rules`만 배포. premiumApi ACTIVE 확인, 보안 규칙 활성 ruleset `4acb168b-1d20-46ed-b73b-f0d93f9d1622` 확인. `api`, `communityApi`, `scheduledJobSync`는 배포하지 않음.
+- **정책**: 기업 계정별 무료 3회, 승인될 때만 1회 차감, 1회당 승인일부터 한국 시간 달력 기준 1개월. 월말은 다음 달 말일로 보정. 관리자 임의 종료일 입력 제거. 기존 승인 건에는 소급 적용하지 않음.
+- **최종 확인**: `npm run validate` 타입·린트·58개 파일/567개 테스트·빌드 통과. 미리보기 프로젝트 화면의 비로그인 조회 7,389건/추천 0건, 프리미엄 기업 4개, 공개 premium API 200 응답과 브라우저 오류 없음 확인.
+- **배포 주소**: `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app` (채널 만료 2026-10-08 13:07:18 표시).
+- **제외/잔여**: 실제 기업 로그인 사진 업로드→관리자 승인 실사용 테스트는 무료 횟수를 소모하므로 미실행. 공통 API Gmail Secret/검색 필터, 일반 공고·제안 권한, 운영 랜딩/수집은 변경하지 않음. 사용자 `.fig`와 생성 Hosting 캐시는 보존.
+
+### [2026-09-08] 프리미엄 노출 기간을 1회당 1개월로 확정 (로컬 수정)
+- **요청/정책**: 무료 총 3회 유지, 매 승인부터 한국 시간 기준 달력 1개월. 다음 달 동일 날짜·시각, 날짜가 없으면 말일로 보정. 자동 연속 연장이 아닌 종료 후 다음 회차 신청 구조 유지.
+- **변경**: premiumWorkflow의 서버 종료일 계산, premiumCompanies의 요청 종료일 무시, premiumCompanyService의 기간 입력 제거. PremiumApplicationsAdmin에서 임의 종료일 필드 삭제, 기업 신청 안내 및 종료일 한국 시간 표시 통일.
+- **검증**: 테스트 스킬로 기존 구현의 새 정책 실패를 먼저 확인. 월말·윤년·연말·임의 기간 변조·만료 경계·관리자 기간 입력 제거 포함 58개 파일/567개 테스트, 타입·린트·빌드 통과(기존 번들 경고 유지).
+- **범위**: 기존 서버 승인 데이터는 변경하지 않음. 앞선 외부 업로드 차단에 대한 명시 승인이 없으므로 원격 푸시 및 모든 배포는 계속 보류. leedongwook 로컬 변경만 수행.
+
+### [2026-09-08] 프리미엄 무료 3회 및 신청·보완·승인 연결 구현 (원격 업로드·배포 차단)
+- **작업자/브랜치**: Codex, `leedongwook`. 사용자 확인: 무료 3회는 프리미엄 노출 3회.
+- **정책**: 접수/보완/반려 차감 없음. 운영·최고 관리자 승인 시 공개 목록과 사용 횟수를 하나의 서버 트랜잭션으로 저장. 동시 승인/낡은 버전/한도 초과/활성 노출 중복 차단. 관리자가 종료 일시 지정, 종료 후 재신청. 계정별 기준이며 동일 사업자 다계정 통합 한도는 없음.
+- **파일**: functions/index 및 premiumCompanies/Workflow/Images/Repository 테스트, premiumCompanyService, PremiumCompaniesSection, PremiumApplicationsAdmin, AdminPage. 구현 상세와 미해결 제한은 `docs/premium-exposure-workflow-2026-09-08.md`.
+- **보안 장애 발견**: 실제 Firestore 규칙은 2026-09-06에 만료된 전체 허용 임시 규칙으로 현재 모든 클라이언트 접근이 거부됨. 사용자 진행 요청에 따라 본인 가입·프로필/경험 카드와 서버 전용 프리미엄 권한 규칙을 로컬 작성. `firestore.rules`, firebase.json, verify-profile-rules 스크립트 및 보안 보고서. 다른 공고/제안 직접 접근은 계속 차단, 공통 API 검색 필터 미배포 문제를 해결하기 전에 개방하지 않음.
+- **검증**: 타입·린트·58개 파일/561개 테스트·빌드 통과. 기존 번들 경고/테스트 환경 안내 유지. Firebase 공식 Rules 사전 검사 40개 전부 통과, 실제 DB 문서 쓰기 없음. 실제 로컬 브라우저 랜딩→더보기→프로젝트→내 정보 로그인 안내, 데스크톱/390px 및 기업 로그인 768px 확인. 실제 기업 사진 업로드/관리자 승인은 아직 미검증.
+- **로컬 커밋**: 화면 정렬 `ca4a5d3`, 프리미엄 `fd47a26`. 사용자 fig 파일과 생성 캐시는 제외·보존.
+- **차단**: origin 원격 업로드 명령이 자동 안전 검토에서 거절됨(코드/보안 규칙 전송 대상 소유·명시 승인 미확인). 목적지는 확인된 `https://github.com/AL07-2026/AL07TEAM04.git`, 브랜치 `leedongwook`. 우회·재시도하지 않음. 원격 푸시, Hosting, premiumApi, Firestore 규칙 배포 모두 미실행.
+- **후속**: 사용자에게 해당 팀 저장소 업로드 및 이어지는 배포 승인 요청. 승인 시 로컬 상태/원격 변경 확인 후 진행. 화면은 leedongwook 채널만, premiumApi/보안 규칙은 공유 서버 영향 명시. 운영 랜딩·수집·커뮤니티·공통 api는 이번 배포 대상 아님. Gmail Secret 누락은 계속 미해결.
+
+### [2026-09-08] 회원 메뉴 화면 공통 정렬 규격화 (로컬 구현, 시각 검증·배포 보류)
+- **작업자**: Codex (`leedongwook`).
+- **변경**: `Ui.tsx`의 3중 화면 틀을 공통 `SiteHeader`/본문으로 통합. `globals.css`에 폭 1152px·좌우 16/32px·헤더 72px 규격 정의. 뒤로가기는 본문으로 이동. 좁은 창의 주요 메뉴는 하단 제공하며 기기 모드는 유지.
+- **적용 파일**: LandingPage, LoginPage, SignupPage, RoleSelectionPage, BasicProfilePage, CompanyInfoPage, CommunityPage, PremiumCompaniesPage, JobDatabasePage, wireframe/FlowPages 및 Ui/Landing/Community/App 테스트.
+- **검증**: 타입·린트·531개 테스트·빌드 통과(기존 번들 경고). 비로그인 상단·하단 보호 메뉴 이동과 역할별 공통 틀 회귀 포함.
+- **제한**: 실제 브라우저 도구가 작업공간 크레딧 부족으로 차단. 시각 검증을 우회하지 않고 커밋·푸시·배포 보류. 크레딧 복구 후 화면 폭별 확인하고 미리보기 채널에만 배포해야 한다.
+- **문서**: `docs/layout-standardization-2026-09-08.md`. 관리자 콘솔, DB/API, 등록 기능은 범위 밖. 기존 사용자 파일·캐시·기업 등록 검토 문서는 보존.
+
+### [2026-09-08] 기업 프리미엄 사진·채용공고 등록 시뮬레이션 검토 (수정/배포 없음)
+- **작업자**: Codex (`leedongwook`)
+- **요청 및 범위**: 기업 관점 등록 흐름 검토. 운영 신청/공고/파일/메일을 생성하지 않고 코드·운영 공개 화면·격리한 모의 테스트로 확인. 리뷰 요청이므로 코드 수정·커밋·원격 업로드·배포하지 않음.
+- **결과**: 프리미엄 사진 업로드 미구현, 보완/반려 후 편집 차단, 승인→공개 목록 운영 연결 부족, 실제 공고 등록 경로에 첨부 없음. 동일 제목 ID 충돌/병합, 서버 저장 실패 복구 및 삭제된 항목의 로컬 재등장 문제를 재현.
+- **주의**: `ProjectRegisterPage`의 사진 첨부는 현재 라우트에 연결되지 않은 예전 코드다. 실제 `/company/projects/new`는 통합 등록 모달로 이동한다.
+- **검증**: 진단 8개로 현행 문제 재현, 최종 타입 검사·린트·526개 기존 테스트·빌드 통과(기존 번들 경고). 실제 기업 계정의 운영 Storage 업로드/권한 및 메일 수신은 미검증.
+- **문서**: `docs/company-registration-review-2026-09-08.md`. 다음은 사용자 수정 요청 후 저장 무결성·사진 등록·보완/승인 연결을 구현하는 단계.
+
+### [2026-09-08] 운영 화면·서버 3개 반영 완료, 공통 API는 Gmail 설정 누락으로 보류
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **사용자 요청**: 미리보기 배포 후 운영 랜딩·수집 서버까지 모두 반영하여 업데이트하도록 명시 승인. 이번 운영 배포 예외는 이후 작업의 기본 미리보기 전용 정책을 변경하지 않음.
+- **수정 파일**: `functions/entry.mjs`, `functions/community-entry.mjs`, `functions/index.mjs`, `functions/package.json`, `functions/lib/community.mjs`, `src/services/communityService.ts`, `src/app/CommunityPage.tsx`, `src/app/community/CommunityBoard.tsx` 및 관련 테스트, `functions/lib/jobSearch.mjs`/테스트, 커뮤니티 검증 보고서.
+- **변경 내용**: 커뮤니티 경량 초기화, 활동명·공감 병렬 조회, 계정별 20초 메모리 캐시/동시 요청 공유, 쓰기·계정 변경 시 캐시 무효화, 로딩·오류·새로고침 처리. 공개 검색에서 `isPublic: false` 기업 공고를 제외하도록 화면 정책과 일치시킴.
+- **검증**: 비공개 공고 노출 회귀를 실패 테스트로 재현한 뒤 수정. 최종 타입 검사·린트·55개 파일/526개 테스트·빌드 통과(기존 번들 크기 안내 경고 유지). 코드 `1e377e4`를 `origin/leedongwook`에 업로드.
+- **배포 결과**: 운영 Hosting은 미리보기와 같은 `2bf52652b36e19c8` 버전으로 17:37 KST 반영. `communityapi-00006-yun`, `premiumapi-00002-zob`, `scheduledjobsync-00033-qiv` 17:39 KST 배포 완료. 수집 00:00 KST 예약 1개, 재시도 0, 동시 실행 1 유지.
+- **공통 API 보류**: 첫 4개 함수 배포는 `GMAIL_APP_PASSWORD` Secret 미등록(404)으로 업데이트 전에 중단. 이후 영향을 받지 않는 3개만 별도로 배포. `api-00058-xew` 유지. 따라서 비공개 검색 필터 보완은 코드에만 있으며 아직 운영 API에는 반영되지 않음. 비밀번호를 임의 생성하거나 필수 Secret 설정을 임의 제거하지 않았다.
+- **후속 선택 필요**: Gmail 발송 설정을 완료할지, 메일 발송을 명시적으로 비활성화한 상태로 공통 API를 먼저 배포할지 사용자에게 질문함. 선택 없이 공통 API 배포 완료라고 판단하면 안 됨.
+- **범위**: DB/보안 규칙 변경·수동 수집·AI/메일 발송 테스트는 하지 않음. 워크넷 원천 이용 권한과 AI 제공처 오류는 별도 미해결 항목.
+
+### [2026-09-07] 사용자 요청에 따른 이전 버전(WDS 적용 이전) 롤백 완료
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  - 사용자 요청 ("이전 버전으로 돌아가자")에 따라 원티드 디자인 시스템(WDS) 피그마 토큰 적용 작업 커밋들을 안전하게 `git revert`하여 작업 이전 상태(`8868243`)로 100% 완전 복원.
+  - 레거시 브랜드 색상(숲록 `#173F3A`, 다홍 `#F06B4F`, 배경/보더) 및 기존 와이어프레임 UI 컴포넌트 상태 복원.
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - `git push origin leedongwook`: 리버트 커밋 반영 완료.
+  - `npm run deploy:leedongwook`: 롤백 버전 전용 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`) 배포 완료.
+- **다음 작업자 전달 사항**:
+  - 현재 코드는 WDS 적용 이전의 안정 버전(`8868243`)의 상태와 정확히 동일합니다.
+
+### [2026-09-07] 작업 원칙 강화: 원스톱 자율 완결(추가 승인 최소화) 및 `leedongwook` 고정
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **주요 내용**:
+  - **원스톱 자율 완결 원칙 수립**:
+    - 사용자가 계획(Plan)을 승인하거나 작업을 지시하면, 중간에 사소한 확인이나 추가 승인 버튼을 요구하지 않고 [구현] ➔ [검증] ➔ [Git 커밋/푸시] ➔ [채널 배포] ➔ [문서 정리 및 보고]까지 한 번에 끝까지 정리하도록 워크플로우 확립.
+  - **사용자 지침 반영**: 사용자의 명시적 요청이 있기 전까지는 `develop` 브랜치 작업 및 메인 라이브 배포를 일체 중단하고, 모든 개발/수정 작업은 **`leedongwook` 브랜치에서만 진행**하며 배포 역시 **`leedongwook` 전용 채널(`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`)로만 수행**하도록 정책 확정.
+  - **규칙 문서 영구 반영**:
+    - `.agents/AGENTS.md`: AI 협업 규칙 1항(브랜치/배포) 및 2항(원스톱 자율 완결) 명시.
+    - `.agents/rules/06-verification-and-collaboration.md`: 3항(브랜치/배포) 및 4항(원스톱 자율 완결 파이프라인) 영구 등록.
+  - **배포 스크립트 추가**:
+    - `package.json`: `"deploy:leedongwook": "npx firebase-tools hosting:channel:deploy leedongwook"` 스크립트 추가하여 간편하고 안전한 배포 환경 구축.
+- **검증**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+- **다음 작업자 전달 사항**:
+  - 사용자가 한번 승인하면 중간에 여러 번 묻거나 추가 승인을 요구하지 말고, 끝까지 검증·배포·문서화까지 원스톱으로 마무리하시기 바랍니다.
+  - 사용자가 특별히 "develop에 배포해달라"고 요청하기 전까지는 절대로 `develop` 브랜치 체크아웃/머지나 메인 운영 사이트(`https://al07team04-bdfcd.web.app`) 배포를 진행하지 마시고, 반드시 `leedongwook` 브랜치 및 `npm run deploy:leedongwook`을 사용하시기 바랍니다.
+
+
+### [2026-09-06] 기업 직접 등록 프로젝트 탐색 화면 병합 및 홈-프로젝트 순위·점수·총건수 완전 일치화
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **발견된 이상 현상 및 근본 원인 분석**:
+  - **증상**: 홈 화면(`/senior`) 맞춤 추천에는 1위 `스튜디오 크리에이티브 (97점)`, 2위 `워크디자인 (94점)`, 3위 `(주) 디자인브릿지스튜디오 (80점)` 등으로 표시되고 건수도 22건으로 표기되었으나, 프로젝트 화면(`/senior/projects`)에서 [1순위 디자인] 선택 시 97점/94점 공고가 증발하고 3위였던 `(주) 디자인브릿지스튜디오 (80점)`부터 1위로 노출되며 건수도 28건으로 불일치함.
+  - **근본 원인**:
+    1. 97점(`스튜디오 크리에이티브`), 94점(`워크디자인`) 프로젝트는 기업 회원이 직접 등록한 공고(`localStorage`의 `eojob_projects`)임.
+    2. 홈 화면(`FlowPages.tsx`)은 `getLocalProjects()`를 읽어 워크넷 공고와 `mergeSeniorPostings()`로 병합하여 97점, 94점이 1, 2위로 정상 랭크되었음.
+    3. 반면 프로젝트 탐색 화면(`JobDatabasePage.tsx`)은 검색 API(워크넷 카탈로그 공고)만 표시하고 기업 프로젝트를 전혀 병합하지 않아 97점, 94점 최고 적합도 공고가 아예 누락되고 80점짜리 워크넷 공고부터 노출됨.
+    4. 건수 역시 홈은 워크넷 20개 슬라이스 + 기업 공고 2개 = 22개, 프로젝트 화면은 워크넷만 28개로 카운트되어 불일치함.
+- **해결 및 개선 내용**:
+  1. `src/services/projectService.ts`: `getLocalProjects(): JobPosting[]` 함수를 `export`하여 외부에서 기업 등록 프로젝트를 동기적으로 접근 가능하도록 수정.
+  2. `src/app/JobDatabasePage.tsx`:
+     - 시니어 역할일 때 `getLocalProjects()`와 `getPublishedCompanyProjects()`를 통해 공개 기업 프로젝트를 가져와 `matchesPublishedCompanyProject()`로 필터링.
+     - `mergeSeniorPostings()`를 사용하여 워크넷 공고와 기업 프로젝트를 정상 병합.
+     - `sortBy === 'fit-desc'` 시 `seniorFitScore` 내림차순 정렬을 수행하여 1위 `스튜디오 크리에이티브(97점)`, 2위 `워크디자인(94점)`이 프로젝트 화면에서도 최상단에 동일하게 노출되도록 보장.
+     - 총 검색 결과 건수(`total`, `catalogTotal`, `preferredTotal`)에 매칭된 기업 프로젝트 수(`matchingCompanyProjectsCount`)를 합산하여 워크넷 28건 + 기업 프로젝트 2건 = **총 30건**으로 정확히 집계.
+  3. `src/app/wireframe/FlowPages.tsx`:
+     - 홈 화면의 맞춤 추천 프로젝트 총 건수 계산을 슬라이스 길이가 아닌 실제 전체 검색 건수(28건) + 기업 프로젝트(2건) = **총 30건**으로 일치시킴.
+  4. `src/app/JobDatabasePage.test.ts`:
+     - `vi.mock('@/services/projectService')`에 `getLocalProjects` 모의 함수 추가하여 단위 테스트 격리 및 무결점 유지.
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint, 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - Firebase Hosting 배포 완료 (`leedongwook` 채널 & 라이브 호스팅).
+- **다음 전달 사항**:
+  - 홈 화면의 TOP 5 목록(1위 스튜디오 크리에이티브 97점, 2위 워크디자인 94점, 3위 디자인브릿지 80점, 4위 부국티엔씨 80점, 5위 아이디플러스 80점)과 프로젝트 탐색 화면의 1순위 추천 목록 및 총 건수(30건)가 완벽하게 일치합니다.
+
+
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 원인 분석**:
+  - 홈 화면(`/senior`)의 "맞춤 추천 프로젝트(TOP 5)"와 프로젝트 탐색 화면(`/senior/projects`)의 1순위 추천 목록 간에 순위와 점수 불일치 현상이 발생함.
+  - **원인 1 (점수 산출 이원화)**: 프로젝트 화면은 검색 서버(`functions/lib/jobSearch.mjs`)가 정밀 계산한 적합도 점수(`seniorFitScore`)를 그대로 보존·표시하였으나, 홈 화면은 서버 응답 후 클라이언트에서 `calculatePersonalizedMatch`로 점수를 다시 덮어써서 동일 공고의 점수와 정렬 순위가 어긋남.
+  - **원인 2 (네비게이션 쿼리 유실)**: 홈 화면의 "전체 N개 보기 →" 링크 클릭 시 단순 `/senior/projects`로 이동하여 1순위 탭이 아닌 '전체' 탭이 활성화되어 추천 목록과 다른 공고가 먼저 노출됨.
+- **개선 내용**:
+  1. **홈 화면 추천 점수 체계 단일화 (`FlowPages.tsx`)**:
+     - `searchFullJobDatabase`가 산출한 `seniorFitScore`를 최우선 보존하도록 정렬 및 매핑 로직 개선.
+     - fallback 또는 점수가 누락된 경우에만 클라이언트 보정 점수를 부여하여, 서버-홈-프로젝트 화면 간 1위~5위 순위와 점수가 100% 일치하도록 보장.
+  2. **홈 화면 추천 "전체보기" 네비게이션 개선 (`FlowPages.tsx`)**:
+     - `getRecommendedProjectsDestination(recommendationPrimaryCategory)` 함수를 통해 1순위 추천 직종 카테고리(`recommendedCategory`) 쿼리 파라미터를 보존하며 이동하도록 연결.
+  3. **프로젝트 탐색 화면 추천 정합성 최적화 (`JobDatabasePage.tsx`)**:
+     - URL 파라미터 `recommendedCategory`를 기반으로 1순위 직종 탭을 기본 선택하도록 초기화 일치.
+     - 서버 점수를 충실히 보존하여 홈 화면의 TOP 5 목록과 완벽히 동기화.
+- **수정한 파일 목록**:
+  - `src/app/wireframe/FlowPages.tsx`: 추천 공고 점수 보존 및 1순위 네비게이션 연결
+  - `src/app/JobDatabasePage.tsx`: 서버 점수 보존 및 1순위 필터 연동 정합성 확보
+  - `docs/AI_COLLABORATION_LOG.md`: 작업 로그 기록
+- **검증 및 배포 결과**:
+  - `npm run validate`: Typecheck, ESLint(0 warning), 43개 테스트 파일(397개 테스트), Vite build 100% 무결점 통과.
+  - Firebase Hosting 채널 배포: `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`
+  - Firebase Hosting 메인 배포: `https://al07team04-bdfcd.web.app`
+- **다음 작업자 전달 사항**:
+  - 홈 화면과 프로젝트 화면 1순위 탭은 동일한 서버 적합도 점수(`seniorFitScore`) 체계를 공유하므로, 임의로 클라이언트 점수를 덮어쓰지 않도록 주의바랍니다.
+
+### [2026-09-05] 로그인 상태 유지(Remember Me) 및 세션 지속성 설정 기능 구현
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 기획 의도**:
+  - 포털 및 글로벌 서비스 표준에 따라, 개인 PC/모바일 사용자는 브라우저 창을 닫아도 로그인이 안전하게 유지되어 시니어 사용자의 불필요한 재인증 피로도를 최소화하고, 공용 PC나 타인 기기 이용자는 `로그인 상태 유지` 체크 해제 시 브라우저 창/탭을 닫으면 즉시 자동 로그아웃되는 보안 편의 하이브리드 옵션(1번 방식) 적용.
+- **개선 내용**:
+  1. **Firebase Auth 공식 지속성(`setPersistence`) 연동 (`authContext.tsx`)**:
+     - `rememberMe: true` (기본값) ➔ `browserLocalPersistence` (로컬 스토리지/IndexedDB 영구 유지).
+     - `rememberMe: false` ➔ `browserSessionPersistence` (브라우저 세션 전용 메모리 보존, 창 닫으면 만료).
+     - 이메일/비밀번호(`signIn`) 및 구글 로그인(`signInWithGoogle`, 리디렉션 복원 포함) 전체에 `rememberMe` 옵션 적용.
+     - `saveUserLocal` 및 `readInitialUser`를 통해 `session_only` 모드일 때 `sessionStorage`를 활용하여 탭/창 종료 시 잔여 로컬 데이터 클리어 보장.
+  2. **로그인 화면 UI 개선 (`LoginPage.tsx`)**:
+     - 모바일 및 데스크톱 폼에 세련된 `[✓] 로그인 상태 유지` 체크박스 컴포넌트 추가 (기본값 체크됨).
+     - 시니어 접근성(WCAG) 가이드라인 준수: 명확한 터치 영역, 폰트 크기 및 시그니처 딥그린(`accent-[#173F3A]`) 스타일.
+     - 친절한 안내 텍스트 제공: `"공용 PC나 다른 사람의 기기에서는 체크를 해제해 주세요."`
+  3. **단위 테스트 작성 및 무결점 파이프라인 통과**:
+     - `src/lib/authContext.test.tsx`: `rememberMe = false` 시 세션 스토리지 격리 및 플래그 검증 케이스 추가.
+     - `src/app/LoginPage.test.tsx`: 체크박스 렌더링, 토글 인터랙션, `signIn`/`signInWithGoogle` 인자 전달 단위 테스트 신규 구현 (4 passed).
+     - `npm run validate`: 43개 테스트 파일 397개 케이스 전체 통과.
+- **수정한 파일 목록**:
+  - `src/lib/authContext.tsx`: persistence 모드 전환 및 세션/로컬 스토리지 분기 제어
+  - `src/lib/authContext.test.tsx`: 지속성 모킹 및 세션 전용 로그인 테스트 추가
+  - `src/app/LoginPage.tsx`: `rememberMe` 상태, 폼 체크박스 UI 및 로그인 핸들러 연동
+  - `src/app/LoginPage.test.tsx`: 로그인 상태 유지 UI 및 인터랙션 테스트 작성
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 43개 파일 397개 테스트 100% 통과, Vite 빌드 성공.
+  - Firebase Hosting `leedongwook` 채널 및 메인 라이브 사이트(`https://al07team04-bdfcd.web.app`) 배포 완료.
+
+### [2026-09-05] 프로젝트 로딩 시 건수 깜빡임(25건 ➔ 8,853건) 방지 및 카탈로그 메타데이터 캐시 보존
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 원인 분석**:
+  - 프로젝트 DB 페이지(`JobDatabasePage`) 초기 진입 시 서버 API 지연/콜드 스타트 동안 로컬 시드 25건 기반 Fast Fallback(`createFallbackSearchResult`)이 먼저 화면에 반영되어 총 건수가 `25건`으로 노출된 후, 백엔드 Cloud Functions API 응답(8,853건)이 도착하며 숫자가 점프하는 시각적 깜빡임 발생.
+- **개선 내용**:
+  1. **카탈로그 메타데이터 세션/로컬 스토리지 캐싱 (`jobSearchService.ts`)**:
+     - `readLastCatalogMeta()`, `writeLastCatalogMeta()` 도입 (`eojob_last_catalog_meta_v1`).
+     - 검색 서버 응답 성공 시 최신 카탈로그 통계(`catalogTotal`, `preferredTotal`, `partTimeTotal`, `closingSoonTotal`)를 로컬 스토리지에 캐시.
+     - 네트워크 지연 시의 Fast Fallback에서도 직전 캐시된 메타데이터를 유지하여 재방문 시 25건으로 덮어쓰지 않음.
+  2. **초기 로딩 시 부드러운 스켈레톤 인디케이터 처리 (`JobDatabasePage.tsx`)**:
+     - 첫 방문자처럼 캐시가 없거나 서버 응답 대기 중일 때 25건을 노출하지 않고 `···` 로딩 인디케이터를 표시하여 혼란 제거.
+     - 메타데이터 통계 카드 및 검색 결과 카운트에 일관된 로딩 표현 적용.
+  3. **React 19 / ESLint 룰 무결성 보장**:
+     - React 19 컴파일러 규칙(`react-hooks/refs`) 및 `react-hooks/exhaustive-deps`를 준수하도록 순수 헬퍼(`readLastCatalogMeta()`)와 안전한 state setter 패턴 적용.
+- **수정한 파일 목록**:
+  - `src/services/jobSearchService.ts`: 카탈로그 메타데이터 캐시 로직 및 Fallback 건수 보존
+  - `src/app/JobDatabasePage.tsx`: 캐시 메타 바인딩, 초기 로딩 `···` 스켈레톤 인디케이터, 린트 클린업
+  - `src/app/JobDatabasePage.test.ts`: 모킹에 `readLastCatalogMeta` 추가
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 파일 392개 테스트 100% 통과, Vite 빌드 성공.
+  - Firebase Hosting `leedongwook` 채널 및 메인 라이브 사이트(`https://al07team04-bdfcd.web.app`) 배포 완료.
+
+### [2026-09-05] 랜딩 페이지 로그인/회원 헤더 네비게이션 디자인 시스템 통일
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **배경 및 원인 분석**:
+  - 기존 로그인 상태 표시가 '👤 인재 로그인됨' 이모지 태그, 둥근 캡슐형 '내 홈' 버튼, 테두리 없는 사각 '로그아웃' 아이콘 등 서로 다른 높이/색상/모서리 반경으로 파편화되어 있어 시각적 통일성이 결여됨.
+- **개선 내용**:
+  1. **역할 뱃지 품격화**: '인재 로그인됨' ➔ '🟢 인재 회원' / '🟢 기업 회원' (실시간 상태 도트 + Lucide 아이콘 + 부드러운 민트 배경 `#F2F7F5` + `#D5DDD8` 보더).
+  2. **헤더 규격 및 수평 정렬 통일**:
+     - 모든 헤더 액션(`회원 뱃지`, `내 홈`, `관리자`, `로그아웃`, `더보기 메뉴`)의 높이를 `min-h-11`(44px, WCAG 기준 충족) 및 모서리 곡률 `rounded-xl`로 단일화.
+  3. **명확한 시각적 위계(Visual Hierarchy) 수립**:
+     - 정보(뱃지: 소프트 민트) ➔ 주 액션(내 홈: 시그니처 딥그린 `#173F3A` 솔리드) ➔ 보조 액션(로그아웃/관리자: 단정한 화이트 아웃라인 + 부드러운 로즈/그린 호버) ➔ 메뉴(더보기).
+  4. **시니어 친화적 접근성 및 반응형 가독성**:
+     - 텍스트 없는 쌩 아이콘이었던 로그아웃 버튼에 명확한 '로그아웃' 텍스트를 결합하여 오작동 방지.
+     - 360px 모바일 화면에서도 요소가 깨지지 않도록 반응형 축약(`hidden sm:inline`) 처리.
+- **수정한 파일 목록**:
+  - `src/app/LandingPage.tsx`: 헤더 우측 로그인/비로그인 네비게이션 컨트롤 전면 리팩토링
+  - `src/app/LandingPage.test.tsx`: 통일된 회원 뱃지, 내 홈, 로그아웃 렌더링 검증 단위 테스트 추가 (5 passed)
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 파일 392개 테스트 100% 통과, Vite 빌드 성공.
+  - 브라우저 실화면 렌더링 및 인터랙션 스크린샷 검증 완료.
+  - Firebase Hosting `leedongwook` 채널 및 메인 라이브 채널(`https://al07team04-bdfcd.web.app`) 배포 완료.
+
+### [2026-09-05] `develop` 브랜치 동기화 및 커뮤니티 댓글의 대댓글(답글) 기능 구현
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **주요 내용**:
+  1. **`origin/develop` 최신 동기화**:
+     - `origin/develop` 최신 변경사항(관리자 초대 관리 기능 등)을 로컬 및 작업 브랜치(`leedongwook`)에 완벽 동기화 완료.
+  2. **커뮤니티 댓글의 대댓글(답글) 기능 구현**:
+     - **계층 구조 설계**: 시니어 가독성 및 모바일 레이아웃(360px+) 보호를 위해 1단계 들여쓰기(Depth 1) 플랫 스레드 모델 적용. 대댓글에 다시 답글을 달아도 최상위 부모 ID를 유지하며 `@상대방활동명` 멘션 배지로 수신 대상 식별.
+     - **백엔드 (Cloud Functions)**:
+       - `createComment`: 부모 댓글 존재 검증, 1-depth 강제를 위한 부모 ID 정규화(`parentData.parentId || data.parentId`), 작성 대상 닉네임 폴백 처리.
+       - `deleteComment`: 부모 댓글 삭제 시 하위 대댓글 연쇄 삭제(Cascade Delete) 및 총 삭제 개수만큼 게시글의 `commentCount` 안전 차감.
+     - **프론트엔드 UI/UX**:
+       - `CommunityBoard.tsx`: 댓글별 '답글' 버튼, 인라인 답글 입력 폼(44px 이상 시니어 터치 타깃, Enter 전송, ESC/취소 버튼), `@상대방` 멘션 배지, 부모 댓글 삭제 시 연쇄 UI 정리.
+       - 비로그인 유저가 '답글' 클릭 시 안전하게 로그인 화면으로 리다이렉트(`moveToLogin()`).
+- **수정한 파일 목록**:
+  - `functions/lib/community.mjs`: 대댓글 생성 및 연쇄 삭제 로직 구현
+  - `functions/lib/community.test.mjs`: 대댓글 생성 백엔드 단위 테스트 추가 (9 passed)
+  - `src/services/communityService.ts`: `parentId`, `replyToAuthorName` 타입 및 API 페이로드 확장
+  - `src/services/communityService.test.ts`: 대댓글 서비스 단위 테스트 추가 (7 passed)
+  - `src/app/community/CommunityBoard.tsx`: 답글 인라인 작성 및 대댓글 렌더링 UI 구현
+  - `src/app/CommunityPage.test.tsx`: 답글 작성 및 부모 댓글 삭제 연쇄 제거 통합 테스트 추가 (9 passed)
+- **검증 결과**:
+  - `npm run validate`: Typecheck (0 error), Lint (0 warning, 0 error), 42개 테스트 파일 391개 테스트 100% 통과, Vite 빌드 성공.
+- **배포 완료 및 트러블슈팅**:
+  - **원격 Git Push**: `origin/leedongwook`에 `84f7cb9` 및 배포 설정 커밋(`5cb66de`) 푸시 완료.
+  - **Firebase Hosting 채널 배포**: `leedongwook` 전용 미리보기 채널 배포 성공 (`https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`).
+  - **Firebase Hosting 메인 라이브 배포**: 사용자 명시 요청에 따라 메인 라이브 사이트 배포 성공 (`https://al07team04-bdfcd.web.app`).
+  - **Cloud Functions 배포 트러블슈팅**:
+    - **원인**: Windows + Node v24 환경에서 `firebase-tools`가 로컬 디스커버리 서버를 띄울 때 `localhost` fetch IPv6 바인딩 불일치(`TypeError: fetch failed`)로 함수 배포가 중단되는 현상 발생.
+    - **해결**: `functions/functions.yaml` 매니페스트를 선제적으로 생성하여 HTTP discovery 단계를 안전하게 건너뛰도록 처리 후 `npx -y firebase-tools deploy --only functions:communityApi` 정상 완료.
+  - **라이브 검증**:
+    - 미리보기 채널 및 메인 라이브 채널 모두 rewrite API(`https://al07team04-bdfcd.web.app/api/community/posts`) 정상 연동 및 200 OK 응답 확인 완료.
+
+### [2026-09-04] 로그인 상태임에도 커뮤니티 진입 시 '로그인 후 이용해 주세요' 노출 버그 원천 차단
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **근본 원인 분석**:
+  - `authContext`의 로컬 스토리지 복원으로 UI상 사용자(`user`)는 즉시 존재하는 반면, Firebase SDK의 `auth.currentUser`는 비동기로 복원되어 `getCommunityProfile()` 호출 찰나에 `null`이 되는 레이스 컨디션 발생.
+  - 이로 인해 `communityService.ts`에서 `throw new Error('로그인 후 이용해 주세요.')`가 발생하고, `CommunityBoard.tsx`의 `.catch`를 통해 화면 상단에 배너로 노출됨.
+- **수정한 파일 목록**:
+  - `src/services/communityService.ts`:
+    - `request` 함수에서 `auth.authStateReady()` 비동기 대기를 적용하여 세션 복원 전 조기 호출 방지.
+    - `getCommunityProfile()`에서 미인증 또는 401 오류 시 예외를 던지지 않고 조용히 `null`을 반환하도록 예외 안전성 확보.
+  - `src/app/community/CommunityBoard.tsx`:
+    - `getCommunityProfile` 에러 catch 시 로그인 관련 에러는 `setMessage` 하지 않도록 방어 로직 추가.
+    - JSX 렌더링 시 `message`에 로그인 관련 문구가 포함된 경우 배너를 노출하지 않도록 3중 방어 처리.
+  - `src/services/communityService.test.ts`: 미인증 상태에서 `getCommunityProfile()`이 예외 없이 `null`을 반환하는 단위 테스트 추가.
+  - `src/app/CommunityPage.test.tsx`: 프로필 조회 실패 시에도 화면에 로그인 유도 배너가 노출되지 않음을 보장하는 단위 테스트 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (0 warning, 0 error), 41개 테스트 파일 383개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 커밋 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 커뮤니티 글쓰기/참여 시 불필요한 '로그인 필요' 배너 문구 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/community/CommunityBoard.tsx`: 로그인 상태 또는 비동기 Auth 복원 타이밍에 화면 상단에 '글쓰기와 참여는 로그인 후 이용할 수 있습니다.' 문구가 노출되던 문제를 해결하기 위해, 비로그인 상태에서 글쓰기 클릭 시 배너 메시지(`setMessage`)를 설정하지 않고 즉시 로그인 페이지(`moveToLogin()`)로 유도하도록 수정.
+  - `src/app/CommunityPage.test.tsx`: 비로그인 사용자가 글쓰기를 클릭했을 때 해당 배너 문구가 화면에 노출되지 않고 정상적으로 로그인 리다이렉트가 발생하는지 보장하는 검증 assertion 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (0 warning, 0 error), 41개 테스트 파일 381개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 커밋 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 글쓰기 폼 게시판 선택 커스텀 드롭다운 UI 적용 및 초록색 포커스 테두리 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/community/CommunityBoard.tsx`: 브라우저 기본 `<select>` 요소를 이어잡 디자인 시스템 표준인 커스텀 드롭다운(`button` + `role="listbox"`, `Check`, `ChevronDown`, `rounded-2xl`, 부드러운 그림자 `shadow-[0_8px_20px_rgba(23,63,58,0.12)]`)으로 전면 개편. 외부 클릭 및 ESC 키 닫기 지원.
+  - 폼 입력 필드(게시판 선택, 제목, 본문, 댓글) 선택 시 노출되던 과도한 초록색 테두리(`focus-visible:ring-[#173F3A]`)를 제거하고 모던하고 차분한 테두리(`focus:outline-none focus:border-[#B8AF9C]`)로 정돈.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 커뮤니티 더보기 메뉴 내 중복 '프로젝트 보러가기' 항목 제거
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/CommunityPage.tsx`: `MobilePage`의 `showProjectLink`를 `false`로 설정하여, 헤더 중앙 네비게이션('프로젝트')과 중복되던 우측 더보기 드롭다운 내 '프로젝트 보러가기' 링크를 제거하고 깔끔하게 '이어잡 소개', '커뮤니티', '문의하기'만 노출되도록 정리.
+  - `src/app/CommunityPage.test.tsx`: 커뮤니티 화면에서 더보기 메뉴를 열었을 때 '프로젝트 보러가기' 항목이 노출되지 않음을 보장하는 단위 테스트 추가.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 커뮤니티 본문 너비 및 카드 레이아웃 헤더 정렬 최적화
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/CommunityPage.tsx`: `contentClassName`의 `max-w-6xl mx-auto` 제약을 제거하고 `w-full pb-10`으로 변경하여, 헤더의 `max-w-7xl` (좌측 이어잡 로고 및 우측 더보기 버튼)과 본문 시작/끝 위치가 완벽히 수직 일치되도록 최적화.
+  - `src/app/community/CommunityBoard.tsx`: 게시글 목록 섹션과 상세 내용 섹션의 높이를 `min-h-[420px] md:min-h-[500px] flex flex-col border border-[#E8E2D6] shadow-2xs`로 통일하고 빈 상태 메시지를 수직 중앙 정렬하여 와이드 화면에서의 시각적 균형감 강화.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 헤더 우측 메뉴 버튼 명칭을 '메뉴'에서 '더보기'로 직관성 개선
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **수정한 파일 목록**:
+  - `src/app/wireframe/Ui.tsx`: `SiteMenu` 버튼 표기를 `<span className="hidden sm:inline">더보기</span>`로 변경하고, `aria-label`을 `더보기 열기` / `더보기 닫기`로 개선. 드롭다운의 `aria-label`을 `이어잡 더보기 메뉴`로 명확화.
+  - `src/app/wireframe/Ui.test.tsx`: '더보기 열기' 버튼 상호작용 검증으로 갱신.
+  - `src/app/LandingPage.test.tsx`: 랜딩 헤더의 '더보기 열기' 버튼 클릭 검증으로 갱신.
+  - `src/app/CommunityPage.test.tsx`: 커뮤니티 헤더의 '더보기 열기' 버튼 존재 검증으로 갱신.
+  - `src/app/App.test.tsx`: 로그인 및 랜딩 라우팅 테스트의 '더보기 열기' 버튼 클릭 검증으로 갱신.
+- **검증 및 배포**:
+  - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+  - `leedongwook` 브랜치 푸시 및 Firebase Hosting `leedongwook` 채널 배포.
+
+### [2026-09-04] 커뮤니티 헤더 글로벌 네비게이션 적용 보장 및 Firebase Hosting 캐시 무효화 헤더 추가
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **Firebase Hosting 캐시 무효화 헤더 보강 (`firebase.json`)**:
+     - `firebase.json`의 `no-cache` 적용 경로에 `community`를 추가(`/@(login|signup|role|company-info|basic-profile|senior|company|community){,/**}`)하여 배포 후 브라우저 캐시로 인해 이전 버전의 화면이 노출되는 현상 원천 차단.
+  2. **모바일/데스크톱 네비게이션 연동 보강 (`src/app/wireframe/Ui.tsx`)**:
+     - `BottomNav`의 `active` prop을 옵셔널로 변경하여 `activeNav`가 지정되지 않은 커뮤니티 화면에서도 모바일 뷰 하단 글로벌 네비게이션이 안정적으로 노출되도록 개선.
+  3. **테스트 및 검증**:
+     - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 100% 통과, 새 chunk hash 번들 빌드 성공.
+
+### [2026-09-04] 커뮤니티 비로그인 상태 글쓰기 클릭 시 로그인 화면 유도 연동
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 화면 유도 및 리다이렉트 연동**:
+     - `src/app/community/CommunityBoard.tsx`: `requireParticipationProfile`에서 비로그인(`!user`) 상태일 때 `moveToLogin()`을 호출하도록 변경.
+     - 비로그인 사용자가 상단 '글쓰기' 및 빈 상태 '첫 글 작성하기' 클릭 시, `createLoginRedirectPath('/community')` 및 `LOGIN_REQUIRED_NAVIGATION_STATE`를 통해 `/login?redirect=%2Fcommunity`로 즉시 이동. 로그인 후 원래 보던 커뮤니티로 자연스럽게 복귀.
+  2. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 비로그인 사용자가 글쓰기 버튼 클릭 시 `mockNavigate`로 로그인 페이지 이동 및 리다이렉트 상태 전달 여부 검증 테스트 갱신.
+     - `npm run validate`: Typecheck, Lint (경고 0건), 41개 테스트 파일 380개 테스트 전체 통과, Vite 빌드 성공.
+
+### [2026-09-04] 커뮤니티 헤더를 프로젝트보기 헤더와 100% 통일
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **헤더 통일**:
+     - 기존 `CommunityPage.tsx`의 독립적인 커스텀 헤더(간이 헤더, compact 메뉴, 중앙 네비 부재)를 프로젝트보기([`JobDatabasePage.tsx`](file:///c:/AL07TEAM04/src/app/JobDatabasePage.tsx))와 동일한 [`MobilePage`](file:///c:/AL07TEAM04/src/app/wireframe/Ui.tsx) 레이아웃 기반으로 교체.
+     - 데스크톱 화면에서 프로젝트보기와 동일하게 `h-16 md:h-18`, 좌측 `BrandLogo`, 중앙 데스크톱 네비게이션 탭(`프로젝트`, `홈`, `내 제안`, `내 정보`), 우측 `[ ≡ 메뉴 ]` 버튼 및 `SiteMenu` 드롭다운이 완벽하게 일치하도록 통일.
+  2. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 통일된 상단 헤더 네비게이션 버튼(프로젝트, 홈, 내 제안, 내 정보, 메뉴 열기) 렌더링 검증 테스트 추가.
+     - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 380개 테스트 100% 통과, Vite 빌드 성공.
+
+### [2026-09-04] 로그인 화면 및 비로그인 메뉴에 '프로젝트 보러가기' 추가 & `leedongwook` 전용 배포 원칙 준수
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 내용**:
+  1. **로그인 메뉴에 '프로젝트 보러가기' 항목 추가**:
+     - `src/app/wireframe/Ui.tsx`: `MobilePageProps`에 `showProjectLink` 추가 (기본값 `!role`로 비로그인 진입 화면에서 자동 활성화). 모바일 및 데스크톱 비로그인/로그인 헤더의 `SiteMenu`에 `showProjectLink` 연결.
+     - `src/app/LoginPage.tsx`: 모바일 및 데스크톱 로그인 화면의 `MobilePage`에 `showProjectLink` 명시.
+     - `src/app/CommunityPage.tsx`: 헤더의 `SiteMenu`에 `showProjectLink` 추가.
+  2. **테스트 및 검증**:
+     - `src/app/wireframe/Ui.test.tsx`: `MobilePage` 비인증 화면 메뉴에 '프로젝트 보러가기' 렌더링 검증 테스트 추가.
+     - `src/app/App.test.tsx`: `/login` 화면 진입 시 상단 메뉴 열기 후 '프로젝트 보러가기' 메뉴 항목 노출 검증 추가.
+     - `npm run validate`: Typecheck, Lint, 41개 테스트 파일 379개 테스트 전체 통과, Vite 빌드 성공.
+- **배포 완료**:
+  - 사용자 명시 요청에 따라 `leedongwook` 브랜치 원격 push (`77ca60b`) 완료.
+  - Firebase Hosting `leedongwook` 전용 미리보기 채널 배포 완료: https://al07team04-bdfcd--leedongwook-78lkswcx.web.app
+  - Firebase Functions `communityApi` 업데이트 배포 완료 (asia-northeast3).
+
+### [2026-09-04] 커뮤니티 댓글 인라인 수정 및 회원 탈퇴 데이터 정리 완결 (Codex 작업 인계 완료)
+- **작업자**: Antigravity (Gemini)
+- **협업 컨텍스트**: Codex와 진행 중단되었던 커뮤니티 댓글 수정 및 데이터 정리 기능 바통 터치 완료.
+- **구현 및 변경 내용**:
+  1. **댓글 수정 기능 완결**:
+     - `src/app/community/CommunityBoard.tsx`: 본인 작성 댓글에 '수정' 버튼 추가, 클릭 시 인라인 input 필드와 '저장/취소' 버튼 노출 및 `updateCommunityComment` 연동.
+     - `src/services/communityService.ts`: `PATCH /api/community/posts/:postId/comments/:commentId` 서비스 함수 추가.
+     - `functions/lib/community.mjs`: `updateComment` 핸들러 및 저장소 메서드 추가.
+  2. **회원 탈퇴 시 커뮤니티 데이터 정리 완결**:
+     - `functions/lib/community.mjs`: `deleteAccount` API 핸들러 추가(작성 글/댓글 삭제 및 좋아요/제한 기록 청소).
+     - `src/services/communityService.ts`: `deleteCommunityAccountData` 함수 구현.
+     - `src/lib/authContext.tsx`: `deleteAccount` 흐름에 `deleteCommunityAccountData` 연동.
+     - `src/lib/authContext.tsx`: `canUseDemoAuth(email = '')` 타입 호환성 복구 (TS2554 해결).
+  3. **테스트 및 검증**:
+     - `src/app/CommunityPage.test.tsx`: 댓글 수정 인터랙션 테스트 케이스 추가.
+     - `src/services/communityService.test.ts`, `functions/lib/community.test.mjs`, `src/lib/authContext.test.tsx`: 단위 테스트 추가 및 통과.
+     - `npm run validate` 전체 파이프라인 100% 무결점 통과 (41개 파일, 378개 테스트 통과, Typecheck/Lint/Build 성공).
+- **수정 파일**:
+  - `src/app/community/CommunityBoard.tsx`
+  - `src/app/CommunityPage.test.tsx`
+  - `src/services/communityService.ts`
+  - `src/services/communityService.test.ts`
+  - `src/lib/authContext.tsx`
+  - `src/lib/authContext.test.tsx`
+  - `functions/lib/community.mjs`
+  - `functions/lib/community.test.mjs`
+- **다음 전달 사항**:
+  - 커뮤니티 기본 기능(게시글 작성/수정/삭제/좋아요/신고, 댓글 작성/수정/삭제, 익명 프로필, 탈퇴 시 데이터 정리)이 프론트엔드와 백엔드 모두 온전히 연결되어 테스트 및 빌드가 완료되었습니다.
+
+### [2026-09-03] 기업 직접 등록 프로젝트 지원서 자동 이메일 발송 구축
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **구현 내용**:
+  1. Firebase 인증 토큰, 지원 이력, 프로젝트 소유자, 기업 프로필을 서버에서 검증하는 `POST /api/applications/send` 추가.
+  2. 지원자별 Storage 경로를 검증한 뒤 PDF/DOC/DOCX 이력서를 Resend 메일에 자동 첨부.
+  3. 지원 ID 기반 중복 발송 방지와 Firestore `emailDelivery` 발송 결과 기록 추가.
+  4. UI를 메일 직접 발송 안내에서 서버 자동 발송 성공/실패 상태 안내로 변경.
+- **보안**: 수신자 주소는 클라이언트 입력을 신뢰하지 않고 서버의 `company_profiles`에서만 조회. API 키와 발신 주소는 Firebase Secret Manager에 바인딩.
+- **운영 상태**: `RESEND_API_KEY`, `APPLICATION_FROM_EMAIL` 시크릿이 아직 등록되지 않아 배포 전 설정이 필요함.
+
+### [2026-09-03] 짤림 없는 단일 연속 롱-페이지(Single Seamless Page) 고화질 PDF 빌드 완료
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 브라우저 인쇄 시 A4/A3 강제 페이지 분할(Pagination)로 인해 카드와 텍스트 중간이 잘리는 현상 원천 차단.
+  - 컨텐츠 전체 높이(620mm)를 하나의 캔버스에 담는 **연속 단일 페이지 규격(`@page { size: 210mm 620mm; margin: 0; }`)**을 적용하고, Chrome 헤드리스 렌더링 엔진으로 완벽한 PDF 직접 빌드.
+- **주요 생성 및 빌드 파일**:
+  1. [eojob-brochure.pdf](file:///c:/AL07TEAM04/docs/slides/eojob-brochure.pdf): **페이지 나뉨 없이 1장으로 끝나는 롱스크롤 PDF (2.47MB)**. 배경색 100% 보존, 폰트/비주얼/QR 짤림 0%.
+  2. [package.json](file:///c:/AL07TEAM04/package.json): `npm run pdf:open` 및 `npm run pdf:brochure` 스크립트 추가.
+- **검증**: `npm run validate` 100% 무결점 통과 (35개 테스트 파일 338개 통과, 빌드 완료).
+
+---
+
+### [2026-09-03] Leonxlnx/taste-skill 공식 탑재 & B2B 원페이지 A4 인쇄/PDF 리플렛(Brochure) 환골탈태
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 깃허브 스타 83.7k의 최고 프론트엔드 디자인 스킬 `Leonxlnx/taste-skill` 공식 도입(`.agents/skills/taste-skill/SKILL.md`).
+  - 사용자가 업로드한 '이어잡 기업용·파일럿 참여' 원본 리플렛을 기반으로, 촌스러운 템플릿 박스를 제거하고 **Anti-Slop 에디토리얼 타이포그래피 + 비대칭 벤토 그리드(Bento Grid) + A4 1:1 완벽 인쇄 규격**의 프리미엄 리플렛(`docs/slides/eojob-onepage-brochure.html`) 제작.
+- **주요 반영 및 생성 파일**:
+  1. [eojob-onepage-brochure.html](file:///c:/AL07TEAM04/docs/slides/eojob-onepage-brochure.html): A4(210mm x 297mm) 정밀 규격 대응, `@media print` 1페이지 완벽 피팅, 상단 원클릭 [🖨️ PDF 다운로드 / 인쇄] 툴바, 실제 동작하는 SVG QR 코드, 고화질 B2B 현장 사진 탑재.
+  2. [.agents/skills/taste-skill/SKILL.md](file:///c:/AL07TEAM04/.agents/skills/taste-skill/SKILL.md): `taste-skill` 공식 등록 (The Three Dials: 8 / 6 / 4).
+  3. [package.json](file:///c:/AL07TEAM04/package.json): `npm run slide:brochure` 실행 스크립트 추가.
+- **검증**: `npm run validate` 전체 파이프라인 100% 무결점 통과 (35개 테스트 파일, 338개 테스트 패스, 빌드 완료).
+
+---
+
+### [2026-09-03] slide-master 원칙 적용: 100% 네이티브 개체 편집형 PPTX 및 8개 슬라이드 완결판 구축
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - `byungjunjang/slide-master`의 핵심 철학("PowerPoint에서 열어서 요소 하나하나를 클릭해서 고칠 수 없으면 진짜 PPT가 아니다") 반영.
+  - 마크다운 렌더링 방식의 단점을 극복하고, `python-pptx`를 통해 도형/텍스트/표/이미지가 파워포인트 내에서 100% 개별 편집 가능한 네이티브 덱 생성.
+  - B2B 인사담당자용 8개 슬라이드 심층 강화(경력직 채용 비용 통계, 비교 매트릭스 표, 3대 직무별 시니어 쇼케이스, 스마트제조 S사 도입 성공 사례, 14일 무상 재매칭 안심 보증제).
+- **주요 생성 및 빌드 파일**:
+  1. [eojob-intro.pptx](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pptx): **100% 네이티브 파워포인트 개체**로 제작된 B2B 제안서 (글자, 박스, 표, 컬러 전면 수정 가능)
+  2. [generate_native_pptx.py](file:///c:/AL07TEAM04/scripts/generate_native_pptx.py): 네이티브 PPTX 자동 생성 파이썬 엔진 (`npm run slide:native`)
+  3. [reveal-eojob.html](file:///c:/AL07TEAM04/docs/slides/reveal-eojob.html): 8장 구성 3D 인터랙티브 웹 슬라이드 (실시간 계산기 위젯, 1280x720 핏)
+  4. [marp-eojob.md](file:///c:/AL07TEAM04/docs/slides/marp-eojob.md) & [eojob-intro.html](file:///c:/AL07TEAM04/docs/slides/eojob-intro.html): Marp 마크다운/HTML 동기화
+- **검증**: `npm run validate` (35개 테스트 338개 통과, TypeScript 및 Vite 빌드 100% 무결점 완료).
+
+---
+
+### [2026-09-03] 기업 인사담당자(HR) 전용 이어잡 B2B 소개서 3대 엔진(Reveal.js, Marp, Slidev) 완성
+- **작업자**: Antigravity (Gemini)
+- **작업 배경**:
+  - 이메일 발송 및 기업 미팅에 특화된 B2B 인사담당자(HR Manager/채용총괄/CEO) 타깃 서비스 소개서 제작.
+  - 고유 로고, 감각적인 AI 생성 비주얼 에셋(B2B 협업, 3D AI 경험 카드 목업), 입체적인 3D 전환 및 실시간 지원금 절감 계산기 위젯 적용.
+- **주요 생성 및 빌드 파일**:
+  1. [reveal-eojob.html](file:///c:/AL07TEAM04/docs/slides/reveal-eojob.html): **Reveal.js 3D 인터랙티브 슬라이드** (실시간 채용 인원별 고용촉진장려금 계산 슬라이더 위젯, 3D 큐브 전환, 글래스모피즘)
+  2. [eojob-intro.pptx](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pptx) & [eojob-intro.pdf](file:///c:/AL07TEAM04/docs/slides/eojob-intro.pdf): 이메일 첨부 발송용 정밀 빌드 문서 (로고 및 고화질 에셋 완전 임베드)
+  3. [eojob-intro.html](file:///c:/AL07TEAM04/docs/slides/eojob-intro.html): Marp 경량 웹 슬라이드
+  4. [slidev-eojob.md](file:///c:/AL07TEAM04/docs/slides/slidev-eojob.md): Slidev 전용 마크다운 덱
+  5. [marp-eojob.md](file:///c:/AL07TEAM04/docs/slides/marp-eojob.md): Marp 소스 마크다운
+  6. [README.md](file:///c:/AL07TEAM04/docs/slides/README.md): 통합 실행 가이드 및 B2B 소구 포인트 정리
+- **검증**: `npm run validate` 전체 파이프라인 100% 무결점 통과 (35개 테스트 파일 338개 테스트 패스, 빌드 완료).
+
+---
+
+### [2026-09-03] origin/develop 최신 14개 커밋 안전 통합
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **작업 배경**: 팀원이 `develop` 브랜치에 추가한 프로젝트·지원 관리, 로그인, 이력서·프로필 동기화, 모바일 프로젝트 등록 변경을 현재 작업에 통합.
+- **통합 원칙**:
+  1. 랜딩 페이지(`src/app/LandingPage.tsx`)와 최근 외부 채용 API 호출 안정화 파일(`functions/index.mjs`, `functions/lib/backendAccumulator.mjs`, `src/services/worknetService.ts`)은 변경하지 않음.
+  2. 비로그인 공고 조회·추천 0건 표시, 서버 적합도 점수, 첫 로딩 중복 방지 동작을 보존.
+  3. `develop`의 프로젝트 생성·수정·삭제·마감·공개 변경과 이력서/경험카드 서버 동기화를 기존 흐름과 통합.
+- **검증 결과**:
+  - `npm run validate` 통과
+  - TypeScript 0 오류, ESLint 0 경고/오류
+  - Vitest 37개 파일, 353개 테스트 전체 통과
+  - Vite 프로덕션 빌드 성공
+- **배포 여부**: 이 작업은 로컬 브랜치 최신화까지만 수행했으며 배포하지 않음.
+
+### [2026-09-02] develop 원격 변경사항 안전 통합 및 사용자 최신 기능·랜딩페이지 100% 보존
+- **작업자**: Antigravity (Gemini) (`leedongwook` 브랜치)
+- **작업 배경**:
+  - `origin/develop`에 추가된 타 작업자의 기능(AI 경험 카드 확장, 지원서 첨부파일 처리, 스토리지 정규화 등)을 안전하게 병합하되,
+  - 사용자가 최근 배포한 핵심 기능(이메일 보안 인증, 세부 경력 기반 추천 점수 계산, 수동 뷰포트 전환기, Firestore 우선 프로필 등)과 **랜딩 페이지(`LandingPage.tsx`, `LandingPage.test.tsx`)를 100% 보존**하면서 무결점으로 통합 완료.
+- **주요 해결 및 통합 내역**:
+  1. **랜딩 페이지 100% 보존**: `LandingPage.tsx` 및 `LandingPage.test.tsx`의 전역 인앱 브라우저 탈출 배너, 디자인 레일, 접근성 검증 로직 완벽 유지.
+  2. **이메일 및 제안 서비스 통합**:
+     - `src/services/emailService.ts`: 기업 담당자 이메일 보안 조회(`prepareApplicationEmailToManager`) 및 외부 접수 분기 보존.
+     - `src/services/proposalService.ts`: develop의 이력서 파일 업로드(`uploadProposalResumeFiles`)와 사용자의 Firestore 필수 저장/에러 핸들링 로직 융합.
+  3. **프로필 및 검색 서비스 통합**:
+     - `src/services/profileService.ts`: develop의 다중 경험 카드 정규화와 사용자의 레거시 근무형태 분리 및 Firestore 우선 로직 융합.
+     - `src/services/jobSearchService.ts`: UID 캐시 격리, 강제 새로고침, `!== 'all'` 필터 생략 로직 융합.
+  4. **화면 및 라우팅 보정**:
+     - `src/app/JobDatabasePage.tsx`: URL 쿼리 파라미터(`register=1`) 지원 및 `createProposalFromPosting` 파일 첨부 연동 보정.
+     - `src/app/App.test.tsx`: 기업 라우트 인증 보호 및 신규 등록 모달 제출 셀렉터 보정.
+- **검증 & 배포 결과**:
+  - `npm run validate` 전체 파이프라인 100% 통과:
+    - TypeScript 타입 체크 0 에러
+    - ESLint 0 경고/0 에러
+    - Vitest 35개 테스트 파일 338개 테스트 전체 통과
+    - Vite 프로덕션 빌드 성공
+  - **Firebase 프로덕션 배포 완료**:
+    - Hosting 및 Cloud Functions (`api(asia-northeast3)`) 배포 성공
+    - 운영 URL: `https://al07team04-bdfcd.web.app`
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/services/proposalService.ts`
+  - [MODIFY] `src/services/proposalService.test.ts`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.test.tsx`
+  - [MODIFY] `src/lib/browserStorage.ts`
+  - [MODIFY] `src/lib/browserStorage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-02] 이어잡(EOJOB) 컬러 시스템 가이드라인 문서화 (`docs/COLOR_SYSTEM.md`)
+- **작업자**: Antigravity (Gemini)
+- **작업 내용**:
+  1. 서비스 전반(랜딩, 시니어/기업 대시보드, 프로젝트 검색, AI 인터뷰 등)에 적용된 컬러 시스템을 체계적으로 정리하여 `docs/COLOR_SYSTEM.md` 생성.
+  2. **핵심 팔레트**: Deep Evergreen (`#173F3A`), Accessible Coral (`#B84734` / `#F06B4F`), Warm Ivory (`#F7F3EA`), Soft Mint (`#DDEBE7`), Deep Ink (`#17212B`) 등.
+  3. **서피스 및 레이어 계층**: 캔버스 기본 배경, 카드 서피스, 보더, 텍스트 계층 분류.
+  4. **기능성/상태 색상**: AI 적합도 점수 4단계(매우 높음/높음/보통/참고), 시스템 상태 뱃지, 인터랙션 및 포커스 링 토큰 정의.
+  5. **코드 스니펫**: Tailwind CSS v4(`@theme`), Tailwind CSS v3(`tailwind.config.js`), TypeScript 상수 토큰(`COLOR_TOKENS`), CSS 변수 정의 포함.
+  6. **접근성 매트릭스**: WCAG 2.1 AA/AAA 명도 대비 검증 결과 정리.
+- **변경 파일**:
+  - [NEW] `docs/COLOR_SYSTEM.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-01] PC·모바일 화면 버튼 수동 전환 및 공통 로고 크기 통일
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인**:
+  1. `ViewportProvider`가 초기 접속 시 사용자 에이전트 또는 768px 미만 화면 너비를 모바일 모드로 강제 판정했음.
+  2. `resize` 이벤트에서도 창 너비가 768px 미만이 되면 사용자 선택과 무관하게 모바일 모드로 변경했음.
+  3. 랜딩 로고는 28px 높이인 반면 로그인·회원가입·서비스 헤더는 17~22px 로고를 사용해 화면별 브랜드 비중이 달랐음.
+- **개선 내용**:
+  1. 화면 너비·기기 UA 기반 자동 모바일 전환과 `resize` 리스너를 제거. 저장된 `eojob_viewport_mode` 버튼 선택이 있으면 그 값을 사용하고, 처음에는 화면 너비와 무관하게 PC 모드로 시작.
+  2. PC·모바일 전환 UI를 `ViewportModeSwitcher`로 통합하고 `aria-pressed`, 명확한 접근성 레이블, 포커스 링, 누름 상태, 44px 이상 조작 영역을 적용.
+  3. `BrandLogo`를 공통 컴포넌트로 추출하고 랜딩·비로그인·로그인 서비스·모바일 시뮬레이터 헤더 로고 모두를 28px 높이로 통일.
+- **디자인 검토**:
+  - 기존 밝은 B2B 톤과 에버그린 색상을 유지하고, 새 장식이나 모션 없이 모드 제어의 일관성·키보드 포커스·터치 편의만 개선.
+- **회귀 테스트**:
+  - 520px·360px로 PC 창을 줄여도 PC 모드가 유지되는지, 모바일 버튼 클릭 시에만 모드가 변경·저장되는지, 전체/아이콘 로고가 공통 28px 높이를 사용하는지 검증.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 32개 테스트 파일 322개 테스트, Vite 프로덕션 빌드 성공.
+  - 사용자 추가 승인 후 Firebase Hosting과 `functions:api` 운영 배포 완료.
+  - 운영 홈 HTTP 200, 메인 번들 `assets/index-sMCYC08O.js`, 화면 모드 선택 저장 코드 포함, 기존 UA 자동 모바일 판정 문구 제거를 확인.
+- **변경 파일**:
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.test.tsx`
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [MODIFY] `src/app/LandingPage.test.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-01] 기업 담당자 이메일 보안 연결 및 서버 지원 전달 구축
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인**:
+  1. 기업회원의 담당자 이메일은 `company_profiles` 문서에 저장되지만 지원 흐름은 공고의 `contactEmail`만 확인하여 기존 기업 프로젝트와 담당자 정보가 연결되지 않았음.
+  2. 로그인 지원자의 Firestore 지원 이력 저장이 실패해도 로컬 저장을 성공으로 반환해 기업에 전달된 것처럼 보일 수 있었음.
+  3. 기존 기본 수신 주소 `sehddnr2@gmail.com`은 실제 공고 담당자가 아닌데도 폴백으로 사용될 여지가 있었음.
+- **구축 내용**:
+  1. 기업 직접 등록 프로젝트에 `source: internal`과 등록 출처를 저장하고, 프로젝트 정규화 과정에서도 출처 정보를 보존.
+  2. `POST /api/applications/contact` 인증 API 추가. Firebase ID 토큰을 검증하고, 해당 사용자의 지원 이력·프로젝트 `ownerId`·기업 프로필을 순차적으로 대조한 뒤에만 담당자 이메일을 반환.
+  3. 공개 공고 검색 API에서 `contactEmail`을 제거하여 비로그인·미지원 사용자에게 담당자 이메일이 노출되지 않도록 차단.
+  4. 가짜 기본 수신 주소를 제거하고, 기업 프로필의 유효한 이메일이 확인된 경우에만 메일 작성창을 제공. 이메일이 없으면 기업 계정의 받은 제안 화면 저장 상태로 안전하게 폴백.
+  5. 로그인 지원은 Firestore 저장 성공이 확인돼야만 완료 화면으로 이동하고, 실패 시 모달에 재시도 안내를 표시.
+  6. 공공·고용24·서울일자리 공고는 종전처럼 공식 접수처로 이동하고, 기업 직접 등록 프로젝트만 받은 제안·담당자 이메일 연결 흐름을 사용하도록 분리.
+- **현재 전달 방식**:
+  - 이어잡 기업 계정의 `받은 제안`으로는 서버 저장·전달됨.
+  - 담당자 이메일은 인증 후 메일 작성창으로 연결되며 지원자가 파일을 다시 첨부하고 직접 발송해야 함. 서버 자동 이메일 발송은 발신 도메인·메일 공급자 자격 증명이 없어 포함하지 않음.
+- **회귀 테스트**:
+  - 미인증 접근 차단, 지원 이력 소유권 대조, 클라이언트·서버 제안 ID 일치, 공개 API 이메일 비노출, 기업 담당자 해석, 서버 저장 실패 처리, 외부/기업 지원 UX 분리 테스트 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 32개 테스트 파일 318개 테스트, Vite 프로덕션 빌드 성공.
+  - 사용자 추가 승인 후 Firebase Hosting과 `functions:api` 운영 배포 완료.
+  - 운영 `/api/health` 정상, 비로그인 `/api/applications/contact` 응답 401, 공개 공고 검색 응답의 `contactEmail` 미노출을 확인.
+- **변경 파일**:
+  - [NEW] `functions/lib/applicationContact.mjs`
+  - [NEW] `functions/lib/applicationContact.test.mjs`
+  - [MODIFY] `functions/lib/firestoreAdmin.mjs`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `functions/lib/jobSearch.test.mjs`
+  - [MODIFY] `functions/index.mjs`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/services/emailService.ts`
+  - [MODIFY] `src/services/emailService.test.ts`
+  - [MODIFY] `src/services/projectService.ts`
+  - [MODIFY] `src/services/proposalService.ts`
+  - [NEW] `src/services/proposalService.test.ts`
+  - [MODIFY] `src/services/dataPersistence.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-01] 지원 모달 디자인 정돈 및 이메일 자동 발송 오인 개선
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **검토 결과**:
+  1. 기존 `sendApplicationEmailToManager`는 서버 발송 없이 브라우저 `mailto:` 링크만 만들고 즉시 성공을 반환했으며, Firebase 이메일 확장 기능과 메일 공급자 환경 변수도 구성되어 있지 않았음.
+  2. 선택한 이력서·포트폴리오는 파일 원본을 업로드하지 않고 파일명만 지원 이력에 저장하고 있었음.
+  3. 화면은 위 동작과 달리 담당자 메일함으로 지원서와 첨부파일이 자동 전송됐다고 안내하고 있어 실제 상태와 불일치했음.
+- **개선 내용**:
+  1. 지원 모달을 넓은 정보 레일과 고정 헤더 구조로 정돈하고, 지원 대상·AI 인터뷰·파일 확인·전달 메시지의 시각적 계층과 모바일 줄바꿈을 개선.
+  2. 중첩 카드와 과도한 테두리를 줄이고 44px 이상 터치 영역, 키보드 포커스, 명확한 저장·오류·비활성 상태를 적용.
+  3. 이메일 로직을 `prepareApplicationEmailToManager`로 변경하고 `emailSent: false`와 `email-client`/`external-application` 전달 방식을 명시적으로 반환.
+  4. 공공 공고는 공식 접수처에서 실제 지원과 파일 첨부를 완료하도록, 기업 공고는 메일 작성창에서 파일을 다시 첨부하고 직접 보내도록 안내.
+  5. 제출 CTA와 완료 화면을 “실제 접수 완료”가 아닌 “이어잡 지원 이력 저장 완료” 의미로 교정하고 가짜 지원자 기본값을 제거.
+- **회귀 테스트**:
+  - 담당자 이메일이 있어도 자동 발송 성공으로 표시하지 않는지, 공공 공고는 외부 접수 필요 상태를 반환하는지, 지원 모달에 자동 전송 문구가 없는지 검증하는 테스트 3개 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 30개 테스트 파일 308개 테스트, Vite 프로덕션 빌드 성공.
+  - `git diff --check` 통과.
+  - 사용자 승인 후 Firebase Hosting 운영 배포 완료: 릴리스 `1788230591158000`, 버전 `b359e227a9567b7f`.
+  - 운영 메인 번들이 새 `JobDatabasePage-CFUAtzw5.js`를 참조하고, 개선 제목·저장 CTA·수동 이메일 안내가 포함되며 기존 자동 전송 문구가 제거된 것을 확인.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/services/emailService.ts`
+  - [NEW] `src/services/emailService.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-01] 어제 사용자 최종 소스 복원·정합성 검증 및 재배포
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인 및 복원**:
+  1. Antigravity가 팀원 커밋 코드를 선별 제거하던 중 `JobDatabasePage.tsx`에서 정의·상태·컴포넌트는 삭제하고 사용부는 남긴 채 중단되어 TypeScript 오류 6건이 발생한 것을 확인.
+  2. Antigravity 내부 작업 기록의 실제 `CODE_ACTION` diff 2개를 확인하고 그 편집만 역적용하여, 다른 사용자 작업을 초기화하거나 삭제하지 않고 어제 사용자 배포 직전 소스를 복원.
+  3. 새 빌드의 34개 Hosting 파일을 운영에 복구된 버전 `e5236ec1519e7022`의 실제 응답 바이트와 SHA-256으로 전수 비교해 불일치 0건을 확인.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 29개 테스트 파일 305개 테스트, Vite 프로덕션 빌드 성공.
+  - Firebase Hosting + `functions:api` 재배포 완료.
+  - Hosting 릴리스 `1788228749974000`, 버전 `b734410734e9c113`, 배포 계정 `sehddnr2@gmail.com` 확인.
+  - Cloud Run API 최신·준비 리비전 모두 `api-00052-voc` 확인.
+  - 운영 홈 HTTP 200 및 새 번들 참조 확인. 비로그인 공고 API 1·2페이지가 각각 5건을 반환하고 페이지 간 중복이 0건임을 확인.
+- **변경 파일**:
+  - [RESTORE] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `.firebase/hosting.ZGlzdA.cache`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-09-01] 사용자 마지막 Firebase 배포본으로 운영 Hosting 롤백
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **배포 이력 확인**:
+  1. 사용자 계정 `sehddnr2@gmail.com`의 마지막 Hosting 배포는 2026-08-31 11:38:27의 버전 `e5236ec1519e7022`로 확인.
+  2. 이후 최신 Hosting 버전 `05ae6b0f93178d20`은 팀원 계정 `phj1120@gmail.com`이 2026-08-31 15:31:17에 배포한 것으로 확인.
+  3. Cloud Run API는 사용자 마지막 Hosting 배포와 같은 시각의 `api-00051-vom`이 최신·준비 리비전이며 트래픽 100%가 `latest`에 연결되어 있어 별도 함수 롤백이 필요하지 않았음.
+- **복원 내용**:
+  1. Firebase Hosting live를 사용자 마지막 버전 `e5236ec1519e7022`로 `ROLLBACK` 릴리스 생성.
+  2. 롤백 후 최신 릴리스 유형 `ROLLBACK`, 대상 버전 `e5236ec1519e7022`, 실행 계정 `sehddnr2@gmail.com`을 재확인.
+  3. 운영 홈이 HTTP 200을 반환하고 `Last-Modified`가 대상 버전 최종화 시각과 동일한 2026-08-31 11:38:26으로 확인됨.
+- **주의 / 다음 작업**:
+  - 8월 30~31일 소스 변경은 Git 커밋 없이 작업 트리에 남아 있어 현재 로컬 소스가 롤백된 Hosting 산출물과 동일하다고 보장할 수 없음.
+  - 로컬 작업 트리를 다시 배포하기 전에 사용자 배포본 기준으로 변경분을 별도 대조·정리해야 하며, 단순 `git reset` 또는 현재 `dist` 재배포는 금지.
+- **변경 파일**:
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-31] 대분류 과대평가 제거 및 세부 경력 맥락 기반 추천 점수 개선
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **재현 및 원인**:
+  1. UX/UI·브랜딩 경력 프로필에서 같은 `디자인` 대분류라는 이유만으로 영상·포스터·인테리어 공고까지 83~98점으로 표시되는 현상을 재현.
+  2. 1순위 대분류 일치 시 최소 80점을 강제하고, `디자인`, `설계`, `서비스`, `운영`처럼 범용적인 단어를 여러 경력 필드에서 중복 가점한 것이 주원인.
+  3. 서버가 자동 보완한 공고 소개문까지 적합도 근거로 사용하여 실제 공고 제목·업무·필수역량보다 템플릿 문구가 점수에 더 크게 영향을 주는 경로가 있었음.
+- **해결 내용**:
+  1. 희망 직종 순위는 기본점수로만 반영하고 높은 점수의 최솟값을 제거. 90점 이상은 실제 전문 분야와 세부 경력 근거가 복수로 일치할 때만 가능하도록 변경.
+  2. 전문 분야, 대표 경험, 핵심 강점, 문제 해결 경험을 서버에 독립 필드로 전달하여 하나의 합친 문자열이 아닌 필드 의미와 우선순위를 보존.
+  3. 점수 근거를 공고 제목·업종·실제 담당 업무·필수/우대 역량·자격 조건으로 제한하고 자동 생성 소개문과 일반 추천 문구는 제외.
+  4. UX/UI, 브랜딩, 디자인 시스템, 서비스 런칭, 시각·영상, 인테리어·CAD 등의 문맥을 동의 개념으로 정규화하고 범용 업무 단어는 가점 대상에서 제외.
+  5. 프로젝트 데이터베이스와 홈 추천이 동일한 구조화 프로필 조건을 서버에 전달하도록 통일하고, 보유 자격증·희망 근무 형태도 홈 추천 요청에 포함.
+- **회귀 테스트**:
+  - 첨부 사례와 같은 프로필에서 UX/UI·브랜딩 공고 `85점`, 영상·포스터 공고 `58점`, 인테리어 공고 `53점`으로 서버와 클라이언트 점수가 동일하게 계산되는 테스트 추가.
+  - 구조화된 프로필 네 필드가 검색 API 요청과 사용자별 캐시 키에 포함되는 테스트 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 29개 테스트 파일 305개 테스트, Vite 프로덕션 빌드 성공.
+  - 강화된 점수 회귀 테스트 34개 추가 실행 통과 및 `git diff --check` 통과.
+  - Firebase Hosting + `functions:api` 운영 배포 전 사용자 확인 대기 중.
+- **변경 파일**:
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `functions/lib/jobSearch.test.mjs`
+  - [MODIFY] `src/services/recommendationEngine.ts`
+  - [MODIFY] `src/services/recommendationEngine.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-31] 랜딩 페이지 헤더·히어로·영상 좌측 정렬 레일 통일
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **디자인 분석**:
+  - 첨부된 PC 화면에서 헤더 로고는 약 92px, 히어로 텍스트는 약 60px, 영상은 약 125px에서 시작해 한 화면에 세 개의 좌측 기준선이 혼재했음.
+  - 헤더는 `max-w-6xl` 내부 패딩, 본문은 섹션 외부 패딩과 내부 최대 폭, 영상은 별도 `max-w-5xl` 중앙 정렬을 사용해 같은 콘텐츠인데도 서로 다른 폭 계산이 적용됐음.
+- **해결 내용**:
+  1. 헤더와 랜딩의 히어로·서비스·혜택·하단 CTA·푸터를 모두 `max-w-6xl + px-5 + sm:px-8` 단일 반응형 레일로 통일.
+  2. 히어로 영상의 별도 `max-w-5xl` 중앙 폭을 제거하고 본문 레일 전체 폭을 사용하여 로고·텍스트·영상의 좌측 시작선을 일치시킴.
+  3. 제목과 본문을 `max-w-4xl`로 제한하고 `text-balance`·`text-pretty`를 적용해 넓은 화면에서도 줄 길이와 제목 2줄 구성을 안정화.
+  4. 모바일은 동일 레일이 20px 안전 여백으로 축소되고, 태블릿 이상은 32px 여백을 사용하도록 구성.
+- **디자인 리뷰**:
+  - 차분한 B2B 신뢰형 랜딩 페이지 톤을 유지하고 새 장식·불필요한 모션 없이 정렬 체계만 정돈.
+  - 로컬 PC 화면에서 로고, 히어로 문구, 제목, 본문, 영상이 동일 좌측선에 배치되는 것을 시각 확인.
+- **회귀 테스트**:
+  - 모든 랜딩 섹션이 같은 반응형 레일 클래스를 사용하는지와 히어로 영상이 별도 중앙 최대 폭을 사용하지 않는지 검증하는 테스트 2개 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 29개 테스트 파일 303개 테스트, Vite 프로덕션 빌드 성공.
+  - `git diff --check` 통과.
+  - Firebase Hosting + `functions:api` 운영 배포 완료.
+  - 운영 모바일 화면에서 헤더 로고, 히어로 문구·제목·본문·영상이 동일한 20px 좌측 레일에 배치되고 이후 서비스 섹션도 같은 기준선을 유지하는 것을 확인.
+- **변경 파일**:
+  - [MODIFY] `src/app/LandingPage.tsx`
+  - [NEW] `src/app/LandingPage.test.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-31] 비로그인 조회 공고 0건·로그인 적합도 점수/정렬 체계 개선
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **운영 및 코드 분석**:
+  1. 실시간 API 응답 후에는 비로그인 조회 공고가 10,459건으로 표시되지만, 콜드 스타트 임시 목록에서는 서버 메타를 비워 `조회 공고 0건`으로 내려가는 경계 조건이 있었음.
+  2. 서버가 전체 공고를 서버 적합도 점수로 정렬·페이징한 뒤, 화면은 같은 공고의 점수를 클라이언트에서 다시 계산해 표시하여 정렬에 사용한 점수와 사용자에게 보이는 점수가 달라질 수 있었음.
+  3. 기존 1순위 점수 상한에 여러 공고가 85점으로 눌려 내부 보조점수로 정렬되더라도 화면에서는 동일 점수로 보여 정렬 오류처럼 보였음.
+  4. 내 정보의 `원하는 근무 형태` 변경이 `대표 경험` 값까지 덮어쓰고, 프로필 정규화 과정도 두 값을 하나로 합쳐 상세 경력 문장이 검색 점수에서 사라졌음.
+  5. 보유 자격증과 원하는 근무 형태가 서버 검색 점수에 전달되지 않아 사용자가 입력한 일부 세부정보가 적합도에 반영되지 않았음.
+- **해결 내용**:
+  1. 임시 목록 응답도 카탈로그·시간제·마감 임박 메타를 화면에 유지하여 비로그인 조회 공고가 0건으로 보이지 않게 변경하고, 추천 건수만 로그인 전 0건을 유지.
+  2. 실시간 검색 결과의 카드·상세 화면은 서버가 전체 정렬에 실제 사용한 `seniorFitScore`를 그대로 표시하도록 단일 점수 원본으로 통일.
+  3. 희망 직종 순위 점수 구간을 1순위 `80~98`, 2순위 `65~79`, 3순위 `50~64`, 비일치 `15~45`로 분리하여 하위 순위가 상위 순위를 역전하지 않도록 구성.
+  4. 같은 희망 순위 안에서는 경력 분야·대표 경험·핵심 강점·해결 성과·AI 경험 인터뷰·경력 기간·희망 지역에 더해 보유 자격증과 원하는 근무 형태 일치 여부를 가감점으로 반영.
+  5. 프로필의 대표 경험과 원하는 근무 형태를 독립 필드로 보존하고, 내 정보 편집 화면에 `대표 경험 및 담당 업무` 입력란을 추가. 과거에 근무 형태 문자열이 대표 경험에 복제된 데이터는 빈 대표 경험으로 안전하게 정규화.
+  6. 검색 요청 캐시 키에도 새 자격증·근무 형태 조건이 포함되므로 프로필 수정 후 다른 점수 결과가 이전 캐시와 섞이지 않도록 유지.
+- **회귀 테스트**:
+  - 비로그인 임시 조회 공고 집계, 서버 점수 표시 일치, 대표 경험/근무 형태 분리, 자격증·근무 형태 가중치, 클라이언트 폴백 점수 일치를 포함한 테스트 5개 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 301개 테스트, Vite 프로덕션 빌드 성공.
+  - `git diff --check` 통과.
+  - Firebase Hosting + `functions:api` 동시 운영 배포 완료.
+  - 운영 첫 진입에서 조회 공고 `10,458건`, 비로그인 추천 `0건`, 1페이지 5개 공고가 즉시 표시되는 것을 확인.
+  - 운영 2페이지 이동 시 공고 5개가 모두 교체되고 표시 범위가 `6~10건`으로 변경되는 것을 확인.
+  - 운영 적합도 API에 자격증·희망 근무 형태·대표 경험 조건을 전달해 서버 점수 내림차순 결과와 총 `10,458건` 응답을 확인.
+- **변경 파일**:
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `functions/lib/jobSearch.test.mjs`
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/recommendationEngine.ts`
+  - [MODIFY] `src/services/recommendationEngine.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-31] 프로젝트 첫 진입 지연·3건 임시 노출·재방문 복구 및 중복 목록 개선
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **운영 재현 결과**:
+  - 첫 진입 화면에서 하단 범위는 `1~5건`이지만 실제 공고 카드는 16개가 렌더링되는 데이터 병합 불일치를 확인.
+  - 브라우저 콘솔 오류는 없었고, 웜 상태의 운영 검색 API 응답은 약 0.56초였으므로 화면 오류보다 콜드 로드·폴백·중복 데이터 경로 문제로 범위를 좁힘.
+- **원인 분석**:
+  1. 인재 프로젝트 화면이 프로필·경험 카드뿐 아니라 별도 `projects` 컬렉션 전체 조회까지 기다린 뒤에야 통합 채용 검색을 시작해 첫 요청이 직렬로 지연됨.
+  2. Cloud Function의 콜드 경로가 `global_job_postings` 전체 카탈로그를 메모리에 적재하는 동안 클라이언트 8초 제한이 먼저 끝나면 소수의 임시 목록을 정상 응답처럼 반환했으며 자동 재시도가 없었음.
+  3. 홈 방문으로 함수가 웜업된 뒤 프로젝트 화면에 재진입할 때만 전체 검색 결과가 나타나는 구조였음.
+  4. 클라이언트가 Firestore `projects`와 검색 API 결과를 별도로 받아 다시 병합해 서버 페이지 크기와 실제 렌더링 개수가 달라지고 중복 제거 기준도 이원화됨.
+  5. 검색 서비스가 네트워크 실패를 내부 임시 응답으로 변환해 컴포넌트의 추가 Worknet 폴백은 사실상 실행되지 않는 중복 경로였음.
+- **해결 내용**:
+  1. Cloud Function이 `global_job_postings`와 공개 상태의 `projects`를 한 번에 결합·정규화·중복 제거한 뒤 서버에서 페이징하도록 통합 검색 API를 단일 원본으로 변경.
+  2. 인재 화면의 별도 `fetchProjects()` 대기와 클라이언트 병합을 제거하고, 기업 화면에서만 소유 프로젝트 조회를 유지.
+  3. 임시 결과를 `isFallback`으로 명시하고 페이지 크기만큼 제공하며, 4초 제한 후 현재 화면에서 최대 2회 자동 재시도하도록 개선.
+     - 운영 콜드 스타트 검증에서 재시도까지 4초로 종료되는 경계 조건을 추가 발견하여, 최초 임시 목록은 4초에 빠르게 표시하되 후속 강제 재시도는 최대 15초 동안 함수 준비를 기다리도록 보강.
+  4. 실시간 응답은 페이지 크기를 넘지 않도록 제한하고, 임시 목록을 표시하는 동안 사용자에게 재연결 상태를 안내.
+  5. 실행되지 않던 컴포넌트의 중복 Worknet 폴백 경로와 관련 import를 제거하고 요청 타이머·외부 중단 리스너 정리를 보강.
+- **회귀 테스트**:
+  - 인재 첫 진입이 별도 프로젝트 조회에 막히지 않는지, 임시 목록에서 홈 이동 없이 자동 복구되는지, 실패 임시 목록이 5건인지, 두 서버 컬렉션이 한 번만 중복 제거되는지 검증하는 테스트 4개 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 296개 테스트, Vite 프로덕션 빌드 성공.
+  - `git diff --check` 통과.
+  - Firebase Hosting과 Node.js 22 `functions:api` 운영 배포 완료: https://al07team04-bdfcd.web.app
+  - 운영 첫 페이지에서 실제 공고 5건·`1~5` 범위·전체 10,459건을 확인하고, 2페이지 이동 시 서로 다른 공고 5건·`6~10` 범위로 즉시 변경되는 것을 확인.
+  - 비로그인 추천 건수는 첫 진입·실시간 데이터 복구·페이지 전환 후 모두 0건으로 유지됨을 확인.
+  - 재시도 전용 15초 제한이 최초 4초에 중단되지 않는 회귀 테스트를 추가하고 보완된 Firebase Hosting을 재배포함.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `functions/lib/jobSearch.test.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-31] 다른 기기 로그인 시 이전 계정의 1·2·3순위 추천 조건이 남는 문제 개선
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인 분석**:
+  1. 로그인 UID가 있어도 `resolveSeniorProfile`이 Firestore보다 브라우저 로컬 프로필을 먼저 반환해, 서버의 최신 1·2·3순위가 조회되지 않았음.
+  2. 해당 UID의 캐시가 없으면 `eojob_current_user`에 남은 이전 계정의 저장 키까지 폴백해 계정 간 프로필이 섞일 수 있었음.
+  3. 공고 검색 메모리·세션 캐시 키에 UID가 없어 서로 다른 사용자가 같은 조건으로 검색하면 이전 계정의 응답을 재사용할 수 있었음.
+  4. 인재 기본정보 저장 시 서버 확인 전에 로컬 캐시를 먼저 갱신해, 서버 저장 실패 후에도 현재 데이터처럼 보일 수 있었음.
+- **해결 내용**:
+  1. 로그인 상태의 인재·기업 프로필은 Firestore를 먼저 조회하고, 서버 조회 자체가 실패한 오프라인 상황에서만 동일 UID의 로컬 캐시를 사용하도록 변경.
+  2. 다른 UID 및 비사용자 구분 캐시 폴백을 제거하고, 서버에 문서가 없으면 해당 UID의 오래된 로컬 프로필도 제거.
+  3. 검색 캐시를 `UID + 검색 조건`으로 분리하되 UID는 서버 요청 파라미터에 노출하지 않도록 구성.
+  4. 인재 기본정보는 Firestore 저장 성공 후 반환된 `updatedAt` 포함 프로필만 로컬 캐시에 반영하고, 실패 시 편집 상태를 유지하도록 변경.
+  5. 인재 홈은 로컬 프로필로 추천을 미리 계산하지 않고 서버 확인 후 계산하며, 내 정보 화면도 서버 우선 프로필을 표시하도록 변경.
+  6. 경험 선택 화면이 선택값을 프로필의 경력 분야에 로컬 전용으로 덮어쓰던 부수 동작을 제거.
+- **회귀 테스트**:
+  - 이전 계정 캐시 격리, 서버 최신값 우선, 서버 문서 없음, 오프라인 동일 UID 폴백, 서버 저장 후 캐시 반영, UID별 검색 캐시 분리를 포함한 테스트 6개 추가.
+- **검증 & 결과**:
+  - 집중 테스트 통과: 프로필·검색 서비스 9개, 앱·프로젝트 DB 67개.
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 291개 테스트, Vite 프로덕션 빌드 성공.
+  - Firebase Hosting 운영 배포 완료: https://al07team04-bdfcd.web.app
+- **변경 파일**:
+  - [MODIFY] `src/services/profileService.ts`
+  - [MODIFY] `src/services/profileService.test.ts`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `src/services/jobSearchService.test.ts`
+  - [MODIFY] `src/app/BasicProfilePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] 비로그인 AI 인터뷰·내 제안·내 정보 로그인 안내 토스트 및 목적지 복귀 적용
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 보호 화면에 비로그인으로 접근하면 로그인 화면으로는 이동했지만 왜 이동했는지 알 수 있는 안내가 없었음.
+  - 공개 프로젝트 화면의 `내 제안`·`내 정보` 버튼은 `/login`으로 바로 이동해 로그인 후 원래 목적지로 돌아갈 `redirect` 정보도 사라졌음.
+- **해결 내용**:
+  1. 공통 로그인 필요 메시지와 안전한 `redirect` 경로를 생성하는 `authRequiredNavigation` 모듈 추가.
+  2. 보호 경로 진입 시 로그인 화면으로 원래 목적지를 전달하고, `로그인 후 이용할 수 있어요.` 토스트를 3.6초 동안 표시.
+  3. 인재 홈의 AI 경험 인터뷰 CTA와 프로젝트 지원 모달의 AI 인터뷰 버튼에 비로그인 직접 가드 추가.
+  4. PC·모바일의 `내 제안`·`내 정보` 내비게이션이 보호 라우터를 거쳐 같은 안내 및 복귀 동작을 사용하도록 통합.
+  5. AI 인터뷰·내 제안·내 정보 직접 접근과 공개 프로젝트 화면 버튼 클릭을 포함한 Vitest 회귀 테스트 5개 추가.
+- **접근성·UI**:
+  - 토스트에 `role="status"`, `aria-live="polite"`, `aria-atomic="true"`를 적용하고 기존 에버그린 색상과 명도 대비를 유지.
+  - 화면 레이아웃을 밀지 않는 고정형 토스트로 구성하고 타이머 정리 처리를 적용.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 285개 테스트, Vite 프로덕션 빌드 성공.
+  - 로컬 및 운영 비로그인 브라우저에서 AI 인터뷰·내 제안·내 정보 모두 토스트 표시, 로그인 이동, 원래 목적지 `redirect` 보존 확인.
+  - Firebase Hosting 운영 배포 완료: https://al07team04-bdfcd.web.app
+- **변경 파일**:
+  - [NEW] `src/app/authRequiredNavigation.ts`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `src/app/App.test.tsx`
+  - [MODIFY] `src/app/LoginPage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] 프로젝트 페이지 전환 시 이전 공고 목록·상세 잔류 문제 수정
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 페이지 버튼은 `currentPage`와 `16~20건` 같은 범위를 즉시 바꾸지만, 새 서버 응답을 기다리는 동안 이전 페이지의 `postings`와 `selectedId`가 유지되어 목록과 오른쪽 상세가 그대로 보였음.
+  - 네트워크 응답이 느릴수록 페이지 번호와 공고 내용이 서로 다른 상태가 오래 지속됨.
+- **해결 내용**:
+  1. 이전·번호·다음 버튼을 공통 `changePage` 처리기로 통합.
+  2. 시니어 페이지 전환 시작 시 이전 목록·선택 상세·서버 메타를 즉시 비우고 `업데이트 중…` 상태를 표시.
+  3. 새 페이지 응답이 도착한 뒤 목록과 첫 상세 공고를 같은 스냅샷으로 반영.
+  4. 4페이지 응답을 지연시켜도 1페이지 목록·상세가 즉시 사라지는 Vitest 회귀 테스트 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 280개 테스트, Vite 프로덕션 빌드 성공.
+  - Firebase Hosting 운영 재배포 완료: https://al07team04-bdfcd.web.app
+  - 운영 로그인 경로의 `전체 10,510건` 상태에서 1→4페이지 전환 검증: 이전 상세 즉시 제거 → `업데이트 중…` 표시 → 4페이지 공고로 교체, 브라우저 콘솔 오류 0건.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] 비로그인 추천 건수 0건 보정 및 Firebase Hosting 운영 배포
+- **작업자**: Codex (`leedongwook` 브랜치)
+- **원인 분석**:
+  - 프로젝트 DB의 `추천 건수` 카드가 인증 상태를 확인하지 않고 서버의 `preferredTotal`을 그대로 표시해, 비로그인 사용자에게도 `25건` 같은 개인화 추천 수가 노출됨.
+- **해결 내용**:
+  1. `JobDatabasePage`의 추천 카드 집계를 인증 상태에 연결해, 비로그인 시 서버 집계와 무관하게 항상 `0건`을 표시하도록 보정.
+  2. 비로그인 상태에서 서버가 `preferredTotal: 25`를 반환해도 UI는 `0건`을 유지하는 Vitest 회귀 테스트 추가.
+- **검증 & 결과**:
+  - `npm run validate` 통과: TypeScript, ESLint, 28개 테스트 파일 279개 테스트, Vite 프로덕션 빌드 성공.
+  - `git diff --check` 통과.
+  - Firebase Hosting 운영 배포 완료: https://al07team04-bdfcd.web.app
+  - 운영 비로그인 경로(`/senior/project-database`)에서 `추천 건수 0건` 및 브라우저 콘솔 오류 0건 확인.
+- **배포 참고**:
+  - Functions 소스와 `functions/.env` 환경값의 운영 업로드는 별도 명시 승인이 필요하여 이번 실행에서는 재배포하지 않음. Hosting은 정상 반영됨.
+- **변경 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/app/JobDatabasePage.test.ts`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] 프로젝트 1·2·3순위 필터링/정렬 지연 및 캐시 동기화 이슈 전면 개선
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **원인 분석**:
+  1. `JobDatabasePage`에서 서버 검색 활성 시(`isServerSearchActive`) `filteredPostings`가 `fit-desc` 외의 정렬 옵션(`title-asc`, `deadline-asc`, `latest-desc`) 또는 비로그인/초기 프로필 상태에서 클라이언트 정렬을 우회하여 정렬 상태가 즉각 반영되지 않던 문제.
+  2. `jobSearchService`의 클라이언트 세션 캐시 TTL이 5분으로 과도하게 길어, 직종 1·2·3순위 전환 시 이전 순위 조건의 캐시 응답이 반환될 가능성 존재.
+  3. 백엔드 `jobSearch.mjs`의 `filterPreparedJobCatalog`에서 `options.sortBy === 'title-asc'` 시 최신순으로 폴백되던 정렬 전달 누락.
+- **해결 내용**:
+  1. **정렬 엔진 및 클라이언트 정렬 동기화 (`src/app/JobDatabasePage.tsx`, `functions/lib/jobSearch.mjs`)**:
+     - `filteredPostings`에서 모든 정렬 조건(`title-asc`, `deadline-asc`, `latest-desc`, `fit-desc`) 및 `seniorProfile` 로컬 캐시 상태를 포함하여 실시간 정렬 보정.
+     - 백엔드 `jobSearch.mjs`의 정렬 전달 로직 보정.
+  2. **캐시 유효성 최적화 & 실시간 무효화 (`src/services/jobSearchService.ts`, `src/app/JobDatabasePage.tsx`)**:
+     - 검색 캐시 TTL을 30초로 단축하고 `forceRefresh` 지원 추가.
+     - 프로필/경험 카드 수정 이벤트 발생 시 `clearJobSearchClientCache()` 즉시 호출.
+  3. **상단 "내 정보 기반 추천 조건" 뱃지 디자인**:
+     - 기존의 깔끔한 화이트 텍스트 뱃지(`<span>1순위 · 직종명</span>`) 원본 스타일 유지.
+- **검증 & 결과**: 28개 테스트 파일 275개 단위 테스트 100% 통과, Firebase Hosting 배포 완료 (https://al07team04-bdfcd.web.app).
+- **수정 파일**:
+  - [MODIFY] `src/app/JobDatabasePage.tsx`
+  - [MODIFY] `src/services/jobSearchService.ts`
+  - [MODIFY] `functions/lib/jobSearch.mjs`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] AI 경험 인터뷰 화면 UI 정제 및 마이크 아이콘 이중 원 제거
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **박스 테두리 제거 (Borderless Modern Surface UI)**:
+     - 상단 직종 헤더(`인터뷰 기준 직종`), 대화창 컨테이너, 음성 안내 박스, 직접 입력하기 폼, 입력 텍스트영역, 단계 프로그레스 바의 테두리(`border border-[#E0D9C8]`, `border border-[#BBD5CE]`)를 모두 제거하고 부드러운 배경색(`bg-white`, `bg-[#FAF7F2]`, `bg-[#DDEBE7]/60`)과 미세 그림자(`shadow-xs`, `shadow-2xs`)로 통일.
+  2. **마이크 버튼 이중 원 UI 제거**:
+     - 원형 버튼 내부의 중복 `bg-white/20` 원형 컨테이너를 제거하고 마이크 아이콘(`Mic`)과 텍스트를 단일 원형 버튼 내부에 깔끔하게 배치.
+  3. **시니어 친화 가독성 및 UI 정제**:
+     - 텍스트 폰트 두께, 여백, 대화 말풍선 모서리 라운딩 및 입력 버튼 호버/비활성 스타일 개선.
+- **검증 & 결과**: 28개 테스트 파일 275개 단위 테스트 100% 통과, Firebase Hosting 배포 완료 (https://al07team04-bdfcd.web.app).
+- **수정 파일**:
+  - [MODIFY] `src/app/wireframe/FlowPages.tsx`
+  - [MODIFY] `src/app/wireframe/Ui.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] 카카오톡 인앱 브라우저 구글 로그인 불가(403 및 계정 미인식) 해결 및 외부 브라우저 전환/리디렉션 지원
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **원인 분석**:
+  1. 구글 OAuth 2.0 보안 정책으로 인해 카카오톡, 인스타그램 등 인앱 웹뷰(In-App Browser/WebView) 환경에서 `403: disallowed_useragent` 오류가 발생하며 로그인이 강제 차단됨.
+  2. 인앱 웹뷰는 기기 내 크롬/사파리와 쿠키 및 구글 로그인 세션이 분리되어 있어 저장된 구글 계정이 불러와지지 않음.
+- **해결 내용**:
+  1. **인앱 브라우저 감지 및 외부 브라우저 탈출 유틸리티 신설 (`src/lib/inAppBrowser.ts`)**:
+     - `isKakaoTalk`, `isInAppBrowser`, `getExternalBrowserUrl`, `openInExternalBrowser` 구현.
+     - 카카오톡 인앱 브라우저 환경 감지 시 카카오톡 전용 스킴(`kakaotalk://web/openExternal?url=...`) 및 안드로이드 크롬 인텐트(`intent://...`)를 통해 기기 기본 브라우저(Chrome/Safari)로 즉시 전환.
+  2. **Firebase Auth 모바일 리디렉션 로그인 & 인앱 브라우저 방어 강화 (`src/lib/authContext.tsx`)**:
+     - `getRedirectResult(auth)` 핸들러를 `useEffect`에 탑재하여 리디렉션 기반 로그인 결과 수신 완비.
+     - 카카오톡 환경에서 구글 로그인 시도 시 구글 403 에러 페이지 대신 기기 기본 브라우저로 전환 및 안내 제공.
+     - 모바일 팝업 차단(`auth/popup-blocked`) 시 `signInWithRedirect`로 자동 폴백.
+  3. **전역 인앱 브라우저 안내 배너 컴포넌트 탑재 (`src/components/InAppBrowserBanner.tsx`, `src/app/App.tsx`)**:
+     - 카카오톡 링크 공유로 접속한 사용자에게 상단 안내 배너와 `[✨ 기본 브라우저로 열기]` 원터치 전환 버튼 제공.
+- **검증 & 결과**: 전체 28개 테스트 파일 275개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 빌드 성공 및 Firebase Hosting 프로덕션 배포 완료 (https://al07team04-bdfcd.web.app).
+- **변경 파일**:
+  - [NEW] `src/lib/inAppBrowser.ts`
+  - [NEW] `src/lib/inAppBrowser.test.ts`
+  - [NEW] `src/components/InAppBrowserBanner.tsx`
+  - [MODIFY] `src/lib/authContext.tsx`
+  - [MODIFY] `src/app/App.tsx`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] Task Observer 자가 학습 및 스킬 진화 메타 스킬 연동 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **Task Observer 메타 스킬 생성 (`.agents/skills/task-observer/SKILL.md`)**:
+     - 사용자 피드백/교정 사항 추적, 3회 이상 반복되는 작업 패턴의 스킬화, 무분별한 룰 비대화 방지 가이드라인 수립.
+  2. **하네스 및 마스터 설정 갱신**:
+     - `.agents/AGENTS.md` 및 `CLAUDE.md`에 `task-observer` 자가 진화 스킬 공식 등록.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 빌드 성공.
+- **변경 파일**:
+  - [NEW] `.agents/skills/task-observer/SKILL.md`
+  - [MODIFY] `.agents/AGENTS.md`
+  - [MODIFY] `CLAUDE.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] Claude Code 마스터 설정 파일(`CLAUDE.md`) 및 ECC 하네스 연동 구축 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **Claude Code 마스터 가이드 생성 (`CLAUDE.md`)**:
+     - 터미널에서 Claude Code(`claude`) 실행 시 프로젝트 구조, 핵심 검증 명령어(`npm run validate`), 3계층 아키텍처, 엄격한 TypeScript 원칙, 시니어 접근성 표준을 즉시 인지하도록 설정.
+  2. **Multi-AI 협업 체계 완성**:
+     - Codex, Antigravity, Claude Code 3자가 모두 `docs/AI_COLLABORATION_LOG.md`를 기반으로 작업 내역을 상호 인수인계하는 통합 AI 협업 하네스 완성.
+  3. **Context7 및 MCP 연동 명시**:
+     - `.mcp.json`을 통한 최신 공식 라이브러리 스펙 실시간 참조 파이프라인 연동.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 빌드 성공.
+- **변경 파일**:
+  - [NEW] `CLAUDE.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] OmniRoute 무손실(Lossless) 고품질 연동 가이드 및 설정 템플릿 구축 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **OmniRoute 무손실 연동 가이드 수립 (`docs/OMNIROUTE_SETUP_GUIDE.md`)**:
+     - 토큰 압축(RTK/Caveman) 완전 비활성화(OFF)를 통한 프롬프트/타입 100% 원형 보존 지침 수립.
+     - Tier-1 플래그십 모델 전용 폴백 체인 구성 및 하위 모델로의 품질 저하 원천 차단.
+     - 실시간 대시보드 텔레메트리(`http://localhost:20128/logs`) 및 메타데이터를 통한 모델/계정 전환 모니터링 절차 정립.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 빌드 성공.
+- **변경 파일**:
+  - [NEW] `docs/OMNIROUTE_SETUP_GUIDE.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] Context7 실시간 공식 기술 문서 MCP 서버 및 스킬 연동 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **Context7 플러그인 및 MCP 구성 (`.agents/plugins/context7/`)**:
+     - `plugin.json` 및 `mcp_config.json` 설정(`@upstash/context7-mcp` 연동)을 통해 실시간 공식 라이브러리 문서 조회 파이프라인 구축.
+  2. **루트 및 멀티 에디터 MCP 설정 생성**:
+     - `.mcp.json` (공통/Claude Code 호환) 및 `.cursor/mcp.json` (Cursor 호환) 생성.
+  3. **Context7 스킬 가이드라인 (`.agents/skills/context7/SKILL.md`)**:
+     - React 19, Vite 8, Tailwind v4, Firebase 12, Vitest 등 최신 기술 스택 개발 시 실시간 공식 스펙 조회 및 환각/Deprecated 코드 방지 가이드 수립.
+  4. **마스터 지침 반영 (`.agents/AGENTS.md`)**:
+     - AI 어시스턴트(Codex, Antigravity) 전문 스킬 목록에 `context7` 등록.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 빌드 성공.
+- **변경 파일**:
+  - [NEW] `.agents/plugins/context7/plugin.json`
+  - [NEW] `.agents/plugins/context7/mcp_config.json`
+  - [NEW] `.agents/skills/context7/SKILL.md`
+  - [NEW] `.mcp.json`
+  - [NEW] `.cursor/mcp.json`
+  - [MODIFY] `.agents/AGENTS.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
+
+### [2026-08-30] Everything Claude Code (ECC) 엔지니어링 하네스 시스템 적용 완료
+- **작업자**: Antigravity (Gemini) - (`leedongwook` & `develop` 브랜치)
+- **작업 내용**:
+  1. **ECC 마스터 지침 갱신 (`.agents/AGENTS.md`)**:
+     - Codex와 Antigravity가 공통으로 준수하는 ECC 기반 5단계 표준 라이프사이클(Plan -> TDD -> Review -> Validate -> Document) 및 하네스 운영 체계 수립.
+  2. **상시 규칙 체계 구축 (`.agents/rules/`)**:
+     - `01-code-quality.md`: 엄격한 TypeScript(No `any`), 불변성, 조기 반환, 명시적 반환 타입.
+     - `02-architecture-patterns.md`: 3계층 관심사 분리(UI Presentation ➔ Hooks ➔ Services/Data).
+     - `03-tdd-testing-standards.md`: Vitest 기반 TDD 원칙, 격리된 모킹, 엣지 케이스 및 회귀 방지.
+     - `04-security-data-integrity.md`: Firebase Auth/Firestore 보안, 시크릿 하드코딩 금지, 입력값 검증.
+     - `05-frontend-performance-a11y.md`: 시니어 타깃 고가독성/접근성(WCAG), 터치 타깃 확보, 렌더링 최적화.
+     - `06-verification-and-collaboration.md`: 무결점 빌드 파이프라인(`npm run validate`) 및 원자적 커밋.
+  3. **전문 스킬 모듈화 (`.agents/skills/`)**:
+     - `ecc-system-architect`: 신규 기능 설계, 아키텍처 영향도 분석, 데이터 모델링.
+     - `ecc-code-reviewer`: 안티패턴 탐지, 타입 안전성, 보안/성능/엣지케이스 정밀 검토.
+     - `ecc-tdd-workflow`: 단위 테스트 우선 설계 및 Vitest 테스트 케이스 구현.
+     - `ecc-build-debugger`: TS/Vite/ESLint/Vitest/Firebase 오류 신속 격리 및 근본 원인 해결.
+- **검증 & 결과**: 전체 27개 테스트 파일 270개 단위 테스트 100% 통과 (`npm run validate` 통과), Vite 프로덕션 빌드 성공.
+- **변경 파일**:
+  - [MODIFY] `.agents/AGENTS.md`
+  - [NEW] `.agents/rules/01-code-quality.md`
+  - [NEW] `.agents/rules/02-architecture-patterns.md`
+  - [NEW] `.agents/rules/03-tdd-testing-standards.md`
+  - [NEW] `.agents/rules/04-security-data-integrity.md`
+  - [NEW] `.agents/rules/05-frontend-performance-a11y.md`
+  - [NEW] `.agents/rules/06-verification-and-collaboration.md`
+  - [NEW] `.agents/skills/ecc-system-architect/SKILL.md`
+  - [NEW] `.agents/skills/ecc-code-reviewer/SKILL.md`
+  - [NEW] `.agents/skills/ecc-tdd-workflow/SKILL.md`
+  - [NEW] `.agents/skills/ecc-build-debugger/SKILL.md`
+  - [MODIFY] `docs/AI_COLLABORATION_LOG.md`
 ### [2026-09-03] 인재 데이터 표시 정합성 수정 Firebase 배포 완료
 - **작업자**: Codex (`develop` 브랜치)
 - **작업 전 확인**:
@@ -3661,6 +4746,27 @@
 - [ ] 파이어베이스 Firestore/Auth 실데이터 연결 시 `src/lib/firebase.ts` 연동
 - [ ] 팀원별 브랜치 작업 시 `npm run validate` 검증 준수
 
+### [2026-09-02] 외부 채용 원천 API 일일 호출 제한 및 반복 호출 차단
+
+- **작업자**: Codex
+- **원인 분석**:
+  - 운영 로그에서 예약 동기화 완료가 8월 18일 279회, 19일 288회, 20일 140회 발생한 이력을 확인. 8월 21일부터는 00:00 KST 하루 1회로 정상화됨.
+  - 기존 예약 실행 한 번이 서울시 최신/순환 구간을 각각 조회하여 서울시 API를 2회 호출했고, 브라우저 장애 폴백은 워크넷·서울시 원천 API를 직접 호출할 수 있었음.
+  - 인재 홈의 전체 `storage` 이벤트 감지가 프로젝트/프로필 캐시 쓰기와 맞물려 동일 추천 검색을 반복하는 구조를 확인.
+- **개선 내용**:
+  - 한국 시간 날짜 기준 Firestore 트랜잭션 일일 실행 잠금을 추가하여 중복 예약·재시도에도 원천 동기화는 하루 한 번만 시작하도록 제한.
+  - 워크넷 최신 1페이지와 서울시 최신 1구간을 서버 예약 함수에서 각각 1회만 조회하고 Firestore 누적 데이터로 저장.
+  - 공개 `/api/jobs/sync` 경로를 제거. 브라우저는 Firestore 저장 데이터만 사용하며 장애 시 정적 임시 목록을 표시.
+  - 이미 열려 있던 이전 화면이 원천 API로 직접 재시도하지 않도록 `/api/worknet/jobs`, `/api/seoul/jobs`, `/api/public/jobs`에는 24시간 캐시되는 빈 호환 응답을 적용.
+  - 인재 홈의 포괄적인 `storage` 이벤트 재조회 제거, 프로필 읽기와 명시적 저장의 캐시 무효화를 분리, 동일 프로젝트 캐시 재쓰기 방지.
+  - 검색 결과의 앱 캐시와 서버의 브라우저 전용(`private`) 응답 캐시를 10분으로 조정하여 새 화면뿐 아니라 이미 열린 이전 화면의 동일 검색 함수 반복 호출도 축소.
+  - Vite 환경 객체 전체 주입을 제거해 워크넷 키와 외부 원천 URL이 브라우저 번들에 포함되지 않도록 정리.
+- **검증**:
+  - 외부 원천 경로 및 알려진 워크넷 키의 프로덕션 번들 포함 여부: 0건.
+  - `npm run validate` 통과: 32개 테스트 파일, 324개 테스트, 타입 검사, ESLint, 프로덕션 빌드 성공.
+  - 운영 상태·채용 검색·세 호환 경로의 200/빈 응답/24시간 캐시 및 새 번들 적용 확인.
+  - 배포 후 예약 함수 로그에 추가 실행 없음 확인. 새 일일 잠금 메타데이터는 다음 00:00 KST 실행부터 기록됨.
+- **배포 상태**: Firebase Hosting, `api`, `scheduledJobSync` 운영 배포 완료 (`https://al07team04-bdfcd.web.app`).
 ### [2026-09-03] CDI #47~#50 최소 수정 및 로컬 검증
 
 - **작업자**: Codex

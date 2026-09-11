@@ -12,14 +12,6 @@ import {
   occupationToProjectCategory,
 } from '@/data/occupationCategories';
 
-const SEOUL_JOB_PROXY_ENDPOINT = '/api/seoul/jobs';
-const SEOUL_REQUEST_TIMEOUT_MS = 6_000;
-
-export const SEOUL_JOB_API_KEY =
-  (import.meta.env.VITE_SEOUL_JOB_API_KEY as string | undefined)?.trim() ??
-  (import.meta.env.SEOUL_JOB_API_KEY as string | undefined)?.trim() ??
-  'sample';
-
 export type SeoulJobRaw = {
   ACDMCR_NM?: string;
   BSNS_SUMRY_CN?: string;
@@ -40,11 +32,6 @@ export type SeoulJobRaw = {
   RCEPT_CLOS_NM?: string;
   WORK_PARAR_BASS_ADRES_CN?: string;
   WORK_TIME_NM?: string;
-};
-
-type SeoulApiResponse = {
-  GetJobInfo?: { row?: SeoulJobRaw[] };
-  GetSeniorJobInfo?: { row?: SeoulJobRaw[] };
 };
 
 export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null {
@@ -136,33 +123,8 @@ export function transformSeoulJobToPosting(raw: SeoulJobRaw): JobPosting | null 
   };
 }
 
-export async function fetchSeoulJobFeed(): Promise<JobPosting[]> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), SEOUL_REQUEST_TIMEOUT_MS);
-
-  try {
-    const proxyUrl = `${SEOUL_JOB_PROXY_ENDPOINT}?authKey=${encodeURIComponent(SEOUL_JOB_API_KEY)}&startIndex=1&endIndex=1000&_v=max`;
-    let response = await fetch(proxyUrl, { signal: controller.signal });
-
-    if (!response.ok) {
-      const directUrl = `http://openapi.seoul.go.kr:8088/${encodeURIComponent(SEOUL_JOB_API_KEY)}/json/GetJobInfo/1/1000/`;
-      response = await fetch(directUrl, { signal: controller.signal });
-    }
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data = (await response.json()) as SeoulApiResponse;
-    const rows: SeoulJobRaw[] = data.GetJobInfo?.row || data.GetSeniorJobInfo?.row || [];
-
-    return rows
-      .map((raw) => transformSeoulJobToPosting(raw))
-      .filter((posting): posting is JobPosting => posting !== null);
-  } catch (error) {
-    console.warn('Seoul Job API fetch skipped/failed, fallback gracefully:', error);
-    return [];
-  } finally {
-    clearTimeout(timeoutId);
-  }
+export function fetchSeoulJobFeed(): Promise<JobPosting[]> {
+  // Source APIs are synchronized by the backend scheduler only. Keeping this
+  // compatibility function prevents future callers from restoring browser calls.
+  return Promise.resolve([]);
 }

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이어잡(EOJOB) 기업용 파일럿 참여 소개서 | 이메일 & 브로슈어 에디션</title>
+  
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+  
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css");
+
+    :root {
+      --primary: #173F3A;
+      --primary-dark: #0F2A27;
+      --primary-light: #245A53;
+      --accent: #F06B4F;
+      --accent-dark: #C84931;
+      --accent-light: #FDF0ED;
+      --bg-ivory: #F7F3EA;
+      --bg-card: #FFFFFF;
+      --mint: #DDEBE7;
+      --mint-light: #EDF5F3;
+      --mint-border: #BBD5CE;
+      --border: #E5DFC9;
+      --border-subtle: #F0EBDC;
+      --ink: #17212B;
+      --ink-muted: #4A5568;
+      --ink-subtle: #718096;
+      
+      /* taste-skill The Three Dials: 8 / 6 / 4 */
+      --radius-sm: 10px;
+      --radius-md: 18px;
+      --radius-lg: 28px;
+      --shadow-subtle: 0 4px 20px -2px rgba(23, 63, 58, 0.05);
+      --shadow-card: 0 12px 36px -4px rgba(23, 63, 58, 0.08);
+      --shadow-float: 0 24px 64px -12px rgba(23, 63, 58, 0.14);
+      --ease-taste: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+      letter-spacing: -0.025em;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #1A222B;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Screen Floating Action Bar (메일 발송 / 복사 / 인쇄) */
+    .toolbar {
+      position: sticky;
+      top: 18px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(23, 63, 58, 0.95);
+      backdrop-filter: blur(16px);
+      padding: 10px 24px;
+      border-radius: 999px;
+      margin: 20px 0 28px 0;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .toolbar-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #DDEBE7;
+      margin-right: 6px;
+    }
+    .toolbar button {
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s var(--ease-taste);
+      box-shadow: 0 4px 14px rgba(240, 107, 79, 0.35);
+    }
+    .toolbar button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+    .toolbar a {
+      background: rgba(255,255,255,0.12);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .toolbar a:hover {
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* Email & Web Long-scroll Brochure Container (최적 열람 폭 760px) */
+    .email-container {
+      width: 100%;
+      max-width: 760px;
+      background: var(--bg-ivory);
+      box-shadow: var(--shadow-float);
+      border-radius: var(--radius-lg);
+      padding: 56px 64px 48px 64px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      margin-bottom: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .email-container {
+        padding: 36px 24px;
+        border-radius: 0;
+        margin-bottom: 0;
+      }
+      .toolbar {
+        display: none;
+      }
+    }
+
+    /* Top Accent Line */
+    .top-accent-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .logo-area img {
+      height: 38px;
+      object-fit: contain;
+    }
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--mint);
+      color: var(--primary);
+      border: 1px solid var(--mint-border);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .tag-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* Hero Section */
+    .hero-section {
+      margin-bottom: 44px;
+    }
+    .hero-eyebrow {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.28;
+      color: var(--primary);
+      margin: 0 0 18px 0;
+      letter-spacing: -0.035em;
+    }
+    .hero-title .highlight {
+      color: var(--accent);
+      position: relative;
+      display: inline-block;
+    }
+    .hero-desc {
+      font-size: 17px;
+      color: var(--ink-muted);
+      line-height: 1.65;
+      margin: 0 0 28px 0;
+    }
+    .hero-desc b {
+      color: var(--primary);
+    }
+
+    /* 3-Step Process Bar (Bento Workflow Indicator) */
+    .step-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: center;
+      background: #FFFFFF;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      box-shadow: var(--shadow-subtle);
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .step-arrow {
+      color: var(--ink-subtle);
+      font-size: 18px;
+      font-weight: 700;
+      padding: 0 8px;
+    }
+
+    /* Section Typography */
+    .section-header {
+      margin-bottom: 20px;
+    }
+    .section-kicker {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 0 0 8px 0;
+      letter-spacing: -0.03em;
+    }
+    .section-desc {
+      font-size: 15px;
+      color: var(--ink-muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Section 1: 3 Ways Grid */
+    .ways-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 48px;
+    }
+    .way-card {
+      background: #FFFFFF;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 26px 22px;
+      box-shadow: var(--shadow-subtle);
+      transition: transform 0.25s var(--ease-taste), box-shadow 0.25s;
+    }
+    .way-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-card);
+      border-color: var(--primary-light);
+    }
+    .way-card.featured {
+      border: 2px solid var(--accent);
+      box-shadow: 0 10px 30px rgba(240, 107, 79, 0.12);
+    }
+    .way-badge {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .way-icon {
+      font-size: 26px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+    .way-name {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .way-desc {
+      font-size: 14px;
+      color: var(--ink-muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Section 2: Scenarios (High Contrast Mint Surface) */
+    .scenario-container {
+      background: #EDF5F3;
+      border: 1.5px solid var(--mint-border);
+      border-radius: var(--radius-lg);
+      padding: 36px 36px;
+      margin-bottom: 48px;
+    }
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 24px;
+    }
+    .scenario-card {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(23, 63, 58, 0.12);
+      border-radius: var(--radius-md);
+      padding: 22px 20px;
+      box-shadow: var(--shadow-subtle);
+      transition: all 0.2s ease;
+    }
+    .scenario-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .scenario-tag {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .scenario-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .scenario-text {
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    /* Section 3: Financial Highlight (고용촉진장려금 720만원) */
+    .grant-box {
+      background: #FFFFFF;
+      border: 2px solid var(--accent);
+      border-radius: var(--radius-lg);
+      padding: 34px 40px;
+      margin-bottom: 48px;
+      box-shadow: 0 16px 40px rgba(240, 107, 79, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 28px;
+    }
+    .grant-info {
+      flex: 1;
+    }
+    .grant-label {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .grant-headline {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 0 0 12px 0;
+      letter-spacing: -0.03em;
+    }
+    .grant-headline .val {
+      color: var(--accent-dark);
+      font-size: 32px;
+      font-weight: 900;
+    }
+    .grant-details {
+      font-size: 14.5px;
+      color: var(--ink-muted);
+      line-height: 1.6;
+      margin: 0 0 10px 0;
+    }
+    .grant-note {
+      font-size: 12px;
+      color: var(--ink-subtle);
+      margin: 0;
+    }
+    .btn-work24 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFFFF;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-work24:hover {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    /* Section 4: Photo Showcase with Glassmorphism Banner */
+    .photo-card {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 48px;
+      box-shadow: var(--shadow-card);
+      border: 1.5px solid var(--border);
+      height: 280px;
+    }
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-overlay-glass {
+      position: absolute;
+      left: 28px;
+      bottom: 24px;
+      background: rgba(23, 63, 58, 0.92);
+      backdrop-filter: blur(14px);
+      color: #FFFFFF;
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 480px;
+    }
+    .photo-overlay-glass .title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin-bottom: 4px;
+    }
+    .photo-overlay-glass .desc {
+      font-size: 13px;
+      color: var(--mint);
+      margin: 0;
+    }
+
+    /* Section 5: High-Impact Footer CTA */
+    .footer-cta-card {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 44px 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 36px;
+      box-shadow: var(--shadow-float);
+    }
+    .cta-content {
+      flex: 1;
+    }
+    .cta-heading {
+      font-size: 26px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin: 0 0 10px 0;
+      letter-spacing: -0.03em;
+    }
+    .cta-sub {
+      font-size: 15px;
+      color: var(--mint);
+      line-height: 1.6;
+      margin: 0 0 24px 0;
+    }
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .free-pill {
+      background: var(--mint);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 900;
+      padding: 8px 14px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .btn-cta-main {
+      background: var(--accent);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 14px 26px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(240, 107, 79, 0.4);
+      transition: all 0.2s var(--ease-taste);
+    }
+    .btn-cta-main:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+    .cta-qr-box {
+      background: #FFFFFF;
+      padding: 14px 14px 12px 14px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .cta-qr-box img {
+      width: 100px;
+      height: 100px;
+      display: block;
+    }
+    .cta-qr-box span {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-top: 8px;
+    }
+
+    /* Meta Footer */
+    .email-footer-meta {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--ink-subtle);
+    }
+    .email-footer-meta a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    @media print {
+      @page {
+        size: 210mm 620mm;
+        margin: 0;
+      }
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      html, body {
+        background-color: #F7F3EA !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 210mm !important;
+        height: 620mm !important;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .email-container {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        max-width: 210mm !important;
+        width: 210mm !important;
+        min-height: 620mm !important;
+        padding: 16mm 18mm 16mm 18mm !important;
+        background-color: #F7F3EA !important;
+        border: none !important;
+      }
+      .scenario-container {
+        background-color: #EDF5F3 !important;
+      }
+      .footer-cta-card {
+        background-color: #173F3A !important;
+      }
+      .tag-pill {
+        background-color: #DDEBE7 !important;
+      }
+      .free-pill {
+        background-color: #DDEBE7 !important;
+      }
+      .btn-cta-main {
+        background-color: #F06B4F !important;
+      }
+      .top-accent-bar {
+        background: linear-gradient(90deg, #173F3A 0%, #F06B4F 100%) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Action Toolbar for Easy Email Sharing -->
+  <div class="toolbar">
+    <span class="toolbar-title">📬 B2B 이메일 발송용 브로슈어</span>
+    <button onclick="copyWebLink()">🔗 메일용 웹링크 복사</button>
+    <button onclick="triggerPrintWithGuide()" style="background: var(--primary-light);">🖨️ PDF 저장 / 인쇄</button>
+    <span style="font-size: 11px; color: #DDEBE7; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 999px;">
+      💡 PDF 저장 시 [설정 더보기 > 배경 그래픽] 체크
+    </span>
+    <a href="html-ppt-eojob.html" target="_blank">🎤 S키 발표자 뷰</a>
+  </div>
+
+  <!-- Long-scroll Email & Web Brochure Container -->
+  <main class="email-container" id="brochure-container">
+    <div class="top-accent-bar"></div>
+
+    <!-- 1. Header -->
+    <header class="header">
+      <div class="logo-area">
+        <img src="assets/logo_text.png" alt="이어잡(EOJOB)">
+      </div>
+      <div class="tag-pill">
+        <span class="dot"></span>
+        <span>기업용 · 파일럿 참여 프로그램</span>
+      </div>
+    </header>
+
+    <!-- 2. Hero Section -->
+    <section class="hero-section">
+      <div class="hero-eyebrow">
+        <span>🏢 기업의 실무 프로젝트와 시니어 경험을 잇다</span>
+      </div>
+      <h1 class="hero-title">
+        경력보다 중요한 것은<br>
+        <span class="highlight">해결해 온 경험</span>입니다
+      </h1>
+      <p class="hero-desc">
+        <b>경험 기반 AI 매칭</b> — 기업이 지금 해결해야 할 실무 업무를 등록하면,<br>
+        실제 문제 해결 경험을 갖춘 시니어 인재와 48시간 내 다이렉트로 연결합니다.
+      </p>
+
+      <!-- 3-Step Process Bar -->
+      <div class="step-bar">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <span>업무·프로젝트 등록</span>
+        </div>
+        <div class="step-arrow">›</div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <span>경험인재 AI 추천</span>
+        </div>
+        <div class="step-arrow">›</div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <span>제안·면접 다이렉트 연결</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 경험을 일로 연결하는 3가지 방식 -->
+    <section>
+      <div class="section-header">
+        <div class="section-kicker">CORE CAPABILITIES</div>
+        <h2 class="section-title">경험을 일로 연결하는 3가지 방식</h2>
+        <p class="section-desc">기업이 후보자의 실제 역량을 빠르게 파악하고, 가장 효율적인 방식으로 협업할 수 있습니다.</p>
+      </div>
+
+      <div class="ways-grid">
+        <div class="way-card">
+          <div class="way-badge">WAY 01</div>
+          <div class="way-icon">📇</div>
+          <div class="way-name">경험 카드</div>
+          <p class="way-desc">단순 스펙 나열이 아닌, 실제 수행한 프로젝트 성과와 핵심 문제 해결 역량을 한눈에 요약 정리해 드립니다.</p>
+        </div>
+
+        <div class="way-card featured">
+          <div class="way-badge">WAY 02 · AI MATCHING</div>
+          <div class="way-icon">⚡</div>
+          <div class="way-name">AI 맞춤 매칭</div>
+          <p class="way-desc">기업의 프로젝트 요구사항과 시니어의 실제 필드 노하우를 AI가 정밀 분석하여 적임자를 즉시 선별합니다.</p>
+        </div>
+
+        <div class="way-card">
+          <div class="way-badge">WAY 03</div>
+          <div class="way-icon">⏱️</div>
+          <div class="way-name">유연 근무 지원</div>
+          <p class="way-desc">정규직 채용 부담을 덜어주는 주 2~3일 반일제, 시간제, 프로젝트 자문형 계약까지 자유롭게 협의 가능합니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 기업 활용 시나리오 -->
+    <section class="scenario-container">
+      <div class="section-header">
+        <div class="section-kicker">BUSINESS SCENARIOS</div>
+        <h2 class="section-title">이런 순간, 이어잡을 활용하세요</h2>
+        <p class="section-desc">실제 기업들이 겪는 대표적인 3대 채용 고민을 명쾌하게 풀어드립니다.</p>
+      </div>
+
+      <div class="scenario-grid">
+        <div class="scenario-card">
+          <div class="scenario-tag">SCENARIO 01</div>
+          <div class="scenario-title">프로젝트 전문 인력</div>
+          <p class="scenario-text">특정 프로젝트를 집중 리드할 20년+ 풍부한 실무 경험의 시니어 총괄이 필요할 때</p>
+        </div>
+
+        <div class="scenario-card" style="border-color: var(--accent);">
+          <div class="scenario-tag" style="color: var(--accent);">SCENARIO 02 · COACHING</div>
+          <div class="scenario-title">내부 문제 해결 코칭</div>
+          <p class="scenario-text">해결할 과제는 분명하지만 기존 사내 팀원들만의 역량으로 돌파구를 찾기 어려울 때</p>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-tag">SCENARIO 03</div>
+          <div class="scenario-title">현장 경험 노하우 보완</div>
+          <p class="scenario-text">제조, 품질, R&D, 고객 운영 현장 경험이 절실한 혁신 스타트업 및 중소기업</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 고용촉진장려금 안내 -->
+    <section class="grant-box">
+      <div class="grant-info">
+        <div class="grant-label">고용노동부 고용촉진장려금 연계 지원</div>
+        <div class="grant-headline">요건 충족 시 1인당 연 최대 <span class="val">720 만원</span> 환급</div>
+        <p class="grant-details">
+          취업지원프로그램 이수 인증 시니어를 신규 채용하고 6개월 이상 고용한 우선지원대상기업 대상<br>
+          (기업 계좌로 분기별 180만원 직접 입금 지급)
+        </p>
+        <p class="grant-note">※ 이어잡 이용만으로 지원이 보장되지 않으며, 기업·근로자·계약 요건을 모두 충족해야 합니다.</p>
+      </div>
+      <div>
+        <a href="https://www.work24.go.kr" target="_blank" class="btn-work24">
+          고용24 요건 확인 ↗
+        </a>
+      </div>
+    </section>
+
+    <!-- 6. 현장 사진 비주얼 카드 -->
+    <div class="photo-card">
+      <img src="assets/eojob_success_case.jpg" alt="시니어 전문가와 기업의 협업">
+      <div class="photo-overlay-glass">
+        <div class="title">기업의 문제 × 시니어의 경험 = 확실한 실질 성과</div>
+        <p class="desc">화려한 직급보다 실전에서 즉시 발휘되는 검증된 노하우를 이어잡에서 만나보세요.</p>
+      </div>
+    </div>
+
+    <!-- 7. 하단 메인 CTA 카드 -->
+    <footer class="footer-cta-card">
+      <div class="cta-content">
+        <h2 class="cta-heading">파일럿 참여 기업을 모집합니다</h2>
+        <p class="cta-sub">채용할 직무가 아니라, 지금 당장 해결해야 할 실무 프로젝트를 등록해보세요.</p>
+        
+        <div class="cta-actions">
+          <span class="free-pill">베타 서비스 수수료 0원</span>
+          <a href="https://al07team04-bdfcd.web.app/role" target="_blank" class="btn-cta-main">
+            시니어 채용 프로젝트 등록하기 →
+          </a>
+        </div>
+      </div>
+
+      <div class="cta-qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fal07team04-bdfcd.web.app" alt="EOJOB QR">
+        <span>모바일로 바로 체험</span>
+      </div>
+    </footer>
+
+    <!-- 8. 메타 정보 푸터 -->
+    <div class="email-footer-meta">
+      <div>
+        <b>이어잡(EOJOB)</b> B2B 시니어 인재 매칭 솔루션 | 문의: contact@eojob.kr
+      </div>
+      <div>
+        <a href="https://al07team04-bdfcd.web.app" target="_blank">al07team04-bdfcd.web.app ↗</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function triggerPrintWithGuide() {
+      window.print();
+    }
+
+    function copyWebLink() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("이메일에 첨부할 브로슈어 웹 링크가 복사되었습니다!\n" + url);
+      }).catch(() => {
+        alert("링크: " + url);
+      });
+    }
+  </script>
+
+</body>
+</html>

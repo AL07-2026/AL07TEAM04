@@ -1,15 +1,60 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { App } from '@/app/App';
+import * as profileService from '@/services/profileService';
 import { saveLocalCompanyProfile, saveLocalSeniorProfile } from '@/services/profileService';
 import * as proposalService from '@/services/proposalService';
 
+type UserRole = 'senior' | 'company';
+
+const mockSignedInUser = (role: UserRole = 'senior') => ({
+  email: 'test@example.com',
+  name: '테스트',
+  role,
+  uid: 'test-uid',
+});
+
+let mockAuthState: { user: ReturnType<typeof mockSignedInUser> | null; role: UserRole } = {
+  role: 'senior',
+  user: mockSignedInUser('senior'),
+};
+
+vi.mock('@/lib/authContext', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await importOriginal<Record<string, any>>();
+  return {
+    ...actual,
+    useAuth: () => ({
+      checkEmailVerified: vi.fn().mockResolvedValue(true),
+      clearError: vi.fn(),
+      deleteAccount: vi.fn(),
+      error: null,
+      loading: false,
+      role: mockAuthState.role,
+      sendVerificationEmail: vi.fn(),
+      signIn: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signUp: vi.fn(),
+      user: mockAuthState.user,
+    }),
+  };
+});
+
 describe('Figma v2 통합 화면 라우팅', () => {
+  beforeEach(() => {
+    // 기본: 시니어 로그인 상태
+    mockAuthState = { role: 'senior', user: mockSignedInUser('senior') };
+    // 테스트 간 스토리지 오염 방지
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
   it.each([
     ['/', /기업의 실무 프로젝트와\s*시니어의 경험을 잇다/],
-    ['/login', '경험매칭'],
     ['/signup', '회원가입'],
+    ['/premium-companies', '프리미엄 기업'],
     ['/role', '역할 선택'],
     ['/basic-profile', '인재 기본정보'],
     ['/company-info', '회사 기본정보'],
@@ -19,10 +64,17 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/senior/experience/card', '인터뷰 결과를 먼저 만들어 주세요'],
     ['/senior/projects', '프로젝트 목록'],
     ['/senior/projects/1', '프로젝트 상세'],
-    ['/senior/projects/1/proposal', '경험매칭'],
+    ['/senior/projects/1/proposal', '제안하기'],
     ['/senior/proposal-complete', '제안 완료'],
     ['/senior/proposals', '내 제안'],
     ['/senior/proposals/1', '내 제안 상세'],
+  ])('%s 화면을 표시한다 (시니어)', async (path, heading) => {
+    window.history.pushState({}, '', path);
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+  });
+
+  it.each([
     ['/company', '회사 홈'],
     ['/company/projects/new', '신규 프로젝트 등록'],
     ['/company/project-complete', '등록 완료'],
@@ -30,11 +82,61 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ['/company/proposals', '받은 제안'],
     ['/company/proposals/1', '제안 상세'],
     ['/company/profile', '내 정보'],
-  ])('%s 화면을 표시한다', async (path, heading) => {
+  ])('%s 화면을 표시한다 (기업)', async (path, heading) => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     window.history.pushState({}, '', path);
     render(<App />);
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
   });
+
+  it('/login 화면을 표시한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
+    window.history.pushState({}, '', '/login');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
+    expect(screen.getByRole('menuitem', { name: /프로젝트 보러가기/ })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/senior/experience', 'AI 경험 인터뷰'],
+    ['/senior/proposals', '내 제안'],
+    ['/senior/profile', '내 정보'],
+  ])('비로그인 상태에서 %s에 접근하면 로그인 안내와 원래 목적지를 보존한다', async (path) => {
+    mockAuthState = { role: 'senior', user: null };
+    window.history.pushState({}, '', path);
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(await screen.findByText('로그인 후 이용할 수 있어요.')).toBeInTheDocument();
+    expect(`${window.location.pathname}${window.location.search}`).toBe(
+      `/login?redirect=${encodeURIComponent(path)}`,
+    );
+  });
+
+  it.each([
+    ['내 제안', '/senior/proposals', '인재 주요 메뉴'],
+    ['내 정보', '/senior/profile', '인재 주요 메뉴'],
+    ['내 제안', '/senior/proposals', '인재 하단 주요 메뉴'],
+    ['내 정보', '/senior/profile', '인재 하단 주요 메뉴'],
+  ])(
+    '비로그인 상태에서 공개 프로젝트 화면의 %s를 누르면 안내 후 로그인으로 이동한다',
+    async (label, destination, menuLabel) => {
+      mockAuthState = { role: 'senior', user: null };
+      window.history.pushState({}, '', '/senior/project-database');
+      render(<App />);
+
+      const menu = await screen.findByRole('navigation', { name: menuLabel });
+      fireEvent.click(within(menu).getByRole('button', { name: label }));
+
+      expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+      expect(await screen.findByText('로그인 후 이용할 수 있어요.')).toBeInTheDocument();
+      expect(`${window.location.pathname}${window.location.search}`).toBe(
+        `/login?redirect=${encodeURIComponent(destination)}`,
+      );
+    },
+  );
 
   it('랜딩 페이지는 소개 영상과 하단 프로젝트 CTA 하나만 제공한다', async () => {
     window.history.pushState({}, '', '/');
@@ -43,7 +145,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(
       await screen.findByTitle('시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상'),
     ).toHaveAttribute('src', '/eojob-landing-hero.mp4');
-    expect(screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*이어잡입니다/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*이어잡입니다/),
+    ).toBeInTheDocument();
 
     const projectButtons = screen.getAllByRole('button', { name: /전체 프로젝트 보러가기/ });
     expect(projectButtons).toHaveLength(1);
@@ -57,8 +161,8 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it.each([
     ['인재로 로그인', '/login?role=senior'],
     ['기업으로 로그인', '/login?role=company'],
-    ['프로젝트 보러가기', '/senior/project-database'],
   ])('랜딩 상단의 %s 아이콘은 해당 화면으로 이동한다', async (label, destination) => {
+    mockAuthState = { role: 'senior', user: null }; // 비로그인 상태에서 랜딩 헤더 버튼 테스트
     window.history.pushState({}, '', '/');
     render(<App />);
 
@@ -66,6 +170,19 @@ describe('Figma v2 통합 화면 라우팅', () => {
 
     await waitFor(() => {
       expect(`${window.location.pathname}${window.location.search}`).toBe(destination);
+    });
+  });
+
+  it('랜딩 메뉴의 프로젝트 보러가기는 프로젝트 화면으로 이동한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
+    window.history.pushState({}, '', '/');
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '더보기 열기' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '프로젝트 보러가기' }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/senior/project-database');
     });
   });
 
@@ -107,12 +224,14 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: '수정한 답변 저장' }));
 
-    fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인 →' }));
+    fireEvent.click(screen.getByRole('button', { name: '실제 답변으로 만든 경험 카드 확인' }));
     expect(
       await screen.findByRole('heading', { name: '경험 카드가 완성됐어요' }),
     ).toBeInTheDocument();
     const requestInit = fetchMock.mock.calls[0]?.[1];
-    const requestBody = JSON.parse(typeof requestInit?.body === 'string' ? requestInit.body : '{}') as {
+    const requestBody = JSON.parse(
+      typeof requestInit?.body === 'string' ? requestInit.body : '{}',
+    ) as {
       history?: Array<{ answer?: string }>;
     };
     expect(requestBody.history?.some((item) => item.answer?.includes('광고 운영 문의'))).toBe(true);
@@ -136,23 +255,30 @@ describe('Figma v2 통합 화면 라우팅', () => {
   it('경험 카드 확인 화면은 저장된 프로필 경험카드를 빈 상태 대신 보여준다', async () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-    saveLocalSeniorProfile({
-      email: 'senior@example.com',
-      experience: '12년',
-      field: 'IT개발·데이터',
-      period: '12년',
-      phone: '010-0000-0000',
-      experienceCardsV1: [
-        {
-          id: 'profile-card-1',
-          workedOn: '고객 문의 운영 기준 정비',
-          accomplished: '평균 응답 시간을 30% 줄였습니다.',
-          strengths: ['프로세스 개선', '운영 자동화'],
-          version: 1,
-          confirmedAt: '2026-09-01T00:00:00.000Z',
-        },
-      ],
-    });
+    saveLocalSeniorProfile(
+      {
+        email: 'senior@example.com',
+        experience: '12년',
+        field: 'IT개발·데이터',
+        period: '12년',
+        phone: '010-0000-0000',
+        experienceCardsV1: [
+          {
+            id: 'profile-card-1',
+            workedOn: '고객 문의 운영 기준 정비',
+            accomplished: '평균 응답 시간을 30% 줄였습니다.',
+            strengths: ['프로세스 개선', '운영 자동화'],
+            version: 1,
+            confirmedAt: '2026-09-01T00:00:00.000Z',
+          },
+        ],
+      },
+      mockAuthState.user?.uid,
+    );
+    const savedProfile = profileService.getLocalSeniorProfile(mockAuthState.user?.uid);
+    const resolveProfileSpy = vi
+      .spyOn(profileService, 'resolveSeniorProfile')
+      .mockResolvedValue(savedProfile);
     window.history.pushState({}, '', '/senior/experience/card');
 
     render(<App />);
@@ -160,6 +286,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     expect(await screen.findByText('저장된 경험 카드')).toBeInTheDocument();
     expect(screen.getByText('고객 문의 운영 기준 정비')).toBeInTheDocument();
     expect(screen.queryByText('저장된 인터뷰 결과가 없습니다')).not.toBeInTheDocument();
+    resolveProfileSpy.mockRestore();
     window.localStorage.clear();
   });
 
@@ -226,24 +353,27 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it('비로그인 상태에서 프로젝트 제안 작성 화면에 진입하지 않고 로그인으로 유도한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
     window.history.pushState({}, '', '/senior/projects/1/proposal');
     render(<App />);
     expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
     expect(window.location.pathname).toBe('/login');
-    expect(window.location.search).toBe('?role=senior');
+    expect(window.location.search).toBe(
+      `?redirect=${encodeURIComponent('/senior/projects/1/proposal')}`,
+    );
   });
 
-  it('비로그인 상태에서 프로젝트 상세의 제안하기도 로그인으로 유도한다', async () => {
+  it('비로그인 상태에서 프로젝트 상세에 진입하면 로그인으로 유도한다', async () => {
+    mockAuthState = { role: 'senior', user: null };
     window.history.pushState({}, '', '/senior/projects/1');
     render(<App />);
-    fireEvent.click(await screen.findByRole('button', { name: '제안하기' }));
-    await waitFor(() => {
-      expect(window.location.pathname).toBe('/login');
-      expect(window.location.search).toBe('?role=senior');
-    });
+    expect(await screen.findByRole('heading', { name: '경험매칭' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+    expect(window.location.search).toBe(`?redirect=${encodeURIComponent('/senior/projects/1')}`);
   });
 
   it('회사 프로젝트를 등록하고 완료 화면으로 이동한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     saveLocalCompanyProfile(
       {
         companyName: '테스트 회사',
@@ -267,14 +397,18 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('필요 경력'), {
       target: { value: '서비스 운영 5년 이상' },
     });
-    fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '주 2회 · 원격' } });
+    fireEvent.change(screen.getByLabelText('프로젝트 기간'), {
+      target: { value: '주 2회 · 원격' },
+    });
     fireEvent.change(screen.getByLabelText('보수/예산'), { target: { value: '월 300만원' } });
     fireEvent.change(screen.getByLabelText('해결해야 할 문제 (Problem Statement) *'), {
       target: { value: '업무 흐름을 정리합니다.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '프로젝트 등록' }));
+    fireEvent.click(screen.getByRole('button', { name: /^프로젝트 등록$/ }));
     expect(
-      await screen.findByText(/프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/),
+      await screen.findByText(
+        /프로젝트가 데이터베이스에 등록되었습니다|프로젝트를 기기에 저장했습니다/,
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
     expect((await screen.findAllByText('운영 체계 만들기')).length).toBeGreaterThan(0);
@@ -282,6 +416,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
   });
 
   it('받은 제안의 진행 단계와 연락 상태를 확인한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     const proposal = {
       id: '1',
       projectId: 'project-1',
@@ -294,7 +429,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
       applicantName: '지원자',
       applicantEmail: 'applicant@example.com',
     } as proposalService.UserProposal;
-    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue([proposal]);
     const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
     const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
     window.localStorage.clear();
@@ -313,6 +450,57 @@ describe('Figma v2 통합 화면 라우팅', () => {
     proposalsSpy.mockRestore();
   });
 
+  it('받은 제안의 장려금 필터를 아이콘과 독립적인 상태값으로 적용한다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
+    const proposals = [
+      {
+        id: 'eligible-1',
+        projectId: 'project-1',
+        projectOwnerId: 'company-test-uid',
+        userId: 'senior-eligible',
+        projectTitle: '장려금 대상 프로젝트',
+        status: '검토 중',
+        processStage: 'document_review',
+        appliedAt: '2026-09-09',
+        applicantName: '지원 대상자',
+        applicantEmail: 'eligible@example.com',
+        employmentSubsidyTarget: true,
+      },
+      {
+        id: 'ineligible-1',
+        projectId: 'project-2',
+        projectOwnerId: 'company-test-uid',
+        userId: 'senior-ineligible',
+        projectTitle: '일반 프로젝트',
+        status: '검토 중',
+        processStage: 'document_review',
+        appliedAt: '2026-09-09',
+        applicantName: '일반 지원자',
+        applicantEmail: 'ineligible@example.com',
+        employmentSubsidyTarget: false,
+      },
+    ] as proposalService.UserProposal[];
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue(proposals);
+    window.history.pushState({}, '', '/company/proposals?filter=subsidy');
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', { name: '장려금 지원 대상 지원자 1건' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('장려금 대상 프로젝트')).toBeInTheDocument();
+    expect(screen.queryByText('일반 프로젝트')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '장려금 대상 (연 720만원)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '전체' }));
+    expect(await screen.findByRole('heading', { name: '받은 제안 2건' })).toBeInTheDocument();
+    expect(screen.getByText('일반 프로젝트')).toBeInTheDocument();
+
+    proposalsSpy.mockRestore();
+  });
+
   it('취소된 받은 제안은 상태를 표시하고 후속 액션을 막는다', async () => {
     const proposal = {
       id: 'cancelled-1',
@@ -326,7 +514,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
       applicantName: '지원자',
       applicantEmail: 'applicant@example.com',
     } as proposalService.UserProposal;
-    const proposalsSpy = vi.spyOn(proposalService, 'getCompanyProposals').mockResolvedValue([proposal]);
+    const proposalsSpy = vi
+      .spyOn(proposalService, 'getCompanyProposals')
+      .mockResolvedValue([proposal]);
     const stageSpy = vi.spyOn(proposalService, 'updateProposalProcessStage').mockResolvedValue();
     const contactSpy = vi.spyOn(proposalService, 'updateProposalContactStatus').mockResolvedValue();
     window.localStorage.clear();
@@ -368,6 +558,9 @@ describe('Figma v2 통합 화면 라우팅', () => {
     ).toBeDisabled();
     fireEvent.change(screen.getByLabelText('경력 분야'), { target: { value: 'AI 서비스 개발' } });
     fireEvent.change(screen.getByLabelText('경력 기간'), { target: { value: '15년' } });
+    fireEvent.change(screen.getByLabelText('대표 경험 및 담당 업무 (매칭 핵심 데이터)'), {
+      target: { value: 'AI 서비스 개발과 운영 전환을 총괄했습니다.' },
+    });
     fireEvent.change(screen.getByLabelText(/원하는 근무 형태/), {
       target: { value: '시간제·파트타임 (오전/오후)' },
     });
@@ -377,9 +570,7 @@ describe('Figma v2 통합 화면 라우팅', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
 
-    expect(
-      await screen.findByText('✓ 프로필 정보가 성공적으로 저장되었습니다.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('프로필 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
     expect(screen.getByText('AI 서비스 개발')).toBeInTheDocument();
     expect(screen.getByText('15년')).toBeInTheDocument();
   });
@@ -395,11 +586,12 @@ describe('Figma v2 통합 화면 라우팅', () => {
     fireEvent.change(screen.getByLabelText('회사명'), { target: { value: '(주) 테크노바' } });
     fireEvent.click(screen.getByRole('button', { name: /변경사항 저장하기/ }));
 
-    expect(await screen.findByText('✓ 회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
+    expect(await screen.findByText('회사 정보가 성공적으로 저장되었습니다.')).toBeInTheDocument();
     expect(screen.getAllByText('(주) 테크노바').length).toBeGreaterThan(0);
   });
 
   it('저장한 회사 정보를 내 정보 탭에서도 같은 내용으로 보여준다', async () => {
+    mockAuthState = { role: 'company', user: mockSignedInUser('company') };
     saveLocalCompanyProfile({
       companyAddress: '서울특별시 동대문구 고산자로 515',
       companyName: '엘레오스',

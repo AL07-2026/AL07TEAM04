@@ -46,7 +46,19 @@ const employmentTypes = new Set<EmploymentType>([
   'advisory',
   'project',
 ]);
-const hiringStages = new Set<HiringStage>(['open', 'screening', 'interviewing', 'closing', 'closed']);
+const hiringStages = new Set<HiringStage>([
+  'open',
+  'screening',
+  'interviewing',
+  'closing',
+  'closed',
+]);
+const postingSources = new Set<NonNullable<JobPosting['source']>>([
+  'internal',
+  'worknet',
+  'seoul',
+  'public',
+]);
 
 function stringValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -183,12 +195,19 @@ export function normalizeProject(id: string, source: unknown): JobPosting | null
         ? Math.min(100, Math.max(0, value.seniorFitScore))
         : 80,
     postedAt,
+    source: postingSources.has(value.source as NonNullable<JobPosting['source']>)
+      ? (value.source as NonNullable<JobPosting['source']>)
+      : ownerId
+        ? 'internal'
+        : undefined,
+    sourceUrl: stringValue(value.sourceUrl) || undefined,
+    sourceProvider: stringValue(value.sourceProvider) || undefined,
   };
 }
 
 const DELETED_TEST_PROJECT_IDS = new Set(['PROJECT-4716ed6d', 'PROJECT-8fe2dfaa', 'PROJECT-faffec6f']);
 
-function getLocalProjects() {
+export function getLocalProjects(): JobPosting[] {
   const stored = readVersionedStorage<unknown[]>(LOCAL_PROJECTS_KEY);
   if (!Array.isArray(stored)) return [];
   return stored
@@ -208,9 +227,11 @@ function getLocalProjects() {
 }
 
 function saveLocalProjects(projects: JobPosting[]) {
+  const nextProjects = uniqueByKey(projects, (project) => project.id);
+  if (JSON.stringify(getLocalProjects()) === JSON.stringify(nextProjects)) return;
   writeVersionedStorage(
     LOCAL_PROJECTS_KEY,
-    uniqueByKey(projects, (project) => project.id),
+    nextProjects,
   );
 }
 

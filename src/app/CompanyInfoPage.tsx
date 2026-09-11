@@ -1,4 +1,4 @@
-import { Building2, LogOut, Pencil } from 'lucide-react';
+import { ArrowRight, Building2, CircleAlert, CircleCheck, LogOut, Pencil } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -14,6 +14,8 @@ import {
 } from '@/services/profileService';
 
 type CompanyForm = CompanyProfileData;
+
+const COMPANY_SAVE_SUCCESS_MESSAGE = '회사 정보가 성공적으로 저장되었습니다.';
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
@@ -83,7 +85,7 @@ export function CompanyInfoPage() {
       return;
     }
     setIsEditing(false);
-    setMessage('✓ 회사 정보가 성공적으로 저장되었습니다.');
+    setMessage(COMPANY_SAVE_SUCCESS_MESSAGE);
   }
 
   async function handleLogout() {
@@ -94,13 +96,7 @@ export function CompanyInfoPage() {
   const isMobile = mode === 'mobile';
 
   return (
-    <MobilePage
-      activeNav="profile"
-      contentClassName={isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10'}
-      role="company"
-      showBack={false}
-      title="회사 기본정보"
-    >
+    <MobilePage activeNav="profile" role="company" showBack={false} title="회사 기본정보">
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
@@ -141,13 +137,20 @@ export function CompanyInfoPage() {
         {/* Message Banner */}
         {message ? (
           <div
+            aria-live="polite"
             className={cn(
               'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 border shadow-2xs',
-              message.startsWith('✓')
+              message === COMPANY_SAVE_SUCCESS_MESSAGE
                 ? 'bg-[#ECFDF5] border-[#10B981]/40 text-[#059669]'
                 : 'bg-rose-50 border-rose-200 text-rose-700',
             )}
+            role="status"
           >
+            {message === COMPANY_SAVE_SUCCESS_MESSAGE ? (
+              <CircleCheck aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+            ) : (
+              <CircleAlert aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+            )}
             <span>{message}</span>
           </div>
         ) : null}
@@ -158,7 +161,10 @@ export function CompanyInfoPage() {
             <div className="flex items-center justify-between gap-2 border-b border-[#E0D9C8]/60 pb-3">
               <div className="min-w-0">
                 <h2
-                  className={cn('font-extrabold text-[#17212B] truncate', isMobile ? 'text-lg' : 'text-2xl')}
+                  className={cn(
+                    'font-extrabold text-[#17212B] truncate',
+                    isMobile ? 'text-lg' : 'text-2xl',
+                  )}
                 >
                   저장된 회사 정보
                 </h2>
@@ -220,9 +226,10 @@ export function CompanyInfoPage() {
               <button
                 type="button"
                 onClick={() => void navigate('/company/projects/new')}
-                className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
               >
-                새 프로젝트 등록하기 →
+                <span>새 프로젝트 등록하기</span>
+                <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
               </button>
             </div>
           </div>

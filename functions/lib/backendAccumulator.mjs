@@ -1,34 +1,16 @@
-import http from 'http';
-import https from 'https';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { FieldPath } from 'firebase-admin/firestore';
 import { adminDb } from './firestoreAdmin.mjs';
-import { containsUtf8Replacement, decodeUtf8Chunks } from './httpEncoding.mjs';
+import { containsUtf8Replacement } from './httpEncoding.mjs';
 import { planJobCatalogCleanup } from './jobDeduplication.mjs';
 import { generateJobContentHash, runIncrementalJobAnalysis } from './jobBatchAnalysisService.mjs';
+import { collectJobSources } from './jobSourceCollection.mjs';
+import { buildPostingUpdate, planDailySync, summarizeSync } from './jobSyncPolicy.mjs';
 
 const GLOBAL_COLLECTION = 'global_job_postings';
 const SYNC_STATE_COLLECTION = 'job_sync_metadata';
 const SYNC_STATE_DOCUMENT = 'global_accumulator';
-const SEOUL_WINDOW_SIZE = 1000;
-const PUBLIC_PAGE_SIZE = 500;
 const JOB_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
-
-function fetchUrlText(urlStr, timeoutMs = 5000) {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(urlStr);
-    const client = urlObj.protocol === 'https:' ? https : http;
-    const req = client.get(urlStr, { timeout: timeoutMs }, (res) => {
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
-      res.on('end', () => resolve(decodeUtf8Chunks(chunks)));
-    });
-    req.on('error', reject);
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Fetch timeout'));
-    });
-  });
-}
 
 function sanitizeId(id) {
   return String(id || '').replace(/[\/\\#?%]/g, '_').trim();
@@ -441,6 +423,8 @@ function detectEmploymentTypeFromJobText(title, details = '', rawEmpCode = '') {
 
 function normalizeDate(value) {
   const raw = String(value || '').trim();
+  const shortYear = raw.match(/(?:^|\s)(\d{2})-(\d{2})-(\d{2})(?:$|\s)/);
+  if (shortYear) return `20${shortYear[1]}-${shortYear[2]}-${shortYear[3]}`;
   const compact = raw.match(/(\d{4})(\d{2})(\d{2})/);
   if (compact) return `${compact[1]}-${compact[2]}-${compact[3]}`;
   const separated = raw.match(/(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})/);
@@ -468,6 +452,142 @@ function normalizeListValue(value, fallback = '') {
   return String(value || '').trim() || fallback;
 }
 
+function decodeXmlText(value = '') {
+  return String(value)
+    .replace(/^<!\[CDATA\[([\s\S]*)\]\]>$/, '$1')
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([\da-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
+function readXmlTag(block, tagName) {
+  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = block.match(new RegExp(`<${escapedTag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`, 'i'));
+  return match ? decodeXmlText(match[1]) : '';
+}
+
+export function parseWorknetRows(xml = '') {
+  const source = String(xml || '');
+  const apiError = readXmlTag(source, 'error') || readXmlTag(source, 'message');
+  if (apiError) return { error: apiError, rows: [] };
+
+  const itemPatterns = [
+    /<wanted\b[^>]*>[\s\S]*?<\/wanted>/gi,
+    /<wantedItem\b[^>]*>[\s\S]*?<\/wantedItem>/gi,
+    /<item\b[^>]*>[\s\S]*?<\/item>/gi,
+  ];
+  const itemBlocks = itemPatterns.map((pattern) => source.match(pattern) || []).find((items) => items.length > 0) || [];
+  const fields = [
+    'wantedAuthNo',
+    'company',
+    'indTpNm',
+    'title',
+    'salTpNm',
+    'sal',
+    'minSal',
+    'maxSal',
+    'region',
+    'addresses',
+    'holidayTpNm',
+    'minEdubg',
+    'maxEdubg',
+    'career',
+    'regDt',
+    'closeDt',
+    'infoSvc',
+    'wantedInfoUrl',
+    'wantedMobileInfoUrl',
+    'empTpCd',
+    'jobsCd',
+  ];
+
+  return {
+    rows: itemBlocks.map((block) =>
+      Object.fromEntries(fields.map((field) => [field, readXmlTag(block, field)])),
+    ),
+  };
+}
+
+export function transformWorknetRow(row, nowStr, now) {
+  const sourceId = String(row.wantedAuthNo || '').trim();
+  const rawTitle = String(row.title || '').trim();
+  if (!sourceId || !rawTitle) return null;
+
+  const rawCompany = String(row.company || '기업명 미제공').trim();
+  const { companyName, title } = normalizeCompanyAndTitle(rawCompany, rawTitle);
+  const industry = String(row.indTpNm || '업종 정보 미제공').trim();
+  const classification = classifyOccupationCategoryFromJobText(title, industry, row.jobsCd);
+  const occupationCategory = classification.isConfident ? classification.category : null;
+  const category = occupationCategory
+    ? occupationToProjectCategory[occupationCategory] || 'operations'
+    : 'operations';
+  const deadline = normalizeDate(row.closeDt);
+  if (isExpiredDeadline(deadline, now)) return null;
+  const postedAt = normalizeDate(row.regDt) || nowStr.slice(0, 10);
+  const career = String(row.career || '경력 정보 미제공').trim();
+  const salaryRange = String(
+    row.sal ||
+      (row.minSal && row.maxSal ? `${row.minSal}~${row.maxSal}` : row.minSal || row.maxSal) ||
+      '임금 정보 미제공',
+  ).trim();
+  const sourceUrl = String(row.wantedInfoUrl || row.wantedMobileInfoUrl || '').trim();
+
+  return {
+    id: createStableDocumentId('WORKNET', sourceId, companyName, title),
+    companyName,
+    industry,
+    companySize: '고용24 공식 채용 공고',
+    title,
+    category,
+    occupationCategory,
+    occupationClassificationConfidence: classification.confidence,
+    occupationClassificationMargin: classification.margin,
+    occupationClassificationStatus: occupationCategory ? 'classified' : 'ambiguous',
+    seniority: 'senior',
+    employmentType: detectEmploymentTypeFromJobText(title, `${industry} ${career}`, row.empTpCd),
+    hiringStage: deriveHiringStage(deadline, now),
+    workType: detectWorkTypeFromJobText(title, `${industry} ${row.holidayTpNm || ''}`),
+    location: String(row.region || row.addresses || '근무 지역 미제공').trim(),
+    experienceYears: career,
+    salaryRange: [row.salTpNm, salaryRange].filter(Boolean).join(' ').trim(),
+    deadline: deadline || '채용 시 마감',
+    projectDuration: '상세 공고에서 확인',
+    collaborationTargets: ['부서 실무진', '사업 담당자'],
+    coreResponsibilities: [],
+    qualifications: [career, [row.minEdubg, row.maxEdubg].filter(Boolean).join('~')].filter(Boolean),
+    benefits: [String(row.holidayTpNm || '공고 원문 확인').trim()],
+    problemStatement: '',
+    projectGoal: '',
+    successMetrics: [],
+    requiredSkills: [industry, title],
+    preferredSkills: [],
+    matchingSignals: [career, row.region, industry].filter(Boolean),
+    recommendedTalentType: `${industry} 분야 실무 경험을 보유한 시니어 인재`,
+    matchingScoreCriteria: ['직무 연관성', '경력 정보', '근무 지역'],
+    interviewFocus: ['관련 실무 경험 및 주요 성과'],
+    sourceDetailProvenance: {
+      coreResponsibilities: 'unknown',
+      problemStatement: 'unknown',
+      projectGoal: 'unknown',
+      requiredSkills: 'synthetic',
+    },
+    seniorFitScore: 80,
+    postedAt,
+    source: 'worknet',
+    sourceUrl,
+    sourceProvider: String(row.infoSvc || '고용24').trim(),
+    workSchedule: String(row.holidayTpNm || '공고 원문 확인').trim(),
+    deadlineLabel: String(row.closeDt || '채용 시 마감').trim(),
+    registeredLabel: String(row.regDt || postedAt).trim(),
+    updatedAt: nowStr,
+  };
+}
+
 function createStableDocumentId(prefix, sourceId, companyName, title) {
   const normalizedSourceId = String(sourceId || '').trim();
   if (normalizedSourceId) return sanitizeId(`${prefix}-${normalizedSourceId}`);
@@ -482,6 +602,46 @@ function getSyncStateRef() {
   return adminDb.collection(SYNC_STATE_COLLECTION).doc(SYNC_STATE_DOCUMENT);
 }
 
+export function getKstDateKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+export function shouldStartDailyJobSync(lastAttemptDate, now = new Date()) {
+  return String(lastAttemptDate || '') !== getKstDateKey(now);
+}
+
+async function claimDailyJobSync(now = new Date()) {
+  const stateRef = getSyncStateRef();
+  return adminDb.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(stateRef);
+    const state = snapshot.exists ? snapshot.data() || {} : {};
+    const plan = planDailySync(state, now);
+    if (!plan.allowed) return plan;
+    const runId = `${plan.dateKey}-${randomUUID()}`;
+    transaction.set(
+      stateRef,
+      {
+        lastSourceSyncAttemptAt: now.toISOString(),
+        lastSourceSyncAttemptDate: plan.dateKey,
+        runId,
+        runStatus: 'running',
+        attemptsToday: plan.attempt,
+        leaseUntil: new Date(now.getTime() + 10 * 60_000).toISOString(),
+      },
+      { merge: true },
+    );
+    return { ...plan, state, runId };
+  });
+}
+
 async function getSyncState() {
   try {
     const snapshot = await getSyncStateRef().get();
@@ -492,41 +652,42 @@ async function getSyncState() {
   }
 }
 
-async function saveSyncState(state) {
-  await getSyncStateRef().set(state, { merge: true });
+async function saveSyncState(state, runId) {
+  // Replace nested per-run maps; recursive merge retains stale counters and errors.
+  await adminDb.runTransaction(async (transaction) => {
+    const ref = getSyncStateRef();
+    const snapshot = await transaction.get(ref);
+    if (snapshot.data()?.runId !== runId) throw new Error('JOB_SYNC_LEASE_LOST');
+    transaction.set(ref, state, { mergeFields: Object.keys(state) });
+  });
 }
 
-async function upsertPostings(postings) {
-  let batch = adminDb.batch();
-  let batchCount = 0;
-  let committedCount = 0;
-
-  for (const posting of postings) {
-    if (containsUtf8Replacement(posting)) {
-      console.warn(`Skipped posting with broken UTF-8 text: ${posting.id}`);
-      continue;
+async function upsertPostings(postings, changedPostings) {
+  const counts = { inserted: 0, updated: 0, unchanged: 0, activeUpserts: 0 };
+  const valid = postings.filter((posting) => !containsUtf8Replacement(posting));
+  for (let offset = 0; offset < valid.length; offset += 300) {
+    const chunk = valid.slice(offset, offset + 300);
+    const refs = chunk.map((posting) => adminDb.collection(GLOBAL_COLLECTION).doc(posting.id));
+    const previous = await adminDb.getAll(...refs);
+    const batch = adminDb.batch();
+    const changes = [];
+    for (let index = 0; index < chunk.length; index++) {
+      const { updatedAt: _updatedAt, hiringStage: _hiringStage, ...sourceData } = chunk[index];
+      const posting = { ...chunk[index], contentHash: generateJobContentHash(chunk[index]),
+        sourceContentHash: createHash('sha256').update(JSON.stringify(sourceData)).digest('hex') };
+      const old = previous[index].exists ? previous[index].data() : null;
+      const update = buildPostingUpdate(posting, old, posting.updatedAt);
+      batch.set(refs[index], update, { merge: true });
+      changes.push({ update, kind: !old ? 'inserted' : old.sourceContentHash !== posting.sourceContentHash ? 'updated' : 'unchanged' });
     }
-    if (!posting.contentHash) {
-      posting.contentHash = generateJobContentHash(posting);
-    }
-    const docRef = adminDb.collection(GLOBAL_COLLECTION).doc(posting.id);
-    batch.set(docRef, posting, { merge: true });
-    batchCount++;
-
-    if (batchCount >= 400) {
-      await batch.commit();
-      committedCount += batchCount;
-      batch = adminDb.batch();
-      batchCount = 0;
-    }
-  }
-
-  if (batchCount > 0) {
     await batch.commit();
-    committedCount += batchCount;
+    for (const { update, kind } of changes) {
+      counts[kind]++;
+      counts.activeUpserts++;
+      if (kind !== 'unchanged') changedPostings.push(update);
+    }
   }
-
-  return committedCount;
+  return counts;
 }
 
 export async function cleanupAccumulatedJobPostings() {
@@ -567,13 +728,27 @@ export async function cleanupAccumulatedJobPostings() {
   };
 }
 
-function deduplicatePostings(postings) {
-  const seenIds = new Set();
-  return postings.filter((posting) => {
-    if (seenIds.has(posting.id)) return false;
-    seenIds.add(posting.id);
-    return true;
-  });
+// recMntList has no provider ID. Identity uses stable public fields, never row position.
+export function transformSeoulPortalRow(row, nowStr, now) {
+  if (!row?.COMPANY || !row?.TITLE || !normalizeDate(row.REG_DT)) return null;
+  const identity = [row.COMPANY, row.TITLE, row.REG_DT, row.CORP_ADDR || row.REGION, row.JOBS_CD].map((value) => String(value || '').normalize('NFKC').trim()).join('::');
+  const id = `PORTAL-${createHash('sha256').update(identity).digest('hex').slice(0, 32)}`;
+  const result = transformSeoulRow({
+    JO_REQST_NO: id, JO_SJ: row.TITLE, CMPNY_NM: row.COMPANY,
+    RCEPT_CLOS_NM: normalizeDate(row.CLOSE_DT) || row.CLOSE_DT,
+    JO_REG_DT: normalizeDate(row.REG_DT), JOBCODE_NM: row.JOBS_NM || row.IND_TP_CD_NM,
+    WORK_PARAR_BASS_ADRES_CN: row.WORK_REGION || row.REGION,
+    DTY_CN: row.JOB_CONT, EMPLYM_STLE_CMMN_MM: row.EMP_TP_NM,
+    EMPLYM_STLE_CMMN_CODE_SE: row.EMP_TP_CD,
+    CAREER_CND_NM: row.CAREER, HOPE_WAGE: row.SAL_TP_NM,
+    ACDMCR_NM: row.MIN_EDUBG, WORK_TIME_NM: row.WORKDAY_WORKHR_CONT,
+  }, nowStr, now);
+  if (!result) return null;
+  return { ...result, sourceDataset: 'recMntList', sourceIdentityType: 'composite', sourceProvider: '서울시 일자리포털',
+    benefits: [row.FOUR_INS, row.RETIREPAY, row.ETC_WELFARE].filter(Boolean),
+    qualifications: [row.CAREER, row.MIN_EDUBG, row.CERTIFICATE, row.COMP_ABL].filter(Boolean),
+    preferredSkills: row.PF_COND ? [row.PF_COND] : [],
+    sourceDetailProvenance: { ...result.sourceDetailProvenance, coreResponsibilities: row.JOB_CONT ? 'source' : 'unknown' } };
 }
 
 export function transformSeoulRow(row, nowStr, now) {
@@ -750,6 +925,14 @@ export async function getAccumulatedStats() {
         publicNextPage: syncState.publicNextPage || 2,
         publicTotalAvailable: syncState.publicTotalAvailable || null,
         lastCompletedAt: syncState.lastCompletedAt || null,
+        lastSuccessfulAt: syncState.lastSuccessfulAt || null,
+        lastFinishedAt: syncState.lastFinishedAt || null,
+        runStatus: syncState.runStatus || 'unknown',
+        insertedThisRun: syncState.insertedThisRun ?? null,
+        updatedThisRun: syncState.updatedThisRun ?? null,
+        sources: syncState.sourceProgress || {},
+        lastSourceSyncAttemptAt: syncState.lastSourceSyncAttemptAt || null,
+        lastSourceSyncAttemptDate: syncState.lastSourceSyncAttemptDate || null,
         lastDeduplicationAt: syncState.lastDeduplicationAt || null,
         lastCleanup: syncState.sourceProgress?.cleanup || null,
       },
@@ -761,221 +944,81 @@ export async function getAccumulatedStats() {
 }
 
 export async function runBackendJobSync() {
-  const nowStr = new Date().toISOString();
-  let newCount = 0;
-
-  // 0. Sync Curated Senior Seed Postings (including Design Bridge Studio WN-DSN-02)
+  const now = new Date();
+  const nowStr = now.toISOString();
+  const claim = await claimDailyJobSync(now);
+  if (!claim.allowed) return { skipped: true, reason: claim.reason, syncedThisRun: 0, updatedAt: nowStr };
+  const { state, dateKey, runId } = claim;
+  const save = (patch) => saveSyncState(patch, runId);
+  const changedPostings = [];
+  let sourceProgress = {};
+  let summary;
+  let aiAnalysisResult = { status: 'skipped', processedCount: 0 };
   try {
-    const curatedBatch = adminDb.batch();
-    const seedPosting = {
-      id: 'WORKNET-WN-DSN-02',
-      companyName: '(주) 디자인브릿지스튜디오',
-      title: '기업 글로벌 브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터',
-      industry: '디자인/글로벌 브랜딩',
-      companySize: '시니어 맞춤 채용 공고',
-      category: 'design-brand',
-      occupationCategory: 'design',
-      seniority: 'senior',
-      employmentType: 'contract',
-      hiringStage: 'open',
-      workType: 'hybrid',
-      location: '서울 마포구',
-      experienceYears: '경력 12년 이상',
-      salaryRange: '월 750만원 ~ 1,100만원',
-      deadline: '2026-09-15',
-      projectDuration: '상세 공고에서 확인',
-      collaborationTargets: ['시니어 실무 총괄', '경영진 직속 자문', '실무 현장 실무진'],
-      coreResponsibilities: [
-        '기업 글로벌 브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터 관련 현장 문제점 정밀 진단 및 구조화',
-        '시니어 전문 경험 기반의 핵심 맞춤 솔루션 수립',
-        '실무진 역량 강화를 위한 멘토링 및 프로세스 가이드 전달',
-      ],
-      qualifications: ['경력 12년 이상', '디자인/글로벌 브랜딩 분야 시니어 경력자'],
-      benefits: ['근무시간 유연 협의', '경영진 직속 자문', '성과에 따른 자문료 지급'],
-      problemStatement:
-        '[시니어 맞춤 채용] (주) 디자인브릿지스튜디오의 기업 글로벌 브랜드 리디자인 및 UX/UI 디자인 시스템 총괄 디렉터 과제 해결입니다.',
-      projectGoal: '글로벌 브랜딩 및 UX/UI 디자인 시스템 완성',
-      successMetrics: ['브랜드 만족도 95% 이상', '현장 실무진 만족도 90% 이상'],
-      requiredSkills: ['UX/UI 디자인', '글로벌 브랜딩', '디자인 시스템', '브랜드 리디자인'],
-      preferredSkills: ['유사 동종 업계 10년+ 경력자', '독자적 문제 해결 역량 소유자'],
-      matchingSignals: ['경력 12년 이상', '서울 마포구', '디자인/글로벌 브랜딩'],
-      recommendedTalentType: '디자인 분야 10년 이상 전문성을 보유한 시니어 리더',
-      matchingScoreCriteria: ['직무 연관성', '경력 정보', '근무 지역'],
-      interviewFocus: ['성공 사례 및 경험 분석'],
-      sourceDetailProvenance: {
-        coreResponsibilities: 'synthetic',
-        problemStatement: 'synthetic',
-        projectGoal: 'synthetic',
-        requiredSkills: 'synthetic',
+    const result = await collectJobSources({
+      state, dateKey, nowStr,
+      transforms: {
+        seoul: (row) => transformSeoulPortalRow(row, nowStr, now),
+        public: (row) => transformPublicRow(row, nowStr, now),
+        worknet: (row) => transformWorknetRow(row, nowStr, now),
+        parseWorknet: parseWorknetRows,
       },
-      seniorFitScore: 98,
-      source: 'worknet',
-      sourceProvider: '이어잡 공식 검증',
-      workSchedule: '주 5일 (유연근무 가능)',
-      deadlineLabel: '2026-09-15',
-      registeredLabel: '2026-08-10',
-      postedAt: '2026-08-10',
-      updatedAt: nowStr,
-    };
-    const seedRef = adminDb.collection(GLOBAL_COLLECTION).doc('WORKNET-WN-DSN-02');
-    curatedBatch.set(seedRef, seedPosting, { merge: true });
-    await curatedBatch.commit();
-    newCount++;
-  } catch (err) {
-    console.warn('Failed to sync curated seed posting:', err);
-  }
-
-  const syncState = await getSyncState();
-  const statePatch = {};
-  const sourceProgress = {};
-
-  // 1. Always refresh the newest Seoul window and rotate through one older window.
-  try {
-    const seoulApiKey = String(process.env.SEOUL_JOB_API_KEY || '').trim();
-    if (!seoulApiKey) throw new Error('SEOUL_JOB_API_KEY is not configured');
-
-    const configuredStart = Number(syncState.seoulNextStartIndex) || SEOUL_WINDOW_SIZE + 1;
-    const rotatingStart = Math.max(SEOUL_WINDOW_SIZE + 1, configuredStart);
-    const ranges = [
-      [1, SEOUL_WINDOW_SIZE],
-      [rotatingStart, rotatingStart + SEOUL_WINDOW_SIZE - 1],
-    ];
-    const responses = await Promise.all(
-      ranges.map(async ([start, end]) => {
-        const url = `http://openapi.seoul.go.kr:8088/${encodeURIComponent(seoulApiKey)}/json/GetJobInfo/${start}/${end}/`;
-        return JSON.parse(await fetchUrlText(url, 12000));
-      }),
-    );
-
-    const rows = [];
-    let totalAvailable = 0;
-    for (const response of responses) {
-      const payload = response?.GetJobInfo || response?.GetSeniorJobInfo;
-      totalAvailable = Math.max(totalAvailable, Number(payload?.list_total_count) || 0);
-      rows.push(...(payload?.row || []));
-    }
-
-    const postings = deduplicatePostings(
-      rows
-        .map((row) => transformSeoulRow(row, nowStr, new Date(nowStr)))
-        .filter(Boolean),
-    );
-    const syncedCount = await upsertPostings(postings);
-    newCount += syncedCount;
-
-    const rotatingEnd = rotatingStart + SEOUL_WINDOW_SIZE - 1;
-    statePatch.seoulNextStartIndex =
-      totalAvailable > SEOUL_WINDOW_SIZE && rotatingEnd < totalAvailable
-        ? rotatingEnd + 1
-        : SEOUL_WINDOW_SIZE + 1;
-    statePatch.seoulTotalAvailable = totalAvailable;
-    sourceProgress.seoul = {
-      requestedRanges: ranges.map(([start, end]) => `${start}-${end}`),
-      received: rows.length,
-      activeUpserts: syncedCount,
-      totalAvailable,
-      nextStartIndex: statePatch.seoulNextStartIndex,
-    };
-  } catch (err) {
-    console.warn('Backend Seoul Job sync notice:', err?.message || err);
-    sourceProgress.seoul = { error: err?.message || String(err) };
-  }
-
-  // 2. Always refresh public page 1 and rotate through one older page.
-  try {
-    const publicApiKey = String(process.env.PUBLIC_JOB_API_KEY || '').trim();
-    if (!publicApiKey) throw new Error('PUBLIC_JOB_API_KEY is not configured');
-
-    const configuredPage = Number(syncState.publicNextPage) || 2;
-    const rotatingPage = Math.max(2, configuredPage);
-    const pageNumbers = [1, rotatingPage];
-    const responses = await Promise.all(
-      pageNumbers.map(async (pageNo) => {
-        const params = new URLSearchParams({
-          serviceKey: publicApiKey,
-          pageNo: String(pageNo),
-          numOfRows: String(PUBLIC_PAGE_SIZE),
-          resultType: 'json',
-        });
-        const url = `https://apis.data.go.kr/1051000/recruitment/list?${params.toString()}`;
-        return JSON.parse(await fetchUrlText(url, 12000));
-      }),
-    );
-
-    const rows = responses.flatMap((response) => response?.result || response?.items || []);
-    const totalAvailable = responses.reduce(
-      (max, response) => Math.max(max, Number(response?.totalCount || response?.total) || 0),
-      0,
-    );
-    const postings = deduplicatePostings(
-      rows
-        .map((row) => transformPublicRow(row, nowStr, new Date(nowStr)))
-        .filter(Boolean),
-    );
-    const syncedCount = await upsertPostings(postings);
-    newCount += syncedCount;
-
-    const totalPages = Math.max(1, Math.ceil(totalAvailable / PUBLIC_PAGE_SIZE));
-    statePatch.publicNextPage = rotatingPage < totalPages ? rotatingPage + 1 : 2;
-    statePatch.publicTotalAvailable = totalAvailable;
-    sourceProgress.public = {
-      requestedPages: pageNumbers,
-      received: rows.length,
-      activeUpserts: syncedCount,
-      totalAvailable,
-      nextPage: statePatch.publicNextPage,
-    };
-  } catch (err) {
-    console.warn('Backend Public Job sync notice:', err?.message || err);
-    sourceProgress.public = { error: err?.message || String(err) };
-  }
-
-  const lastDeduplicationAt = new Date(syncState.lastDeduplicationAt || 0).getTime();
-  if (
-    !Number.isFinite(lastDeduplicationAt) ||
-    new Date(nowStr).getTime() - lastDeduplicationAt >= JOB_CLEANUP_INTERVAL_MS
-  ) {
-    try {
-      const cleanup = await cleanupAccumulatedJobPostings();
-      sourceProgress.cleanup = cleanup;
-      statePatch.lastDeduplicationAt = nowStr;
-    } catch (error) {
-      console.warn('Failed to clean duplicate job postings:', error?.message || error);
-      sourceProgress.cleanup = { error: error?.message || String(error) };
-    }
-  }
-
-  try {
-    await saveSyncState({ ...statePatch, lastCompletedAt: nowStr, sourceProgress });
-  } catch (error) {
-    console.warn('Failed to save job sync cursor:', error?.message || error);
-  }
-
-  // 3. Trigger incremental delta AI analysis on newly synced/un-analyzed postings
-  let aiAnalysisResult = null;
-  try {
-    const recentSnapshot = await adminDb
-      .collection(GLOBAL_COLLECTION)
-      .where('catalogStatus', '==', 'active')
-      .limit(100)
-      .get();
-    const recentPostings = recentSnapshot.docs.map((doc) => ({ documentId: doc.id, ...doc.data() }));
-    aiAnalysisResult = await runIncrementalJobAnalysis(recentPostings, {
-      batchChunkSize: 10,
-      maxToProcess: 50,
+      upsert: (postings) => upsertPostings(postings, changedPostings),
+      onSourceResult: async (progress, patch) => {
+        sourceProgress = { ...progress };
+        await save({ ...patch, sourceProgress });
+      },
     });
-    console.log('[runBackendJobSync] Incremental AI delta analysis completed:', aiAnalysisResult);
-  } catch (aiErr) {
-    console.warn('[runBackendJobSync] Incremental AI analysis notice:', aiErr?.message || aiErr);
-    aiAnalysisResult = { error: aiErr?.message || String(aiErr) };
-  }
+    sourceProgress = result.sourceProgress;
+    summary = summarizeSync(sourceProgress);
 
-  const stats = await getAccumulatedStats();
-  return {
-    syncedThisRun: newCount,
-    aiAnalysisResult,
-    sourceProgress,
-    ...stats,
-    updatedAt: nowStr,
-  };
+    // Maintenance never runs solely because a failed source or sample was touched.
+    const lastCleanup = Date.parse(state.lastDeduplicationAt || '');
+    if (summary.insertedThisRun + summary.updatedThisRun > 0 && (!Number.isFinite(lastCleanup) || now.getTime() - lastCleanup >= JOB_CLEANUP_INTERVAL_MS)) {
+      try {
+        const cleanup = await cleanupAccumulatedJobPostings();
+        await save({ lastDeduplicationAt: nowStr, lastCleanup: cleanup });
+      } catch { console.warn('Job catalog maintenance failed; original records retained.'); }
+    }
+
+    // Legacy records lack catalogStatus=active. Scan a bounded document-id window
+    // and prefer newly changed records, so an unchanged first 100 never starves others.
+    if (state.aiAnalysisAttemptDate !== dateKey && summary.runStatus !== 'failed') {
+      await save({ aiAnalysisAttemptDate: dateKey });
+      try {
+        let query = adminDb.collection(GLOBAL_COLLECTION).orderBy(FieldPath.documentId()).limit(500);
+        if (state.aiAnalysisCursor) query = query.startAfter(state.aiAnalysisCursor);
+        const snapshot = await query.get();
+        const backlog = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        const candidates = [...new Map([
+          ...changedPostings.sort((a, b) => String(b.postedAt || '').localeCompare(String(a.postedAt || ''))),
+          ...backlog,
+        ].filter((job) => job.catalogStatus !== 'hidden' && !isExpiredDeadline(job.deadline, now))
+          .map((job) => [job.id, job])).values()];
+        aiAnalysisResult = await runIncrementalJobAnalysis(candidates, {
+          batchChunkSize: 5, maxToProcess: 50, deadlineAt: Math.min(Date.now() + 120_000, now.getTime() + 450_000),
+        });
+        await save({ aiAnalysisCursor: snapshot.size === 500 ? snapshot.docs.at(-1).id : '' });
+      } catch { aiAnalysisResult = { status: 'failed', errorCode: 'AI_ANALYSIS_FAILED', processedCount: 0 }; }
+    }
+
+    const completedAt = new Date().toISOString();
+    const finalState = {
+      ...result.statePatch, ...summary, sourceProgress, aiAnalysisResult,
+      lastFinishedAt: completedAt, leaseUntil: null,
+      retryAfter: summary.retryable ? new Date(Date.now() + 15 * 60_000).toISOString() : null,
+      ...(summary.runStatus === 'success' ? { lastCompletedAt: completedAt, lastSuccessfulAt: completedAt } : {}),
+    };
+    await save(finalState);
+    await adminDb.collection('job_sync_runs').doc(runId).set({ runId, dateKey, startedAt: nowStr, ...finalState });
+    return { ...summary, sourceProgress, aiAnalysisResult, syncedThisRun: summary.insertedThisRun,
+      ...(await getAccumulatedStats()), updatedAt: completedAt };
+  } catch (error) {
+    await save({ runStatus: 'failed', retryable: true, leaseUntil: null, sourceProgress,
+      lastFinishedAt: new Date().toISOString(), retryAfter: new Date(Date.now() + 15 * 60_000).toISOString(),
+      errorCode: 'SYNC_PERSISTENCE_FAILURE' });
+    // Do not echo provider payloads, URLs or credentials into platform logs.
+    console.error('Job sync failed before completion:', error?.name || 'Error');
+    throw new Error('JOB_SYNC_FAILED');
+  }
 }

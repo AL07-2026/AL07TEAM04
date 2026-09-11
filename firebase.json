@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "functions": {
     "source": "functions",
     "runtime": "nodejs22"
@@ -42,7 +45,7 @@
         ]
       },
       {
-        "source": "/@(login|signup|role|company-info|basic-profile|senior|company){,/**}",
+        "source": "/@(login|signup|role|company-info|basic-profile|senior|company|community|premium-companies|admin){,/**}",
         "headers": [
           {
             "key": "Cache-Control",
@@ -51,12 +54,29 @@
         ]
       }
     ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      {
+        "source": "/api/account{,/**}",
+        "function": {
+          "functionId": "accountApi",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/api/premium/**",
+        "function": {
+          "functionId": "premiumApi",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/api/community/**",
+        "function": {
+          "functionId": "communityApi",
+          "region": "asia-northeast3"
+        }
+      },
       {
         "source": "/api/**",
         "function": {

@@ -7,7 +7,9 @@ import {
   BriefcaseBusiness,
   Check,
   Coins,
+  Circle,
   CircleCheck,
+  CircleDot,
   FileText,
   ImagePlus,
   Loader2,
@@ -36,6 +38,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
 import { JobDatabasePage } from '@/app/JobDatabasePage';
+import { PremiumCompanyBanner } from '@/app/premium/PremiumCompanyBanner';
+import {
+  createLoginRedirectPath,
+  LOGIN_REQUIRED_NAVIGATION_STATE,
+} from '@/app/authRequiredNavigation';
 import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
 import { analyzeJobPostingForDetail } from '@/services/aiJobDetailAnalyzer';
 import {
@@ -51,6 +58,7 @@ import {
   normalizeOccupationCategory,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
+import { getAudioUploadFilename, selectSupportedAudioMimeType } from '@/lib/audioRecording';
 import {
   beginExperienceFollowUp,
   clearExperienceProfileDraft,
@@ -331,8 +339,18 @@ export function ExperienceSummaryView({
   const { mode } = useViewportMode();
   const items = snapshot
     ? [
-        { label: '해온 일', value: normalizeExperienceDisplayText(snapshot.workedOn), icon: Route, tone: 'emerald' },
-        { label: '해낸 일', value: normalizeExperienceDisplayText(snapshot.accomplished), icon: Target, tone: 'coral' },
+        {
+          label: '해온 일',
+          value: normalizeExperienceDisplayText(snapshot.workedOn),
+          icon: Route,
+          tone: 'emerald',
+        },
+        {
+          label: '해낸 일',
+          value: normalizeExperienceDisplayText(snapshot.accomplished),
+          icon: Target,
+          tone: 'coral',
+        },
         {
           label: '잘하는 점',
           value: snapshot.strengths.map(normalizeExperienceDisplayText).filter(Boolean).join(' · '),
@@ -341,7 +359,14 @@ export function ExperienceSummaryView({
         },
       ]
     : legacyText
-      ? [{ label: '해온 일', value: normalizeExperienceDisplayText(legacyText), icon: Route, tone: 'emerald' }]
+      ? [
+          {
+            label: '해온 일',
+            value: normalizeExperienceDisplayText(legacyText),
+            icon: Route,
+            tone: 'emerald',
+          },
+        ]
       : [];
 
   if (!items.length) return <p className="text-xs font-medium text-slate-500">{emptyText}</p>;
@@ -728,7 +753,10 @@ function HomeRecommendationRow({
             {analyzed.keyJobFacts.roleTitle}
           </h4>
           <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-slate-600 truncate">
-            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#F06B4F]">
+              <Zap aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              해결과제
+            </span>
             <span className="truncate font-semibold text-[#17212B]/90">
               {analyzed.aiExecutiveSummary.keyChallenge}
             </span>
@@ -777,7 +805,10 @@ function HomeRecommendationRow({
 
           {/* AI 1-line Challenge */}
           <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-600 truncate mt-0.5">
-            <span className="shrink-0 font-extrabold text-[#F06B4F]">⚡ 해결과제</span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#F06B4F]">
+              <Zap aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              해결과제
+            </span>
             <span className="truncate font-semibold text-[#17212B]/90">
               {analyzed.aiExecutiveSummary.keyChallenge}
             </span>
@@ -835,9 +866,9 @@ export function SeniorHomePage() {
   const navigate = useNavigate();
   const { mode } = useViewportMode();
   const { user } = useAuth();
+  const userId = user?.uid;
   const isMobile = mode === 'mobile';
 
-  const initialLocalProfile = useMemo(() => getLocalSeniorProfile(user?.uid), [user?.uid]);
   const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
 
   const [activeProposalsCount, setActiveProposalsCount] = useState<number>(0);
@@ -848,11 +879,21 @@ export function SeniorHomePage() {
   const [recommendationFeedMessage, setRecommendationFeedMessage] = useState('');
   const [recommendationReloadKey, setRecommendationReloadKey] = useState(0);
   const [recommendationProfile, setRecommendationProfile] = useState<SeniorProfileData | null>(
-    initialLocalProfile,
+    null,
   );
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   const hasLoadedRef = useRef(false);
+
+  function handleStartExperienceInterview() {
+    if (!user) {
+      void navigate(createLoginRedirectPath('/senior/experience'), {
+        state: LOGIN_REQUIRED_NAVIGATION_STATE,
+      });
+      return;
+    }
+    void navigate('/senior/experience');
+  }
 
   useEffect(() => {
     async function loadAndRankProjects() {
@@ -861,11 +902,11 @@ export function SeniorHomePage() {
       }
       const [profile, proposals, experienceCard, rawCompanyProjects, remoteExperienceCards] =
         await Promise.all([
-          resolveSeniorProfile(user?.uid),
-          getUserProposals(user?.uid),
-          getLatestUserExperienceCard(user?.uid),
+          resolveSeniorProfile(userId),
+          getUserProposals(userId),
+          getLatestUserExperienceCard(userId),
           fetchProjects().catch(() => []),
-          user?.uid ? getUserExperienceCards(user.uid) : Promise.resolve([]),
+          userId ? getUserExperienceCards(userId) : Promise.resolve([]),
         ]);
       setRecommendationProfile(profile);
       setActiveProposalsCount(
@@ -886,7 +927,7 @@ export function SeniorHomePage() {
       const shouldUseOtherOccupation = preferredPreferences.includes(OTHER_OCCUPATION_PREFERENCE);
       const otherOccupationRank = preferredPreferences.indexOf(OTHER_OCCUPATION_PREFERENCE) + 1;
 
-      if (!user) {
+      if (!userId) {
         setRecommendedJobs([]);
         setRecommendedProjectsCount(0);
         setHighestFitProject(null);
@@ -920,7 +961,9 @@ export function SeniorHomePage() {
         );
 
         const result = await searchFullJobDatabase({
+          cacheScope: userId,
           categories: primaryCategory ? [primaryCategory] : undefined,
+          certificationText: profile?.certifications,
           desiredCategories: preferredPreferences,
           desiredLocation: profile?.desiredLocation,
           desiredOccupationRank: shouldUseOtherOccupation ? otherOccupationRank : undefined,
@@ -932,33 +975,41 @@ export function SeniorHomePage() {
           experienceYears: Number.parseInt(profile?.period ?? '', 10) || 0,
           page: 1,
           pageSize: 20,
-          profileText: [profile?.field, profile?.solvedExperiences, profile?.keySkills]
-            .filter(Boolean)
-            .join(' '),
+          profileExperience:
+            profile?.experience === profile?.desiredWorkType ? '' : profile?.experience,
+          profileField: profile?.field,
+          profileKeySkills: profile?.keySkills,
+          profileSolvedExperience: profile?.solvedExperiences,
+          desiredWorkType: profile?.desiredWorkType,
           sortBy: 'fit-desc',
         });
 
         const mergedPostings = mergeSeniorPostings(matchingCompanyProjects, result.items);
-        const allPersonalizedItems = mergedPostings
-          .map((item) => {
-            const matchResult = calculatePersonalizedMatch(
-              item,
-              profile,
-              primaryCategory,
-              activeExperienceCard,
-            );
-            return {
-              ...item,
-              seniorFitScore: matchResult.personalizedScore,
-              recommendationReasons:
-                matchResult.matchReasons.length > 0
-                  ? matchResult.matchReasons
-                  : item.recommendationReasons,
-            };
-          })
-          .sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+        const allPersonalizedItems = mergedPostings.map((item) => {
+          if (typeof item.seniorFitScore === 'number' && item.seniorFitScore > 0) {
+            return item;
+          }
+          const matchResult = calculatePersonalizedMatch(
+            item,
+            profile,
+            primaryCategory,
+            activeExperienceCard,
+          );
+          return {
+            ...item,
+            seniorFitScore: matchResult.personalizedScore,
+            recommendationReasons:
+              matchResult.matchReasons.length > 0
+                ? matchResult.matchReasons
+                : item.recommendationReasons,
+            experienceRecommendationApplied: matchResult.experienceRecommendationApplied,
+          };
+        });
 
-        const total = allPersonalizedItems.length;
+        allPersonalizedItems.sort((a, b) => (b.seniorFitScore ?? 0) - (a.seniorFitScore ?? 0));
+
+        const total =
+          (result.total > 0 ? result.total : result.items.length) + matchingCompanyProjects.length;
         setRecommendedJobs(allPersonalizedItems.slice(0, 5));
         setRecommendedProjectsCount(total);
         setHighestFitProject(getHighestFitProject(allPersonalizedItems));
@@ -1017,14 +1068,12 @@ export function SeniorHomePage() {
     window.addEventListener('eojob_senior_profile_updated', handleProfileUpdate);
     window.addEventListener('eojob_experience_card_updated', handleProfileUpdate);
     window.addEventListener('eojob_feed_revalidated', handleProfileUpdate);
-    window.addEventListener('storage', handleProfileUpdate);
     return () => {
       window.removeEventListener('eojob_senior_profile_updated', handleProfileUpdate);
       window.removeEventListener('eojob_experience_card_updated', handleProfileUpdate);
       window.removeEventListener('eojob_feed_revalidated', handleProfileUpdate);
-      window.removeEventListener('storage', handleProfileUpdate);
     };
-  }, [recommendationReloadKey, user, user?.uid]);
+  }, [recommendationReloadKey, userId]);
 
   const recommendationPrimaryCategory = getProfilePrimaryCategory(recommendationProfile);
   const recommendationPrimaryLabel = recommendationPrimaryCategory
@@ -1036,10 +1085,7 @@ export function SeniorHomePage() {
   return (
     <MobilePage
       activeNav="home"
-      contentClassName={cn(
-        'project-ui-readable flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="project-ui-readable flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="인재 홈"
@@ -1058,12 +1104,11 @@ export function SeniorHomePage() {
         </p>
       </div>
 
-      {/* RESTORED INTERACTIVE ROLLING BANNER CAROUSEL FOR MOBILE & PC */}
-      <RollingBanner isCompact={isMobile} />
+      <PremiumCompanyBanner isCompact={isMobile} />
 
       {/* AI Experience Interview Banner */}
       <button
-        onClick={() => void navigate('/senior/experience')}
+        onClick={handleStartExperienceInterview}
         type="button"
         className="group w-full rounded-2xl bg-white p-4 md:p-6 text-left shadow-xs transition hover:shadow-md active:scale-[0.99]"
       >
@@ -1082,7 +1127,8 @@ export function SeniorHomePage() {
               AI 경험 인터뷰 시작하기
             </strong>
             <span className="text-xs md:text-base font-medium text-slate-600">
-              말로 편하게 답하면 전용 경험 카드가 자동 <span className="whitespace-nowrap">완성됩니다.</span>
+              말로 편하게 답하면 전용 경험 카드가 자동{' '}
+              <span className="whitespace-nowrap">완성됩니다.</span>
             </span>
           </div>
 
@@ -1165,11 +1211,16 @@ export function SeniorHomePage() {
             </span>
           </div>
           <button
-            onClick={() => void navigate('/senior/projects')}
-            className="shrink-0 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] hover:text-[#0F2D2A] hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer"
+            onClick={() => {
+              void navigate(
+                getRecommendedProjectsDestination(recommendationPrimaryCategory ?? undefined),
+              );
+            }}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-extrabold text-[#173F3A] transition-colors hover:text-[#0F2D2A] hover:underline"
             type="button"
           >
-            <span>전체 {recommendedProjectsCount}개 보기 →</span>
+            <span>전체 {recommendedProjectsCount}개 보기</span>
+            <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
           </button>
         </div>
 
@@ -1178,19 +1229,17 @@ export function SeniorHomePage() {
           <span className="font-extrabold">1순위 직무 · {recommendationPrimaryLabel}</span>
           <span className="text-slate-300">|</span>
           <span className="text-slate-700">
-            {isExperienceRecommendationApplied
-              ? (
-                <>
-                  AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천{' '}
-                  <span className="whitespace-nowrap">공고입니다.</span>
-                </>
-              )
-              : (
-                <>
-                  경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5{' '}
-                  <span className="whitespace-nowrap">공고입니다.</span>
-                </>
-              )}
+            {isExperienceRecommendationApplied ? (
+              <>
+                AI 경험 인터뷰의 역할·성과가 정합도 점수에 반영된 TOP 5 추천{' '}
+                <span className="whitespace-nowrap">공고입니다.</span>
+              </>
+            ) : (
+              <>
+                경력 분야와 해결 경험이 반영된 정합도 최고 순위 TOP 5{' '}
+                <span className="whitespace-nowrap">공고입니다.</span>
+              </>
+            )}
           </span>
         </div>
 
@@ -1257,13 +1306,18 @@ export function SeniorHomePage() {
               type="button"
             >
               {!user ? null : hasProfileRecommendationCriteria(recommendationProfile) ? (
-                <RefreshCw className="size-4" />
+                <RefreshCw aria-hidden="true" className="size-4" />
               ) : null}
-              {!user
-                ? '로그인 / 회원가입하기 ➔'
-                : hasProfileRecommendationCriteria(recommendationProfile)
-                  ? '다시 불러오기'
-                  : '내 정보 입력하기'}
+              <span>
+                {!user
+                  ? '로그인 / 회원가입하기'
+                  : hasProfileRecommendationCriteria(recommendationProfile)
+                    ? '다시 불러오기'
+                    : '내 정보 입력하기'}
+              </span>
+              {!user || !hasProfileRecommendationCriteria(recommendationProfile) ? (
+                <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+              ) : null}
             </button>
           </div>
         )}
@@ -1324,7 +1378,6 @@ function buildExperienceInterviewPath(selectedOptions: string[]) {
 
 export function ExperienceSelectionPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [selected, setSelected] = useState(['운영 효율화', '마케팅/영업']);
 
   function toggle(option: string) {
@@ -1338,13 +1391,6 @@ export function ExperienceSelectionPage() {
   }
 
   function handleProceed(targetUrl: string) {
-    if (selected.length > 0) {
-      const profile = getLocalSeniorProfile(user?.uid);
-      if (profile) {
-        saveLocalSeniorProfile({ ...profile, field: selected.join(', ') }, user?.uid);
-        window.dispatchEvent(new Event('eojob_senior_profile_updated'));
-      }
-    }
     void navigate(
       targetUrl === '/senior/experience/interview'
         ? buildExperienceInterviewPath(selected)
@@ -1356,7 +1402,7 @@ export function ExperienceSelectionPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior"
-      contentClassName="flex flex-col gap-[18px] px-6 pb-6 pt-7"
+      contentClassName="flex flex-col gap-[18px]"
       role="senior"
       title="경험 선택"
     >
@@ -1364,10 +1410,11 @@ export function ExperienceSelectionPage() {
         <p className="text-xs font-extrabold text-[#173F3A]">분야 선택</p>
         <button
           onClick={() => handleProceed('/senior/experience/interview')}
-          className="text-xs font-extrabold text-[#F06B4F] underline"
+          className="inline-flex min-h-11 items-center gap-1.5 text-xs font-extrabold text-[#B84734] underline"
           type="button"
         >
-          AI 경험 인터뷰 시작 →
+          <span>AI 경험 인터뷰 시작</span>
+          <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
         </button>
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">경험 분야를 선택하세요</h2>
@@ -1381,7 +1428,7 @@ export function ExperienceSelectionPage() {
           </Chip>
         ))}
       </div>
-      <div className="flex h-20 flex-col rounded-xl border border-[#E0D9C8] bg-white p-4 shadow-xs">
+      <div className="flex h-20 flex-col rounded-2xl bg-white p-4 shadow-xs">
         <strong className="text-[13px] font-extrabold text-[#17212B]">
           선택 {selected.length}개
         </strong>
@@ -1427,7 +1474,7 @@ export function ExperienceInterviewPage() {
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
-  const recordingMimeTypeRef = useRef('audio/webm');
+  const recordingMimeTypeRef = useRef('');
   const [messages, setMessages] = useState<InterviewMessage[]>([
     { id: 1, sender: 'ai', text: interviewQuestions[0]!.prompt },
   ]);
@@ -1470,12 +1517,6 @@ export function ExperienceInterviewPage() {
     streamRef.current = null;
   }
 
-  function getSupportedAudioMimeType() {
-    if (typeof MediaRecorder === 'undefined') return '';
-    const candidates = ['audio/webm;codecs=opus', 'audio/webm'];
-    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? '';
-  }
-
   function formatRecordingTime(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60)
       .toString()
@@ -1507,7 +1548,8 @@ export function ExperienceInterviewPage() {
 
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'interview-answer.webm');
+      const audioMimeType = audioBlob.type || recordingMimeTypeRef.current;
+      formData.append('audio', audioBlob, getAudioUploadFilename(audioMimeType));
 
       const response = await fetch('/api/interview/transcribe', {
         method: 'POST',
@@ -1588,10 +1630,12 @@ export function ExperienceInterviewPage() {
       return;
     }
 
-    const mimeType = getSupportedAudioMimeType();
+    const mimeType = selectSupportedAudioMimeType((candidate) =>
+      MediaRecorder.isTypeSupported(candidate),
+    );
     if (!mimeType) {
       setVoiceNotice(
-        '이 브라우저에서는 webm 녹음을 지원하지 않을 수 있습니다. 모바일 Chrome에서 다시 시도하거나 텍스트 입력을 이용해 주세요.',
+        '이 브라우저에서는 지원하는 음성 녹음 형식을 찾지 못했습니다. 브라우저를 최신 버전으로 업데이트하거나 텍스트 입력을 이용해 주세요.',
       );
       return;
     }
@@ -1602,11 +1646,12 @@ export function ExperienceInterviewPage() {
 
       streamRef.current = stream;
       mediaRecorderRef.current = recorder;
-      recordingMimeTypeRef.current = mimeType;
+      recordingMimeTypeRef.current = recorder.mimeType || mimeType;
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          if (event.data.type) recordingMimeTypeRef.current = event.data.type;
           audioChunksRef.current.push(event.data);
         }
       };
@@ -1829,14 +1874,14 @@ export function ExperienceInterviewPage() {
     <MobilePage
       activeNav="projects"
       backTo={applicationReturn?.path ?? '/senior/experience'}
-      contentClassName="project-ui-readable flex flex-col gap-3.5 px-5 pb-6 pt-3"
+      contentClassName="project-ui-readable flex flex-col gap-3.5"
       role="senior"
       title="AI 경험 인터뷰"
     >
       <StepProgressBar current={1} total={3} />
 
       <div className="my-0.5 flex flex-col items-center gap-1 text-center">
-        <p className="text-xl font-extrabold tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
+        <p className="text-xl font-black tracking-tight text-[#17212B]">AI 경험 인터뷰</p>
         <p className="text-xs font-medium text-slate-500">
           {isFollowUpInterview
             ? '부족한 정보를 조금 더 답하면 경험 카드의 구체성이 높아집니다.'
@@ -1846,14 +1891,14 @@ export function ExperienceInterviewPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-[#BBD5CE] bg-[#DDEBE7]/55 px-3.5 py-3">
+      <div className="flex items-center justify-between rounded-2xl bg-[#DDEBE7]/60 px-4 py-3 shadow-2xs">
         <div className="min-w-0">
           <p className="text-[11px] font-extrabold text-[#173F3A]">인터뷰 기준 직종</p>
-          <p className="mt-0.5 truncate text-[14px] font-extrabold text-[#17212B]">
+          <p className="mt-0.5 truncate text-[14px] font-black text-[#17212B]">
             {targetCategoryLabel}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#173F3A]">
+        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#173F3A] shadow-2xs">
           {isFollowUpInterview ? '보완 질문' : '질문'}{' '}
           {Math.min(questionIndex + 1, interviewQuestions.length)}/{interviewQuestions.length}
         </span>
@@ -1861,7 +1906,7 @@ export function ExperienceInterviewPage() {
 
       <div
         ref={messagesScrollRef}
-        className="flex min-h-[200px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3.5 shadow-xs"
+        className="flex min-h-[220px] flex-col gap-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-xs"
       >
         {messages.map((msg) => (
           <div
@@ -1874,17 +1919,17 @@ export function ExperienceInterviewPage() {
               </div>
             )}
             <div
-              className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed font-medium ${
+              className={`max-w-[84%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed font-medium ${
                 msg.sender === 'user'
                   ? 'rounded-tr-xs bg-[#173F3A] text-white shadow-xs'
-                  : 'rounded-tl-xs border border-[#BBD5CE] bg-[#DDEBE7]/70 text-[#17212B]'
+                  : 'rounded-tl-xs bg-[#DDEBE7]/80 text-[#173F3A] shadow-2xs'
               }`}
             >
               {editingAnswer?.messageId === msg.id ? (
                 <div className="flex flex-col gap-2">
                   <textarea
                     aria-label="수정할 인터뷰 답변"
-                    className="min-h-20 w-full resize-none rounded-xl border border-white/30 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none focus:border-[#F06B4F]"
+                    className="min-h-20 w-full resize-none rounded-xl border-0 bg-white px-3 py-2 text-[13px] font-semibold leading-relaxed text-[#17212B] outline-none ring-2 ring-[#F06B4F]"
                     value={editingAnswer.text}
                     onChange={(event) =>
                       setEditingAnswer((current) =>
@@ -1895,33 +1940,31 @@ export function ExperienceInterviewPage() {
                   <div className="flex justify-end gap-1.5">
                     <button
                       aria-label="답변 수정 취소"
-                      className="flex size-8 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+                      className="flex size-11 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                       onClick={() => setEditingAnswer(null)}
                       type="button"
                     >
-                      <X className="size-4" />
+                      <X aria-hidden="true" className="size-4" />
                     </button>
                     <button
                       aria-label="수정한 답변 저장"
-                      className="flex size-8 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex size-11 items-center justify-center rounded-full bg-white text-[#173F3A] transition hover:bg-[#DDEBE7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!editingAnswer.text.trim()}
                       onClick={saveEditedAnswer}
                       type="button"
                     >
-                      <Check className="size-4" />
+                      <Check aria-hidden="true" className="size-4" />
                     </button>
                   </div>
                 </div>
               ) : (
-                <>
-                  <p>{msg.text}</p>
-                </>
+                <p>{msg.text}</p>
               )}
             </div>
             {msg.answerField && editingAnswer?.messageId !== msg.id ? (
               <button
                 aria-label="답변 수정"
-                className="order-first mt-1 flex h-8 shrink-0 items-center gap-1 rounded-full border border-[#D4CBB8] bg-white px-2.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs transition hover:border-[#173F3A] hover:bg-[#F4FAF8]"
+                className="order-first mt-1 flex h-7 shrink-0 items-center gap-1 rounded-full bg-[#FAF7F2] px-2.5 text-[11px] font-bold text-[#173F3A] shadow-2xs transition hover:bg-[#EAF3F0]"
                 onClick={() => startEditingAnswer(msg)}
                 type="button"
               >
@@ -1933,12 +1976,12 @@ export function ExperienceInterviewPage() {
         ))}
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-2.5 pt-1">
+      <div className="flex flex-col items-center justify-center gap-3 pt-1">
         {/* Voice Graphic with Waveform indicator */}
         <div className="relative flex items-center justify-center">
           {isRecording && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <AudioLines className="size-24 text-[#F06B4F] opacity-70 animate-pulse" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <AudioLines className="size-24 animate-pulse text-[#F06B4F] opacity-70" />
             </div>
           )}
           <button
@@ -1947,7 +1990,7 @@ export function ExperienceInterviewPage() {
             disabled={isTranscribing || interviewComplete}
             type="button"
             className={cn(
-              'group relative flex size-20 flex-col items-center justify-center gap-1 rounded-full text-white shadow-xl transition-all active:scale-95 hover:scale-105',
+              'group relative flex size-20 flex-col items-center justify-center gap-1.5 rounded-full text-white shadow-lg transition-all active:scale-95 hover:scale-105',
               interviewComplete
                 ? 'cursor-not-allowed bg-slate-300 shadow-none'
                 : isTranscribing
@@ -1957,16 +2000,12 @@ export function ExperienceInterviewPage() {
                     : 'bg-[#F06B4F] shadow-[#F06B4F]/25 hover:bg-[#E05A3E]',
             )}
           >
-            <div
-              className={`flex size-8 items-center justify-center rounded-full bg-white/20 ${isRecording ? 'animate-ping' : ''}`}
-            >
-              {isRecording ? (
-                <AudioLines className="size-4 text-white" />
-              ) : (
-                <Mic className="size-4 text-white" />
-              )}
-            </div>
-            <span className="text-[10px] font-extrabold tracking-tight">
+            {isRecording ? (
+              <AudioLines className="size-5.5 animate-pulse text-white" />
+            ) : (
+              <Mic className="size-5.5 text-white" />
+            )}
+            <span className="text-[11px] font-black tracking-tight">
               {interviewComplete
                 ? '답변 완료'
                 : isTranscribing
@@ -1978,8 +2017,8 @@ export function ExperienceInterviewPage() {
           </button>
         </div>
 
-        <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2 text-center shadow-xs">
-          <span className="text-[11px] font-extrabold text-[#173F3A]">
+        <div className="flex min-h-10 w-full flex-col items-center justify-center gap-1 rounded-2xl bg-[#FAF7F2] px-4 py-2.5 text-center shadow-2xs">
+          <span className="text-[11.5px] font-bold text-[#173F3A]">
             {isTranscribing
               ? transcribingVoiceNotice
               : isRecording
@@ -2005,12 +2044,9 @@ export function ExperienceInterviewPage() {
 
         <form
           onSubmit={handleTextSubmit}
-          className="flex w-full flex-col gap-2 rounded-xl border border-[#E0D9C8] bg-white p-3 shadow-xs"
+          className="flex w-full flex-col gap-2.5 rounded-2xl bg-white p-4 shadow-xs"
         >
-          <label
-            className="text-[12px] font-extrabold text-[#173F3A]"
-            htmlFor="interview-text-answer"
-          >
+          <label className="text-[12px] font-bold text-[#173F3A]" htmlFor="interview-text-answer">
             직접 입력하기
           </label>
           <div className="flex items-stretch gap-2">
@@ -2021,12 +2057,12 @@ export function ExperienceInterviewPage() {
               placeholder={interviewComplete ? '답변 완료' : '현재 질문에 직접 답변하기'}
               value={inputText}
               onChange={(e) => handleAnswerTextChange(e.target.value)}
-              className="min-h-10 flex-1 resize-none rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs text-[#17212B] outline-none placeholder:text-slate-400 focus:border-[#173F3A] font-medium leading-relaxed"
+              className="min-h-11 flex-1 resize-none rounded-xl border-0 bg-[#FAF7F2] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#17212B] outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-[#173F3A]/20"
             />
             <button
               disabled={interviewComplete || isRecording || isTranscribing}
               type="submit"
-              className="flex min-h-10 items-center justify-center rounded-xl bg-[#DDEBE7] px-3 text-xs font-bold text-[#173F3A] hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              className="flex min-h-11 items-center justify-center rounded-xl bg-[#DDEBE7] px-4 text-xs font-bold text-[#173F3A] shadow-2xs transition-colors hover:bg-[#BBD5CE] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               입력
             </button>
@@ -2230,7 +2266,7 @@ export function ExperienceCardPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/experience/interview"
-      contentClassName="project-ui-readable flex flex-col gap-4 px-5 pb-6 pt-3"
+      contentClassName="project-ui-readable flex flex-col gap-4"
       role="senior"
       title="경험 카드 확인"
     >
@@ -2254,7 +2290,8 @@ export function ExperienceCardPage() {
               {getExperienceCardCategoryLabel(experienceCard)} 인터뷰 완료
             </span>
             <span className="flex items-center gap-1 text-[11px] font-bold text-[#173F3A]">
-              ✓ 본인 확인
+              <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              <span>본인 확인</span>
             </span>
           </div>
 
@@ -2413,10 +2450,7 @@ export function ProjectDetailPage() {
     <MobilePage
       activeNav="projects"
       backTo="/senior/projects"
-      contentClassName={cn(
-        'project-ui-readable flex flex-col',
-        isMobile ? 'gap-3 px-4 pb-20 pt-4' : 'mx-auto w-full max-w-5xl gap-5 px-10 py-8',
-      )}
+      contentClassName={cn('project-ui-readable flex flex-col', isMobile ? 'gap-3' : 'gap-5')}
       role="senior"
       title="프로젝트 상세"
     >
@@ -2489,9 +2523,7 @@ export function ProjectDetailPage() {
         <ActionButton onClick={handleProposalEntry}>제안하기</ActionButton>
       ) : (
         <div className="sticky bottom-0 z-10 -mx-4 border-y border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm">
-          <ActionButton onClick={handleProposalEntry}>
-            이 프로젝트에 제안하기
-          </ActionButton>
+          <ActionButton onClick={handleProposalEntry}>이 프로젝트에 제안하기</ActionButton>
         </div>
       )}
 
@@ -2580,12 +2612,7 @@ export function ProposalPage() {
 
   if (!user?.uid) {
     return (
-      <MobilePage
-        activeNav="projects"
-        backTo="/senior/projects"
-        role="senior"
-        title="로그인 필요"
-      >
+      <MobilePage activeNav="projects" backTo="/senior/projects" role="senior" title="로그인 필요">
         <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-8 text-center text-sm font-semibold text-slate-500">
           제안하려면 먼저 로그인해 주세요.
         </div>
@@ -2597,10 +2624,7 @@ export function ProposalPage() {
     <MobilePage
       activeNav="projects"
       backTo={`/senior/projects/${projectId}`}
-      contentClassName={cn(
-        'project-ui-readable',
-        isMobile ? 'px-4 pb-0 pt-4' : 'mx-auto w-full max-w-4xl px-10 py-8',
-      )}
+      contentClassName="project-ui-readable"
       role="senior"
       title="제안하기"
     >
@@ -2709,13 +2733,13 @@ export function ProposalCompletePage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName="flex flex-col items-center justify-center gap-4 px-6 pb-8 pt-14"
+      contentClassName="flex flex-col items-center justify-center gap-4"
       role="senior"
       showBack={false}
       title="제안 완료"
     >
-      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
-        ✓
+      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-white shadow-md">
+        <CircleCheck aria-hidden="true" className="size-9" strokeWidth={2.25} />
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">제안을 보냈어요</h2>
       <p className="text-sm font-medium text-slate-500">회사가 확인하면 알려드릴게요.</p>
@@ -2765,10 +2789,7 @@ export function MyProposalsPage() {
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="내 제안"
@@ -2815,7 +2836,8 @@ export function MyProposalsPage() {
               onClick={() => void navigate('/senior/projects')}
               className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#173F3A] px-5 text-xs md:text-sm font-extrabold text-white shadow-xs hover:bg-[#12332F] transition cursor-pointer"
             >
-              프로젝트 둘러보기 →
+              <span>프로젝트 둘러보기</span>
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
             </button>
           </div>
         ) : (
@@ -2920,7 +2942,7 @@ export function MyProposalDetailPage() {
     <MobilePage
       activeNav="proposals"
       backTo="/senior/proposals"
-      contentClassName="flex flex-col gap-[13px] px-6 pb-[18px] pt-5"
+      contentClassName="flex flex-col gap-[13px]"
       role="senior"
       title="내 제안 상세"
     >
@@ -2960,7 +2982,9 @@ export function MyProposalDetailPage() {
           <ActionButton onClick={() => void navigate('/senior/projects')}>
             프로젝트 보기
           </ActionButton>
-          {cancelError ? <p className="text-xs font-semibold text-[#D85A3F]">{cancelError}</p> : null}
+          {cancelError ? (
+            <p className="text-xs font-semibold text-[#D85A3F]">{cancelError}</p>
+          ) : null}
           <ActionButton disabled={cancelled} onClick={() => void handleCancelProposal()} secondary>
             {cancelled ? '취소한 제안입니다' : '제안 취소'}
           </ActionButton>
@@ -3011,7 +3035,7 @@ export function CompanyHomePage() {
         company: latestProject.companyName,
         title: latestProject.title,
         meta: `받은 제안 ${latestProjectProposalCount}건 · ${latestProject.location}`,
-        action: '프로젝트 관리 →',
+        action: '프로젝트 관리',
       }
     : null;
   const companyName =
@@ -3022,10 +3046,7 @@ export function CompanyHomePage() {
   return (
     <MobilePage
       activeNav="home"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="회사 홈"
@@ -3056,25 +3077,29 @@ export function CompanyHomePage() {
       >
         <SummaryCard
           caption="등록 프로젝트 현황"
+          icon={BriefcaseBusiness}
           label="등록 프로젝트"
           role="company"
           value={`${companyProjects.length}개`}
         />
         <SummaryCard
           caption="시니어 지원서 누적"
+          icon={Send}
           label="받은 지원/제안"
           role="company"
           value={`${companyProposals.length}건`}
         />
         <SummaryCard
           caption="연 최대 720만원 혜택"
-          label="💰 장려금 대상"
+          icon={Coins}
+          label="장려금 대상"
           onClick={() => void navigate('/company/proposals?filter=subsidy')}
           role="company"
           value={`${companyProposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true).length}명`}
         />
         <SummaryCard
           caption="지원서 검토 및 대화 상태"
+          icon={Route}
           label="후속 진행"
           role="company"
           value={`${companyProposals.filter((proposal) => proposal.status !== '검토 중' && proposal.status !== '취소됨').length}건`}
@@ -3319,6 +3344,8 @@ export function ProjectRegisterPage() {
           requiredSkills: 'unknown',
         },
         seniorFitScore: 90,
+        source: 'internal',
+        sourceProvider: '이어잡 기업 직접 등록',
       });
       let attachmentSync = attachments.length === 0 ? 'none' : 'local';
       if (savedToFirestore && attachments.length > 0) {
@@ -3348,13 +3375,7 @@ export function ProjectRegisterPage() {
     }
   }
   return (
-    <MobilePage
-      activeNav="projects"
-      contentClassName="px-6 pb-[18px] pt-5"
-      role="company"
-      showBack={false}
-      title="프로젝트 등록"
-    >
+    <MobilePage activeNav="projects" role="company" showBack={false} title="프로젝트 등록">
       <form className="flex flex-col gap-[11px]" onSubmit={submit}>
         <p className="text-xs font-extrabold text-[#173F3A]">회사 프로젝트 작성</p>
         <h2 className="text-[22px] font-extrabold text-[#17212B]">필요한 경험을 알려주세요</h2>
@@ -3407,7 +3428,7 @@ export function ProjectRegisterPage() {
         <Field
           label="보수/급여"
           onChange={(e) => update('salaryRange')(e.target.value)}
-          placeholder="예: 월 300만원 · 협의 가능"
+          placeholder="예: 월 300만 원 · 협의 가능"
           value={form.salaryRange}
         />
         <section aria-labelledby="project-attachment-title" className="flex flex-col gap-2 pt-1">
@@ -3465,7 +3486,7 @@ export function ProjectRegisterPage() {
                   </div>
                   <button
                     aria-label={`${attachment.file.name} 삭제`}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
                     onClick={() => removeAttachment(attachment.id)}
                     title="첨부 자료 삭제"
                     type="button"
@@ -3511,13 +3532,13 @@ export function ProjectCompletePage() {
   return (
     <MobilePage
       activeNav="projects"
-      contentClassName="project-ui-readable flex flex-col items-center justify-center gap-4 px-6 pb-8 pt-14"
+      contentClassName="project-ui-readable flex flex-col items-center justify-center gap-4"
       role="company"
       showBack={false}
       title="등록 완료"
     >
-      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-[32px] font-bold text-white shadow-md">
-        ✓
+      <div className="flex size-[72px] items-center justify-center rounded-full bg-[#173F3A] text-white shadow-md">
+        <CircleCheck aria-hidden="true" className="size-9" strokeWidth={2.25} />
       </div>
       <h2 className="text-2xl font-extrabold text-[#17212B]">프로젝트를 등록했어요</h2>
       <p className="text-sm font-medium text-slate-500">
@@ -3561,15 +3582,42 @@ export function ProjectManagementPage() {
   return <JobDatabasePage role="company" />;
 }
 
+const EMPLOYMENT_SUBSIDY_WEB_INFO_URL =
+  'https://www.work24.go.kr/cm/c/f/1100/selecSystInfo.do?systId=SI00000370';
+const EMPLOYMENT_SUBSIDY_MOBILE_INFO_URL =
+  'https://m.work24.go.kr/cm/c/f/1100/selecSystInfo.do?systId=SI00000370';
+
+function getEmploymentSubsidyInfoUrl(isMobileMode: boolean) {
+  if (typeof window === 'undefined') return EMPLOYMENT_SUBSIDY_WEB_INFO_URL;
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const isMobileDevice =
+    /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|palm|smartphone|tablet|iemobile|mobi/i.test(
+      userAgent,
+    );
+  return isMobileMode || isMobileDevice || window.innerWidth < 768
+    ? EMPLOYMENT_SUBSIDY_MOBILE_INFO_URL
+    : EMPLOYMENT_SUBSIDY_WEB_INFO_URL;
+}
+
+const receivedProposalFilters = [
+  { id: 'all', label: '전체' },
+  { id: 'subsidy', label: '장려금 대상 (연 720만원)' },
+  { id: '검토 중', label: '검토 중' },
+  { id: '연락 받음', label: '연락 받음' },
+] as const;
+
+type ReceivedProposalFilter = (typeof receivedProposalFilters)[number]['id'];
+
 export function ReceivedProposalsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { mode } = useViewportMode();
   const isMobile = mode === 'mobile';
-  const initialFilter =
-    searchParams.get('filter') === 'subsidy' ? '💰 장려금 대상 (연 720만원)' : '전체';
-  const [filter, setFilter] = useState(initialFilter);
+  const employmentSubsidyInfoUrl = getEmploymentSubsidyInfoUrl(isMobile);
+  const initialFilter: ReceivedProposalFilter =
+    searchParams.get('filter') === 'subsidy' ? 'subsidy' : 'all';
+  const [filter, setFilter] = useState<ReceivedProposalFilter>(initialFilter);
   const [proposals, setProposals] = useState<UserProposal[]>([]);
 
   useEffect(() => {
@@ -3579,20 +3627,17 @@ export function ReceivedProposalsPage() {
   const subsidyEligibleCount = proposals.filter((p) => p.employmentSubsidyTarget ?? true).length;
 
   const visible = useMemo(() => {
-    if (filter === '💰 장려금 대상 (연 720만원)') {
+    if (filter === 'subsidy') {
       return proposals.filter((proposal) => proposal.employmentSubsidyTarget ?? true);
     }
-    if (filter === '전체') return proposals;
+    if (filter === 'all') return proposals;
     return proposals.filter((proposal) => proposal.status === filter);
   }, [filter, proposals]);
 
   return (
     <MobilePage
       activeNav="proposals"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="받은 제안"
@@ -3604,41 +3649,78 @@ export function ReceivedProposalsPage() {
             <Coins className="size-5 text-[#F06B4F]" />
           </div>
           <div className="min-w-0">
-            <strong className={cn('block font-extrabold text-[#173F3A]', isMobile ? 'text-[15px] leading-6' : 'text-sm')}>
+            <strong
+              className={cn(
+                'block font-extrabold text-[#173F3A]',
+                isMobile ? 'text-[15px] leading-6' : 'text-sm',
+              )}
+            >
               고용촉진장려금 지원 대상 <span className="whitespace-nowrap">인재 확인</span>
             </strong>
-            <p className={cn('mt-1 font-medium text-slate-600', isMobile ? 'text-[13px] leading-5' : 'text-xs')}>
-              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총 {subsidyEligibleCount}명)
+            <p
+              className={cn(
+                'mt-1 font-medium text-slate-600',
+                isMobile ? 'text-[13px] leading-5' : 'text-xs',
+              )}
+            >
+              정부 지원 교육을 수료한 시니어 인재 채용 시 월 60만원 인건비 지원 (총{' '}
+              {subsidyEligibleCount}명)
             </p>
           </div>
-          <span className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-center font-black text-white', isMobile ? 'size-[4.75rem] flex-col leading-5' : 'px-3 py-1.5 text-xs')}>
-            {isMobile ? <><span className="whitespace-nowrap text-[13px]">연 최대</span><span className="whitespace-nowrap text-lg">720만원</span></> : '연 최대 720만원'}
-          </span>
+          <a
+            aria-label="고용촉진장려금 지원 제도 안내 새 창에서 보기"
+            className={cn(
+              'flex shrink-0 items-center justify-center rounded-full bg-[#173F3A] text-center font-black text-white transition hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]/30 active:scale-[0.98]',
+              isMobile ? 'size-[4.75rem] flex-col leading-5' : 'gap-1.5 px-3 py-1.5 text-xs',
+            )}
+            href={employmentSubsidyInfoUrl}
+            rel="noreferrer"
+            target="_blank"
+            title="고용촉진장려금 지원 제도 세부 안내 보기"
+          >
+            {isMobile ? (
+              <>
+                <span className="whitespace-nowrap text-[13px]">연 최대</span>
+                <span className="whitespace-nowrap text-lg">720만원</span>
+              </>
+            ) : (
+              <>
+                <span>연 최대 720만원</span>
+                <Link2 className="size-3.5" aria-hidden="true" />
+              </>
+            )}
+          </a>
         </div>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 shrink-0">
-        {['전체', '💰 장려금 대상 (연 720만원)', '검토 중', '연락 받음'].map((item) => (
+        {receivedProposalFilters.map((item) => (
           <Chip
-            key={item}
-            onClick={() => setFilter(item)}
+            key={item.id}
+            onClick={() => setFilter(item.id)}
             role="company"
-            selected={filter === item}
+            selected={filter === item.id}
           >
-            {item}
+            <span className="inline-flex items-center gap-1.5">
+              {item.id === 'subsidy' ? (
+                <Coins aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+              ) : null}
+              <span>{item.label}</span>
+            </span>
           </Chip>
         ))}
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-extrabold text-[#17212B]">
-          {filter === '💰 장려금 대상 (연 720만원)'
+          {filter === 'subsidy'
             ? `장려금 지원 대상 지원자 ${visible.length}건`
             : `받은 제안 ${visible.length}건`}
         </h2>
-        {filter === '💰 장려금 대상 (연 720만원)' && (
-          <span className="shrink-0 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] sm:text-xs">
-            ✓ 채용 시 국가 지원금 신청 가능
+        {filter === 'subsidy' && (
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-extrabold text-[#173F3A] sm:text-xs">
+            <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+            <span>채용 시 국가 지원금 신청 가능</span>
           </span>
         )}
       </div>
@@ -3653,8 +3735,8 @@ export function ReceivedProposalsPage() {
               project={{
                 company: proposal.applicantName || '지원 인재',
                 title: proposal.projectTitle,
-                meta: `${proposal.status} · ${proposal.appliedAt}${isSubsidy ? ' · 💰 연 720만원 지원 대상' : ''}`,
-                action: '지원서 확인 →',
+                meta: `${proposal.status} · ${proposal.appliedAt}${isSubsidy ? ' · 연 720만원 지원 대상' : ''}`,
+                action: '지원서 확인',
               }}
             />
           );
@@ -3722,7 +3804,13 @@ function ProposalProgress({
                     : 'border-[#D4CBB8] bg-white text-slate-400',
               )}
             >
-              {completed ? '✓' : active ? '●' : '○'}
+              {completed ? (
+                <Check aria-hidden="true" className="size-3.5" strokeWidth={2.75} />
+              ) : active ? (
+                <CircleDot aria-hidden="true" className="size-3.5" strokeWidth={2.5} />
+              ) : (
+                <Circle aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
+              )}
             </span>
             <span
               className={cn(
@@ -4002,7 +4090,7 @@ export function ReceivedProposalDetailPage() {
     <MobilePage
       activeNav="proposals"
       backTo="/company/proposals"
-      contentClassName="flex flex-col gap-3.5 px-5 pb-6 pt-4"
+      contentClassName="flex flex-col gap-3.5"
       role="company"
       title="제안 상세"
     >
@@ -4149,7 +4237,9 @@ export function ReceivedProposalDetailPage() {
             : proposalStageHelper[processStage]}
         </p>
         {proposal.status === '취소됨' ? (
-          <p className="text-xs font-semibold text-slate-500">후속 진행 액션을 사용할 수 없습니다.</p>
+          <p className="text-xs font-semibold text-slate-500">
+            후속 진행 액션을 사용할 수 없습니다.
+          </p>
         ) : (
           <ProposalProgress
             current={processStage}
@@ -4211,8 +4301,7 @@ export function ReceivedProposalDetailPage() {
           aria-labelledby="profile-resume-dialog-title"
           aria-modal="true"
           className={cn(
-            'inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center sm:justify-center',
-            isMobile ? 'absolute' : 'fixed',
+            'fixed inset-0 z-[70] flex items-end justify-center bg-[#17212B]/40 p-3 sm:items-center sm:justify-center',
           )}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeProfileResume();
@@ -4233,7 +4322,7 @@ export function ReceivedProposalDetailPage() {
               </div>
               <button
                 aria-label="프로필·이력서 보기 닫기"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#FAF7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
                 onClick={closeProfileResume}
                 ref={profileResumeCloseRef}
                 type="button"
@@ -4352,9 +4441,7 @@ export function ReceivedProposalDetailPage() {
 
 export function SeniorProfilePage() {
   const navigate = useNavigate();
-  const { mode } = useViewportMode();
-  const { user, signOut, deleteAccount } = useAuth();
-  const isMobile = mode === 'mobile';
+  const { isAdmin, user, signOut, deleteAccount } = useAuth();
   const [seniorProfile, setSeniorProfile] = useState<SeniorProfileData | null>(() =>
     getLocalSeniorProfile(user?.uid),
   );
@@ -4375,6 +4462,31 @@ export function SeniorProfilePage() {
       void navigate('/login', { replace: true });
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    let active = true;
+    const ownerId = user.uid;
+
+    const loadProfile = () => {
+      void resolveSeniorProfile(ownerId).then((profile) => {
+        if (active) {
+          setSeniorProfile(profile);
+          setExperienceCards(
+            profile?.experienceCardsV1 ??
+              (profile?.experienceProfileV1 ? [profile.experienceProfileV1] : []),
+          );
+        }
+      });
+    };
+
+    loadProfile();
+    window.addEventListener('eojob_senior_profile_updated', loadProfile);
+    return () => {
+      active = false;
+      window.removeEventListener('eojob_senior_profile_updated', loadProfile);
+    };
+  }, [user?.uid]);
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
@@ -4470,10 +4582,7 @@ export function SeniorProfilePage() {
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="senior"
       showBack={false}
       title="내 정보"
@@ -4493,7 +4602,8 @@ export function SeniorProfilePage() {
             </span>
             {seniorProfile?.employmentSubsidyTarget ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#DDEBE7] px-2.5 py-0.5 text-xs font-extrabold text-[#173F3A]">
-                ✓ 연 720만원 지원 대상
+                <CircleCheck aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+                <span>연 720만원 지원 대상</span>
               </span>
             ) : null}
           </div>
@@ -4575,6 +4685,11 @@ export function SeniorProfilePage() {
 
       {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
+        {isAdmin ? (
+          <ActionButton onClick={() => void navigate('/admin/dashboard')} secondary>
+            관리자 페이지
+          </ActionButton>
+        ) : null}
         <ActionButton onClick={() => void navigate('/basic-profile')} secondary>
           기본 정보 수정
         </ActionButton>
@@ -4647,9 +4762,7 @@ export function SeniorProfilePage() {
 
 export function CompanyProfilePage() {
   const navigate = useNavigate();
-  const { user, signOut, deleteAccount } = useAuth();
-  const { mode } = useViewportMode();
-  const isMobile = mode === 'mobile';
+  const { isAdmin, user, signOut, deleteAccount } = useAuth();
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(
     () => getLocalCompanyProfile(user?.uid) || getLocalCompanyProfile(),
   );
@@ -4708,10 +4821,7 @@ export function CompanyProfilePage() {
   return (
     <MobilePage
       activeNav="profile"
-      contentClassName={cn(
-        'flex flex-col gap-4',
-        isMobile ? 'px-4 pb-5 pt-4 w-full' : 'px-6 pb-6 pt-7 md:px-10 md:py-8 max-w-6xl mx-auto',
-      )}
+      contentClassName="flex flex-col gap-4"
       role="company"
       showBack={false}
       title="내 정보"
@@ -4778,6 +4888,11 @@ export function CompanyProfilePage() {
 
       {/* Action Buttons System (Standardized 48px Height) */}
       <div className="flex flex-col gap-2.5 pt-2">
+        {isAdmin ? (
+          <ActionButton onClick={() => void navigate('/admin/dashboard')} role="company" secondary>
+            관리자 페이지
+          </ActionButton>
+        ) : null}
         <ActionButton onClick={() => void navigate('/company-info')} role="company" secondary>
           기업 정보 수정
         </ActionButton>

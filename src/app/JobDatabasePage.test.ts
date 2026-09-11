@@ -1,42 +1,58 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createElement, type ChangeEvent, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 
 const {
-  mockedAuthUser,
+  mockAuthState,
   mockedCreateProject,
-  mockedExperienceCard,
+  mockedDeleteProject,
+  mockedUpdateProject,
   mockedNavigate,
   mockedSearch,
   mockedProfile,
   mockedProjects,
-} = vi.hoisted(() => ({
-  mockedAuthUser: (() => {
-    const value: { current: { uid: string } | null } = { current: null };
-    value.current = { uid: 'senior-test-user' };
-    return value;
-  })(),
-  mockedCreateProject: vi.fn(),
-  mockedSearch: vi.fn(),
-  mockedProfile: vi.fn(),
-  mockedProjects: vi.fn(),
-  mockedExperienceCard: vi.fn(),
-  mockedNavigate: vi.fn(),
-}));
+  mockedExperienceCard,
+} = vi.hoisted(() => {
+  const mockAuthState: { user: { uid: string } | null } = {
+    user: { uid: 'senior-test-user' },
+  };
+  return {
+    mockAuthState,
+    mockedCreateProject: vi.fn(),
+    mockedDeleteProject: vi.fn(),
+    mockedUpdateProject: vi.fn(),
+    mockedNavigate: vi.fn(),
+    mockedSearch: vi.fn(),
+    mockedProfile: vi.fn(),
+    mockedProjects: vi.fn(),
+    mockedExperienceCard: vi.fn(),
+  };
+});
 
 vi.mock('react-router', () => ({
   useNavigate: () => mockedNavigate,
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
-vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: mockedAuthUser.current }) }));
-vi.mock('@/services/jobSearchService', () => ({ searchFullJobDatabase: mockedSearch }));
+vi.mock('@/lib/authContext', () => ({ useAuth: () => ({ user: mockAuthState.user }) }));
+vi.mock('@/services/jobSearchService', () => ({
+  clearJobSearchClientCache: vi.fn(),
+  readLastCatalogMeta: vi.fn(() => null),
+  searchFullJobDatabase: mockedSearch,
+}));
 vi.mock('@/services/profileService', () => ({ resolveSeniorProfile: mockedProfile }));
-vi.mock('@/services/projectService', () => ({ createProject: mockedCreateProject, fetchProjects: mockedProjects }));
-vi.mock('@/services/interviewService', () => ({ getLatestUserExperienceCard: mockedExperienceCard }));
+vi.mock('@/services/projectService', () => ({
+  createProject: mockedCreateProject,
+  deleteProject: mockedDeleteProject,
+  fetchProjects: mockedProjects,
+  getLocalProjects: vi.fn(() => []),
+  updateProject: mockedUpdateProject,
+}));
+vi.mock('@/services/interviewService', () => ({
+  getLatestUserExperienceCard: mockedExperienceCard,
+}));
 
 import type { JobPosting } from '@/data/jobPostings';
-import { getCompletedApplicationDestination } from '@/app/jobDatabaseApplicationNavigation';
 import {
   getCompanyOwnedProjects,
   getPublishedCompanyProjects,
@@ -52,8 +68,13 @@ import {
   PostingWorkSummaryContent,
   type FilterOption,
 } from '@/app/JobDatabasePage';
-import { calculatePersonalizedMatch } from '@/services/recommendationEngine';
 import type { PostingWorkSummary } from '@/services/postingWorkSummary';
+import { getCompletedApplicationDestination } from '@/app/jobDatabaseApplicationNavigation';
+
+beforeEach(() => {
+  mockAuthState.user = { uid: 'senior-test-user' };
+  mockedNavigate.mockReset();
+});
 
 const companyProject: JobPosting = {
   id: 'company-project-1',
@@ -89,31 +110,84 @@ const companyProject: JobPosting = {
   postedAt: '2026-08-19',
 };
 
-describe('기업 등록 프로젝트의 인재 목록 노출', () => {
+describe('비로그인 추천 건수', () => {
+  it('검색 서버의 추천 집계와 무관하게 0건을 표시한다', async () => {
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedProjects.mockResolvedValueOnce([]);
+    mockedExperienceCard.mockReset().mockResolvedValue(null);
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      catalogTotal: 13761,
+      closingSoonTotal: 18,
+      items: [{ ...companyProject, id: 'guest-project', title: '비로그인 추천 테스트' }],
+      page: 1,
+      pageSize: 5,
+      partTimeTotal: 64,
+      preferredTotal: 25,
+      status: 'success' as const,
+      total: 25,
+      totalPages: 5,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '비로그인 추천 테스트' });
+    expect(screen.getByText('추천 건수').parentElement).toHaveTextContent('0건');
+  });
+
+  it('중복 없는 소개 문구와 오렌지 로그인·회원가입 버튼을 표시한다', async () => {
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedProjects.mockResolvedValueOnce([]);
+    mockedExperienceCard.mockReset().mockResolvedValue(null);
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      catalogTotal: 1,
+      closingSoonTotal: 0,
+      items: [{ ...companyProject, id: 'guest-copy-project', title: '문구 확인 공고' }],
+      page: 1,
+      pageSize: 5,
+      partTimeTotal: 0,
+      preferredTotal: 0,
+      status: 'success' as const,
+      total: 1,
+      totalPages: 1,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '문구 확인 공고' });
+    expect(screen.getByText('시니어 채용')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: '내 경험에 맞는 공고를 확인해 보세요' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('경력과 전문성을 살릴 수 있는 맞춤 채용 공고')).toBeNull();
+    expect(screen.getByRole('button', { name: '로그인 / 회원가입' })).toHaveClass('bg-[#F06B4F]');
+  });
+});
+
+describe('지원 접근 및 완료 경로', () => {
   it('비로그인 시니어는 지원 모달 대신 로그인 화면으로 이동한다', async () => {
-    mockedAuthUser.current = null;
-    mockedProjects.mockResolvedValueOnce([companyProject]);
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedExperienceCard.mockResolvedValueOnce(null);
     mockedSearch.mockResolvedValueOnce({
       catalogTotal: 1,
       closingSoonTotal: 0,
       items: [companyProject],
       page: 1,
-      pageSize: 12,
+      pageSize: 5,
       partTimeTotal: 0,
       preferredTotal: 1,
       status: 'success',
       total: 1,
       totalPages: 1,
     });
-    mockedProfile.mockResolvedValueOnce(null);
-    mockedExperienceCard.mockResolvedValueOnce(null);
 
     render(createElement(JobDatabasePage, { role: 'senior' }));
     fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
 
     expect(mockedNavigate).toHaveBeenCalledWith('/login?role=senior');
-    expect(screen.queryByRole('heading', { name: '프로젝트 지원 준비' })).toBeNull();
-    mockedAuthUser.current = { uid: 'senior-test-user' };
+    expect(screen.queryByRole('heading', { name: '지원 내용을 확인해 주세요' })).toBeNull();
   });
 
   it('지원 성공 확인은 방금 저장한 제안 상세로 이동한다', () => {
@@ -121,7 +195,200 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
       '/senior/proposals/proposal-just-created',
     );
   });
+});
 
+describe('프로젝트 첫 진입 안정성', () => {
+  const seniorProfile = {
+    desiredCategory: 'planning-strategy',
+    email: 'senior@example.com',
+    experience: '서비스 전략 수립',
+    field: '서비스 기획',
+    period: '15년',
+    phone: '010-0000-0000',
+  };
+
+  function searchResult(titlePrefix: string, isFallback = false) {
+    return {
+      catalogTotal: 10_446,
+      closingSoonTotal: 10,
+      isFallback,
+      items: Array.from({ length: 5 }, (_, index) => ({
+        ...companyProject,
+        id: `${titlePrefix}-${index + 1}`,
+        title: `${titlePrefix} ${index + 1}`,
+      })),
+      page: 1,
+      pageSize: 5,
+      partTimeTotal: 100,
+      preferredTotal: 50,
+      status: 'success' as const,
+      total: 10_446,
+      totalPages: 2_090,
+    };
+  }
+
+  it('인재 목록 검색은 별도 Firestore 프로젝트 조회를 기다리거나 중복 호출하지 않는다', async () => {
+    mockedProfile.mockResolvedValueOnce(seniorProfile);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+    mockedProjects.mockReset();
+    mockedSearch.mockReset().mockResolvedValueOnce(searchResult('실시간 공고'));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '실시간 공고 1' });
+    expect(mockedSearch).toHaveBeenCalledTimes(1);
+    expect(mockedProjects).not.toHaveBeenCalled();
+    expect(screen.getAllByRole('button', { name: /^실시간 공고 \d$/ })).toHaveLength(5);
+  });
+
+  it('지원 화면은 자동 이메일 발송으로 오인시키지 않고 실제 접수 단계를 안내한다', async () => {
+    mockedProfile.mockResolvedValueOnce(seniorProfile);
+    mockedExperienceCard.mockReset().mockResolvedValue(null);
+    mockedProjects.mockReset();
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      ...searchResult('지원 안내 공고'),
+      items: [
+        {
+          ...companyProject,
+          id: 'WORKNET-application-guide',
+          ownerId: undefined,
+          source: 'worknet' as const,
+          title: '지원 안내 공고 1',
+        },
+      ],
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
+
+    expect(screen.getByRole('heading', { name: '지원 내용을 확인해 주세요' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: '지원 내용을 확인해 주세요' })).toHaveTextContent(
+      '월 300만 원',
+    );
+    expect(screen.getByText('실제 지원은 공식 채용 페이지에서 완료해야 합니다.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '지원 내용 저장하기' })).toBeTruthy();
+    expect(screen.queryByText(/이메일로 실시간 지원서 알림이 자동 전송/)).toBeNull();
+  });
+
+  it('기업 직접 등록 프로젝트는 공식 외부 접수처로 잘못 안내하지 않는다', async () => {
+    mockedProfile.mockResolvedValueOnce(seniorProfile);
+    mockedExperienceCard.mockReset().mockResolvedValue(null);
+    mockedProjects.mockReset();
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      ...searchResult('기업 직접 등록'),
+      items: [
+        {
+          ...companyProject,
+          source: 'internal' as const,
+          title: '기업 직접 등록 프로젝트',
+        },
+      ],
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: '이 프로젝트에 지원하기' }));
+
+    expect(screen.getByText('지원 완료 시 담당자에게 이메일이 자동 발송됩니다.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '기업에 지원 내용 보내기' })).toBeTruthy();
+    expect(screen.queryByText('실제 지원은 공식 채용 페이지에서 완료해야 합니다.')).toBeNull();
+  });
+
+  it('임시 목록을 표시한 경우 홈 재방문 없이 실시간 목록을 자동 재조회한다', async () => {
+    mockedProfile.mockResolvedValueOnce(seniorProfile);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+    mockedProjects.mockReset();
+    mockedSearch
+      .mockReset()
+      .mockResolvedValueOnce(searchResult('임시 공고', true))
+      .mockResolvedValueOnce(searchResult('실시간 공고'));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '실시간 공고 1' }, { timeout: 2_000 });
+    expect(mockedSearch).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('button', { name: '임시 공고 1' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^실시간 공고 \d$/ })).toHaveLength(5);
+  });
+
+  it('비로그인 임시 목록에서도 조회 가능한 공고 수를 0건으로 표시하지 않는다', async () => {
+    mockAuthState.user = null;
+    mockedProfile.mockResolvedValueOnce(null);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+    mockedProjects.mockReset();
+    mockedSearch
+      .mockReset()
+      .mockResolvedValueOnce(searchResult('임시 공고', true))
+      .mockImplementationOnce(() => new Promise(() => undefined));
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '임시 공고 1' });
+    expect(screen.getByText('조회 공고').parentElement).toHaveTextContent('10,446건');
+    expect(screen.getByText('추천 건수').parentElement).toHaveTextContent('0건');
+  });
+
+  it('로그인 검색 결과는 서버가 정렬에 사용한 적합도 점수를 그대로 표시한다', async () => {
+    const profile = {
+      ...seniorProfile,
+      certifications: '정보처리기사',
+      desiredCategory: 'service',
+      desiredWorkType: '계약직·기간제 (1년 등)',
+      experience: '서비스 운영 총괄',
+    };
+    const highScorePosting = {
+      ...companyProject,
+      id: 'server-score-high',
+      occupationCategory: 'service',
+      occupationClassificationStatus: 'classified' as const,
+      seniorFitScore: 96,
+      title: '서버 점수 상위 공고',
+    };
+    const lowerScorePosting = {
+      ...highScorePosting,
+      id: 'server-score-lower',
+      seniorFitScore: 81,
+      title: '서버 점수 하위 공고',
+    };
+    mockedProfile.mockResolvedValueOnce(profile);
+    mockedExperienceCard.mockResolvedValueOnce(null);
+    mockedProjects.mockReset();
+    mockedSearch.mockReset().mockResolvedValueOnce({
+      ...searchResult('서버 점수'),
+      items: [highScorePosting, lowerScorePosting],
+      pageSize: 5,
+      preferredTotal: 2,
+      total: 2,
+      totalPages: 1,
+    });
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    const highScoreButton = await screen.findByRole('button', { name: '서버 점수 상위 공고' });
+    const lowerScoreButton = screen.getByRole('button', { name: '서버 점수 하위 공고' });
+    expect(highScoreButton.closest('article')).toHaveTextContent('96점');
+    expect(lowerScoreButton.closest('article')).toHaveTextContent('81점');
+    const searchOptions = mockedSearch.mock.calls[0]?.[0] as
+      | {
+          certificationText?: string;
+          desiredWorkType?: string;
+          profileExperience?: string;
+          profileField?: string;
+          sortBy?: string;
+        }
+      | undefined;
+    expect(searchOptions).toMatchObject({
+      certificationText: '정보처리기사',
+      desiredWorkType: '계약직·기간제 (1년 등)',
+      sortBy: 'fit-desc',
+    });
+    expect(searchOptions?.profileExperience).toBe('서비스 운영 총괄');
+    expect(searchOptions?.profileField).toBe(profile.field);
+  });
+});
+
+describe('기업 등록 프로젝트의 인재 목록 노출', () => {
   it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {
     mockedProjects.mockResolvedValueOnce([]);
     mockedCreateProject.mockResolvedValueOnce({
@@ -134,7 +401,9 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
 
     fireEvent.change(screen.getByLabelText('회사명 *'), { target: { value: '테스트 기업' } });
     fireEvent.change(screen.getByLabelText('회사 규모'), { target: { value: '100-300명' } });
-    fireEvent.change(screen.getByLabelText('프로젝트 제목 *'), { target: { value: 'AI 자동화 프로젝트' } });
+    fireEvent.change(screen.getByLabelText('프로젝트 제목 *'), {
+      target: { value: 'AI 자동화 프로젝트' },
+    });
     fireEvent.change(screen.getByLabelText('산업/직무 분야'), { target: { value: 'IT / SW' } });
     fireEvent.change(screen.getByLabelText('근무 지역'), { target: { value: '서울 강남' } });
     fireEvent.change(screen.getByLabelText('프로젝트 기간'), { target: { value: '4개월' } });
@@ -166,6 +435,8 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
         qualifications: ['AI 프로젝트 경험', '프로젝트 주도 경험'],
         recommendedTalentType: 'AI 자동화 리드',
         salaryRange: '월 800만-1000만',
+        source: 'internal',
+        sourceProvider: '이어잡 기업 직접 등록',
       }),
     );
   });
@@ -192,25 +463,42 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /등록 프로젝트\s*1건/ }));
     expect(screen.getByRole('dialog', { name: /등록 프로젝트 1건/ })).toBeTruthy();
-    expect(screen.getAllByRole('heading', { name: companyProject.title }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: companyProject.title }).length).toBeGreaterThan(
+      0,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: '등록 프로젝트 팝업 닫기' }));
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: /등록 프로젝트 1건/ })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /등록 프로젝트 1건/ })).toBeNull(),
+    );
   });
 
   it('공개 중인 기업 프로젝트만 인재 목록에 포함한다', () => {
-    const closedProject = { ...companyProject, id: 'company-project-2', hiringStage: 'closing' as const };
+    const closedProject = {
+      ...companyProject,
+      id: 'company-project-2',
+      hiringStage: 'closing' as const,
+    };
     const privateProject = { ...companyProject, id: 'company-project-3', isPublic: false };
 
-    expect(getPublishedCompanyProjects([companyProject, closedProject, privateProject])).toEqual([companyProject]);
+    expect(getPublishedCompanyProjects([companyProject, closedProject, privateProject])).toEqual([
+      companyProject,
+    ]);
   });
 
   it('기업 관리 화면에는 로그인한 기업이 등록한 공고만 포함한다', () => {
     const legacyProject = { ...companyProject, id: 'legacy-project', ownerId: undefined };
-    const anotherCompanyProject = { ...companyProject, id: 'company-project-2', ownerId: 'company-b' };
+    const anotherCompanyProject = {
+      ...companyProject,
+      id: 'company-project-2',
+      ownerId: 'company-b',
+    };
 
     expect(
-      getCompanyOwnedProjects([companyProject, legacyProject, anotherCompanyProject], 'company-user'),
+      getCompanyOwnedProjects(
+        [companyProject, legacyProject, anotherCompanyProject],
+        'company-user',
+      ),
     ).toEqual([companyProject]);
     expect(getCompanyOwnedProjects([companyProject], undefined)).toEqual([]);
     expect(getPublishedCompanyProjects([legacyProject])).toEqual([legacyProject]);
@@ -226,22 +514,8 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
         workType: 'all',
       }),
     ).toBe(true);
-    expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([companyProject]);
-  });
-
-  it('내부 프로젝트 ID가 카탈로그에서 제목만 정규화되어 돌아와도 한 카드로 유지한다', () => {
-    const catalogMirror = { ...companyProject, title: '운영 프로젝트' };
-
-    expect(mergeSeniorPostings([companyProject], [catalogMirror])).toEqual([companyProject]);
-  });
-
-  it('외부 공고 ID가 같아도 제목이 다르면 서로 다른 공고로 유지한다', () => {
-    const firstPosting = { ...companyProject, id: 'shared-worknet-id', title: '첫 번째 추천 공고' };
-    const secondPosting = { ...companyProject, id: 'shared-worknet-id', title: '두 번째 추천 공고' };
-
-    expect(mergeSeniorPostings([], [firstPosting, secondPosting])).toEqual([
-      firstPosting,
-      secondPosting,
+    expect(mergeSeniorPostings([companyProject], [{ ...companyProject }])).toEqual([
+      companyProject,
     ]);
   });
 
@@ -272,7 +546,9 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
         }),
       ),
     ).toEqual([designCompanyProject]);
-    expect(resolveSeniorCategoryFilter('it-development-data', 'design')).toBe('it-development-data');
+    expect(resolveSeniorCategoryFilter('it-development-data', 'design')).toBe(
+      'it-development-data',
+    );
     expect(resolveSeniorCategoryFilter('all')).toBe('all');
   });
 
@@ -342,7 +618,8 @@ describe('공고 실제 업무의 task stack 표현', () => {
   });
 
   it('한 개의 길게 줄바꿈되는 업무도 clip 없이 같은 task row로 유지한다', () => {
-    const longDuty = '여러 이해관계자의 일정과 운영 기준을 함께 정리하고 공유하는 업무를 담당합니다.';
+    const longDuty =
+      '여러 이해관계자의 일정과 운영 기준을 함께 정리하고 공유하는 업무를 담당합니다.';
     render(
       createElement(PostingWorkSummaryContent, {
         summary: { ...sourceBackedSummary, duties: [longDuty] },
@@ -355,7 +632,7 @@ describe('공고 실제 업무의 task stack 표현', () => {
 });
 
 describe('선택된 프로젝트 카드의 조용한 강조', () => {
-  it('서버 검색 결과 점수가 있어도 시니어 화면에서는 홈과 같은 개인화 점수를 우선 표시한다', () => {
+  it('서버 검색 결과는 정렬에 사용한 적합도 점수를 카드에도 동일하게 표시한다', () => {
     const profile = {
       desiredCategory: 'service',
       email: 'senior@example.com',
@@ -366,8 +643,6 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
       phone: '010-0000-0000',
     };
     const posting = { ...companyProject, seniorFitScore: 42 };
-    const expectedScore = calculatePersonalizedMatch(posting, profile, 'service').personalizedScore;
-
     render(
       createElement(PostingCard, {
         activePrimaryCategory: 'service',
@@ -375,14 +650,13 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
         profile,
         role: 'senior',
         selected: false,
-        useServerScore: true,
+        preferServerFitScore: true,
         onSelect: vi.fn(),
       }),
     );
 
-    expect(expectedScore).toBeGreaterThan(posting.seniorFitScore);
-    expect(screen.getByText(`${expectedScore}점`)).toBeTruthy();
-    expect(screen.queryByText(`${posting.seniorFitScore}점`)).toBeNull();
+    expect(screen.getByText(`${posting.seniorFitScore}점`)).toBeTruthy();
+    expect(screen.getByText('월 300만 원')).toBeTruthy();
   });
 
   it('선택 직종과 분류가 달라도 시니어 프로젝트 카드에는 점수를 표시한다', () => {
@@ -402,7 +676,7 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
         posting,
         role: 'senior',
         selected: false,
-        useServerScore: true,
+        preferServerFitScore: true,
         onSelect: vi.fn(),
       }),
     );
@@ -433,7 +707,9 @@ describe('선택된 프로젝트 카드의 조용한 강조', () => {
     const selected = container.querySelector('article')!;
     expect(selected).toHaveAttribute('aria-current', 'true');
     expect(selected.className).toContain('inset_3px');
-    expect(screen.getByRole('button', { name: companyProject.title })).toHaveClass('focus-visible:ring-2');
+    expect(screen.getByRole('button', { name: companyProject.title })).toHaveClass(
+      'focus-visible:ring-2',
+    );
   });
 });
 
@@ -450,7 +726,9 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
     expect(screen.queryByText('선택 직종 탐색 안내')).toBeNull();
     expect(screen.queryByText(/채용 공고를 탐색 중입니다/)).toBeNull();
     expect(screen.getAllByRole('heading', { name: companyProject.title })).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: companyProject.title }).closest('header')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { name: companyProject.title }).closest('header'),
+    ).toBeTruthy();
   });
 
   it('기타 직무 예외에서는 compact mismatch 안내를 유지한다', () => {
@@ -464,7 +742,9 @@ describe('프로젝트 상세의 조용한 상태와 sticky identity', () => {
 
     expect(screen.getByText('90점')).toBeTruthy();
     expect(screen.queryByText('직종 탐색')).toBeNull();
-    expect(screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.')).toBeTruthy();
+    expect(
+      screen.getByText('자동 분류 확신이 낮아 기타·직무 확인 필요 목록에 표시된 공고입니다.'),
+    ).toBeTruthy();
   });
 });
 
@@ -500,7 +780,12 @@ describe('검색 결과 generation transition', () => {
     mockedSearch
       .mockReset()
       .mockResolvedValueOnce(result(64, initialPosting))
-      .mockImplementationOnce(() => new Promise((resolve) => { resolveNext = resolve; }));
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveNext = resolve;
+          }),
+      );
 
     render(createElement(JobDatabasePage, { role: 'senior' }));
     await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
@@ -547,7 +832,9 @@ describe('검색 결과 generation transition', () => {
     mockedProfile.mockResolvedValue(profile);
     mockedProjects.mockResolvedValue([]);
     mockedExperienceCard.mockResolvedValue(null);
-    mockedSearch.mockReset().mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
+    mockedSearch
+      .mockReset()
+      .mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
 
     render(createElement(JobDatabasePage, { role: 'senior' }));
     await waitFor(() => expect(resolvers).toHaveLength(1));
@@ -634,7 +921,9 @@ describe('직무 선택 picker의 실제 DOM 흐름', () => {
     expect(screen.getByText('다른 직무')).toBeTruthy();
     expect(screen.getAllByText('전체')).toHaveLength(1);
     expect(screen.getByText('기타 직무')).toBeTruthy();
-    expect(screen.getByText('✓')).toBeTruthy();
+    const selectedButton = screen.getByRole('button', { name: '전체' });
+    expect(selectedButton).toHaveAttribute('aria-pressed', 'true');
+    expect(selectedButton.querySelector('[aria-hidden="true"]')).toBeTruthy();
   });
 });
 
@@ -694,5 +983,107 @@ describe('picker와 global search의 전체 DOM lifecycle', () => {
     const globalInput = getInputByLabel('global project search');
     fireEvent.change(globalInput, { target: { value: '부산' } });
     expect(globalInput.value).toBe('부산');
+  });
+});
+
+describe('JobDatabasePage 페이지네이션 순서 및 전환', () => {
+  it('새 페이지 응답 전에는 이전 페이지 목록과 상세를 즉시 숨긴다', async () => {
+    const profile = {
+      desiredCategory: 'customer-service-tm',
+      email: 'senior@example.com',
+      experience: '고객상담 10년',
+      field: '고객상담·TM',
+      period: '10년',
+      phone: '010-0000-0000',
+    };
+    const makeResult = (page: number, title: string) => ({
+      catalogTotal: 46,
+      closingSoonTotal: 0,
+      items: [{ ...companyProject, id: `cs-job-${page}`, title }],
+      page,
+      pageSize: 5,
+      partTimeTotal: 0,
+      preferredTotal: 46,
+      status: 'success' as const,
+      total: 46,
+      totalPages: 10,
+    });
+    let resolvePageFour!: (value: ReturnType<typeof makeResult>) => void;
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+    mockedSearch
+      .mockReset()
+      .mockResolvedValueOnce(makeResult(1, '고객상담 1페이지 공고'))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolvePageFour = resolve;
+          }),
+      );
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await screen.findByRole('button', { name: '고객상담 1페이지 공고' });
+    fireEvent.click(screen.getByRole('button', { name: '4' }));
+
+    expect(screen.getByText('업데이트 중…')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '고객상담 1페이지 공고' })).toBeNull();
+    expect(screen.queryAllByRole('heading', { name: '고객상담 1페이지 공고' })).toHaveLength(0);
+
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(2));
+    resolvePageFour(makeResult(4, '고객상담 4페이지 공고'));
+    await screen.findByRole('button', { name: '고객상담 4페이지 공고' });
+    expect(screen.getByRole('heading', { name: '고객상담 4페이지 공고', level: 2 })).toBeTruthy();
+  });
+
+  it('페이지 번호 클릭 시 해당 페이지의 공고 목록을 요청하고 올바른 인덱스 범위를 표시한다', async () => {
+    const profile = {
+      desiredCategory: 'customer-service-tm',
+      email: 'senior@example.com',
+      experience: '고객상담 10년',
+      field: '고객상담·TM',
+      period: '10년',
+      phone: '010-0000-0000',
+    };
+    mockedProfile.mockResolvedValue(profile);
+    mockedProjects.mockResolvedValue([]);
+    mockedExperienceCard.mockResolvedValue(null);
+
+    mockedSearch.mockReset().mockImplementation(({ page = 1 }: { page?: number }) =>
+      Promise.resolve({
+        catalogTotal: 46,
+        closingSoonTotal: 0,
+        items: [
+          { ...companyProject, id: `cs-job-${page}-1`, title: `고객상담 ${page}페이지 1번` },
+          { ...companyProject, id: `cs-job-${page}-2`, title: `고객상담 ${page}페이지 2번` },
+        ],
+        page,
+        pageSize: 5,
+        partTimeTotal: 0,
+        preferredTotal: 46,
+        status: 'success' as const,
+        total: 46,
+        totalPages: 10,
+      }),
+    );
+
+    render(createElement(JobDatabasePage, { role: 'senior' }));
+
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '고객상담 1페이지 1번' })).toBeTruthy(),
+    );
+    expect(screen.getByText('1~5')).toBeTruthy();
+    expect(screen.getByText(/건 표시/)).toBeTruthy();
+
+    const page2Button = screen.getByRole('button', { name: '2' });
+    fireEvent.click(page2Button);
+
+    await waitFor(() => expect(mockedSearch).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '고객상담 2페이지 1번' })).toBeTruthy(),
+    );
+    expect(screen.getByText('6~10')).toBeTruthy();
   });
 });

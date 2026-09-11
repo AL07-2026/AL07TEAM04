@@ -17,18 +17,26 @@ export type JobDatabaseSort = 'fit-desc' | 'deadline-asc' | 'latest-desc' | 'tit
 export type JobOccupationFilter = OccupationCategory | 'unclassified';
 
 export type FullJobSearchOptions = {
+  cacheScope?: string;
   categories?: JobOccupationFilter[];
+  certificationText?: string;
   desiredCategories?: OccupationPreference[];
   desiredLocation?: string;
   desiredOccupationRank?: number;
   desiredOccupationText?: string;
+  desiredWorkType?: string;
   employmentType?: EmploymentType | 'all';
   experienceCardCategory?: ProjectCategory;
   experienceCardText?: string;
   experienceYears?: number;
   hiringStage?: HiringStage | 'all';
+  forceRefresh?: boolean;
   page?: number;
   pageSize?: number;
+  profileExperience?: string;
+  profileField?: string;
+  profileKeySkills?: string;
+  profileSolvedExperience?: string;
   profileText?: string;
   query?: string;
   requireDesiredOccupationMatch?: boolean;
@@ -41,6 +49,7 @@ export type FullJobSearchResult = {
   catalogRefreshedAt?: string;
   catalogTotal: number;
   closingSoonTotal: number;
+  isFallback?: boolean;
   items: JobPosting[];
   page: number;
   pageSize: number;
@@ -51,8 +60,46 @@ export type FullJobSearchResult = {
   totalPages: number;
 };
 
-const SEARCH_CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
+// Source data is refreshed once daily. A longer client cache prevents repeat
+// navigation and React remounts from turning into unnecessary function calls.
+const SEARCH_CLIENT_CACHE_TTL_MS = 10 * 60 * 1000;
+const SEARCH_REQUEST_TIMEOUT_MS = 4_000;
+const SEARCH_RETRY_REQUEST_TIMEOUT_MS = 15_000;
 const clientSearchCache = new Map<string, { expiresAt: number; result: FullJobSearchResult }>();
+
+const LAST_CATALOG_META_KEY = 'eojob_last_catalog_meta_v1';
+
+export type LastCatalogMeta = {
+  catalogTotal: number;
+  closingSoonTotal: number;
+  partTimeTotal: number;
+  preferredTotal: number;
+  timestamp: number;
+};
+
+export function readLastCatalogMeta(): LastCatalogMeta | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw =
+      window.sessionStorage.getItem(LAST_CATALOG_META_KEY) ||
+      window.localStorage.getItem(LAST_CATALOG_META_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LastCatalogMeta;
+  } catch {
+    return null;
+  }
+}
+
+export function writeLastCatalogMeta(meta: Omit<LastCatalogMeta, 'timestamp'>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload = JSON.stringify({ ...meta, timestamp: Date.now() });
+    window.sessionStorage.setItem(LAST_CATALOG_META_KEY, payload);
+    window.localStorage.setItem(LAST_CATALOG_META_KEY, payload);
+  } catch {
+    // Ignore quota errors
+  }
+}
 
 function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearchResult {
   const seedProjects = getDefaultSeniorJobPostings();
@@ -69,22 +116,46 @@ function createFallbackSearchResult(options: FullJobSearchOptions): FullJobSearc
       })
     : seedProjects;
 
-  const targetProjects = matchedSeedProjects.length > 0 ? matchedSeedProjects : seedProjects;
+  const targetProjects = requestedCategories.length > 0
+    ? Array.from(
+        new Map(
+          [...matchedSeedProjects, ...seedProjects].map((project) => [project.id, project]),
+        ).values(),
+      )
+    : seedProjects;
   const page = options.page || 1;
   const pageSize = options.pageSize || 5;
-  const start = (page - 1) * pageSize;
+  const total = targetProjects.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
   const items = targetProjects.slice(start, start + pageSize);
+
+  const lastMeta = readLastCatalogMeta();
+  const catalogTotal =
+    lastMeta && lastMeta.catalogTotal > targetProjects.length
+      ? lastMeta.catalogTotal
+      : targetProjects.length;
+  const closingSoonTotal =
+    lastMeta?.closingSoonTotal ??
+    targetProjects.filter((project) => project.hiringStage === 'closing').length;
+  const partTimeTotal =
+    lastMeta?.partTimeTotal ??
+    targetProjects.filter((project) => project.employmentType === 'part-time').length;
+  const preferredTotal = lastMeta?.preferredTotal ?? total;
+
   return {
-    catalogTotal: 14820,
-    closingSoonTotal: 12,
+    catalogTotal,
+    closingSoonTotal,
+    isFallback: true,
     items,
-    page,
+    page: safePage,
     pageSize,
-    partTimeTotal: 86,
-    preferredTotal: Math.max(items.length, 120),
+    partTimeTotal,
+    preferredTotal,
     status: 'success',
-    total: Math.max(targetProjects.length, 120),
-    totalPages: Math.max(1, Math.ceil(targetProjects.length / pageSize)),
+    total,
+    totalPages,
   };
 }
 
@@ -128,6 +199,8 @@ export function clearClientSearchCache() {
   }
 }
 
+export const clearJobSearchClientCache = clearClientSearchCache;
+
 function setListParam(params: URLSearchParams, key: string, values?: string[]) {
   if (values && values.length > 0) params.set(key, values.join(','));
 }
@@ -137,6 +210,7 @@ export async function searchFullJobDatabase(
 ): Promise<FullJobSearchResult> {
   const params = new URLSearchParams();
   setListParam(params, 'categories', options.categories);
+  if (options.certificationText) params.set('certificationText', options.certificationText);
   setListParam(params, 'desiredCategories', options.desiredCategories);
   if (options.desiredLocation) params.set('desiredLocation', options.desiredLocation);
   if (options.desiredOccupationRank) {
@@ -144,6 +218,9 @@ export async function searchFullJobDatabase(
   }
   if (options.desiredOccupationText) {
     params.set('desiredOccupationText', options.desiredOccupationText);
+  }
+  if (options.desiredWorkType && options.desiredWorkType !== 'all') {
+    params.set('desiredWorkType', options.desiredWorkType);
   }
   if (options.employmentType && options.employmentType !== 'all') {
     params.set('employmentType', options.employmentType);
@@ -156,6 +233,12 @@ export async function searchFullJobDatabase(
   if (options.hiringStage && options.hiringStage !== 'all') params.set('hiringStage', options.hiringStage);
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  if (options.profileExperience) params.set('profileExperience', options.profileExperience);
+  if (options.profileField) params.set('profileField', options.profileField);
+  if (options.profileKeySkills) params.set('profileKeySkills', options.profileKeySkills);
+  if (options.profileSolvedExperience) {
+    params.set('profileSolvedExperience', options.profileSolvedExperience);
+  }
   if (options.profileText) params.set('profileText', options.profileText);
   if (options.query) params.set('q', options.query);
   if (options.requireDesiredOccupationMatch) {
@@ -164,34 +247,47 @@ export async function searchFullJobDatabase(
   if (options.sortBy) params.set('sortBy', options.sortBy);
   if (options.workType && options.workType !== 'all') params.set('workType', options.workType);
 
-  const cacheKey = params.toString();
+  const requestKey = params.toString();
+  const cacheScope = options.cacheScope?.trim() || 'guest';
+  const cacheKey = `${encodeURIComponent(cacheScope)}::${requestKey}`;
   const now = Date.now();
-  const cached = clientSearchCache.get(cacheKey);
-  if (cached && cached.expiresAt > now && !options.signal?.aborted) {
-    return cached.result;
-  }
-  const sessionCached = readSessionStorageCache(cacheKey);
-  if (sessionCached && !options.signal?.aborted) {
-    clientSearchCache.set(cacheKey, {
-      expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS,
-      result: sessionCached,
-    });
-    return sessionCached;
+  if (!options.forceRefresh) {
+    const cached = clientSearchCache.get(cacheKey);
+    if (cached && cached.expiresAt > now && !options.signal?.aborted) {
+      return cached.result;
+    }
+    const sessionCached = readSessionStorageCache(cacheKey);
+    if (sessionCached && !options.signal?.aborted) {
+      clientSearchCache.set(cacheKey, {
+        expiresAt: Date.now() + SEARCH_CLIENT_CACHE_TTL_MS,
+        result: sessionCached,
+      });
+      return sessionCached;
+    }
   }
 
+  let requestTimer: ReturnType<typeof setTimeout> | undefined;
+  let removeExternalAbortListener: (() => void) | undefined;
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    requestTimer = setTimeout(
+      () => controller.abort(),
+      options.forceRefresh ? SEARCH_RETRY_REQUEST_TIMEOUT_MS : SEARCH_REQUEST_TIMEOUT_MS,
+    );
     if (options.signal) {
       if (options.signal.aborted) controller.abort();
-      else options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      else {
+        const handleExternalAbort = () => controller.abort();
+        options.signal.addEventListener('abort', handleExternalAbort, { once: true });
+        removeExternalAbortListener = () =>
+          options.signal?.removeEventListener('abort', handleExternalAbort);
+      }
     }
 
-    const response = await fetch(`/api/jobs/search?${cacheKey}`, {
+    const response = await fetch(`/api/jobs/search?${requestKey}`, {
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     });
-    clearTimeout(timer);
     if (!response.ok) {
       throw new Error(`Full job database search failed (${response.status})`);
     }
@@ -205,6 +301,7 @@ export async function searchFullJobDatabase(
       catalogRefreshedAt: result.catalogRefreshedAt,
       catalogTotal: Number(result.catalogTotal) || 0,
       closingSoonTotal: Number(result.closingSoonTotal) || 0,
+      isFallback: false,
       items: result.items.map(normalizeJobPostingDetailFields),
       page: Number(result.page) || 1,
       pageSize: Number(result.pageSize) || options.pageSize || 12,
@@ -225,6 +322,15 @@ export async function searchFullJobDatabase(
     });
     writeSessionStorageCache(cacheKey, searchResult);
 
+    if (searchResult.catalogTotal > 0) {
+      writeLastCatalogMeta({
+        catalogTotal: searchResult.catalogTotal,
+        closingSoonTotal: searchResult.closingSoonTotal,
+        partTimeTotal: searchResult.partTimeTotal,
+        preferredTotal: searchResult.preferredTotal,
+      });
+    }
+
     return searchResult;
   } catch (error) {
     if (options.signal?.aborted) {
@@ -233,5 +339,8 @@ export async function searchFullJobDatabase(
     console.warn('Fast fallback search result activated due to network delay/error:', error);
     const fallbackResult = createFallbackSearchResult(options);
     return fallbackResult;
+  } finally {
+    removeExternalAbortListener?.();
+    if (requestTimer) clearTimeout(requestTimer);
   }
 }

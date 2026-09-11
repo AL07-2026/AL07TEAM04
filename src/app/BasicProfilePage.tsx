@@ -1,4 +1,15 @@
-import { Coins, FileText, LogOut, Pencil } from 'lucide-react';
+import {
+  ArrowRight,
+  BadgeCheck,
+  CircleAlert,
+  CircleCheck,
+  Clock3,
+  Coins,
+  ExternalLink,
+  FileText,
+  LogOut,
+  Pencil,
+} from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -16,10 +27,12 @@ import {
   OTHER_OCCUPATION_PREFERENCE,
 } from '@/data/occupationCategories';
 import { useAuth } from '@/lib/authContext';
+import { prepareAsyncNavigation } from '@/lib/browserActions';
+import { isInAppBrowser } from '@/lib/inAppBrowser';
 import { cn } from '@/lib/utils';
 import {
   getLocalSeniorProfile,
-  getSeniorProfile,
+  resolveSeniorProfile,
   isUsableSeniorResumeFile,
   resolveSeniorResumeUrl,
   saveLocalSeniorProfile,
@@ -30,6 +43,8 @@ import {
 } from '@/services/profileService';
 
 type ProfileForm = SeniorProfileData;
+
+const PROFILE_SAVE_SUCCESS_MESSAGE = '프로필 정보가 성공적으로 저장되었습니다.';
 
 function createEmptyProfile(email = ''): ProfileForm {
   return {
@@ -43,7 +58,7 @@ function createEmptyProfile(email = ''): ProfileForm {
     keySkills: '',
     period: '',
     certifications: '',
-    experience: '시간제·파트타임 (오전/오후)',
+    experience: '',
     solvedExperiences: '',
     phone: '',
     email,
@@ -147,11 +162,10 @@ export function BasicProfilePage() {
   useEffect(() => {
     if (!user?.uid) return;
     void (async () => {
-      const data = await getSeniorProfile(user.uid);
+      const data = await resolveSeniorProfile(user.uid);
       if (data) {
         const loadedForm: ProfileForm = { ...data, email: data.email || user.email || '' };
         setForm(loadedForm);
-        saveLocalSeniorProfile(loadedForm, user.uid);
         setIsEditing(false);
         return;
       }
@@ -222,9 +236,7 @@ export function BasicProfilePage() {
         desiredCategory: desiredPreferences[0],
         desiredCategory2: desiredPreferences[1],
         desiredCategory3: desiredPreferences[2],
-        desiredOccupationText: usesOtherOccupation
-          ? form.desiredOccupationText?.trim()
-          : undefined,
+        desiredOccupationText: usesOtherOccupation ? form.desiredOccupationText?.trim() : undefined,
         resumeFile: uploadedResumeFile,
       };
       if (user?.uid) {
@@ -242,7 +254,7 @@ export function BasicProfilePage() {
       }
       setAttachment(null);
       setIsEditing(false);
-      setMessage('✓ 프로필 정보가 성공적으로 저장되었습니다.');
+      setMessage(PROFILE_SAVE_SUCCESS_MESSAGE);
     } catch (err) {
       if (attachment && uploadedResumeFile?.storagePath !== previousResumeFile?.storagePath) {
         await deleteSeniorResumeFile(uploadedResumeFile);
@@ -257,7 +269,7 @@ export function BasicProfilePage() {
           ? '이력서 저장 권한을 확인하지 못했습니다. 로그인 상태를 확인한 뒤 다시 저장해 주세요.'
           : err instanceof Error
             ? err.message
-          : '프로필 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            : '프로필 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
       );
     } finally {
       setIsSaving(false);
@@ -268,10 +280,12 @@ export function BasicProfilePage() {
     if (!form.resumeFile || isOpeningResume) return;
     setIsOpeningResume(true);
     setMessage('');
+    const pendingNavigation = prepareAsyncNavigation({ preferSameTab: isInAppBrowser() });
     try {
       const url = await resolveSeniorResumeUrl(form.resumeFile);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      pendingNavigation.navigate(url);
     } catch (err) {
+      pendingNavigation.cancel();
       console.error('Failed to open resume:', err);
       setMessage('이력서 파일을 열지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
@@ -292,13 +306,7 @@ export function BasicProfilePage() {
   ];
 
   return (
-    <MobilePage
-      activeNav="profile"
-      contentClassName={isMobile ? 'px-4 py-4 w-full' : 'px-6 py-8 md:px-10 md:py-10'}
-      role="senior"
-      showBack={false}
-      title="인재 기본정보"
-    >
+    <MobilePage activeNav="profile" role="senior" showBack={false} title="인재 기본정보">
       <div
         className={cn(
           'w-full mx-auto flex flex-col gap-5',
@@ -307,8 +315,7 @@ export function BasicProfilePage() {
       >
         {/* Account Header Badge & Logout */}
         {(() => {
-          const displayName =
-            user?.name || '지원자';
+          const displayName = user?.name || '지원자';
           return (
             <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAF7F2]">
               <div className="flex min-w-0 items-center gap-3">
@@ -344,13 +351,20 @@ export function BasicProfilePage() {
         {/* Message Banner */}
         {message ? (
           <div
+            aria-live="polite"
             className={cn(
               'p-3.5 rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-2xs',
-              message.startsWith('✓')
+              message === PROFILE_SAVE_SUCCESS_MESSAGE
                 ? 'bg-[#ECFDF5] text-[#059669]'
                 : 'bg-rose-50 text-rose-700',
             )}
+            role="status"
           >
+            {message === PROFILE_SAVE_SUCCESS_MESSAGE ? (
+              <CircleCheck aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+            ) : (
+              <CircleAlert aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.25} />
+            )}
             <span>{message}</span>
           </div>
         ) : null}
@@ -435,7 +449,11 @@ export function BasicProfilePage() {
                   strong={false}
                   value={form.solvedExperiences || form.experience}
                 />
-                <ProfileInfoRow label="대표 경험" strong={false} value={form.experience} />
+                <ProfileInfoRow
+                  label="대표 경험"
+                  strong={false}
+                  value={form.experience || '미입력'}
+                />
                 <ProfileInfoRow label="연락처" value={form.phone} />
                 <ProfileInfoRow label="이메일" value={form.email} />
               </dl>
@@ -527,16 +545,26 @@ export function BasicProfilePage() {
 
                 <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
                   <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
+                    대표 경험 및 담당 업무
+                  </span>
+                  <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
+                    {form.experience || '미입력'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#FAF7F2]">
+                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
                     해결했던 핵심 문제 및 성과 사례
                   </span>
                   <p className="text-sm font-semibold text-[#17212B] whitespace-pre-wrap leading-relaxed">
-                    {form.solvedExperiences || form.experience}
+                    {form.solvedExperiences || '미입력'}
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-1 p-4 rounded-2xl bg-[#EAF3F0]">
-                  <span className="text-[11px] font-extrabold text-[#173F3A] uppercase tracking-wider">
-                    ⏰ 원하는 근무 형태
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#173F3A]">
+                    <Clock3 aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+                    원하는 근무 형태
                   </span>
                   <p className="text-sm font-extrabold text-[#173F3A] whitespace-pre-wrap leading-relaxed">
                     {form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
@@ -546,15 +574,21 @@ export function BasicProfilePage() {
                 {form.employmentSubsidyTarget ? (
                   <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-[#EAF3F0]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="shrink-0 whitespace-nowrap rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
-                        ✓ 연 720만원 정부 지원금 대상 인증됨
+                      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-white px-2.5 py-0.5 text-[11px] font-extrabold text-[#173F3A] shadow-2xs">
+                        <BadgeCheck
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0"
+                          strokeWidth={2.25}
+                        />
+                        연 720만원 정부 지원금 대상 인증됨
                       </span>
                       <span className="text-xs font-bold text-[#173F3A]">
                         {form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료 완료'}
                       </span>
                     </div>
                     <p className="text-[12px] font-semibold text-[#17212B] leading-snug">
-                      기업에서 해당 인재 채용 시 고용촉진장려금(월 60만원 x 12개월)을 지원받아 채용 서류 및 면접 우대를 받습니다.
+                      기업에서 해당 인재 채용 시 고용촉진장려금(월 60만원 x 12개월)을 지원받아 채용
+                      서류 및 면접 우대를 받습니다.
                     </p>
                   </div>
                 ) : null}
@@ -597,9 +631,10 @@ export function BasicProfilePage() {
               <button
                 type="button"
                 onClick={() => void navigate('/senior/experience')}
-                className="py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 py-1 text-center text-xs font-extrabold text-[#173F3A] hover:underline"
               >
-                AI 경험 인터뷰 진행하기 (1/3) →
+                <span>AI 경험 인터뷰 진행하기 (1/3)</span>
+                <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
               </button>
             </div>
           </div>
@@ -626,8 +661,7 @@ export function BasicProfilePage() {
                 </label>
                 <p className="text-xs md:text-[13px] font-medium text-slate-500">
                   희망 직종을 1순위부터 3순위까지 지정하면 프로젝트{' '}
-                  <span className="whitespace-nowrap">DB 추천</span> 순위에 순서대로
-                  반영됩니다.
+                  <span className="whitespace-nowrap">DB 추천</span> 순위에 순서대로 반영됩니다.
                 </p>
               </div>
 
@@ -746,7 +780,9 @@ export function BasicProfilePage() {
                   </span>
                 </label>
                 <p className="text-xs md:text-[13px] font-medium text-slate-500 leading-relaxed">
-                  국민취업지원제도(1단계 수료) 또는 내일배움카드 훈련<span className="whitespace-nowrap">(3개월 이상)</span>을 이수하셨다면 인증해 주세요.
+                  국민취업지원제도(1단계 수료) 또는 내일배움카드 훈련
+                  <span className="whitespace-nowrap">(3개월 이상)</span>을 이수하셨다면 인증해
+                  주세요.
                   <span className="block">기업의 채용 우선순위가 크게 상승합니다.</span>
                 </p>
               </div>
@@ -776,9 +812,7 @@ export function BasicProfilePage() {
                       이수한 취업지원프로그램
                     </span>
                     <select
-                      value={
-                        form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료'
-                      }
+                      value={form.employmentSubsidyProgram || '국민취업지원제도 1단계(IAP) 수료'}
                       onChange={(e) =>
                         setForm((prev) => ({
                           ...prev,
@@ -819,22 +853,35 @@ export function BasicProfilePage() {
                   <p className="min-w-0 text-xs font-semibold leading-5 text-slate-600 [word-break:keep-all]">
                     <span className="block">아직 수료하지 않으셨나요?</span>
                     <span className="block">
-                      <span className="whitespace-nowrap">국민취업지원제도</span> 1단계를 완료하면 기업 지원 대상이 됩니다.
+                      <span className="whitespace-nowrap">국민취업지원제도</span> 1단계를 완료하면
+                      기업 지원 대상이 됩니다.
                     </span>
                   </p>
                   <a
                     href="https://www.kua.go.kr"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 text-xs font-extrabold text-[#173F3A] hover:underline"
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-extrabold text-[#173F3A] hover:underline"
                   >
-                    국취제 안내 ➔
+                    <span>국취제 안내</span>
+                    <ExternalLink
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0"
+                      strokeWidth={2.25}
+                    />
                   </a>
                 </div>
               )}
             </div>
 
-            {/* Section 5: 해결했던 핵심 문제 및 성과 사례 */}
+            {/* Section 5: 대표 경험 및 해결했던 핵심 문제 */}
+            <TextAreaField
+              label="대표 경험 및 담당 업무 (매칭 핵심 데이터)"
+              onChange={(e) => update('experience')(e.target.value)}
+              placeholder="예: 12년간 B2B 서비스 운영을 총괄하며 고객지원 조직과 운영 지표를 관리했습니다."
+              value={form.experience || ''}
+            />
+
             <TextAreaField
               label="해결했던 핵심 문제 및 성과 사례 (매칭 핵심 데이터)"
               onChange={(e) => update('solvedExperiences')(e.target.value)}
@@ -844,7 +891,10 @@ export function BasicProfilePage() {
 
             {/* Section 6: 원하는 근무 형태 (시간제/계약직/정규직 선택) */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs md:text-sm font-extrabold text-[#173F3A]" htmlFor="desired-work-type-select">
+              <label
+                className="text-xs md:text-sm font-extrabold text-[#173F3A]"
+                htmlFor="desired-work-type-select"
+              >
                 원하는 근무 형태 (시간제/계약직/정규직 선택)
               </label>
               <select
@@ -853,15 +903,23 @@ export function BasicProfilePage() {
                 className="w-full rounded-2xl border-0 bg-[#FAF7F2] px-4 py-3.5 text-sm font-bold text-[#17212B] outline-none focus:bg-white focus:ring-2 focus:ring-[#173F3A]/20 shadow-2xs transition-all"
                 onChange={(e) => {
                   const val = e.target.value;
-                  setForm((prev) => ({ ...prev, desiredWorkType: val, experience: val }));
+                  setForm((prev) => ({ ...prev, desiredWorkType: val }));
                 }}
                 value={form.desiredWorkType || form.experience || '시간제·파트타임 (오전/오후)'}
               >
-                <option value="시간제·파트타임 (오전/오후)">시간제·파트타임 (오전/오후 선택)</option>
-                <option value="오전 시간제 (오전 파트타임: 09:00~13:00)">오전 시간제 (오전 파트타임: 09:00~13:00)</option>
-                <option value="오후 시간제 (오후 파트타임: 13:00~17:00)">오후 시간제 (오후 파트타임: 13:00~17:00)</option>
+                <option value="시간제·파트타임 (오전/오후)">
+                  시간제·파트타임 (오전/오후 선택)
+                </option>
+                <option value="오전 시간제 (오전 파트타임: 09:00~13:00)">
+                  오전 시간제 (오전 파트타임: 09:00~13:00)
+                </option>
+                <option value="오후 시간제 (오후 파트타임: 13:00~17:00)">
+                  오후 시간제 (오후 파트타임: 13:00~17:00)
+                </option>
                 <option value="계약직·기간제 (1년 등)">계약직·기간제 (1년 등)</option>
-                <option value="전체 무관 (시간제/계약직/정규직)">전체 무관 (시간제/계약직/정규직 모두 가능)</option>
+                <option value="전체 무관 (시간제/계약직/정규직)">
+                  전체 무관 (시간제/계약직/정규직 모두 가능)
+                </option>
                 <option value="정규직">정규직</option>
                 <option value="자문·프로젝트">자문·프로젝트</option>
               </select>
@@ -892,7 +950,9 @@ export function BasicProfilePage() {
 
             {/* Section 8: 이력서 첨부 */}
             <div className="flex flex-col gap-2">
-              <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">이력서 첨부 (선택)</span>
+              <span className="text-xs md:text-sm font-extrabold text-[#173F3A]">
+                이력서 첨부 (선택)
+              </span>
               <input
                 accept=".pdf,.doc,.docx"
                 className="sr-only"

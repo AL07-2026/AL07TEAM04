@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function adminReader() {
+      return signedIn() && request.auth.token.get('adminRole', '') in
+        ['super_admin', 'operations_admin', 'finance_admin', 'viewer'];
+    }
+    function validUser(uid) {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['uid', 'email', 'name', 'role', 'createdAt', 'lastLoginAt', 'updatedAt'])
+        && data.get('uid', uid) == uid
+        && data.email == request.auth.token.email
+        && data.name is string && data.name.size() <= 100
+        && data.get('role', 'senior') in ['senior', 'company'];
+    }
+    match /users/{uid} {
+      allow get: if owner(uid) || adminReader();
+      allow list: if adminReader();
+      allow create: if owner(uid) && validUser(uid);
+      allow update: if owner(uid) && validUser(uid)
+        && request.resource.data.get('role', '') == resource.data.get('role', request.resource.data.get('role', ''));
+      allow delete: if owner(uid);
+    }
+    // These profiles contain contacts and career history, never public directory data.
+    match /company_profiles/{uid} {
+      allow read: if owner(uid) || adminReader();
+      allow write: if owner(uid);
+    }
+    match /senior_profiles/{uid} {
+      allow read: if owner(uid) || adminReader();
+      allow write: if owner(uid);
+    }
+    match /companies/{uid} {
+      allow read: if owner(uid) || adminReader();
+      allow write: if owner(uid);
+    }
+    match /experience_cards/{id} {
+      allow read: if (signedIn() && resource.data.uid == request.auth.uid) || adminReader();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if signedIn() && (id == request.auth.uid || resource.data.uid == request.auth.uid);
+    }
+    // Server-only: public DTOs, approval, images and free exposure usage go through premiumApi.
+    match /premium_company_applications/{id} { allow read, write: if false; }
+    match /premium_company_entitlements/{id} { allow read, write: if false; }
+    match /premium_company_listings/{id} { allow read, write: if false; }
+    match /premium_company_reviews/{id} { allow read, write: if false; }
+    // Keep the previous deny policy for unrelated collections.
+    // Project/proposal rules need the public-search API fix before opening client writes.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
