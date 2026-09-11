@@ -136,7 +136,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               aria-hidden={!selected}
               aria-label={`${company.companyName} 기업 소개 보기`}
               className={cn(
-                'group min-w-0 [grid-area:1/1] transition-opacity focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#173F3A] motion-reduce:transition-none',
+                'group relative min-w-0 [grid-area:1/1] transition-opacity focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#173F3A] motion-reduce:transition-none',
                 selected ? 'z-10 opacity-100' : 'pointer-events-none opacity-0',
               )}
               inert={!selected}
@@ -157,30 +157,43 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'relative z-10 mx-3 -mt-24 mb-3 flex min-h-[8.25rem] items-start justify-between gap-4 rounded-xl bg-[#FFFEFC]/92 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-sm supports-[backdrop-filter]:bg-[#FFFEFC]/82',
+                  'relative z-10 mx-3 -mt-24 mb-3 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/77 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-sm supports-[backdrop-filter]:bg-[#FFFEFC]/67',
                   !isCompact &&
-                    'sm:mx-4 sm:-mt-28 sm:mb-4 sm:min-h-28 sm:items-center sm:px-6 sm:py-4 sm:pr-[232px]',
+                    'sm:mx-4 sm:-mt-24 sm:mb-4 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold">
-                    <span className="text-[#8F3524]">프리미엄 기업</span>
-                    {company.isSample ? <span className="text-[#354B46]">샘플 노출</span> : null}
-                  </div>
-                  <h3 className="mt-1 line-clamp-1 text-lg font-extrabold leading-snug text-[#173F3A] [text-wrap:balance] sm:text-xl">
-                    {company.companyName}
-                  </h3>
-                  <p
-                    className={cn(
-                      'mt-1 text-sm leading-6 text-[#354B46]',
-                      isCompact ? 'line-clamp-1' : 'line-clamp-1 sm:line-clamp-2',
-                    )}
+                  <div
+                    className="flex min-w-0 items-center gap-2"
+                    data-testid="premium-company-primary-line"
                   >
+                    <div className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
+                      <span className="text-[#6F281B]">프리미엄 기업</span>
+                      {company.isSample ? (
+                        <span className={cn('text-[#173F3A]', isCompact && 'sr-only')}>
+                          샘플 노출
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="min-w-0 truncate text-lg font-extrabold leading-snug text-[#173F3A] sm:text-xl">
+                      {company.companyName}
+                    </h3>
+                  </div>
+                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-[#173F3A]">
                     {company.headline}
                   </p>
                 </div>
-                <ArrowUpRight aria-hidden="true" className="size-5 shrink-0 text-[#173F3A]" />
               </div>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'absolute right-[13.5rem] bottom-5 z-20 grid size-11 place-items-center text-[#173F3A]',
+                  !isCompact && 'sm:right-[14.25rem] sm:bottom-[2.625rem]',
+                )}
+                data-testid="premium-company-link-indicator"
+              >
+                <ArrowUpRight className="size-5" />
+              </span>
             </Link>
           );
         })}
@@ -188,7 +201,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       <div
         className={cn(
           'absolute right-5 bottom-5 z-20 flex items-center justify-end gap-1',
-          !isCompact && 'sm:right-8 sm:bottom-8',
+          !isCompact && 'sm:right-8 sm:bottom-[2.625rem]',
         )}
         onKeyDown={(event) => {
           if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
