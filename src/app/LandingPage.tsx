@@ -25,21 +25,18 @@ import { trackButtonClick, trackSubsidyModalOpen } from '@/services/analyticsSer
 
 const features = [
   {
-    number: '01',
     icon: IdCard,
     title: '경험 카드',
     description:
       '음성 인터뷰와 직접 입력 내용을 AI가 정리해, 문제 해결 역량이 한눈에 보이는 경험 카드로 완성합니다.',
   },
   {
-    number: '02',
     icon: Handshake,
     title: 'AI 맞춤 매칭',
     description:
       '희망 분야 1-3순위와 경험·경력을 함께 분석해, 인재와 기업에 맞는 프로젝트를 연결합니다.',
   },
   {
-    number: '03',
     icon: Clock3,
     title: '유연 근무',
     description:
@@ -244,17 +241,14 @@ export function LandingPage() {
             </div>
 
             <div className="mt-7 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
-              {features.map(({ number, icon: Icon, title, description }) => (
+              {features.map(({ icon: Icon, title, description }) => (
                 <article
-                  key={number}
+                  key={title}
                   className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 rounded-2xl bg-[#DDEBE7]/70 p-5 text-[#17212B] shadow-[0_8px_24px_rgba(23,63,58,0.06)] sm:p-6 md:block md:min-h-[320px] md:p-7"
                 >
-                  <div className="flex flex-col items-center gap-2 md:flex-row md:justify-between md:gap-4">
-                    <span className="order-2 text-[0.8125rem] font-black text-[#F06B4F] md:order-1 md:text-[0.95rem]">
-                      {number}
-                    </span>
+                  <div className="flex items-start justify-center pt-0.5 md:justify-end md:pt-0">
                     <Icon
-                      className="order-1 size-9 text-[#173F3A] md:order-2 md:size-[3.25rem]"
+                      className="size-9 text-[#173F3A] md:size-[3.25rem]"
                       strokeWidth={1.8}
                       aria-hidden="true"
                     />

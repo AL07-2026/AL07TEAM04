@@ -59,6 +59,16 @@ describe('LandingPage alignment rail', () => {
     expect(videoFrame).toHaveClass('w-full');
   });
 
+  it('서비스 특징 카드는 불필요한 순번 없이 아이콘과 내용만 표시한다', () => {
+    render(<LandingPage />);
+    const section = screen.getByRole('heading', { name: 'Service Features' }).closest('section');
+
+    expect(screen.queryByText('01')).not.toBeInTheDocument();
+    expect(screen.queryByText('02')).not.toBeInTheDocument();
+    expect(screen.queryByText('03')).not.toBeInTheDocument();
+    expect(section?.querySelectorAll('article svg')).toHaveLength(3);
+  });
+
   it('로그인 상태에서 통일된 인재 회원 뱃지와 내 홈, 로그아웃 버튼을 표시한다', () => {
     render(<LandingPage />);
 
