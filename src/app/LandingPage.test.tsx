@@ -69,6 +69,16 @@ describe('LandingPage alignment rail', () => {
     expect(section?.querySelectorAll('article svg')).toHaveLength(3);
   });
 
+  it.each(['이어잡이 만드는 새로운 연결', '이어잡의 서비스 특징', '고용노동부 연계 혜택'])(
+    '%s 섹션 라벨은 오렌지 색상을 유지하고 굵기를 두 단계 낮춘다',
+    (label) => {
+      render(<LandingPage />);
+
+      expect(screen.getByText(label)).toHaveClass('font-bold', 'text-[#F06B4F]');
+      expect(screen.getByText(label)).not.toHaveClass('font-black');
+    },
+  );
+
   it('로그인 상태에서 통일된 인재 회원 뱃지와 내 홈, 로그아웃 버튼을 표시한다', () => {
     render(<LandingPage />);
 

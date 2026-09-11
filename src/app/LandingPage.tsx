@@ -169,7 +169,7 @@ export function LandingPage() {
         <section className="bg-white pb-16 pt-14 sm:pb-20 sm:pt-18">
           <div className="site-rail">
             <div className="pt-2 text-left">
-              <p className="text-[0.875rem] font-black tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
+              <p className="text-[0.875rem] font-bold tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
               </p>
               <h2
@@ -222,10 +222,13 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-white py-12 sm:py-16 md:py-20" aria-labelledby="service-features-title">
+        <section
+          className="bg-white py-12 sm:py-16 md:py-20"
+          aria-labelledby="service-features-title"
+        >
           <div className="site-rail">
             <div>
-              <p className="text-[0.875rem] font-black uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
+              <p className="text-[0.875rem] font-bold uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡의 서비스 특징
               </p>
               <h2
@@ -274,7 +277,7 @@ export function LandingPage() {
                 <Landmark aria-hidden="true" className="size-9 sm:size-10" strokeWidth={1.8} />
               </span>
               <div>
-                <p className="text-[0.875rem] font-black text-[#F06B4F] sm:text-[1rem]">
+                <p className="text-[0.875rem] font-bold text-[#F06B4F] sm:text-[1rem]">
                   고용노동부 연계 혜택
                 </p>
                 <h2 className="mt-2 text-[1.375rem] font-black leading-snug text-[#17212B] sm:text-[1.875rem]">
