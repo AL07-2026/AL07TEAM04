@@ -22,10 +22,10 @@ function CompanyBannerImage({
 }) {
   const [failed, setFailed] = useState(false);
   const imageClassName = cn(
-    'w-full bg-[#EAF2EF] object-cover object-[center_30%]',
+    'w-full bg-[#EAF2EF] object-cover object-center',
     compact
       ? 'aspect-[400/297]'
-      : 'aspect-[400/297] sm:aspect-auto sm:h-[clamp(330px,42.24vw,501.6px)]',
+      : 'aspect-[400/297] sm:aspect-[16/10]',
   );
 
   return failed ? (
@@ -44,9 +44,11 @@ function CompanyBannerImage({
       className={imageClassName}
       decoding="async"
       fetchPriority={priority ? 'high' : 'auto'}
+      height={800}
       loading={priority ? 'eager' : 'lazy'}
       onError={() => setFailed(true)}
       src={company.imageUrl}
+      width={1200}
     />
   );
 }
@@ -157,9 +159,9 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'relative z-10 mx-3 -mt-24 mb-3 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/77 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-sm supports-[backdrop-filter]:bg-[#FFFEFC]/67',
+                  'relative z-10 mx-3 -mt-24 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/77 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/67',
                   !isCompact &&
-                    'sm:mx-4 sm:-mt-24 sm:mb-4 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
+                    'sm:mx-4 sm:-mt-24 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
                 <div className="min-w-0">
