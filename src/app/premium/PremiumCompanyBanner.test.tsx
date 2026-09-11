@@ -179,10 +179,10 @@ describe('PremiumCompanyBanner', () => {
     expect(listPremiumCompaniesWithFallback).toHaveBeenCalledWith(4);
   });
 
-  it('웹과 모바일 배너 이미지 영역을 기존보다 10% 높게 표시한다', async () => {
+  it('웹과 모바일 배너 이미지 영역을 현재 기준보다 20% 높게 표시한다', async () => {
     await renderBanner();
     expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
-      'aspect-[160/99]',
+      'aspect-[400/297]',
     );
 
     cleanup();
@@ -195,8 +195,8 @@ describe('PremiumCompanyBanner', () => {
       await Promise.resolve();
     });
     expect(screen.getByRole('img', { name: '담은생활연구소 업무 현장' })).toHaveClass(
-      'aspect-[160/99]',
-      'sm:h-[clamp(275px,35.2vw,418px)]',
+      'aspect-[400/297]',
+      'sm:h-[clamp(330px,42.24vw,501.6px)]',
     );
   });
 
