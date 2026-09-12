@@ -54,7 +54,7 @@ export function LandingPage() {
   return (
     <div className="min-h-dvh bg-white text-[#17212b]">
       <SiteHeader
-        glass={Boolean(user)}
+        glass
         onProjectClick={() => trackButtonClick('nav_view_projects')}
         actions={
           <nav className="ml-auto flex items-center gap-1.5 sm:gap-2" aria-label="빠른 이동">
@@ -91,7 +91,7 @@ export function LandingPage() {
                     trackButtonClick('nav_user_home');
                     void navigate(homePath);
                   }}
-                  className="site-glass-primary inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-3.5 text-sm font-bold text-white transition-[background-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-4"
+                  className="site-glass-primary inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-3.5 text-sm font-bold text-white transition-[background-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-4"
                   aria-label="내 홈으로 이동"
                   title="내 홈으로 이동"
                 >
@@ -104,7 +104,7 @@ export function LandingPage() {
                   <button
                     type="button"
                     onClick={() => void navigate('/admin/dashboard')}
-                    className="site-glass-control hidden min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.98] sm:inline-flex sm:px-3"
+                    className="site-glass-control hidden min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] sm:inline-flex sm:px-3"
                     aria-label="관리자 페이지"
                     title="관리자 페이지"
                   >
@@ -124,7 +124,7 @@ export function LandingPage() {
                     trackButtonClick('nav_logout');
                     await signOut();
                   }}
-                  className="site-glass-control site-glass-danger inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2.5 text-sm font-bold text-[#5A6872] transition-[color,background-color,border-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-3"
+                  className="site-glass-control site-glass-danger inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-2.5 text-sm font-bold text-[#5A6872] transition-[color,background-color,border-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-3"
                   aria-label="로그아웃"
                   title="로그아웃"
                 >
@@ -140,7 +140,7 @@ export function LandingPage() {
                     trackButtonClick('nav_login_senior');
                     void navigate('/login?role=senior');
                   }}
-                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-3 sm:px-3.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
+                  className="site-glass-control inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-bold text-[#173F3A] transition-[color,background-color,border-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-3.5"
                   aria-label="인재로 로그인"
                   title="인재로 로그인"
                 >
@@ -153,7 +153,7 @@ export function LandingPage() {
                     trackButtonClick('nav_login_company');
                     void navigate('/login?role=company');
                   }}
-                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#D8D1C2] bg-white px-3 sm:px-3.5 text-sm font-bold text-[#173F3A] transition-[background-color,transform] duration-150 hover:bg-[#F2F7F5] active:scale-[0.98] cursor-pointer"
+                  className="site-glass-control inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-bold text-[#173F3A] transition-[color,background-color,border-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.98] sm:px-3.5"
                   aria-label="기업으로 로그인"
                   title="기업으로 로그인"
                 >

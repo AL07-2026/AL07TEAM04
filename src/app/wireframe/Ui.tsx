@@ -127,7 +127,7 @@ export function SiteMenu({
         aria-haspopup="menu"
         aria-label={open ? '더보기 닫기' : '더보기 열기'}
         className={cn(
-          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,border-color,transform] duration-150 hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] cursor-pointer',
+          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,border-color,transform] duration-150 hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] cursor-pointer',
           glass && 'site-glass-control',
           compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
         )}

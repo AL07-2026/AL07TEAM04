@@ -4,21 +4,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LandingPage } from '@/app/LandingPage';
 
 const navigate = vi.fn();
+const auth = vi.hoisted(() => ({
+  useAuth: vi.fn(),
+}));
 
 vi.mock('react-router', () => ({
   useNavigate: () => navigate,
 }));
 
 vi.mock('@/lib/authContext', () => ({
-  useAuth: () => ({
-    signOut: vi.fn(),
-    user: { role: 'senior' },
-  }),
+  useAuth: auth.useAuth,
 }));
 
 describe('LandingPage alignment rail', () => {
   beforeEach(() => {
     navigate.mockReset();
+    auth.useAuth.mockReturnValue({
+      isAdmin: false,
+      signOut: vi.fn(),
+      user: { role: 'senior' },
+    });
   });
 
   it('헤더와 모든 랜딩 섹션을 같은 반응형 좌측 기준선에 맞춘다', () => {
@@ -109,5 +114,28 @@ describe('LandingPage alignment rail', () => {
       'site-glass-danger',
     );
     expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
+  });
+
+  it('비로그인 상태에서도 로그인 버튼과 더보기까지 같은 글래스 헤더를 사용한다', () => {
+    auth.useAuth.mockReturnValue({
+      isAdmin: false,
+      signOut: vi.fn(),
+      user: null,
+    });
+
+    render(<LandingPage />);
+
+    expect(screen.getByRole('banner')).toHaveClass('site-glass-header');
+    expect(screen.getByRole('button', { name: '인재로 로그인' })).toHaveClass(
+      'site-glass-control',
+      'focus-visible:ring-[#173F3A]',
+    );
+    expect(screen.getByRole('button', { name: '기업으로 로그인' })).toHaveClass(
+      'site-glass-control',
+      'focus-visible:ring-[#173F3A]',
+    );
+    expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
+    expect(screen.queryByText('인재 회원')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '로그아웃' })).not.toBeInTheDocument();
   });
 });
