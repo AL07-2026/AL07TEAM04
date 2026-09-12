@@ -157,17 +157,24 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'absolute inset-x-3 bottom-[4.5rem] z-10 flex h-12 items-center rounded-xl bg-[#FFFEFC]/62 px-3 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
-                  !isCompact &&
-                    'sm:relative sm:inset-x-auto sm:bottom-auto sm:mx-4 sm:-mt-28 sm:mb-4 sm:block sm:h-auto sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
+                  'z-10 rounded-xl bg-[#FFFEFC]/62 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
+                  isCompact
+                    ? 'absolute inset-x-3 bottom-3 flex h-12 items-center overflow-hidden px-3'
+                    : 'absolute inset-x-3 bottom-[4.5rem] flex h-12 items-center px-3 sm:relative sm:inset-x-auto sm:bottom-auto sm:mx-4 sm:-mt-28 sm:mb-4 sm:block sm:h-auto sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
                 <div className="min-w-0 flex-1">
                   <div
-                    className="flex min-w-0 items-center gap-2"
+                    className={cn('flex min-w-0 items-center', isCompact ? 'gap-1' : 'gap-2')}
                     data-testid="premium-company-primary-line"
                   >
-                    <div className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
+                    <div
+                      className={cn(
+                        'flex shrink-0 items-center font-semibold',
+                        isCompact ? 'gap-1 !text-[11px]' : 'gap-1.5 text-xs',
+                      )}
+                      data-testid="premium-company-labels"
+                    >
                       <span className="text-[#2F0C08]">프리미엄 기업</span>
                       {company.isSample ? (
                         <span
@@ -182,8 +189,10 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                     </div>
                     <h3
                       className={cn(
-                        'min-w-0 truncate text-base font-extrabold leading-snug text-[#061C1A]',
-                        !isCompact && 'sm:text-xl',
+                        'min-w-0 truncate text-[#061C1A]',
+                        isCompact
+                          ? '!text-[13px] font-bold leading-none tracking-[-0.01em] min-[360px]:!text-sm'
+                          : 'text-base font-extrabold leading-snug sm:text-xl',
                       )}
                     >
                       {company.companyName}
@@ -225,10 +234,12 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       </div>
       <div
         className={cn(
-          'absolute right-3 bottom-3 z-20 flex h-11 items-center justify-end gap-0 rounded-xl bg-[#FFFEFC]/58 px-1 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px]',
-          !isCompact &&
-            'sm:right-8 sm:bottom-[2.625rem] sm:h-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:px-0 sm:shadow-none sm:ring-0 sm:backdrop-blur-none',
+          'absolute z-20 flex items-center gap-0',
+          isCompact
+            ? 'top-3 left-3 h-11 rounded-xl bg-[#FFFEFC]/58 px-1 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/48'
+            : 'right-3 bottom-3 h-11 justify-end rounded-xl bg-[#FFFEFC]/58 px-1 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] sm:right-8 sm:bottom-[2.625rem] sm:h-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:px-0 sm:shadow-none sm:ring-0 sm:backdrop-blur-none',
         )}
+        data-testid="premium-company-controls"
         onKeyDown={(event) => {
           if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
           event.preventDefault();
@@ -252,8 +263,8 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         <span
           aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`}
           className={cn(
-            'min-w-10 text-center text-sm font-semibold tabular-nums text-[#0F1917]',
-            !isCompact && 'sm:min-w-12',
+            'text-center font-semibold tabular-nums text-[#0F1917]',
+            isCompact ? 'min-w-8 !text-xs' : 'min-w-10 text-sm sm:min-w-12',
           )}
         >
           <span className="font-extrabold text-[#061C1A]">{currentIndex + 1}</span> /{' '}

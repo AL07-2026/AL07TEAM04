@@ -202,7 +202,7 @@ describe('PremiumCompanyBanner', () => {
     );
   });
 
-  it('하단 정보와 조작 영역을 사진 위 반투명 글래스 패널로 표시한다', async () => {
+  it('모바일 조작부는 좌측 상단, 기업 정보는 하단 글래스 패널로 분리한다', async () => {
     await renderBanner();
 
     const banner = screen.getByRole('region', { name: '프리미엄 기업 소개' });
@@ -211,18 +211,20 @@ describe('PremiumCompanyBanner', () => {
     const compactImage = activeBanner.getByRole('img', { name: '담은생활연구소 업무 현장' });
     const glassPanel = activeBanner.getByTestId('premium-company-glass-panel');
     const primaryLine = activeBanner.getByTestId('premium-company-primary-line');
+    const labels = activeBanner.getByTestId('premium-company-labels');
     const mobileLinkIndicator = activeBanner.getByTestId('premium-company-mobile-link-indicator');
     const desktopLinkIndicator = activeBanner.getByTestId('premium-company-desktop-link-indicator');
-    const controls = screen.getByRole('button', { name: '배너 일시정지' }).parentElement;
+    const controls = screen.getByTestId('premium-company-controls');
     const position = screen.getByLabelText('4개 기업 중 1번째');
 
     expect(glassPanel).toHaveClass(
       'absolute',
       'inset-x-3',
-      'bottom-[4.5rem]',
+      'bottom-3',
       'flex',
       'h-12',
       'items-center',
+      'overflow-hidden',
       'px-3',
       'bg-[#FFFEFC]/62',
       'backdrop-blur-[2px]',
@@ -237,26 +239,37 @@ describe('PremiumCompanyBanner', () => {
     expect(companyLink).toHaveClass('relative');
     expect(companyLink).toContainElement(compactImage);
     expect(glassPanel.parentElement).toBe(companyLink);
-    expect(primaryLine).toHaveClass('flex', 'items-center');
+    expect(primaryLine).toHaveClass('flex', 'items-center', 'gap-1');
+    expect(labels).toHaveClass('gap-1', '!text-[11px]');
     expect(activeBanner.getByText('프리미엄 기업')).toHaveClass('text-[#2F0C08]');
+    expect(activeBanner.getByText('프리미엄 기업')).not.toHaveClass('sr-only');
     expect(activeBanner.getByText('샘플 노출')).toHaveClass('sr-only');
     expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass(
       'truncate',
-      'text-base',
+      '!text-[13px]',
+      'font-bold',
+      'leading-none',
+      'min-[360px]:!text-sm',
     );
     expect(activeBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass('hidden');
     expect(mobileLinkIndicator).toHaveClass('size-8');
     expect(desktopLinkIndicator).toHaveClass('hidden');
     expect(controls).toHaveClass(
       'absolute',
-      'right-3',
-      'bottom-3',
+      'top-3',
+      'left-3',
       'z-20',
       'h-11',
       'gap-0',
       'rounded-xl',
+      'bg-[#FFFEFC]/58',
+      'px-1',
+      'backdrop-blur-[2px]',
+      'supports-[backdrop-filter]:bg-[#FFFEFC]/48',
     );
-    expect(position).toHaveClass('min-w-10');
+    expect(controls).not.toHaveClass('right-3', 'bottom-3');
+    expect(position).toHaveClass('min-w-8', '!text-xs', 'text-center');
+    expect(position).not.toHaveClass('sr-only');
     for (const name of ['배너 일시정지', '이전 기업', '다음 기업']) {
       expect(screen.getByRole('button', { name })).toHaveClass('size-11');
     }
@@ -267,7 +280,10 @@ describe('PremiumCompanyBanner', () => {
 
     const desktopBanner = within(activeCompany('담은생활연구소'));
     const desktopGlassPanel = desktopBanner.getByTestId('premium-company-glass-panel');
-    const desktopControls = screen.getByRole('button', { name: '배너 일시정지' }).parentElement;
+    const desktopPrimaryLine = desktopBanner.getByTestId('premium-company-primary-line');
+    const desktopLabels = desktopBanner.getByTestId('premium-company-labels');
+    const desktopHeading = desktopBanner.getByRole('heading', { name: '담은생활연구소' });
+    const desktopControls = screen.getByTestId('premium-company-controls');
     expect(desktopGlassPanel).toHaveClass(
       'sm:relative',
       'sm:inset-x-auto',
@@ -279,6 +295,9 @@ describe('PremiumCompanyBanner', () => {
       'sm:h-auto',
       'sm:min-h-24',
     );
+    expect(desktopPrimaryLine).toHaveClass('gap-2');
+    expect(desktopLabels).toHaveClass('gap-1.5', 'text-xs');
+    expect(desktopHeading).toHaveClass('text-base', 'font-extrabold', 'leading-snug', 'sm:text-xl');
     expect(desktopBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass(
       'sm:line-clamp-1',
     );
@@ -295,9 +314,17 @@ describe('PremiumCompanyBanner', () => {
       'sm:bottom-[2.625rem]',
       'sm:h-auto',
       'sm:gap-1',
+      'sm:rounded-none',
       'sm:bg-transparent',
       'sm:px-0',
+      'sm:shadow-none',
+      'sm:ring-0',
+      'sm:backdrop-blur-none',
     );
-    expect(screen.getByLabelText('4개 기업 중 1번째')).toHaveClass('sm:min-w-12');
+    expect(screen.getByLabelText('4개 기업 중 1번째')).toHaveClass(
+      'min-w-10',
+      'text-sm',
+      'sm:min-w-12',
+    );
   });
 });
