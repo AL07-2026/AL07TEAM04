@@ -99,8 +99,15 @@ describe('LandingPage alignment rail', () => {
   it('로그인 상태에서 통일된 인재 회원 뱃지와 내 홈, 로그아웃 버튼을 표시한다', () => {
     render(<LandingPage />);
 
-    expect(screen.getByText('인재 회원')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내 홈으로 이동' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '로그아웃' })).toBeInTheDocument();
+    expect(screen.getByRole('banner')).toHaveClass('site-glass-header');
+    expect(screen.getByText('인재 회원').closest('[aria-label]')).toHaveClass('site-glass-status');
+    expect(screen.getByRole('button', { name: '내 홈으로 이동' })).toHaveClass(
+      'site-glass-primary',
+    );
+    expect(screen.getByRole('button', { name: '로그아웃' })).toHaveClass(
+      'site-glass-control',
+      'site-glass-danger',
+    );
+    expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
   });
 });

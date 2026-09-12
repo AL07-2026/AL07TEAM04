@@ -150,9 +150,39 @@ html {
   backdrop-filter: blur(16px) saturate(135%);
 }
 
-.site-glass-control:hover {
-  border-color: rgb(255 255 255 / 92%);
-  background: rgb(255 255 255 / 82%);
+.site-glass-status {
+  border-color: rgb(255 255 255 / 76%);
+  background: rgb(242 247 245 / 58%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 88%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+}
+
+.site-glass-primary {
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: rgb(23 63 58 / 92%);
+  box-shadow:
+    0 2px 8px rgb(23 63 58 / 12%),
+    inset 0 1px 0 rgb(255 255 255 / 18%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  backdrop-filter: blur(16px) saturate(135%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-glass-control:hover {
+    border-color: rgb(255 255 255 / 92%);
+    background: rgb(255 255 255 / 82%);
+  }
+
+  .site-glass-primary:hover {
+    background: rgb(33 84 78 / 94%);
+  }
+
+  .site-glass-danger:hover {
+    border-color: rgb(254 205 211 / 82%);
+    background: rgb(255 241 242 / 72%);
+    color: rgb(190 18 60);
+  }
 }
 
 .site-primary-nav {

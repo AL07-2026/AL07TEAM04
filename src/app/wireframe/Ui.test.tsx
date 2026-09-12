@@ -7,6 +7,7 @@ import {
   BrandLogo,
   Chip,
   MobilePage,
+  SiteHeader,
   SiteMenu,
   SummaryCard,
   useViewportMode,
@@ -150,6 +151,18 @@ describe('공통 헤더', () => {
       }
     },
   );
+
+  it('역할 메뉴가 없는 헤더도 명시적으로 요청하면 글래스 표면을 사용한다', () => {
+    render(
+      <MemoryRouter>
+        <SiteHeader glass />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('banner')).toHaveClass('site-glass-header');
+    expect(screen.queryByRole('navigation', { name: /주요 메뉴/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
+  });
 
   it('메뉴에서 소개, 커뮤니티, 설문 참여, 문의하기를 제공한다', () => {
     render(

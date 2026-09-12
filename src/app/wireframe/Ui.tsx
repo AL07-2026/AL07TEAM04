@@ -266,18 +266,21 @@ export function SiteHeader({
   activeNav,
   role,
   actions,
+  glass = false,
   onProjectClick,
   showProjectLink = !role,
 }: {
   activeNav?: SeniorNav | CompanyNav;
   role?: Role;
   actions?: ReactNode;
+  glass?: boolean;
   onProjectClick?: () => void;
   showProjectLink?: boolean;
 }): React.JSX.Element {
   const navigate = useNavigate();
+  const glassEnabled = glass || Boolean(role);
   return (
-    <header className={cn('site-header', role && 'site-glass-header')}>
+    <header className={cn('site-header', glassEnabled && 'site-glass-header')}>
       <div className="site-rail site-header-row">
         <button
           type="button"
@@ -318,7 +321,7 @@ export function SiteHeader({
         <div className="site-header-actions">
           {actions}
           <SiteMenu
-            glass={Boolean(role)}
+            glass={glassEnabled}
             onProjectClick={onProjectClick}
             showProjectLink={showProjectLink}
           />
