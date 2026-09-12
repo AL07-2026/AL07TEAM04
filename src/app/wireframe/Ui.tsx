@@ -82,10 +82,12 @@ export function BrandLogo({
 
 export function SiteMenu({
   compact = false,
+  glass = false,
   onProjectClick,
   showProjectLink = false,
 }: {
   compact?: boolean;
+  glass?: boolean;
   onProjectClick?: () => void;
   showProjectLink?: boolean;
 }) {
@@ -125,7 +127,8 @@ export function SiteMenu({
         aria-haspopup="menu"
         aria-label={open ? '더보기 닫기' : '더보기 열기'}
         className={cn(
-          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,transform] duration-150 hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] cursor-pointer',
+          'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D1C2] bg-white font-extrabold text-[#173F3A] transition-[color,background-color,border-color,transform] duration-150 hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] focus-visible:ring-offset-2 active:scale-[0.97] cursor-pointer',
+          glass && 'site-glass-control',
           compact ? 'min-w-11 px-2' : 'px-3.5 text-sm',
         )}
         onClick={() => setOpen((current) => !current)}
@@ -274,7 +277,7 @@ export function SiteHeader({
 }): React.JSX.Element {
   const navigate = useNavigate();
   return (
-    <header className="site-header">
+    <header className={cn('site-header', role && 'site-glass-header')}>
       <div className="site-rail site-header-row">
         <button
           type="button"
@@ -286,7 +289,7 @@ export function SiteHeader({
         </button>
         {role ? (
           <nav
-            className="site-primary-nav"
+            className="site-primary-nav site-glass-nav"
             aria-label={`${role === 'senior' ? '인재' : '회사'} 주요 메뉴`}
           >
             {navItems[role].map((item) => {
@@ -302,7 +305,7 @@ export function SiteHeader({
                     'flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-extrabold transition-colors',
                     selected
                       ? 'bg-[#F06B4F] text-white'
-                      : 'text-slate-600 hover:bg-white hover:text-[#17212B]',
+                      : 'text-slate-600 hover:bg-white/75 hover:text-[#17212B]',
                   )}
                 >
                   <Icon aria-hidden="true" className="size-4 shrink-0" />
@@ -314,7 +317,11 @@ export function SiteHeader({
         ) : null}
         <div className="site-header-actions">
           {actions}
-          <SiteMenu onProjectClick={onProjectClick} showProjectLink={showProjectLink} />
+          <SiteMenu
+            glass={Boolean(role)}
+            onProjectClick={onProjectClick}
+            showProjectLink={showProjectLink}
+          />
         </div>
       </div>
     </header>

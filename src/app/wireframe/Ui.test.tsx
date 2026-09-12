@@ -92,6 +92,11 @@ describe('공통 헤더', () => {
       .getByRole('img', { name: '이어잡' })
       .closest('header')?.firstElementChild;
     expect(headerRail).toHaveClass('site-rail', 'site-header-row');
+    expect(screen.getByRole('banner')).toHaveClass('site-glass-header');
+    expect(screen.getByRole('navigation', { name: '인재 주요 메뉴' })).toHaveClass(
+      'site-glass-nav',
+    );
+    expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
     expect(screen.queryByRole('button', { name: /PC 화면|모바일 화면/ })).not.toBeInTheDocument();
   });
 
@@ -136,6 +141,13 @@ describe('공통 헤더', () => {
         screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header'),
       ).toBeNull();
       expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
+      expect(screen.getByRole('banner')).toHaveClass(role ? 'site-glass-header' : 'site-header');
+      if (!role) {
+        expect(screen.getByRole('banner')).not.toHaveClass('site-glass-header');
+        expect(screen.getByRole('button', { name: '더보기 열기' })).not.toHaveClass(
+          'site-glass-control',
+        );
+      }
     },
   );
 
