@@ -172,17 +172,7 @@ export function LandingPage() {
               <p className="text-[0.875rem] font-bold tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
                 이어잡이 만드는 새로운 연결
               </p>
-              <h2
-                className="mt-2 text-[1.5rem] font-medium leading-tight tracking-normal text-[#17212b] sm:text-[1.875rem]"
-                style={{
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
-                }}
-              >
-                Experience Meets Opportunity
-              </h2>
-
-              <h1 className="mt-10 max-w-4xl text-balance text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:text-[3rem] lg:text-[3.75rem]">
+              <h1 className="mt-5 max-w-4xl text-balance text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:mt-6 sm:text-[3rem] lg:text-[3.75rem]">
                 <span className="text-[#173f3a]">기업</span>의{' '}
                 <span className="text-[#173f3a]">실무</span> 프로젝트와
                 <br />
@@ -228,22 +218,15 @@ export function LandingPage() {
         >
           <div className="site-rail">
             <div>
-              <p className="text-[0.875rem] font-bold uppercase tracking-[0.24em] text-[#F06B4F] sm:text-[1rem]">
-                이어잡의 서비스 특징
-              </p>
               <h2
                 id="service-features-title"
-                className="mt-2 text-[1.5rem] font-medium tracking-normal text-[#17212B] sm:text-[1.875rem]"
-                style={{
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
-                }}
+                className="text-[1.5rem] font-bold leading-tight tracking-normal text-[#F06B4F] sm:text-[1.875rem]"
               >
-                Service Features
+                이어잡의 서비스 특징
               </h2>
             </div>
 
-            <div className="mt-7 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
               {features.map(({ icon: Icon, title, description }) => (
                 <article
                   key={title}

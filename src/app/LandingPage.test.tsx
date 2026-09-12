@@ -61,12 +61,27 @@ describe('LandingPage alignment rail', () => {
 
   it('서비스 특징 카드는 불필요한 순번 없이 아이콘과 내용만 표시한다', () => {
     render(<LandingPage />);
-    const section = screen.getByRole('heading', { name: 'Service Features' }).closest('section');
+    const section = screen
+      .getByRole('heading', { name: '이어잡의 서비스 특징', level: 2 })
+      .closest('section');
 
     expect(screen.queryByText('01')).not.toBeInTheDocument();
     expect(screen.queryByText('02')).not.toBeInTheDocument();
     expect(screen.queryByText('03')).not.toBeInTheDocument();
     expect(section?.querySelectorAll('article svg')).toHaveLength(3);
+  });
+
+  it('중복 영문 제목을 제거하고 한국어 제목만으로 정보 위계를 구성한다', () => {
+    render(<LandingPage />);
+
+    expect(screen.queryByText('Experience Meets Opportunity')).not.toBeInTheDocument();
+    expect(screen.queryByText('Service Features')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '이어잡의 서비스 특징', level: 2 })).toHaveClass(
+      'text-[1.5rem]',
+      'font-bold',
+      'text-[#F06B4F]',
+    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveClass('mt-5', 'sm:mt-6');
   });
 
   it.each(['이어잡이 만드는 새로운 연결', '이어잡의 서비스 특징', '고용노동부 연계 혜택'])(
