@@ -266,7 +266,7 @@ export function SiteHeader({
   activeNav,
   role,
   actions,
-  glass = false,
+  glass = true,
   onProjectClick,
   showProjectLink = !role,
 }: {

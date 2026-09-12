@@ -79,6 +79,13 @@ describe('LoginPage rememberMe persistence', () => {
     );
   });
 
+  it('공개 로그인 헤더와 더보기 버튼에 공통 글래스 표면을 사용한다', () => {
+    render(<LoginPage />);
+
+    expect(screen.getByRole('banner')).toHaveClass('site-header', 'site-glass-header');
+    expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
+  });
+
   it('체크 상태 유지 시 signIn 호출 시 rememberMe=true가 전달된다', async () => {
     signIn.mockResolvedValueOnce({
       email: 'test@example.com',

@@ -142,20 +142,15 @@ describe('공통 헤더', () => {
         screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header'),
       ).toBeNull();
       expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
-      expect(screen.getByRole('banner')).toHaveClass(role ? 'site-glass-header' : 'site-header');
-      if (!role) {
-        expect(screen.getByRole('banner')).not.toHaveClass('site-glass-header');
-        expect(screen.getByRole('button', { name: '더보기 열기' })).not.toHaveClass(
-          'site-glass-control',
-        );
-      }
+      expect(screen.getByRole('banner')).toHaveClass('site-header', 'site-glass-header');
+      expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
     },
   );
 
-  it('역할 메뉴가 없는 헤더도 명시적으로 요청하면 글래스 표면을 사용한다', () => {
+  it('역할 메뉴가 없는 헤더도 기본 글래스 표면을 사용한다', () => {
     render(
       <MemoryRouter>
-        <SiteHeader glass />
+        <SiteHeader />
       </MemoryRouter>,
     );
 
