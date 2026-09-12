@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import {
   ActionButton,
   BrandLogo,
+  Chip,
   MobilePage,
   SiteMenu,
   SummaryCard,
@@ -201,6 +202,37 @@ describe('BrandLogo', () => {
     screen.getAllByRole('img', { name: '이어잡' }).forEach((logo) => {
       expect(logo).toHaveClass('h-7');
     });
+  });
+});
+
+describe('Chip', () => {
+  it('선택 상태를 단색 배경과 그림자 없는 평면 스타일로 표시한다', () => {
+    render(
+      <Chip onClick={vi.fn()} selected>
+        전체
+      </Chip>,
+    );
+
+    const chip = screen.getByRole('button', { name: '전체' });
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    expect(chip).toHaveClass(
+      'bg-[#173F3A]',
+      'h-11',
+      'min-h-11',
+      'shadow-none',
+      'focus-visible:ring-2',
+      'focus-visible:ring-offset-2',
+    );
+    expect(chip).not.toHaveClass('bg-gradient-to-b', 'hover:-translate-y-0.5');
+  });
+
+  it('선택하지 않은 상태를 흰색 배경과 얇은 테두리로 표시한다', () => {
+    render(<Chip onClick={vi.fn()}>진행 중</Chip>);
+
+    const chip = screen.getByRole('button', { name: '진행 중' });
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+    expect(chip).toHaveClass('border-[#D4CBB8]', 'bg-white', 'shadow-none');
+    expect(chip).not.toHaveClass('bg-gradient-to-b', 'hover:-translate-y-0.5');
   });
 });
 

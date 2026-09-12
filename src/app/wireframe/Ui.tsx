@@ -465,16 +465,17 @@ export function Chip({
   const Element = onClick ? 'button' : 'span';
   return (
     <Element
-      aria-pressed={onClick ? selected : undefined}
+      aria-pressed={onClick ? Boolean(selected) : undefined}
       className={cn(
-        'flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-extrabold leading-none transition-all duration-200 break-keep select-none',
-        isMobile ? 'h-[38px] min-h-[38px] px-3.5 text-[13px]' : 'h-11 min-h-11 px-5 text-[14px]',
-        onClick ? 'cursor-pointer' : 'cursor-default',
+        'flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border font-extrabold break-keep select-none transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2',
+        isMobile ? 'h-11 min-h-11 px-3.5 text-[13px]' : 'h-11 min-h-11 px-5 text-[14px]',
+        'leading-none',
+        onClick ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default',
         selected
-          ? 'border border-[#173F3A] bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-white shadow-[0_4px_12px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.98]'
+          ? 'border-[#173F3A] bg-[#173F3A] text-white shadow-none hover:bg-[#21544E]'
           : onClick
-            ? 'border border-[#D4CBB8] bg-gradient-to-b from-white to-[#FAF7F2] text-[#17212B] shadow-[0_2px_4px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-[#173F3A] hover:from-[#F4FAF8] hover:to-[#E5F2EE] hover:text-[#173F3A] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(23,63,58,0.15)] active:translate-y-0 active:scale-[0.98]'
-            : 'border border-[#E0D9C8] bg-[#FAF7F2] text-slate-700 shadow-none',
+            ? 'border-[#D4CBB8] bg-white text-[#354B46] shadow-none hover:border-[#173F3A] hover:bg-[#F2F7F5] hover:text-[#173F3A]'
+            : 'border-[#E0D9C8] bg-[#FAF7F2] text-slate-700 shadow-none',
       )}
       onClick={onClick}
       type={onClick ? 'button' : undefined}
