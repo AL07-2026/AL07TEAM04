@@ -211,31 +211,55 @@ describe('PremiumCompanyBanner', () => {
     const compactImage = activeBanner.getByRole('img', { name: '담은생활연구소 업무 현장' });
     const glassPanel = activeBanner.getByTestId('premium-company-glass-panel');
     const primaryLine = activeBanner.getByTestId('premium-company-primary-line');
-    const linkIndicator = activeBanner.getByTestId('premium-company-link-indicator');
+    const mobileLinkIndicator = activeBanner.getByTestId('premium-company-mobile-link-indicator');
+    const desktopLinkIndicator = activeBanner.getByTestId('premium-company-desktop-link-indicator');
     const controls = screen.getByRole('button', { name: '배너 일시정지' }).parentElement;
+    const position = screen.getByLabelText('4개 기업 중 1번째');
 
     expect(glassPanel).toHaveClass(
       'absolute',
       'inset-x-3',
-      'bottom-3',
-      'min-h-[7.5rem]',
-      'pt-3',
-      'pb-14',
+      'bottom-[4.5rem]',
+      'flex',
+      'h-12',
+      'items-center',
+      'px-3',
       'bg-[#FFFEFC]/62',
       'backdrop-blur-[2px]',
       'supports-[backdrop-filter]:bg-[#FFFEFC]/52',
     );
     expect(glassPanel).not.toHaveClass('-mt-24', 'mb-3');
+    expect(glassPanel).not.toHaveClass('min-h-[7.5rem]');
+    expect(glassPanel).not.toHaveClass('pb-14');
+    expect(glassPanel).not.toHaveClass('min-h-[6.5rem]');
+    expect(glassPanel).not.toHaveClass('pb-11');
     expect(banner).toHaveClass('overflow-hidden');
     expect(companyLink).toHaveClass('relative');
     expect(companyLink).toContainElement(compactImage);
     expect(glassPanel.parentElement).toBe(companyLink);
     expect(primaryLine).toHaveClass('flex', 'items-center');
     expect(activeBanner.getByText('프리미엄 기업')).toHaveClass('text-[#2F0C08]');
-    expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass('truncate');
-    expect(activeBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass('line-clamp-1');
-    expect(linkIndicator).toHaveClass('bottom-6');
-    expect(controls).toHaveClass('absolute', 'bottom-6', 'z-20');
+    expect(activeBanner.getByText('샘플 노출')).toHaveClass('sr-only');
+    expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass(
+      'truncate',
+      'text-base',
+    );
+    expect(activeBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass('hidden');
+    expect(mobileLinkIndicator).toHaveClass('size-8');
+    expect(desktopLinkIndicator).toHaveClass('hidden');
+    expect(controls).toHaveClass(
+      'absolute',
+      'right-3',
+      'bottom-3',
+      'z-20',
+      'h-11',
+      'gap-0',
+      'rounded-xl',
+    );
+    expect(position).toHaveClass('min-w-10');
+    for (const name of ['배너 일시정지', '이전 기업', '다음 기업']) {
+      expect(screen.getByRole('button', { name })).toHaveClass('size-11');
+    }
     expect(banner).toContainElement(glassPanel);
 
     cleanup();
@@ -243,6 +267,7 @@ describe('PremiumCompanyBanner', () => {
 
     const desktopBanner = within(activeCompany('담은생활연구소'));
     const desktopGlassPanel = desktopBanner.getByTestId('premium-company-glass-panel');
+    const desktopControls = screen.getByRole('button', { name: '배너 일시정지' }).parentElement;
     expect(desktopGlassPanel).toHaveClass(
       'sm:relative',
       'sm:inset-x-auto',
@@ -250,10 +275,29 @@ describe('PremiumCompanyBanner', () => {
       'sm:mx-4',
       'sm:-mt-28',
       'sm:mb-4',
+      'sm:block',
+      'sm:h-auto',
       'sm:min-h-24',
     );
-    expect(screen.getByRole('button', { name: '배너 일시정지' }).parentElement).toHaveClass(
+    expect(desktopBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass(
+      'sm:line-clamp-1',
+    );
+    expect(desktopBanner.getByTestId('premium-company-mobile-link-indicator')).toHaveClass(
+      'sm:hidden',
+    );
+    expect(desktopBanner.getByTestId('premium-company-desktop-link-indicator')).toHaveClass(
+      'sm:grid',
+      'sm:right-[14.25rem]',
       'sm:bottom-[2.625rem]',
     );
+    expect(desktopControls).toHaveClass(
+      'sm:right-8',
+      'sm:bottom-[2.625rem]',
+      'sm:h-auto',
+      'sm:gap-1',
+      'sm:bg-transparent',
+      'sm:px-0',
+    );
+    expect(screen.getByLabelText('4개 기업 중 1번째')).toHaveClass('sm:min-w-12');
   });
 });

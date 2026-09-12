@@ -157,12 +157,12 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'absolute inset-x-3 bottom-3 z-10 min-h-[7.5rem] rounded-xl bg-[#FFFEFC]/62 px-4 pt-3 pb-14 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
+                  'absolute inset-x-3 bottom-[4.5rem] z-10 flex h-12 items-center rounded-xl bg-[#FFFEFC]/62 px-3 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
                   !isCompact &&
-                    'sm:relative sm:inset-x-auto sm:bottom-auto sm:mx-4 sm:-mt-28 sm:mb-4 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
+                    'sm:relative sm:inset-x-auto sm:bottom-auto sm:mx-4 sm:-mt-28 sm:mb-4 sm:block sm:h-auto sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div
                     className="flex min-w-0 items-center gap-2"
                     data-testid="premium-company-primary-line"
@@ -170,16 +170,41 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                     <div className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
                       <span className="text-[#2F0C08]">프리미엄 기업</span>
                       {company.isSample ? (
-                        <span className={cn('text-[#061C1A]', isCompact && 'sr-only')}>
+                        <span
+                          className={cn(
+                            'text-[#061C1A]',
+                            isCompact ? 'sr-only' : 'hidden sm:inline',
+                          )}
+                        >
                           샘플 노출
                         </span>
                       ) : null}
                     </div>
-                    <h3 className="min-w-0 truncate text-lg font-extrabold leading-snug text-[#061C1A] sm:text-xl">
+                    <h3
+                      className={cn(
+                        'min-w-0 truncate text-base font-extrabold leading-snug text-[#061C1A]',
+                        !isCompact && 'sm:text-xl',
+                      )}
+                    >
                       {company.companyName}
                     </h3>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'ml-auto grid size-8 shrink-0 place-items-center text-[#061C1A]',
+                        !isCompact && 'sm:hidden',
+                      )}
+                      data-testid="premium-company-mobile-link-indicator"
+                    >
+                      <ArrowUpRight className="size-5" />
+                    </span>
                   </div>
-                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-[#0F1917]">
+                  <p
+                    className={cn(
+                      'hidden text-sm text-[#0F1917]',
+                      !isCompact && 'sm:mt-1 sm:line-clamp-1 sm:leading-6',
+                    )}
+                  >
                     {company.headline}
                   </p>
                 </div>
@@ -187,12 +212,10 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <span
                 aria-hidden="true"
                 className={cn(
-                  'absolute z-20 grid size-11 place-items-center text-[#061C1A]',
-                  isCompact
-                    ? 'right-[13.5rem] bottom-6'
-                    : 'right-[13.5rem] bottom-6 sm:right-[14.25rem] sm:bottom-[2.625rem]',
+                  'absolute z-20 hidden size-11 place-items-center text-[#061C1A]',
+                  !isCompact && 'sm:right-[14.25rem] sm:bottom-[2.625rem] sm:grid',
                 )}
-                data-testid="premium-company-link-indicator"
+                data-testid="premium-company-desktop-link-indicator"
               >
                 <ArrowUpRight className="size-5" />
               </span>
@@ -202,8 +225,9 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       </div>
       <div
         className={cn(
-          'absolute right-5 z-20 flex items-center justify-end gap-1',
-          isCompact ? 'bottom-6' : 'bottom-6 sm:right-8 sm:bottom-[2.625rem]',
+          'absolute right-3 bottom-3 z-20 flex h-11 items-center justify-end gap-0 rounded-xl bg-[#FFFEFC]/58 px-1 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px]',
+          !isCompact &&
+            'sm:right-8 sm:bottom-[2.625rem] sm:h-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:px-0 sm:shadow-none sm:ring-0 sm:backdrop-blur-none',
         )}
         onKeyDown={(event) => {
           if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
@@ -227,7 +251,10 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         </button>
         <span
           aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`}
-          className="min-w-12 text-center text-sm font-semibold tabular-nums text-[#0F1917]"
+          className={cn(
+            'min-w-10 text-center text-sm font-semibold tabular-nums text-[#0F1917]',
+            !isCompact && 'sm:min-w-12',
+          )}
         >
           <span className="font-extrabold text-[#061C1A]">{currentIndex + 1}</span> /{' '}
           {companies.length}
