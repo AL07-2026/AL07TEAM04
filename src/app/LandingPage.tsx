@@ -218,15 +218,18 @@ export function LandingPage() {
         >
           <div className="site-rail">
             <div>
+              <p className="text-[0.875rem] font-bold text-[#F06B4F] sm:text-[1rem]">
+                이어잡의 서비스 특징
+              </p>
               <h2
                 id="service-features-title"
-                className="text-[1.5rem] font-bold leading-tight tracking-normal text-[#F06B4F] sm:text-[1.875rem]"
+                className="mt-2 max-w-2xl text-balance text-[1.375rem] font-black leading-snug tracking-normal text-[#17212B] sm:text-[1.875rem]"
               >
-                이어잡의 서비스 특징
+                경험을 프로젝트로 연결하는 세 가지 방식
               </h2>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
+            <div className="mt-7 grid gap-4 sm:mt-8 sm:gap-5 md:mt-10 md:grid-cols-3 md:gap-7">
               {features.map(({ icon: Icon, title, description }) => (
                 <article
                   key={title}

@@ -62,7 +62,7 @@ describe('LandingPage alignment rail', () => {
   it('서비스 특징 카드는 불필요한 순번 없이 아이콘과 내용만 표시한다', () => {
     render(<LandingPage />);
     const section = screen
-      .getByRole('heading', { name: '이어잡의 서비스 특징', level: 2 })
+      .getByRole('heading', { name: '경험을 프로젝트로 연결하는 세 가지 방식', level: 2 })
       .closest('section');
 
     expect(screen.queryByText('01')).not.toBeInTheDocument();
@@ -76,11 +76,13 @@ describe('LandingPage alignment rail', () => {
 
     expect(screen.queryByText('Experience Meets Opportunity')).not.toBeInTheDocument();
     expect(screen.queryByText('Service Features')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '이어잡의 서비스 특징', level: 2 })).toHaveClass(
-      'text-[1.5rem]',
-      'font-bold',
-      'text-[#F06B4F]',
-    );
+    expect(
+      screen.getByRole('heading', {
+        name: '경험을 프로젝트로 연결하는 세 가지 방식',
+        level: 2,
+      }),
+    ).toHaveClass('mt-2', 'text-[1.375rem]', 'font-black', 'text-[#17212B]');
+    expect(screen.getByText('이어잡의 서비스 특징')).toHaveClass('font-bold', 'text-[#F06B4F]');
     expect(screen.getByRole('heading', { level: 1 })).toHaveClass('mt-5', 'sm:mt-6');
   });
 
