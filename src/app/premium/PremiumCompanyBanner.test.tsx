@@ -179,10 +179,10 @@ describe('PremiumCompanyBanner', () => {
     expect(listPremiumCompaniesWithFallback).toHaveBeenCalledWith(4);
   });
 
-  it('모바일 비율은 유지하고 웹 배너는 직전 높이에서 위아래 3%씩 줄인다', async () => {
+  it('모바일은 원본 3:2 비율을 사용하고 웹 배너 비율은 유지한다', async () => {
     await renderBanner();
     const compactImage = screen.getByRole('img', { name: '담은생활연구소 업무 현장' });
-    expect(compactImage).toHaveClass('aspect-[400/297]', 'object-center');
+    expect(compactImage).toHaveClass('aspect-[3/2]', 'object-center');
     expect(compactImage).toHaveAttribute('height', '800');
     expect(compactImage).toHaveAttribute('width', '1200');
 
@@ -215,6 +215,7 @@ describe('PremiumCompanyBanner', () => {
 
     expect(glassPanel).toHaveClass(
       '-mt-24',
+      'mb-3',
       'bg-[#FFFEFC]/62',
       'backdrop-blur-[2px]',
       'supports-[backdrop-filter]:bg-[#FFFEFC]/52',
@@ -223,8 +224,8 @@ describe('PremiumCompanyBanner', () => {
     expect(activeBanner.getByText('프리미엄 기업')).toHaveClass('text-[#2F0C08]');
     expect(activeBanner.getByRole('heading', { name: '담은생활연구소' })).toHaveClass('truncate');
     expect(activeBanner.getByText('경험이 브랜드의 기준이 되는 곳')).toHaveClass('line-clamp-1');
-    expect(linkIndicator).toHaveClass('bottom-5');
-    expect(controls).toHaveClass('absolute', 'bottom-5', 'z-20');
+    expect(linkIndicator).toHaveClass('bottom-8');
+    expect(controls).toHaveClass('absolute', 'bottom-8', 'z-20');
     expect(banner).toContainElement(glassPanel);
 
     cleanup();

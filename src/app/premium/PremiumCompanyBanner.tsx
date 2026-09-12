@@ -23,7 +23,7 @@ function CompanyBannerImage({
   const [failed, setFailed] = useState(false);
   const imageClassName = cn(
     'w-full bg-[#EAF2EF] object-cover object-center',
-    compact ? 'aspect-[400/297]' : 'aspect-[400/297] sm:aspect-[1600/893]',
+    compact ? 'aspect-[3/2]' : 'aspect-[400/297] sm:aspect-[1600/893]',
   );
 
   return failed ? (
@@ -157,7 +157,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'relative z-10 mx-3 -mt-24 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/62 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
+                  'relative z-10 mx-3 -mt-24 mb-3 min-h-[8.25rem] rounded-xl bg-[#FFFEFC]/62 px-4 pt-4 pb-[4.25rem] shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
                   !isCompact && 'sm:mx-4 sm:-mt-28 sm:mb-4 sm:min-h-24 sm:px-6 sm:py-4 sm:pr-72',
                 )}
               >
@@ -186,8 +186,10 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <span
                 aria-hidden="true"
                 className={cn(
-                  'absolute right-[13.5rem] bottom-5 z-20 grid size-11 place-items-center text-[#061C1A]',
-                  !isCompact && 'sm:right-[14.25rem] sm:bottom-[2.625rem]',
+                  'absolute z-20 grid size-11 place-items-center text-[#061C1A]',
+                  isCompact
+                    ? 'right-[13.5rem] bottom-8'
+                    : 'right-[13.5rem] bottom-5 sm:right-[14.25rem] sm:bottom-[2.625rem]',
                 )}
                 data-testid="premium-company-link-indicator"
               >
@@ -199,8 +201,8 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       </div>
       <div
         className={cn(
-          'absolute right-5 bottom-5 z-20 flex items-center justify-end gap-1',
-          !isCompact && 'sm:right-8 sm:bottom-[2.625rem]',
+          'absolute right-5 z-20 flex items-center justify-end gap-1',
+          isCompact ? 'bottom-8' : 'bottom-5 sm:right-8 sm:bottom-[2.625rem]',
         )}
         onKeyDown={(event) => {
           if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
