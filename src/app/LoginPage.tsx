@@ -4,6 +4,8 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Home,
   LogIn,
   LogOut,
@@ -18,46 +20,131 @@ import { isSuperAdminEmail } from '@/lib/adminAccess';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 
-const bannerSlides = [
+type BannerSlide = {
+  alt: string;
+  description: string;
+  height: number;
+  id: number;
+  image: string;
+  imageLoginPc?: string;
+  imageMobile?: string;
+  tag: string;
+  title: string;
+  width: number;
+};
+
+const homeBannerSlides: BannerSlide[] = [
   {
+    alt: '이어잡의 경험 기반 프로젝트 연결 안내',
+    description: '해결해 본 사람과 해결이 필요한 조직을 잇습니다.',
+    height: 556,
     id: 1,
-    imagePcHome: '/eojob_pc_home_banner.png',
+    image: '/eojob_pc_home_banner.png',
     imageLoginPc: '/eojob_login_pc_banner.png',
     imageMobile: '/eojob_mobile_banner.png',
     tag: '이어잡 메인',
     title: '당신의 경험이, 다음 해답이 되도록',
-    description: '해결해 본 사람과 해결이 필요한 조직을 잇습니다.',
+    width: 1024,
   },
   {
+    alt: '이어잡 AI 경험 인터뷰 안내',
+    description: '음성 대화로 답하면 전용 경험 카드가 자동 생성됩니다.',
+    height: 556,
     id: 2,
-    imagePcHome: '/eojob_pc_home_banner.png',
+    image: '/eojob_pc_home_banner.png',
     imageLoginPc: '/eojob_login_pc_banner.png',
     imageMobile: '/eojob_mobile_banner.png',
     tag: 'AI 경험 인터뷰',
     title: '10분 만에 완성하는 경험 카드',
-    description: '음성 대화로 답하면 전용 경험 카드가 자동 생성됩니다.',
+    width: 1024,
   },
   {
+    alt: '이어잡의 시니어 전문가와 기업 프로젝트 연결 안내',
+    description: '필요한 전문 프로젝트를 경험 카드로 연결해 보세요.',
+    height: 556,
     id: 3,
-    imagePcHome: '/eojob_pc_home_banner.png',
+    image: '/eojob_pc_home_banner.png',
     imageLoginPc: '/eojob_login_pc_banner.png',
     imageMobile: '/eojob_mobile_banner.png',
     tag: '핵심 프로젝트 연결',
     title: '검증된 실무 인재와 기업 프로젝트 매칭',
-    description: '필요한 전문 프로젝트를 경험 카드로 연결해 보세요.',
+    width: 1024,
   },
 ];
 
+const loginBannerSlides: BannerSlide[] = [
+  {
+    alt: '제조 현장에서 부품 품질을 함께 검토하는 시니어 전문가와 동료',
+    description: '축적된 제조 경험으로 공정과 제품의 개선 지점을 찾아냅니다.',
+    height: 926,
+    id: 1,
+    image: '/login-banners/senior-field-manufacturing-quality.png',
+    tag: '제조 품질 개선',
+    title: '현장의 기준을 함께 세우는 경험',
+    width: 1699,
+  },
+  {
+    alt: '물류 현장에서 작업 동선을 점검하는 시니어 전문가와 동료',
+    description: '현장을 이해하는 운영 노하우로 더 나은 물류 흐름을 설계합니다.',
+    height: 926,
+    id: 2,
+    image: '/login-banners/senior-field-logistics-operations.png',
+    tag: '물류 운영 최적화',
+    title: '경험으로 연결하는 효율적인 현장',
+    width: 1698,
+  },
+  {
+    alt: '설비 상태를 점검하는 시니어 시설 전문가와 동료',
+    description: '설비와 에너지의 작은 이상까지 실무의 눈으로 진단합니다.',
+    height: 926,
+    id: 3,
+    image: '/login-banners/senior-field-facilities-energy.png',
+    tag: '시설·에너지 진단',
+    title: '안전과 효율을 지키는 전문성',
+    width: 1698,
+  },
+  {
+    alt: '사무실에서 프로젝트 일정과 원가를 검토하는 시니어 전문가와 동료들',
+    description: '일정과 원가를 함께 살피며 프로젝트의 해법을 구체화합니다.',
+    height: 926,
+    id: 4,
+    image: '/login-banners/senior-office-project-operations.png',
+    tag: '프로젝트 운영 개선',
+    title: '복잡한 과제를 선명하게 만드는 경험',
+    width: 1699,
+  },
+  {
+    alt: '사무실에서 디지털 업무 과정을 분석하는 시니어 전문가와 동료들',
+    description: '현장 지식과 디지털 도구를 연결해 일하는 방식을 개선합니다.',
+    height: 926,
+    id: 5,
+    image: '/login-banners/senior-office-digital-process.png',
+    tag: '디지털 업무 혁신',
+    title: '세대의 강점을 잇는 새로운 방식',
+    width: 1698,
+  },
+];
+
+const BANNER_ROTATION_INTERVAL_MS = 6_500;
+const bannerControlClassName =
+  'grid size-8 shrink-0 place-items-center rounded-full transition-colors hover:bg-[#DDEBE7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-1 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100';
+
 export function RollingBanner({
   isCompact = false,
+  slideSet = 'home',
   variant = 'pc-home',
 }: {
   isCompact?: boolean;
+  slideSet?: 'home' | 'login';
   variant?: 'pc-home' | 'login-desktop' | 'mobile';
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const slides = slideSet === 'login' ? loginBannerSlides : homeBannerSlides;
+  const effectiveVariant = isCompact ? 'mobile' : variant;
+  const slide = slides[currentIndex]!;
+  const isPlaying = slides.length > 1 && !isPaused && !prefersReducedMotion;
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -69,80 +156,153 @@ export function RollingBanner({
   }, []);
 
   useEffect(() => {
-    if (isCompact || isPaused || prefersReducedMotion) return;
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % bannerSlides.length);
-    }, 6500);
-    return () => clearInterval(timer);
-  }, [isCompact, isPaused, prefersReducedMotion]);
+    const compactCanRotate = !isCompact || slideSet === 'login';
+    if (!compactCanRotate || !isPlaying) return;
+    const timer = window.setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, BANNER_ROTATION_INTERVAL_MS);
+    return () => window.clearTimeout(timer);
+  }, [currentIndex, isCompact, isPlaying, slideSet, slides.length]);
 
-  const slide = bannerSlides[currentIndex]!;
-  const effectiveVariant = isCompact ? 'mobile' : variant;
   const slideImage =
     effectiveVariant === 'mobile'
-      ? slide.imageMobile
+      ? (slide.imageMobile ?? slide.image)
       : effectiveVariant === 'login-desktop'
-        ? slide.imageLoginPc
-        : slide.imagePcHome;
+        ? (slide.imageLoginPc ?? slide.image)
+        : slide.image;
   const imageFitClassName =
     effectiveVariant === 'login-desktop'
-      ? 'w-full h-full object-cover object-[center_40%]'
-      : effectiveVariant === 'mobile'
-        ? 'w-full h-full object-cover object-[center_45%]'
-        : 'w-full h-full object-cover object-[center_45%]';
+      ? 'h-full w-full object-cover object-[center_40%]'
+      : 'h-full w-full object-cover object-[center_45%]';
+
+  useEffect(() => {
+    if (typeof window.Image !== 'function' || slides.length < 2) return;
+    const nextSlide = slides[(currentIndex + 1) % slides.length]!;
+    const nextImage =
+      effectiveVariant === 'mobile'
+        ? (nextSlide.imageMobile ?? nextSlide.image)
+        : effectiveVariant === 'login-desktop'
+          ? (nextSlide.imageLoginPc ?? nextSlide.image)
+          : nextSlide.image;
+    const image = new window.Image();
+    image.src = nextImage;
+  }, [currentIndex, effectiveVariant, slides]);
+
+  function move(direction: number) {
+    setCurrentIndex((index) => (index + direction + slides.length) % slides.length);
+  }
+
+  const controls = (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsPaused((paused) => !paused)}
+        className={bannerControlClassName}
+        aria-label={isPlaying ? '배너 일시정지' : '배너 자동 재생'}
+        disabled={prefersReducedMotion}
+        title={prefersReducedMotion ? '동작 줄이기 설정으로 자동 재생이 꺼져 있습니다.' : undefined}
+      >
+        {isPlaying ? (
+          <Pause aria-hidden="true" className="size-3.5" />
+        ) : (
+          <Play aria-hidden="true" className="size-3.5" />
+        )}
+      </button>
+      <span
+        aria-label={`${slides.length}개 배너 중 ${currentIndex + 1}번째`}
+        className="min-w-9 text-center text-[11px] font-bold tabular-nums sm:min-w-10 sm:text-xs"
+      >
+        {currentIndex + 1} / {slides.length}
+      </span>
+      <button
+        type="button"
+        onClick={() => move(-1)}
+        className={bannerControlClassName}
+        aria-label="이전 배너"
+      >
+        <ChevronLeft aria-hidden="true" className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => move(1)}
+        className={bannerControlClassName}
+        aria-label="다음 배너"
+      >
+        <ChevronRight aria-hidden="true" className="size-4" />
+      </button>
+    </>
+  );
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      {/* 100% Full-Width Dimension-Matched Banner Graphic Image */}
+    <section
+      aria-label="이어잡 현장 프로젝트 소개"
+      aria-roledescription="캐러셀"
+      className="flex w-full flex-col gap-2"
+    >
       <div
         className={cn(
           'relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-[#E0D9C8] bg-[#FAF6EF] shadow-2xs',
-          effectiveVariant === 'mobile'
-            ? 'h-[clamp(170px,26dvh,225px)]'
-            : effectiveVariant === 'login-desktop'
-              ? 'h-[clamp(210px,32dvh,310px)]'
-              : 'h-[clamp(250px,32vw,380px)]',
+          slideSet === 'login'
+            ? 'aspect-[849/463]'
+            : effectiveVariant === 'mobile'
+              ? 'h-[clamp(170px,26dvh,225px)]'
+              : effectiveVariant === 'login-desktop'
+                ? 'h-[clamp(210px,32dvh,310px)]'
+                : 'h-[clamp(250px,32vw,380px)]',
         )}
       >
         <img
+          key={slide.id}
           src={slideImage}
-          alt={slide.title}
-          width={1024}
-          height={556}
+          alt={slide.alt}
+          width={slide.width}
+          height={slide.height}
           decoding="async"
-          className={cn('h-full w-full', imageFitClassName)}
+          fetchPriority={currentIndex === 0 ? 'high' : 'auto'}
+          loading={currentIndex === 0 ? 'eager' : 'lazy'}
+          className={imageFitClassName}
         />
+        {isCompact && slideSet === 'login' ? (
+          <div className="absolute right-2 bottom-2 z-10 flex items-center gap-0.5 rounded-full border border-white/60 bg-white/82 p-0.5 text-[#173F3A] shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/72">
+            {controls}
+          </div>
+        ) : null}
       </div>
 
-      {/* Clean Text Description Below the Image */}
-      {!isCompact && (
-        <div className="flex flex-col gap-1.5 px-1 pt-2 md:pt-2.5 pb-1">
+      {!isCompact ? (
+        <div className="flex flex-col gap-1.5 px-1 pt-2 pb-1 md:pt-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 overflow-hidden pt-2.5">
-              <span className="shrink-0 whitespace-nowrap text-sm md:text-base font-extrabold text-[#F06B4F] leading-tight">
+              <span className="shrink-0 whitespace-nowrap text-sm font-extrabold leading-tight text-[#F06B4F] md:text-base">
                 {slide.tag}
               </span>
-              <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-slate-300 mx-0.5" />
+              <span aria-hidden="true" className="mx-0.5 h-3.5 w-px shrink-0 bg-slate-300" />
               <strong className="truncate text-sm font-extrabold leading-tight text-[#17212B] md:text-base">
                 {slide.title}
               </strong>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsPaused((paused) => !paused)}
-              className="mt-2.5 inline-flex items-center gap-1 rounded-full border border-slate-300 px-2 py-0.5 text-2xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
-              aria-label={isPaused ? '배너 재생' : '배너 일시정지'}
-            >
-              {isPaused ? <Play className="size-3" /> : <Pause className="size-3" />}
-              <span>{isPaused ? '재생' : '일시정지'}</span>
-            </button>
+            {slideSet === 'login' ? (
+              <div className="mt-1.5 flex shrink-0 items-center gap-0.5 rounded-full border border-slate-300 bg-white/80 p-0.5 text-slate-600 shadow-2xs backdrop-blur-sm">
+                {controls}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsPaused((paused) => !paused)}
+                className="mt-2.5 inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-300 px-2 py-0.5 text-2xs font-semibold text-slate-600 hover:bg-slate-100"
+                aria-label={isPlaying ? '배너 일시정지' : '배너 재생'}
+              >
+                {isPlaying ? <Pause className="size-3" /> : <Play className="size-3" />}
+                <span>{isPlaying ? '일시정지' : '재생'}</span>
+              </button>
+            )}
           </div>
-          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 md:text-sm text-left">
+          <p className="line-clamp-2 text-left text-xs leading-relaxed text-slate-600 md:text-sm">
             {slide.description}
           </p>
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -435,7 +595,7 @@ export function LoginPage() {
           </div>
 
           {/* Compact Rolling Banner */}
-          <RollingBanner isCompact />
+          <RollingBanner isCompact slideSet="login" />
 
           {/* Login Form */}
           <form className="flex flex-col gap-3 pt-0.5" onSubmit={submit}>
@@ -620,7 +780,7 @@ export function LoginPage() {
           </div>
 
           {/* Borderless Rolling Banner */}
-          <RollingBanner variant="login-desktop" />
+          <RollingBanner slideSet="login" variant="login-desktop" />
         </div>
 
         {/* Right Side: Role Selector Tabs & Login Form (PC: col-span-5) */}

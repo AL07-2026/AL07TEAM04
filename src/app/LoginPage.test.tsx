@@ -1,12 +1,19 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as UiModule from '@/app/wireframe/Ui';
-import { LoginPage } from '@/app/LoginPage';
+import { LoginPage, RollingBanner } from '@/app/LoginPage';
 
 const navigate = vi.fn();
 const signIn = vi.fn();
 const signInWithGoogle = vi.fn();
+const loginBannerImages = [
+  '/login-banners/senior-field-manufacturing-quality.png',
+  '/login-banners/senior-field-logistics-operations.png',
+  '/login-banners/senior-field-facilities-energy.png',
+  '/login-banners/senior-office-project-operations.png',
+  '/login-banners/senior-office-digital-process.png',
+];
 
 vi.mock('react-router', () => ({
   Link: ({
@@ -156,5 +163,54 @@ describe('LoginPage rememberMe persistence', () => {
     await waitFor(() => {
       expect(signInWithGoogle).toHaveBeenCalledWith('senior', false);
     });
+  });
+});
+
+describe('LoginPage rolling banner', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('로그인 배너 5장을 6.5초마다 순환하고 원본 비율 프레임을 유지한다', async () => {
+    vi.useFakeTimers();
+    render(<RollingBanner slideSet="login" variant="login-desktop" />);
+
+    const image = screen.getByRole('img');
+    expect(image).toHaveAttribute('src', loginBannerImages[0]);
+    expect(image.parentElement).toHaveClass('aspect-[849/463]');
+    expect(screen.getByLabelText('5개 배너 중 1번째')).toBeInTheDocument();
+
+    for (let index = 1; index < loginBannerImages.length; index += 1) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(6_500);
+      });
+      expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[index]);
+    }
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6_500);
+    });
+    expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[0]);
+  });
+
+  it('모바일에서도 자동 순환하며 일시정지와 수동 이동을 제공한다', async () => {
+    vi.useFakeTimers();
+    render(<RollingBanner isCompact slideSet="login" />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6_500);
+    });
+    expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[1]);
+
+    fireEvent.click(screen.getByRole('button', { name: '배너 일시정지' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(13_000);
+    });
+    expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[1]);
+
+    fireEvent.click(screen.getByRole('button', { name: '다음 배너' }));
+    expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[2]);
+    fireEvent.click(screen.getByRole('button', { name: '이전 배너' }));
+    expect(screen.getByRole('img')).toHaveAttribute('src', loginBannerImages[1]);
   });
 });
