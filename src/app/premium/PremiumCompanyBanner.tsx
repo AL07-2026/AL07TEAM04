@@ -9,7 +9,7 @@ import { listPremiumCompaniesWithFallback } from '@/services/premiumCompanyServi
 const ROTATION_INTERVAL_MS = 6_500;
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const controlClassName =
-  'grid size-10 shrink-0 place-items-center rounded-xl text-[#061C1A] transition-colors hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100 sm:size-11';
+  'grid size-11 shrink-0 place-items-center rounded-xl text-[#061C1A] transition-colors hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:active:scale-100';
 
 function CompanyBannerImage({
   company,
@@ -83,7 +83,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
   useEffect(() => {
     const onVisibilityChange = () => setPageHidden(document.hidden);
     document.addEventListener('visibilitychange', onVisibilityChange);
-    const media =
+    const motionMedia =
       typeof window.matchMedia === 'function' ? window.matchMedia(REDUCED_MOTION_QUERY) : null;
     const onMotionChange = (event: MediaQueryListEvent) => {
       setReducedMotion(event.matches);
@@ -92,10 +92,10 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         setAnimated(false);
       }
     };
-    media?.addEventListener('change', onMotionChange);
+    motionMedia?.addEventListener('change', onMotionChange);
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      media?.removeEventListener('change', onMotionChange);
+      motionMedia?.removeEventListener('change', onMotionChange);
     };
   }, []);
 
@@ -157,7 +157,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
               <div
                 data-testid="premium-company-glass-panel"
                 className={cn(
-                  'absolute inset-x-3 bottom-3 z-10 flex h-12 items-center overflow-hidden rounded-xl bg-[#FFFEFC]/62 px-3 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
+                  'absolute inset-x-3 bottom-3 z-10 flex h-12 items-center overflow-hidden rounded-xl bg-[#FFFEFC]/62 pr-[7.75rem] pl-3 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/52',
                   !isCompact &&
                     'sm:relative sm:inset-x-auto sm:bottom-auto sm:mx-4 sm:-mt-28 sm:mb-4 sm:block sm:h-auto sm:min-h-24 sm:overflow-visible sm:px-6 sm:py-4 sm:pr-72',
                 )}
@@ -169,7 +169,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                   >
                     <div
                       className={cn(
-                        'flex shrink-0 items-center gap-1 text-xs font-semibold max-sm:!text-[11px]',
+                        'hidden shrink-0 items-center gap-1 text-xs font-semibold max-sm:!text-[11px] min-[380px]:flex',
                         !isCompact && 'sm:gap-1.5',
                       )}
                       data-testid="premium-company-labels"
@@ -189,16 +189,6 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
                     >
                       {company.companyName}
                     </h3>
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'ml-auto grid size-8 shrink-0 place-items-center text-[#061C1A]',
-                        !isCompact && 'sm:hidden',
-                      )}
-                      data-testid="premium-company-mobile-link-indicator"
-                    >
-                      <ArrowUpRight className="size-5" />
-                    </span>
                   </div>
                   <p
                     className={cn(
@@ -225,12 +215,13 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         })}
       </div>
       <div
+        aria-label="기업 배너 탐색"
         className={cn(
-          'absolute top-3 left-3 z-20 flex h-10 items-center gap-0 rounded-xl bg-[#FFFEFC]/58 px-0.5 shadow-[0_2px_8px_rgba(23,63,58,0.12)] ring-1 ring-inset ring-white/70 backdrop-blur-[2px] supports-[backdrop-filter]:bg-[#FFFEFC]/48',
-          !isCompact &&
-            'sm:top-auto sm:right-8 sm:bottom-[2.625rem] sm:left-auto sm:h-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:px-0 sm:shadow-none sm:ring-0 sm:backdrop-blur-none sm:supports-[backdrop-filter]:bg-transparent',
+          'absolute right-3 bottom-3 z-20 flex h-12 items-center gap-0',
+          !isCompact && 'sm:right-8 sm:bottom-[2.625rem] sm:h-auto sm:gap-1',
         )}
         data-testid="premium-company-controls"
+        role="group"
         onKeyDown={(event) => {
           if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
           event.preventDefault();
@@ -239,7 +230,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
       >
         <button
           aria-label={playing && !reducedMotion ? '배너 일시정지' : '배너 자동 재생'}
-          className={controlClassName}
+          className={cn(controlClassName, 'hidden', !isCompact && 'sm:grid')}
           disabled={!canRotate || reducedMotion}
           onClick={() => setPlaying((value) => !value)}
           title={reducedMotion ? '동작 줄이기 설정으로 자동 재생이 꺼져 있습니다.' : undefined}
@@ -254,7 +245,7 @@ export function PremiumCompanyBanner({ isCompact = false }: { isCompact?: boolea
         <span
           aria-label={`${companies.length}개 기업 중 ${currentIndex + 1}번째`}
           className={cn(
-            'min-w-7 text-center text-sm font-semibold tabular-nums text-[#0F1917] max-sm:!text-[11px]',
+            'min-w-8 text-center text-sm font-semibold tabular-nums text-[#0F1917] max-sm:!text-xs',
             !isCompact && 'sm:min-w-12',
           )}
         >
