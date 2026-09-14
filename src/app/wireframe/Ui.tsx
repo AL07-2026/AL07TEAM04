@@ -338,7 +338,7 @@ const navItems = {
     { id: 'profile', label: '내 정보', path: '/senior/profile', Icon: User },
   ],
   company: [
-    { id: 'database', label: '프로젝트', path: '/company/project-database', Icon: FolderKanban },
+    { id: 'database', label: '인재탐색', path: '/company/project-database', Icon: FolderKanban },
     { id: 'home', label: '홈', path: '/company', Icon: Home },
     { id: 'proposals', label: '받은 제안', path: '/company/proposals', Icon: Inbox },
     { id: 'profile', label: '내 정보', path: '/company/profile', Icon: Building2 },

@@ -48,7 +48,10 @@ import {
   createLoginRedirectPath,
   LOGIN_REQUIRED_NAVIGATION_STATE,
 } from '@/app/authRequiredNavigation';
-import { getCompanyOwnedProjects } from '@/app/jobDatabaseProjectVisibility';
+import {
+  getCompanyOwnedProjects,
+  isProjectOpenForApplications,
+} from '@/app/jobDatabaseProjectVisibility';
 import type {
   EmploymentType,
   HiringStage,
@@ -880,18 +883,104 @@ function RecommendedTalentCard({
         <span className="min-w-0 truncate text-[12px] font-extrabold text-slate-500">
           {talent.workType} · {talent.availability}
         </span>
-        <button
-          className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] px-4 py-1.5 text-[13px] font-extrabold text-white shadow-2xs transition-all duration-200 hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]"
-          onClick={(event) => {
-            event.stopPropagation();
-            onPropose();
-          }}
-          type="button"
-        >
-          제안하기
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            aria-label={`${talent.name} 상세 프로필 보기`}
+            className="rounded-xl px-2.5 py-1.5 text-[12px] font-extrabold text-[#173F3A] transition hover:bg-[#EAF4F1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect();
+            }}
+            type="button"
+          >
+            프로필 보기
+          </button>
+          <button
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#D85A3F] bg-gradient-to-b from-[#F57B61] via-[#F06B4F] to-[#D85A3F] px-4 py-1.5 text-[13px] font-extrabold text-white shadow-2xs transition-all duration-200 hover:from-[#F78B73] hover:via-[#F2755B] hover:to-[#E06146] active:scale-[0.98]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onPropose();
+            }}
+            type="button"
+          >
+            제안하기
+          </button>
+        </div>
       </div>
     </article>
+  );
+}
+
+export function CompanyProjectManagementActions({
+  isPending = false,
+  onDelete,
+  onEdit,
+  onToggleHiring,
+  onToggleVisibility,
+  posting,
+}: {
+  isPending?: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
+  onToggleHiring: () => void;
+  onToggleVisibility: () => void;
+  posting: JobPosting;
+}) {
+  const isClosed = posting.hiringStage === 'closed';
+  const isPrivate = posting.isPublic === false;
+  const buttonClassName =
+    'min-h-10 rounded-lg border border-[#D8D1C2] px-3 py-2 text-[12px] font-bold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-1 active:bg-slate-100 disabled:cursor-wait disabled:opacity-50';
+
+  return (
+    <section aria-label={`${posting.title} 관리`} className="grid gap-2 px-1">
+      <div aria-live="polite" className="flex flex-wrap gap-1.5">
+        <span
+          className={cn(
+            'rounded-md px-2.5 py-1 text-[11px] font-extrabold',
+            isClosed ? 'bg-[#FDF0ED] text-[#B84B36]' : 'bg-[#EAF4F1] text-[#173F3A]',
+          )}
+        >
+          모집 상태: {hiringStageLabels[posting.hiringStage]}
+        </span>
+        <span
+          className={cn(
+            'rounded-md px-2.5 py-1 text-[11px] font-extrabold',
+            isPrivate ? 'bg-slate-200 text-slate-700' : 'bg-[#EAF4F1] text-[#173F3A]',
+          )}
+        >
+          공개 상태: {isPrivate ? '비공개' : '공개'}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <button className={buttonClassName} disabled={isPending} onClick={onEdit} type="button">
+          프로젝트 수정
+        </button>
+        <button
+          className={buttonClassName}
+          disabled={isPending}
+          onClick={onToggleHiring}
+          type="button"
+        >
+          {isClosed ? '모집 다시 열기' : '모집 마감'}
+        </button>
+        <button
+          className={buttonClassName}
+          disabled={isPending}
+          onClick={onToggleVisibility}
+          type="button"
+        >
+          {isPrivate ? '다시 공개' : '비공개'}
+        </button>
+        <button
+          className="min-h-10 rounded-lg border border-[#F06B4F]/40 px-3 py-2 text-[12px] font-bold text-[#B84B36] transition-colors hover:bg-[#FFF8F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B84B36] focus-visible:ring-offset-1 active:bg-[#FDF0ED] disabled:cursor-wait disabled:opacity-50"
+          disabled={isPending}
+          onClick={onDelete}
+          type="button"
+        >
+          프로젝트 삭제
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -931,6 +1020,7 @@ export function DetailPanel({
 
   const analyzed = useMemo(() => analyzeJobPostingForDetail(posting), [posting]);
   const safeSourceUrl = useMemo(() => getSafeWebUrl(posting.sourceUrl), [posting.sourceUrl]);
+  const isApplicationOpen = isProjectOpenForApplications(posting);
 
   return (
     <article
@@ -1230,12 +1320,15 @@ export function DetailPanel({
       <div className="mt-4 flex flex-col gap-2.5 border-t border-[#E0D9C8]/70 pt-4">
         {role === 'senior' ? (
           <button
+            disabled={!isApplicationOpen}
             type="button"
             onClick={() => onApply?.()}
-            className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-[15.5px] font-extrabold text-white border border-[#173F3A] shadow-[0_4px_14px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(23,63,58,0.4)] active:translate-y-0 active:scale-[0.99] transition-all duration-200 cursor-pointer"
+            className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#21544E] via-[#173F3A] to-[#0F2D2A] text-[15.5px] font-extrabold text-white border border-[#173F3A] shadow-[0_4px_14px_rgba(23,63,58,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#26635C] hover:via-[#1B4B45] hover:to-[#123834] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(23,63,58,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-none disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:translate-y-0"
           >
-            <span>이 프로젝트에 지원하기</span>
-            <ArrowRight className="size-4" />
+            <span>
+              {isApplicationOpen ? '이 프로젝트에 지원하기' : '모집이 마감된 프로젝트입니다'}
+            </span>
+            {isApplicationOpen ? <ArrowRight className="size-4" /> : null}
           </button>
         ) : (
           <button
@@ -1355,6 +1448,8 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   }, [isSortDropdownOpen]);
   const [selectedId, setSelectedId] = useState('');
   const [selectedTalentId, setSelectedTalentId] = useState('');
+  const [profileTalent, setProfileTalent] = useState<RecommendedTalent | null>(null);
+  const openedEditProjectIdRef = useRef<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(() =>
     Boolean(searchParams.get('focusProject')),
   );
@@ -1362,6 +1457,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const [editingProject, setEditingProject] = useState<JobPosting | null>(null);
   const [isCompanyProjectModalOpen, setIsCompanyProjectModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingOwnedProjectId, setPendingOwnedProjectId] = useState('');
   const [actionNotice, setActionNotice] = useState('');
   const actionNoticeIsError =
     actionNotice.includes('못했습니다') || actionNotice.includes('로그인 후에만');
@@ -1472,12 +1568,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
   const isModalOpen =
     isRegisterOpen ||
     isCompanyProjectModalOpen ||
+    Boolean(profileTalent) ||
     Boolean(applyingPosting) ||
     Boolean(completedApplication) ||
     isInterviewBypassConfirmOpen ||
     (isMobile && isMobileDetailOpen);
 
   useDocumentScrollLock(isModalOpen);
+
+  useEffect(() => {
+    if (!profileTalent) return undefined;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setProfileTalent(null);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [profileTalent]);
 
   useEffect(
     () => () => {
@@ -1894,6 +2000,11 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   function handleApply(posting: JobPosting) {
     if (role === 'senior') {
+      if (!isProjectOpenForApplications(posting)) {
+        setActionNotice('모집이 마감되었거나 비공개된 프로젝트에는 지원할 수 없습니다.');
+        setTimeout(() => setActionNotice(''), 4000);
+        return;
+      }
       if (!user?.uid) {
         void navigate('/login?role=senior');
         return;
@@ -2214,6 +2325,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
 
   async function changeOwnedProject(project: JobPosting, updates: Partial<Omit<JobPosting, 'id'>>) {
     if (role !== 'company' || !user?.uid || project.ownerId !== user.uid) return;
+    setPendingOwnedProjectId(project.id);
     try {
       await updateProject(project.id, updates, user.uid);
       const updated = { ...project, ...updates };
@@ -2224,12 +2336,14 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       console.error('Failed to update owned project:', error);
       setActionNotice('프로젝트 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
+    setPendingOwnedProjectId('');
     setTimeout(() => setActionNotice(''), 7000);
   }
 
   async function handleDeleteOwnedProject(project: JobPosting) {
     if (role !== 'company' || !user?.uid || project.ownerId !== user.uid) return;
     if (typeof window !== 'undefined' && !window.confirm('이 프로젝트를 삭제할까요?')) return;
+    setPendingOwnedProjectId(project.id);
     try {
       await deleteProject(project.id, user.uid);
       setPostings((prev) => prev.filter((item) => item.id !== project.id));
@@ -2239,6 +2353,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
       console.error('Failed to delete owned project:', error);
       setActionNotice('프로젝트를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
+    setPendingOwnedProjectId('');
     setTimeout(() => setActionNotice(''), 7000);
   }
 
@@ -2479,8 +2594,27 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
     filteredPostings.find((posting) => posting.id === selectedTalent?.projectId) ??
     filteredPostings.find((posting) => posting.id === selectedId) ??
     filteredPostings[0];
+  const profileTalentProject = profileTalent
+    ? filteredPostings.find((posting) => posting.id === profileTalent.projectId)
+    : undefined;
   const selectedCompanyProject =
     postings.find((posting) => posting.id === selectedId) ?? postings[0];
+
+  useEffect(() => {
+    const editProjectId = searchParams.get('editProject');
+    if (!editProjectId || role !== 'company' || openedEditProjectIdRef.current === editProjectId)
+      return;
+    const project = postings.find(
+      (posting) => posting.id === editProjectId && posting.ownerId === user?.uid,
+    );
+    if (!project) return;
+    openedEditProjectIdRef.current = editProjectId;
+    queueMicrotask(() => {
+      setSelectedId(project.id);
+      setEditingProject(project);
+      setIsRegisterOpen(true);
+    });
+  }, [postings, role, searchParams, user?.uid]);
 
   useEffect(() => {
     if (!focusProjectId || !focusedPosting || focusedViewportIdRef.current === focusProjectId)
@@ -3722,6 +3856,136 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         </div>
       )}
 
+      {profileTalent ? (
+        <div
+          aria-labelledby="talent-profile-dialog-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/50 p-3 backdrop-blur-xs sm:p-4"
+          onClick={() => setProfileTalent(null)}
+          role="dialog"
+        >
+          <div
+            className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-[#E0D9C8] px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#DDEBE7] text-[#173F3A]">
+                  <UserRound aria-hidden="true" className="size-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-extrabold text-[#173F3A]">추천 인재 상세</p>
+                  <h3
+                    className="mt-1 truncate text-xl font-extrabold text-[#17212B]"
+                    id="talent-profile-dialog-title"
+                  >
+                    {profileTalent.name} 기본 프로필
+                  </h3>
+                </div>
+              </div>
+              <button
+                aria-label="인재 상세 프로필 닫기"
+                autoFocus
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A]"
+                onClick={() => setProfileTalent(null)}
+                type="button"
+              >
+                <X aria-hidden="true" className="size-5" />
+              </button>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+              <section aria-labelledby="talent-basic-profile-title">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4
+                    className="text-base font-extrabold text-[#17212B]"
+                    id="talent-basic-profile-title"
+                  >
+                    기본 프로필
+                  </h4>
+                  <span className="rounded-full bg-[#FAF7F2] px-3 py-1 text-[11px] font-bold text-slate-500">
+                    현재 추천 정보 기준
+                  </span>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-[#E0D9C8] sm:grid-cols-4">
+                  {[
+                    ['경력', profileTalent.career],
+                    ['희망 지역', profileTalent.location],
+                    ['희망 근무', profileTalent.workType],
+                    ['근무 가능', profileTalent.availability],
+                  ].map(([label, value]) => (
+                    <div className="bg-[#FAFDFB] p-3" key={label}>
+                      <dt className="text-[11px] font-bold text-slate-500">{label}</dt>
+                      <dd className="mt-1 text-[13px] font-extrabold text-[#17212B]">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-4 text-[15px] font-bold leading-7 text-[#17212B]">
+                  {profileTalent.headline}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {profileTalent.skills.map((skill) => (
+                    <span
+                      className="rounded-full bg-[#EAF4F1] px-3 py-1.5 text-xs font-extrabold text-[#173F3A]"
+                      key={skill}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </section>
+
+              <section
+                aria-labelledby="talent-fit-title"
+                className="mt-5 rounded-2xl bg-[#EAF4F1] p-4 sm:p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-extrabold text-[#173F3A]" id="talent-fit-title">
+                      우리 프로젝트와 맞는 이유
+                    </h4>
+                    <p className="mt-1 text-sm font-bold text-[#315E50]">
+                      {profileTalent.projectTitle}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#F06B4F] px-3 py-1.5 text-sm font-black text-white">
+                    {profileTalent.matchScore}점
+                  </span>
+                </div>
+                <ul className="mt-4 space-y-2.5">
+                  {profileTalent.evidence.map((item) => (
+                    <li
+                      className="flex items-start gap-2 text-sm font-semibold leading-6 text-[#17212B]"
+                      key={item}
+                    >
+                      <CheckCircle2
+                        aria-hidden="true"
+                        className="mt-1 size-4 shrink-0 text-[#173F3A]"
+                      />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <footer className="border-t border-[#E0D9C8] p-4 sm:px-5">
+              <button
+                className="min-h-12 w-full rounded-xl bg-[#F06B4F] px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#D95337] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F06B4F] focus-visible:ring-offset-2 active:scale-[0.99]"
+                onClick={() => {
+                  if (!profileTalentProject) return;
+                  setProfileTalent(null);
+                  handleApply(profileTalentProject);
+                }}
+                type="button"
+              >
+                이 인재에게 제안하기
+              </button>
+            </footer>
+          </div>
+        </div>
+      ) : null}
+
       {isCompanyProjectModalOpen ? (
         <div
           aria-labelledby="company-project-modal-title"
@@ -3773,52 +4037,22 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                         selected={selectedCompanyProject?.id === posting.id}
                       />
                       {role === 'company' && posting.ownerId === user?.uid ? (
-                        <div className="flex flex-wrap gap-1.5 px-1">
-                          <button
-                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openEditProject(posting);
-                            }}
-                            type="button"
-                          >
-                            프로젝트 수정
-                          </button>
-                          <button
-                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void changeOwnedProject(posting, {
-                                hiringStage: posting.hiringStage === 'closed' ? 'open' : 'closed',
-                              });
-                            }}
-                            type="button"
-                          >
-                            {posting.hiringStage === 'closed' ? '모집 다시 열기' : '모집 마감'}
-                          </button>
-                          <button
-                            className="rounded-lg border border-[#E0D9C8] px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void changeOwnedProject(posting, {
-                                isPublic: posting.isPublic === false,
-                              });
-                            }}
-                            type="button"
-                          >
-                            {posting.isPublic === false ? '다시 공개' : '비공개'}
-                          </button>
-                          <button
-                            className="rounded-lg border border-[#F06B4F]/40 px-2.5 py-1.5 text-[11px] font-bold text-[#D85A3F] hover:bg-[#FFF8F6]"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleDeleteOwnedProject(posting);
-                            }}
-                            type="button"
-                          >
-                            프로젝트 삭제
-                          </button>
-                        </div>
+                        <CompanyProjectManagementActions
+                          isPending={pendingOwnedProjectId === posting.id}
+                          onDelete={() => void handleDeleteOwnedProject(posting)}
+                          onEdit={() => openEditProject(posting)}
+                          onToggleHiring={() =>
+                            void changeOwnedProject(posting, {
+                              hiringStage: posting.hiringStage === 'closed' ? 'open' : 'closed',
+                            })
+                          }
+                          onToggleVisibility={() =>
+                            void changeOwnedProject(posting, {
+                              isPublic: posting.isPublic === false,
+                            })
+                          }
+                          posting={posting}
+                        />
                       ) : null}
                     </div>
                   ))}
@@ -3908,7 +4142,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         />
       </div>
 
-      <PremiumCompaniesSection role={role} user={user} />
+      {role === 'senior' ? <PremiumCompaniesSection role={role} user={user} /> : null}
 
       {isMobile ? (
         <section className="rounded-[20px] bg-white p-4 shadow-xs flex flex-col gap-3.5">
@@ -4375,6 +4609,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                           trackJobView(project.id, project.companyName, project.title);
                           setSelectedTalentId(talent.id);
                           setSelectedId(project.id);
+                          setProfileTalent(talent);
                         }}
                         selected={selectedTalentId === talent.id}
                         talent={talent}

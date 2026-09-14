@@ -37,7 +37,13 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState 
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { RollingBanner } from '@/app/LoginPage';
-import { JobDatabasePage } from '@/app/JobDatabasePage';
+import { CompanyProjectEditorDialog } from '@/app/CompanyProjectEditorDialog';
+import {
+  CompanyProjectManagementActions,
+  DetailPanel,
+  JobDatabasePage,
+  PostingCard,
+} from '@/app/JobDatabasePage';
 import { PremiumCompanyBanner } from '@/app/premium/PremiumCompanyBanner';
 import {
   createLoginRedirectPath,
@@ -48,6 +54,7 @@ import { analyzeJobPostingForDetail } from '@/services/aiJobDetailAnalyzer';
 import {
   categoryLabels,
   type EmploymentType,
+  hiringStageLabels,
   type JobPosting,
   type ProjectAttachment,
   type ProjectCategory,
@@ -101,6 +108,7 @@ import {
 import { searchFullJobDatabase } from '@/services/jobSearchService';
 import {
   createProject,
+  deleteProject,
   fetchProjectById,
   fetchProjects,
   updateProject,
@@ -135,6 +143,7 @@ import {
 import type { ExperienceProfileV1 } from '@/services/profileService';
 import {
   getPublishedCompanyProjects,
+  isProjectOpenForApplications,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
 } from '@/app/jobDatabaseProjectVisibility';
@@ -2447,7 +2456,9 @@ export function ProjectDetailPage() {
       ]
     : ['주 2회', '원격', '3개월'];
   const proposalPath = `/senior/projects/${projectId}/proposal`;
+  const isApplicationOpen = isProjectOpenForApplications(project);
   function handleProposalEntry() {
+    if (!isApplicationOpen) return;
     void navigate(user?.uid ? proposalPath : '/login?role=senior');
   }
 
@@ -2525,10 +2536,14 @@ export function ProjectDetailPage() {
       </div>
 
       {!isMobile ? (
-        <ActionButton onClick={handleProposalEntry}>제안하기</ActionButton>
+        <ActionButton disabled={!isApplicationOpen} onClick={handleProposalEntry}>
+          {isApplicationOpen ? '제안하기' : '모집이 마감된 프로젝트입니다'}
+        </ActionButton>
       ) : (
         <div className="sticky bottom-0 z-10 -mx-4 border-y border-[#E0D9C8] bg-[#F7F3EA]/95 px-4 pb-3 pt-3 backdrop-blur-sm">
-          <ActionButton onClick={handleProposalEntry}>이 프로젝트에 제안하기</ActionButton>
+          <ActionButton disabled={!isApplicationOpen} onClick={handleProposalEntry}>
+            {isApplicationOpen ? '이 프로젝트에 제안하기' : '모집이 마감된 프로젝트입니다'}
+          </ActionButton>
         </div>
       )}
 
@@ -2578,6 +2593,10 @@ export function ProposalPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (!isProjectOpenForApplications(project)) {
+      setSendError('모집이 마감되었거나 비공개된 프로젝트에는 제안할 수 없습니다.');
+      return;
+    }
     if (!intro.trim() || !method.trim() || !date.trim() || isSending) return;
     if (!user?.uid) {
       void navigate('/login?role=senior');
@@ -2634,6 +2653,14 @@ export function ProposalPage() {
       title="제안하기"
     >
       <form className={cn('flex flex-col', isMobile ? 'gap-4' : 'gap-5')} onSubmit={submit}>
+        {project && !isProjectOpenForApplications(project) ? (
+          <p
+            aria-live="assertive"
+            className="rounded-xl bg-[#FDF0ED] p-3 text-sm font-bold text-[#B84B36]"
+          >
+            모집이 마감된 프로젝트로 제안을 보낼 수 없습니다.
+          </p>
+        ) : null}
         <div
           className={cn(
             'flex flex-col rounded-[18px] border shadow-xs',
@@ -2707,7 +2734,12 @@ export function ProposalPage() {
               : 'pt-1',
           )}
         >
-          <ActionButton disabled={!intro || !method || !date || isSending} type="submit">
+          <ActionButton
+            disabled={
+              !intro || !method || !date || isSending || !isProjectOpenForApplications(project)
+            }
+            type="submit"
+          >
             {isSending ? '제안 저장 중...' : '제안 보내기'}
           </ActionButton>
         </div>
@@ -3010,6 +3042,12 @@ export function CompanyHomePage() {
   const isMobile = mode === 'mobile';
   const [companyProjects, setCompanyProjects] = useState<JobPosting[]>([]);
   const [companyProposals, setCompanyProposals] = useState<UserProposal[]>([]);
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [editingHomeProject, setEditingHomeProject] = useState<JobPosting | null>(null);
+  const [pendingProjectActionId, setPendingProjectActionId] = useState('');
+  const [projectActionNotice, setProjectActionNotice] = useState('');
+  const [projectActionError, setProjectActionError] = useState('');
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData | null>(() =>
     getLocalCompanyProfile(user?.uid),
   );
@@ -3031,7 +3069,28 @@ export function CompanyHomePage() {
     });
   }, [user?.uid]);
 
+  useEffect(() => {
+    if (!isProjectDialogOpen || typeof document === 'undefined') return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (editingHomeProject) {
+        setEditingHomeProject(null);
+      } else {
+        setIsProjectDialogOpen(false);
+      }
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [editingHomeProject, isProjectDialogOpen]);
+
   const latestProject = companyProjects[0];
+  const selectedProject =
+    companyProjects.find((project) => project.id === selectedProjectId) ?? latestProject;
   const latestProjectProposalCount = latestProject
     ? companyProposals.filter((proposal) => proposal.projectId === latestProject.id).length
     : 0;
@@ -3039,7 +3098,9 @@ export function CompanyHomePage() {
     ? {
         company: latestProject.companyName,
         title: latestProject.title,
-        meta: `받은 제안 ${latestProjectProposalCount}건 · ${latestProject.location}`,
+        meta: `${hiringStageLabels[latestProject.hiringStage]} · ${
+          latestProject.isPublic === false ? '비공개' : '공개'
+        } · 받은 제안 ${latestProjectProposalCount}건 · ${latestProject.location}`,
         action: '프로젝트 관리',
       }
     : null;
@@ -3047,6 +3108,109 @@ export function CompanyHomePage() {
     companyProfile?.companyName ||
     (user?.name && user.name !== '채용담당자' ? user.name : '') ||
     '채용';
+
+  function openProjectDialog() {
+    setSelectedProjectId(latestProject?.id ?? '');
+    setIsProjectDialogOpen(true);
+  }
+
+  async function changeHomeProject(
+    project: JobPosting,
+    updates: Partial<Pick<JobPosting, 'hiringStage' | 'isPublic'>>,
+  ) {
+    if (!user?.uid || project.ownerId !== user.uid) return;
+    setPendingProjectActionId(project.id);
+    setProjectActionError('');
+    try {
+      await updateProject(project.id, updates, user.uid);
+      setCompanyProjects((current) =>
+        current.map((item) => (item.id === project.id ? { ...item, ...updates } : item)),
+      );
+      setProjectActionNotice('프로젝트 상태가 저장되었습니다.');
+    } catch (error) {
+      console.error('Failed to update project from company home:', error);
+      setProjectActionError('프로젝트 상태를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setPendingProjectActionId('');
+    }
+  }
+
+  async function deleteHomeProject(project: JobPosting) {
+    if (!user?.uid || project.ownerId !== user.uid) return;
+    if (!window.confirm(`"${project.title}" 프로젝트를 삭제할까요?`)) return;
+    setPendingProjectActionId(project.id);
+    setProjectActionError('');
+    try {
+      await deleteProject(project.id, user.uid);
+      setCompanyProjects((current) => current.filter((item) => item.id !== project.id));
+      setSelectedProjectId('');
+      setProjectActionNotice('프로젝트가 삭제되었습니다.');
+    } catch (error) {
+      console.error('Failed to delete project from company home:', error);
+      setProjectActionError('프로젝트를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setPendingProjectActionId('');
+    }
+  }
+
+  async function saveHomeProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingHomeProject || !user?.uid || editingHomeProject.ownerId !== user.uid) return;
+    const formData = new FormData(event.currentTarget);
+    const text = (key: string, fallback = '') => {
+      const value = formData.get(key);
+      return (typeof value === 'string' ? value.trim() : '') || fallback;
+    };
+    const list = (key: string) =>
+      text(key)
+        .split(/\r?\n|,/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const updates = {
+      companyName: text('companyName', editingHomeProject.companyName),
+      companySize: text('companySize', '협의/미등록'),
+      title: text('title', editingHomeProject.title),
+      industry: text('industry', '협의/미등록'),
+      category: (formData.get('category') as ProjectCategory) || editingHomeProject.category,
+      workType: (formData.get('workType') as JobPosting['workType']) || editingHomeProject.workType,
+      employmentType:
+        (formData.get('employmentType') as EmploymentType) || editingHomeProject.employmentType,
+      location: text('location', '협의/미등록'),
+      experienceYears: text('experienceYears', '협의/미등록'),
+      projectDuration: text('projectDuration', '협의/미등록'),
+      salaryRange: text('salaryRange', '협의/미등록'),
+      deadline: text('deadline'),
+      problemStatement: text('problemStatement', editingHomeProject.problemStatement),
+      projectGoal: text('projectGoal'),
+      coreResponsibilities: list('coreResponsibilities'),
+      qualifications: list('qualifications'),
+      benefits: list('benefits'),
+      requiredSkills: list('requiredSkills'),
+      preferredSkills: list('preferredSkills'),
+      recommendedTalentType: text('recommendedTalentType', '관련 경험을 보유한 시니어 전문가'),
+      matchingSignals: list('matchingSignals'),
+      matchingScoreCriteria: list('matchingScoreCriteria'),
+      interviewFocus: list('interviewFocus'),
+      successMetrics: list('successMetrics'),
+      collaborationTargets: list('collaborationTargets'),
+    } satisfies Partial<Omit<JobPosting, 'id'>>;
+
+    setPendingProjectActionId(editingHomeProject.id);
+    setProjectActionError('');
+    try {
+      await updateProject(editingHomeProject.id, updates, user.uid);
+      setCompanyProjects((current) =>
+        current.map((item) => (item.id === editingHomeProject.id ? { ...item, ...updates } : item)),
+      );
+      setEditingHomeProject(null);
+      setProjectActionNotice('프로젝트 정보가 수정되었습니다.');
+    } catch (error) {
+      console.error('Failed to edit project from company home:', error);
+      setProjectActionError('프로젝트 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setPendingProjectActionId('');
+    }
+  }
 
   return (
     <MobilePage
@@ -3160,11 +3324,11 @@ export function CompanyHomePage() {
           <span>새 프로젝트 등록</span>
         </button>
         <button
-          onClick={() => void navigate('/company/projects')}
+          onClick={openProjectDialog}
           type="button"
           className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E0D9C8] bg-white px-3 py-2.5 text-xs sm:text-sm font-extrabold text-[#17212B] hover:bg-slate-50 transition-all shadow-2xs"
         >
-          <span>지원서·프로젝트 관리</span>
+          <span>등록 프로젝트 관리</span>
         </button>
         <button
           onClick={() => void navigate('/company-info')}
@@ -3178,11 +3342,8 @@ export function CompanyHomePage() {
       <h3 className="text-base md:text-xl lg:text-2xl font-extrabold text-[#17212B] mt-1">
         최근 등록 프로젝트
       </h3>
-      {latestProjectCard ? (
-        <ProjectCard
-          onClick={() => void navigate('/company/projects')}
-          project={latestProjectCard}
-        />
+      {latestProjectCard && latestProject ? (
+        <ProjectCard onClick={openProjectDialog} project={latestProjectCard} />
       ) : (
         <div className="rounded-2xl border border-dashed border-[#E0D9C8] bg-white p-6 text-center text-sm font-semibold text-slate-500">
           아직 등록된 프로젝트가 없습니다.
@@ -3191,6 +3352,131 @@ export function CompanyHomePage() {
       <ActionButton onClick={() => void navigate('/company/projects/new')} role="company">
         새 프로젝트 등록
       </ActionButton>
+
+      {isProjectDialogOpen && !editingHomeProject ? (
+        <div
+          aria-labelledby="company-home-project-dialog-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/50 p-3 backdrop-blur-xs sm:p-4"
+          onClick={() => setIsProjectDialogOpen(false)}
+          role="dialog"
+        >
+          <div
+            className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[#E0D9C8] bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-[#E0D9C8] px-4 py-3.5 sm:px-5 sm:py-4">
+              <div className="min-w-0">
+                <p className="text-[12px] font-extrabold text-[#173F3A]">회사 직접 등록 기준</p>
+                <h3
+                  className="mt-1 text-lg font-extrabold leading-snug text-[#17212B]"
+                  id="company-home-project-dialog-title"
+                >
+                  등록 프로젝트 {companyProjects.length}건
+                </h3>
+              </div>
+              <button
+                aria-label="등록 프로젝트 팝업 닫기"
+                autoFocus
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] active:bg-slate-200"
+                onClick={() => setIsProjectDialogOpen(false)}
+                type="button"
+              >
+                <X aria-hidden="true" className="size-5" />
+              </button>
+            </header>
+
+            {companyProjects.length > 0 ? (
+              <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-3 sm:p-4 lg:grid-cols-[0.85fr_1.15fr]">
+                <section aria-label="등록 프로젝트 목록" className="grid content-start gap-3">
+                  {projectActionNotice ? (
+                    <p
+                      aria-live="polite"
+                      className="rounded-xl bg-[#EAF4F1] px-3 py-2 text-xs font-bold text-[#173F3A]"
+                    >
+                      {projectActionNotice}
+                    </p>
+                  ) : null}
+                  {projectActionError ? (
+                    <p
+                      aria-live="assertive"
+                      className="rounded-xl bg-[#FDF0ED] px-3 py-2 text-xs font-bold text-[#B84B36]"
+                    >
+                      {projectActionError}
+                    </p>
+                  ) : null}
+                  {companyProjects.map((project) => (
+                    <div className="grid gap-2" key={project.id}>
+                      <PostingCard
+                        experienceCard={null}
+                        onSelect={() => setSelectedProjectId(project.id)}
+                        posting={project}
+                        profile={null}
+                        role="company"
+                        selected={selectedProject?.id === project.id}
+                      />
+                      {project.ownerId === user?.uid ? (
+                        <CompanyProjectManagementActions
+                          isPending={pendingProjectActionId === project.id}
+                          onDelete={() => void deleteHomeProject(project)}
+                          onEdit={() => setEditingHomeProject(project)}
+                          onToggleHiring={() =>
+                            void changeHomeProject(project, {
+                              hiringStage: project.hiringStage === 'closed' ? 'open' : 'closed',
+                            })
+                          }
+                          onToggleVisibility={() =>
+                            void changeHomeProject(project, {
+                              isPublic: project.isPublic === false,
+                            })
+                          }
+                          posting={project}
+                        />
+                      ) : null}
+                    </div>
+                  ))}
+                </section>
+
+                {selectedProject ? (
+                  <section
+                    aria-label="선택한 프로젝트 상세"
+                    className="min-h-0 overflow-y-auto rounded-2xl border border-[#E0D9C8] bg-white p-3 shadow-xs sm:p-4"
+                  >
+                    <DetailPanel
+                      experienceCard={null}
+                      posting={selectedProject}
+                      profile={null}
+                      role="company"
+                    />
+                  </section>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 p-8 text-center">
+                <p className="text-sm font-extrabold text-[#17212B]">
+                  아직 등록된 프로젝트가 없습니다.
+                </p>
+                <button
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#173F3A] px-4 text-xs font-extrabold text-white shadow-xs transition-colors hover:bg-[#21544E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173F3A] focus-visible:ring-offset-2"
+                  onClick={() => void navigate('/company/projects/new')}
+                  type="button"
+                >
+                  새 프로젝트 등록
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {editingHomeProject ? (
+        <CompanyProjectEditorDialog
+          isSubmitting={pendingProjectActionId === editingHomeProject.id}
+          onClose={() => setEditingHomeProject(null)}
+          onSubmit={(event) => void saveHomeProject(event)}
+          project={editingHomeProject}
+        />
+      ) : null}
     </MobilePage>
   );
 }

@@ -102,9 +102,9 @@ describe('공통 헤더', () => {
   });
 
   it.each([
-    { label: '인재', role: 'senior' as const },
-    { label: '회사', role: 'company' as const },
-  ])('$label 상단·하단 현재 메뉴를 이어잡 오렌지로 표시한다', ({ label, role }) => {
+    { label: '인재', menuLabel: '프로젝트', role: 'senior' as const },
+    { label: '회사', menuLabel: '인재탐색', role: 'company' as const },
+  ])('$label 상단·하단 현재 메뉴를 이어잡 오렌지로 표시한다', ({ label, menuLabel, role }) => {
     render(
       <MemoryRouter>
         <MobilePage activeNav="database" role={role} title="프로젝트">
@@ -115,10 +115,10 @@ describe('공통 헤더', () => {
 
     const primaryProject = within(
       screen.getByRole('navigation', { name: `${label} 주요 메뉴` }),
-    ).getByRole('button', { name: '프로젝트' });
+    ).getByRole('button', { name: menuLabel });
     const bottomProject = within(
       screen.getByRole('navigation', { name: `${label} 하단 주요 메뉴` }),
-    ).getByRole('button', { name: '프로젝트' });
+    ).getByRole('button', { name: menuLabel });
 
     expect(primaryProject).toHaveClass('bg-[#F06B4F]', 'text-white');
     expect(bottomProject).toHaveClass('text-[#F06B4F]');

@@ -56,6 +56,7 @@ import type { JobPosting } from '@/data/jobPostings';
 import {
   getCompanyOwnedProjects,
   getPublishedCompanyProjects,
+  isProjectOpenForApplications,
   matchesPublishedCompanyProject,
   mergeSeniorPostings,
   resolveSeniorCategoryFilter,
@@ -389,6 +390,15 @@ describe('프로젝트 첫 진입 안정성', () => {
 });
 
 describe('기업 등록 프로젝트의 인재 목록 노출', () => {
+  it('기업 인재탐색 화면에는 프리미엄 기업 영역을 표시하지 않는다', async () => {
+    mockedProjects.mockResolvedValueOnce([]);
+
+    render(createElement(JobDatabasePage, { role: 'company' }));
+
+    await waitFor(() => expect(mockedProjects).toHaveBeenCalled());
+    expect(screen.queryByText('프리미엄 기업')).toBeNull();
+  });
+
   it('새 프로젝트 등록 시 상세 화면에 보이는 추가 정보를 함께 저장한다', async () => {
     mockedProjects.mockResolvedValueOnce([]);
     mockedCreateProject.mockResolvedValueOnce({
@@ -453,6 +463,22 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     expect(screen.getAllByText(/매칭 프로젝트 · 기업 운영 프로젝트/)).toHaveLength(3);
   });
 
+  it('추천 인재를 누르면 기본 프로필과 프로젝트 적합 근거를 보여준다', async () => {
+    mockedProjects.mockResolvedValueOnce([{ ...companyProject, ownerId: 'senior-test-user' }]);
+
+    render(createElement(JobDatabasePage, { role: 'company' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: '김도현 상세 프로필 보기' }));
+
+    const dialog = screen.getByRole('dialog', { name: '김도현 기본 프로필' });
+    expect(dialog).toHaveTextContent('기본 프로필');
+    expect(dialog).toHaveTextContent('경력');
+    expect(dialog).toHaveTextContent('희망 지역');
+    expect(dialog).toHaveTextContent('우리 프로젝트와 맞는 이유');
+    expect(dialog).toHaveTextContent(companyProject.title);
+    expect(dialog).toHaveTextContent('90점');
+  });
+
   it('등록 프로젝트 상세는 추천 결과에서 숨기고 등록 프로젝트 카드 클릭 시 팝업으로 연다', async () => {
     mockedProjects.mockResolvedValueOnce([{ ...companyProject, ownerId: 'senior-test-user' }]);
 
@@ -466,6 +492,23 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     expect(screen.getAllByRole('heading', { name: companyProject.title }).length).toBeGreaterThan(
       0,
     );
+    expect(screen.getByText('모집 상태: 모집 중')).toBeInTheDocument();
+    expect(screen.getByText('공개 상태: 공개')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '모집 마감' }));
+    await waitFor(() =>
+      expect(mockedUpdateProject).toHaveBeenCalledWith(
+        companyProject.id,
+        { hiringStage: 'closed' },
+        'senior-test-user',
+      ),
+    );
+    expect(screen.getByText('모집 상태: 모집 마감')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '모집 다시 열기' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '비공개' }));
+    await waitFor(() => expect(screen.getByText('공개 상태: 비공개')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: '다시 공개' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '등록 프로젝트 팝업 닫기' }));
     await waitFor(() =>
@@ -473,17 +516,34 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
     );
   });
 
+  it('인재 화면에서 모집 마감 프로젝트의 지원 버튼을 비활성화한다', () => {
+    render(
+      createElement(DetailPanel, {
+        experienceCard: null,
+        posting: { ...companyProject, hiringStage: 'closed' },
+        profile: null,
+        role: 'senior',
+      }),
+    );
+
+    expect(screen.getByRole('button', { name: '모집이 마감된 프로젝트입니다' })).toBeDisabled();
+  });
+
   it('공개 중인 기업 프로젝트만 인재 목록에 포함한다', () => {
     const closedProject = {
       ...companyProject,
       id: 'company-project-2',
-      hiringStage: 'closing' as const,
+      hiringStage: 'closed' as const,
     };
     const privateProject = { ...companyProject, id: 'company-project-3', isPublic: false };
 
     expect(getPublishedCompanyProjects([companyProject, closedProject, privateProject])).toEqual([
       companyProject,
+      closedProject,
     ]);
+    expect(isProjectOpenForApplications(companyProject)).toBe(true);
+    expect(isProjectOpenForApplications(closedProject)).toBe(false);
+    expect(isProjectOpenForApplications(privateProject)).toBe(false);
   });
 
   it('기업 관리 화면에는 로그인한 기업이 등록한 공고만 포함한다', () => {
