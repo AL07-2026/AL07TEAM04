@@ -31,5 +31,13 @@ pnpm-debug.log*
 # Firebase local cache
 .firebase/
 
+# Vercel & Supabase cache
+.vercel/
+.supabase/
+
 # local web research outputs
 .firecrawl/
+
+# Design & submission binaries
+*.fig
+docs/submission/
