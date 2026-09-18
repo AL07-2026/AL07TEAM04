@@ -19,11 +19,15 @@
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-raised: var(--surface-raised);
 
-  --color-evergreen: #173f3a;
-  --color-coral: #b84734;
-  --color-ivory: #f7f3ea;
-  --color-mint: #ddebe7;
-  --color-ink: #17212b;
+  --color-navy: #0f172a;
+  --color-royal: #2563eb;
+  --color-cyan: #0284c7;
+  --color-slate: #64748b;
+  --color-evergreen: #0f172a;
+  --color-coral: #2563eb;
+  --color-ivory: #f8fafc;
+  --color-mint: #e0e7ff;
+  --color-ink: #0f172a;
 }
 
 html {
@@ -38,24 +42,24 @@ html {
   --site-header-height: 4.5rem;
   --site-page-space: 1.5rem;
   color-scheme: light;
-  --background: #f7f3ea; /* Background: Warm Ivory */
-  --foreground: #17212b; /* Text: Ink */
+  --background: #f8fafc; /* OneMore Clean Slate 50 */
+  --foreground: #0f172a; /* Slate 900 */
   --card: #ffffff;
-  --card-foreground: #17212b;
-  --primary: #173f3a; /* Primary: Deep Evergreen */
+  --card-foreground: #0f172a;
+  --primary: #0f172a; /* OneMore Deep Royal Navy */
   --primary-foreground: #ffffff;
-  --accent: #b84734; /* Accessible Warm Coral */
+  --accent: #2563eb; /* OneMore Dynamic Royal Blue */
   --accent-foreground: #ffffff;
-  --secondary: #ddebe7; /* Secondary: Soft Mint */
-  --secondary-foreground: #173f3a;
-  --muted: #ebe5d9;
-  --muted-foreground: #45556c;
-  --border: #e0d9c8;
-  --input: #e0d9c8;
-  --ring: #173f3a;
-  --surface-subtle: #faf7f2;
+  --secondary: #e0e7ff; /* Soft Royal/Indigo Tint */
+  --secondary-foreground: #1e3a8a;
+  --muted: #f1f5f9; /* Slate 100 */
+  --muted-foreground: #475569; /* Slate 600 */
+  --border: #e2e8f0; /* Slate 200 */
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --surface-subtle: #f8fafc;
   --surface-raised: #ffffff;
-  --focus-ring: #173f3a;
+  --focus-ring: #2563eb;
   --motion-fast: 160ms;
   --motion-standard: 220ms;
 }

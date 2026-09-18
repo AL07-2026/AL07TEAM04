@@ -509,7 +509,7 @@ export function CommunityBoard({ user }: { user: UserProfile | null }) {
             className="text-[1.75rem] font-black tracking-[-0.025em] text-[#173F3A] [text-wrap:balance] sm:text-4xl"
             id="community-board-heading"
           >
-            이어잡 커뮤니티
+            원모어 커뮤니티
           </h1>
           <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#53645F] sm:text-base">
             경험을 나누고 프로젝트에 관해 묻고 답하는 공간입니다.

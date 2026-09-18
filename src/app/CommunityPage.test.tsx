@@ -140,7 +140,7 @@ describe('CommunityPage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: '이어잡 커뮤니티', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '원모어 커뮤니티', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: '커뮤니티 게시판' })).toBeInTheDocument();
     expect(await screen.findByText('아직 게시글이 없습니다.')).toBeInTheDocument();
   });
@@ -205,7 +205,7 @@ describe('CommunityPage', () => {
     expect(screen.getByRole('button', { name: '더보기 열기' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
     expect(screen.queryByRole('menuitem', { name: /프로젝트 보러가기/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /원모어 소개/ })).toBeInTheDocument();
   });
 
   it('비로그인 사용자가 글쓰기를 누르면 로그인 화면으로 유도한다', async () => {

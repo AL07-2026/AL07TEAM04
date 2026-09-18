@@ -234,7 +234,7 @@ export function transformWorknetToSeniorProject(
     postedAt,
     source: 'worknet',
     sourceUrl,
-    sourceProvider: raw.infoSvc?.trim() || '이어잡 공식 검증',
+    sourceProvider: raw.infoSvc?.trim() || '원모어 공식 검증',
     workSchedule: raw.holidayTpNm?.trim(),
     deadlineLabel: raw.closeDt?.trim() || '마감일 미제공',
     registeredLabel: raw.regDt?.trim(),
@@ -276,7 +276,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 800만원 ~ 1,200만원',
     regDt: '2026-08-12',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-DSN-02',
@@ -288,7 +288,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 750만원 ~ 1,100만원',
     regDt: '2026-08-10',
     closeDt: '2026-09-15',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-MKT-03',
@@ -300,7 +300,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 700만원 ~ 1,000만원',
     regDt: '2026-08-11',
     closeDt: '2026-09-20',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-HR-04',
@@ -312,7 +312,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 720만원 ~ 980만원',
     regDt: '2026-08-08',
     closeDt: '2026-09-18',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-MFG-05',
@@ -324,7 +324,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 850만원 ~ 1,300만원',
     regDt: '2026-08-05',
     closeDt: '2026-09-28',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-OPS-06',
@@ -336,7 +336,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 680만원 ~ 950만원',
     regDt: '2026-08-07',
     closeDt: '2026-09-12',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-AI-07',
@@ -348,7 +348,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 850만원 ~ 1,250만원',
     regDt: '2026-08-13',
     closeDt: '2026-09-28',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-PART-08',
@@ -360,7 +360,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 400만원 (주 20시간 시간제)',
     regDt: '2026-08-14',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '11',
   },
   {
@@ -373,7 +373,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 350만원 (시간제 근로)',
     regDt: '2026-08-13',
     closeDt: '2026-09-25',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
   {
@@ -386,7 +386,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 650만원 ~ 900만원',
     regDt: '2026-08-12',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-ACCT-11',
@@ -398,7 +398,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 750만원 ~ 1,100만원',
     regDt: '2026-08-14',
     closeDt: '2026-10-05',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-CS-12',
@@ -410,7 +410,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 550만원 ~ 800만원',
     regDt: '2026-08-11',
     closeDt: '2026-09-25',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-EDU-13',
@@ -422,7 +422,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 600만원 ~ 900만원',
     regDt: '2026-08-09',
     closeDt: '2026-09-28',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-MED-14',
@@ -434,7 +434,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 700만원 ~ 1,000만원',
     regDt: '2026-08-10',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-FIN-15',
@@ -446,7 +446,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 800만원 ~ 1,200만원',
     regDt: '2026-08-13',
     closeDt: '2026-10-10',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-WEL-16',
@@ -458,7 +458,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 550만원 ~ 750만원',
     regDt: '2026-08-14',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-CON-17',
@@ -470,7 +470,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 850만원 ~ 1,200만원',
     regDt: '2026-08-12',
     closeDt: '2026-10-15',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
   },
   {
     wantedAuthNo: 'WN-PART-AM-18',
@@ -482,7 +482,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 280만원 (주 20시간)',
     regDt: '2026-08-15',
     closeDt: '2026-08-20',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
   {
@@ -495,7 +495,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 270만원 (주 20시간)',
     regDt: '2026-08-14',
     closeDt: '2026-08-22',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
   {
@@ -508,7 +508,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 450만원 ~ 600만원',
     regDt: '2026-08-13',
     closeDt: '2026-08-23',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '11',
   },
   {
@@ -521,7 +521,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 320만원 (주 20시간)',
     regDt: '2026-08-15',
     closeDt: '2026-09-30',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
   {
@@ -534,7 +534,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 550만원 ~ 750만원',
     regDt: '2026-08-14',
     closeDt: '2026-10-10',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '11',
   },
   {
@@ -547,7 +547,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 290만원 (주 20시간)',
     regDt: '2026-08-15',
     closeDt: '2026-09-25',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
   {
@@ -560,7 +560,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 400만원 ~ 550만원',
     regDt: '2026-08-13',
     closeDt: '2026-10-15',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '11',
   },
   {
@@ -573,7 +573,7 @@ export const fallbackWorknetJobs: WorknetJobRaw[] = [
     sal: '월 300만원 (주 20시간)',
     regDt: '2026-08-12',
     closeDt: '2026-09-28',
-    infoSvc: '이어잡 공식 검증',
+    infoSvc: '원모어 공식 검증',
     empTpCd: '21',
   },
 ];

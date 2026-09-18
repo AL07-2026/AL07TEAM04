@@ -143,10 +143,10 @@ describe('Figma v2 통합 화면 라우팅', () => {
     render(<App />);
 
     expect(
-      await screen.findByTitle('시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상'),
+      await screen.findByTitle('시니어의 경험과 기업의 과제가 만나는 원모어 소개 영상'),
     ).toHaveAttribute('src', '/eojob-landing-hero.mp4');
     expect(
-      screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*이어잡입니다/),
+      screen.getByText(/경험을 잇고, 일을 잇고, 세대를 잇다\.\s*원모어입니다/),
     ).toBeInTheDocument();
 
     const projectButtons = screen.getAllByRole('button', { name: /전체 프로젝트 보러가기/ });

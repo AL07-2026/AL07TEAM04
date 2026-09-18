@@ -436,7 +436,7 @@ describe('기업 등록 프로젝트의 인재 목록 노출', () => {
         recommendedTalentType: 'AI 자동화 리드',
         salaryRange: '월 800만-1000만',
         source: 'internal',
-        sourceProvider: '이어잡 기업 직접 등록',
+        sourceProvider: '원모어 기업 직접 등록',
       }),
     );
   });

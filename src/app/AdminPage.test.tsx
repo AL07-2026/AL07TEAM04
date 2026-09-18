@@ -43,7 +43,7 @@ const dashboardData = {
   categoryStats: [{ label: '경영·회계·사무', count: 1 }],
   companies: [
     {
-      companyName: '이어잡 기업',
+      companyName: '원모어 기업',
       managerName: '담당자',
       email: 'manager@eojob.kr',
       phone: '010-1234-5678',
@@ -54,7 +54,7 @@ const dashboardData = {
     {
       id: 'PROJECT-1',
       title: '운영 체계 개선',
-      companyName: '이어잡 기업',
+      companyName: '원모어 기업',
       category: 'operations',
       workType: '하이브리드',
       salaryRange: '연봉 5,000만원',

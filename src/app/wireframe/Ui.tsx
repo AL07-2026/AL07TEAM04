@@ -23,6 +23,7 @@ import { createContext, useContext, useEffect, useRef, type ReactNode, useState 
 import { useNavigate } from 'react-router';
 
 import { cn } from '@/lib/utils';
+import { OneMoreLogo } from '@/components/brand/OneMoreLogo';
 
 export type Role = 'senior' | 'company';
 export type SeniorNav = 'home' | 'projects' | 'database' | 'proposals' | 'profile';
@@ -72,10 +73,9 @@ export function BrandLogo({
   variant?: 'full' | 'icon';
 }) {
   return (
-    <img
-      alt="이어잡"
-      className={cn('h-7 object-contain', variant === 'icon' ? 'w-7' : 'w-auto', className)}
-      src={variant === 'icon' ? '/logo_icon.png' : '/logo_text.png'}
+    <OneMoreLogo
+      className={cn('h-7', variant === 'icon' ? 'w-7' : 'w-auto', className)}
+      variant={variant}
     />
   );
 }
@@ -145,9 +145,9 @@ export function SiteMenu({
 
       {open ? (
         <div
-          aria-label="이어잡 더보기 메뉴"
+          aria-label="원모어 더보기 메뉴"
           className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl bg-white p-2 shadow-[0_6px_12px_rgba(23,63,58,0.16)]"
-          id="eojob-site-menu"
+          id="onemore-site-menu"
           role="menu"
         >
           {showProjectLink ? (
@@ -171,7 +171,7 @@ export function SiteMenu({
             type="button"
           >
             <Info aria-hidden="true" className="size-5 text-[#173F3A]" />
-            <span>이어잡 소개</span>
+            <span>원모어 소개</span>
           </button>
           <button
             className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold text-[#17212B] hover:bg-[#F2F7F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8AF9C] active:scale-[0.98] transition-colors cursor-pointer"
@@ -284,7 +284,7 @@ export function SiteHeader({
       <div className="site-rail site-header-row">
         <button
           type="button"
-          aria-label="이어잡 첫 화면"
+          aria-label="원모어 첫 화면"
           onClick={() => void navigate('/')}
           className="site-brand inline-flex min-h-11 items-center rounded-lg hover:opacity-85"
         >

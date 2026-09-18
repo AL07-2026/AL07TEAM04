@@ -1,8 +1,8 @@
 {
-  "name": "react-spa-boilerplate",
+  "name": "onemore",
   "version": "1.0.0",
   "private": true,
-  "description": "수업과 실무 프로젝트를 위한 Vite 기반 React SPA 보일러플레이트",
+  "description": "원모어(OneMore) - 시니어 실무 경험 & 기업 프로젝트 연결 플랫폼",
   "type": "module",
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -32,12 +32,14 @@
     "slide:native": "python scripts/generate_native_pptx.py",
     "slide:pptx": "powershell -Command \"Start-Process docs/slides/eojob-intro.pptx\"",
     "validate": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "deploy:vercel": "npx vercel --prod",
     "deploy:leedongwook": "npx firebase-tools hosting:channel:deploy leedongwook"
   },
   "engines": {
     "node": ">=22.22.2 <23 || >=24.15.0 <25"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.116.0",
     "assemblyai": "4.36.5",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

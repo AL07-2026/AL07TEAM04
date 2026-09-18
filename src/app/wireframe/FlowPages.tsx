@@ -1105,7 +1105,7 @@ export function SeniorHomePage() {
           {userName}님, 안녕하세요
         </h2>
         <p className="text-xs md:text-lg font-medium text-slate-500 mt-1">
-          이어잡에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
+          원모어에서 경험에 딱 맞는 프로젝트와 기업 제안을 확인하세요.
         </p>
       </div>
 
@@ -3350,7 +3350,7 @@ export function ProjectRegisterPage() {
         },
         seniorFitScore: 90,
         source: 'internal',
-        sourceProvider: '이어잡 기업 직접 등록',
+        sourceProvider: '원모어 기업 직접 등록',
       });
       let attachmentSync = attachments.length === 0 ? 'none' : 'local';
       if (savedToFirestore && attachments.length > 0) {

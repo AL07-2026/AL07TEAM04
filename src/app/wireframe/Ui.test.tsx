@@ -90,7 +90,7 @@ describe('공통 헤더', () => {
     );
 
     const headerRail = screen
-      .getByRole('img', { name: '이어잡' })
+      .getByRole('img', { name: /원모어/i })
       .closest('header')?.firstElementChild;
     expect(headerRail).toHaveClass('site-rail', 'site-header-row');
     expect(screen.getByRole('banner')).toHaveClass('site-glass-header');
@@ -104,7 +104,7 @@ describe('공통 헤더', () => {
   it.each([
     { label: '인재', role: 'senior' as const },
     { label: '회사', role: 'company' as const },
-  ])('$label 상단·하단 현재 메뉴를 이어잡 오렌지로 표시한다', ({ label, role }) => {
+  ])('$label 상단·하단 현재 메뉴를 활성 강조색으로 표시한다', ({ label, role }) => {
     render(
       <MemoryRouter>
         <MobilePage activeNav="database" role={role} title="프로젝트">
@@ -141,7 +141,10 @@ describe('공통 헤더', () => {
       expect(
         screen.getByRole('button', { name: '이전 화면으로 돌아가기' }).closest('header'),
       ).toBeNull();
-      expect(container.querySelector('.site-header img')).toHaveAttribute('alt', '이어잡');
+      expect(container.querySelector('.site-header [role="img"]')).toHaveAttribute(
+        'aria-label',
+        expect.stringContaining('원모어'),
+      );
       expect(screen.getByRole('banner')).toHaveClass('site-header', 'site-glass-header');
       expect(screen.getByRole('button', { name: '더보기 열기' })).toHaveClass('site-glass-control');
     },
@@ -167,7 +170,7 @@ describe('공통 헤더', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: '더보기 열기' }));
-    expect(screen.getByRole('menuitem', { name: /이어잡 소개/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /원모어 소개/ })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /커뮤니티/ })).toBeInTheDocument();
     const surveyLink = screen.getByRole('menuitem', {
       name: '설문 참여하기 (새 창에서 열림)',
@@ -219,7 +222,7 @@ describe('BrandLogo', () => {
       </>,
     );
 
-    screen.getAllByRole('img', { name: '이어잡' }).forEach((logo) => {
+    screen.getAllByRole('img', { name: /원모어/i }).forEach((logo) => {
       expect(logo).toHaveClass('h-7');
     });
   });

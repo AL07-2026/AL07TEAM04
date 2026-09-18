@@ -16,6 +16,35 @@
 
 ## 📝 작업 기록 (Work History)
 
+### [2026-09-19] 원모어(OneMore) 프로젝트 리브랜딩, 로고·컬러 전면 개편 및 Supabase + Vercel 인프라 구축
+- **작업자/브랜치**: Antigravity, `leedongwook` 브랜치.
+- **프로젝트 리브랜딩**:
+  - `package.json`: 프로젝트명 `onemore`, 설명 "원모어(OneMore) - 시니어 실무 경험 & 기업 프로젝트 연결 플랫폼"으로 갱신.
+  - `index.html`: 페이지 타이틀 `원모어 (OneMore) | 시니어 실무 경험 & 기업 프로젝트 연결 플랫폼`, 메타 설명, 테마 색상 갱신.
+  - UI 및 서비스 레이어 일괄 전환: `LandingPage`, `LoginPage`, `CommunityBoard`, `JobDatabasePage`, `AdminPage`, `FlowPages`, `seoulJobService`, `publicJobService`, `worknetService`, `emailService`, `aiJobDetailAnalyzer` 등 전체 소스 코드 내 "이어잡"을 "원모어"로 100% 전환 완료.
+- **신규 로고 및 브랜딩 컴포넌트**:
+  - `src/components/brand/OneMoreLogo.tsx`: OneMore의 '1'과 도약, 순환을 상징하는 정교한 모던 벡터 SVG 로고 및 엠블럼, 워드마크 구현.
+  - `src/app/wireframe/Ui.tsx`: `BrandLogo` 컴포넌트와 OneMoreLogo 완벽 연동.
+- **디자인 시스템 컬러 개편 (Deep Royal Navy & Electric Cyan)**:
+  - `src/styles/globals.css`: Tailwind v4 `@theme` 토큰 및 커스텀 프로퍼티 갱신.
+  - Deep Royal Navy (`#0F172A`), Dynamic Royal Blue (`#2563EB`), Cyan (`#0284c7`), Slate (`#64748B`), Slate Canvas (`#F8FAFC`) 기반의 신뢰도 높은 모던 테크 & 시니어 가독성 컬러 시스템 구축.
+- **Supabase + Vercel 인프라 구축**:
+  - `supabase/schema.sql`: 사용자 프로필(`profiles`), 기업/시니어 프로필, 프로젝트/공고(`projects`), 지원서(`proposals`), 커뮤니티 게시판/댓글, AI 경험카드 전체를 수용하는 PostgreSQL DDL 및 소유자 격리/공개 열람 Row Level Security (RLS) 보안 정책 100% 작성.
+  - `src/lib/supabase.ts`: `@supabase/supabase-js` 기반 클라이언트 SDK 구성 및 환경변수 래핑.
+  - `vercel.json`: Vercel 호스팅용 SPA 라우트 rewrite, 불변 정적 에셋 캐싱 헤더, 보안 헤더 설정 완료.
+  - `package.json`: `"deploy:vercel": "npx vercel --prod"` 배포 스크립트 추가.
+  - `.env.example`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` 추가.
+- **무결점 검증 결과**:
+  - `npm run validate` 전체 파이프라인 무결점 통과:
+    - TypeScript 컴파일 검사: 0 Errors (`tsc --noEmit`)
+    - ESLint 린트 검사: 0 Errors, 0 Warnings
+    - Vitest 단위/통합 테스트: **68개 테스트 파일 / 705개 테스트 100% 통과**
+    - Vite 프로덕션 빌드: `dist/index.html` 및 에셋 번들 생성 완료.
+- **배포 및 확인**:
+  - `leedongwook` 전용 채널에 62개 번들 배포 완료: `https://al07team04-bdfcd--leedongwook-78lkswcx.web.app`
+- **폴더명 및 향후 안내**:
+  - 프로젝트 내부 명칭은 `onemore`로 전환 완료. 로컬 루트 디렉토리명(`D:\AL07TEAM04` ➔ `D:\onemore` 또는 `D:\OneMore`)은 IDE 세션 종료 후 안전하게 1-step으로 폴더명을 변경하고 새 경로로 IDE를 재오픈할 수 있도록 안내 지침 마련.
+
 ### [2026-09-13] 모바일 프리미엄 배너 하단 한 줄 통합 및 전체 Hosting 배포
 - **작업자/브랜치**: Codex. UI 커밋 `6d1726e`를 `develop`과 `leedongwook` 및 두 원격 브랜치에 동일하게 반영.
 - **모바일 최적화**: 640px 미만에서 별도 좌측 상단 조작 글래스를 제거하고, 기존 하단 48px 정보 글래스 하나에 기업명·현재 순번·이전·다음을 한 줄로 통합. 모바일 정지 버튼과 링크 화살표를 숨기고 이전·다음은 44px 터치 영역을 유지. 380px 미만에서는 `프리미엄 기업` 라벨만 숨겨 최장 회사명 공간을 확보하며 자동 롤링과 수동 탐색은 모두 유지.

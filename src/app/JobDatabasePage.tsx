@@ -2061,7 +2061,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         sourceUrl: applyingPosting.sourceUrl,
       });
 
-      const text = `[${applyingPosting.companyName}] 지원 내용과 이어잡 기록이 저장되었습니다.`;
+      const text = `[${applyingPosting.companyName}] 지원 내용과 원모어 기록이 저장되었습니다.`;
       setActionNotice(text);
       setIsInterviewBypassConfirmOpen(false);
       setApplyingPosting(null);
@@ -2159,7 +2159,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
         },
         seniorFitScore: editingProject?.seniorFitScore ?? 95,
         source: 'internal',
-        sourceProvider: '이어잡 기업 직접 등록',
+        sourceProvider: '원모어 기업 직접 등록',
       } satisfies Partial<Omit<JobPosting, 'id'>>;
 
       if (editingProject) {
@@ -3195,7 +3195,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   지원 내용을 확인해 주세요
                 </h3>
                 <p className="mt-1.5 text-[14px] font-medium leading-6 text-[#53645F]">
-                  인터뷰 결과와 첨부파일을 확인한 뒤 이어잡 지원 이력을 저장합니다.
+                  인터뷰 결과와 첨부파일을 확인한 뒤 원모어 지원 이력을 저장합니다.
                 </p>
               </div>
               <button
@@ -3434,7 +3434,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                   </span>
                   <span className="text-[13px] font-medium text-[#7A5146]">
                     {applyingPostingUsesExternalApplication
-                      ? '이어잡에는 지원 이력과 선택한 파일명이 저장됩니다. 아래 저장 후 원문 접수처에서 파일을 다시 첨부해 주세요.'
+                      ? '원모어에는 지원 이력과 선택한 파일명이 저장됩니다. 아래 저장 후 원문 접수처에서 파일을 다시 첨부해 주세요.'
                       : '지원 이력은 기업의 받은 제안에 저장되고, 등록된 담당자 이메일로 이력서와 AI 경험 요약이 함께 전송됩니다.'}
                   </span>
                 </div>
@@ -3588,7 +3588,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                 </div>
                 <div>
                   <span className="inline-block rounded-lg bg-[#173F3A]/10 px-3 py-1 text-[12px] font-extrabold text-[#173F3A]">
-                    이어잡 저장 완료
+                    원모어 저장 완료
                   </span>
                   <h3 className="mt-1 text-[20px] font-extrabold text-[#17212B]">
                     지원 내용이 저장되었습니다
@@ -3623,7 +3623,7 @@ export function JobDatabasePage({ role = 'company', title }: { role?: Role; titl
                     <span>아직 실제 접수 전입니다</span>
                   </div>
                   <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-[#6F5149]">
-                    이어잡 지원 이력만 저장되었습니다. AI 경험 요약을 복사한 뒤 공식 채용 페이지에서
+                    원모어 지원 이력만 저장되었습니다. AI 경험 요약을 복사한 뒤 공식 채용 페이지에서
                     파일을 다시 첨부하고 지원을 완료해 주세요.
                   </p>
                 </div>

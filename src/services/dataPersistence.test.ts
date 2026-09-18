@@ -71,7 +71,7 @@ describe('데이터 저장 및 조회 정합성', () => {
         requiredSkills: 'source',
       },
       source: 'internal',
-      sourceProvider: '이어잡 기업 직접 등록',
+      sourceProvider: '원모어 기업 직접 등록',
       attachments: [
         {
           name: 'project-guide.pdf',
@@ -103,7 +103,7 @@ describe('데이터 저장 및 조회 정합성', () => {
       requiredSkills: 'source',
     });
     expect(project?.source).toBe('internal');
-    expect(project?.sourceProvider).toBe('이어잡 기업 직접 등록');
+    expect(project?.sourceProvider).toBe('원모어 기업 직접 등록');
   });
 
   it('기업이 직접 등록한 프로젝트의 저장 업무는 provenance가 없더라도 source로 유지한다', () => {
@@ -202,7 +202,7 @@ describe('데이터 저장 및 조회 정합성', () => {
       'eojob_company_profile',
       JSON.stringify({
         companyAddress: '서울특별시 강남구 테헤란로 123',
-        companyName: '(주) 이어잡',
+        companyName: '(주) 원모어',
         email: 'hr@eojob.com',
         managerName: '김담당',
         phone: '02-1234-5678',

@@ -77,7 +77,7 @@ describe('LoginPage rememberMe persistence', () => {
     ).toBeInTheDocument();
   });
 
-  it('기본 로그인 행동 버튼에 이어잡 오렌지 색상을 사용한다', () => {
+  it('기본 로그인 행동 버튼에 브랜드 강조 색상을 사용한다', () => {
     render(<LoginPage />);
 
     expect(screen.getByRole('button', { name: '인재로 로그인' })).toHaveClass(

@@ -1624,7 +1624,7 @@ export function AdminPage() {
               <ShieldCheck className="size-5" aria-hidden="true" />
             </span>
             <span>
-              <span className="block text-lg font-black">이어잡 관리자</span>
+              <span className="block text-lg font-black">원모어 관리자</span>
               <span className="block text-xs font-bold text-white/65">운영 콘솔</span>
             </span>
           </button>

@@ -306,7 +306,7 @@ export function analyzeJobPostingForDetail(posting: JobPosting): AIAnalyzedJobDe
         ? '서울시 일자리포털 공식 연동'
         : posting.source === 'public'
           ? '공공 채용 포털 검증'
-          : '이어잡 공식 등록 기업';
+          : '원모어 공식 등록 기업';
 
   const deadlineLabel = posting.deadline
     ? `${posting.deadline} (마감 예정)`

@@ -34,7 +34,7 @@ export async function sendApplicationToManager(
     return {
       deliveryMethod: 'external-application',
       emailSent: false,
-      message: '이어잡 지원 이력이 저장되었습니다. 실제 접수는 공식 채용 페이지에서 완료해야 합니다.',
+      message: '원모어 지원 이력이 저장되었습니다. 실제 접수는 공식 채용 페이지에서 완료해야 합니다.',
       recipientEmail:
         posting.contactEmail?.trim() || posting.sourceProvider || '공식 채용 접수처',
     };
@@ -45,7 +45,7 @@ export async function sendApplicationToManager(
       deliveryMethod: 'in-app',
       emailSent: false,
       message: '지원 이력은 저장되었지만 등록 기업 계정을 확인할 수 없습니다.',
-      recipientEmail: '이어잡 기업 담당자',
+      recipientEmail: '원모어 기업 담당자',
     };
   }
 
@@ -69,7 +69,7 @@ export async function sendApplicationToManager(
         message:
           payload.error ||
           '지원 이력은 저장되었지만 담당자 이메일 알림은 발송하지 못했습니다.',
-        recipientEmail: '이어잡 기업 담당자',
+        recipientEmail: '원모어 기업 담당자',
       };
     }
 
@@ -87,7 +87,7 @@ export async function sendApplicationToManager(
       emailSent: false,
       message:
         '지원 이력은 저장되었지만 담당자 이메일 알림은 발송하지 못했습니다.',
-      recipientEmail: '이어잡 기업 담당자',
+      recipientEmail: '원모어 기업 담당자',
     };
   }
 }

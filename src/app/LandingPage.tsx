@@ -171,7 +171,7 @@ export function LandingPage() {
           <div className="site-rail">
             <div className="pt-2 text-left">
               <p className="text-[0.875rem] font-bold tracking-[0.16em] text-[#F06B4F] sm:text-[1rem]">
-                이어잡이 만드는 새로운 연결
+                원모어가 만드는 새로운 연결
               </p>
               <h1 className="mt-5 max-w-4xl text-balance text-[2rem] font-black leading-[1.20] tracking-normal text-[#111820] sm:mt-6 sm:text-[3rem] lg:text-[3.75rem]">
                 <span className="text-[#173f3a]">기업</span>의{' '}
@@ -183,10 +183,10 @@ export function LandingPage() {
 
               <p className="mt-6 max-w-4xl text-pretty text-[1rem] font-medium leading-[1.75] text-[#53606e] sm:text-[1.125rem]">
                 <span className="block">
-                  경험을 잇고, 일을 잇고, 세대를 잇다.&nbsp;이어잡입니다.
+                  경험을 잇고, 일을 잇고, 세대를 잇다.&nbsp;원모어입니다.
                 </span>
                 <span className="mt-1 inline sm:block">
-                  이어잡은 시니어 전문가의 실무 노하우와 기업의 당면 과제를 AI로 매칭하는
+                  원모어는 시니어 전문가의 실무 노하우와 기업의 당면 과제를 AI로 매칭하는
                   플랫폼으로{' '}
                 </span>
                 <span className="inline sm:mt-1 sm:block">
@@ -200,7 +200,7 @@ export function LandingPage() {
               <video
                 className="aspect-video w-full object-cover"
                 src="/eojob-landing-hero.mp4"
-                title="시니어의 경험과 기업의 과제가 만나는 이어잡 소개 영상"
+                title="시니어의 경험과 기업의 과제가 만나는 원모어 소개 영상"
                 autoPlay
                 muted
                 loop
@@ -220,7 +220,7 @@ export function LandingPage() {
           <div className="site-rail">
             <div>
               <p className="text-[0.875rem] font-bold text-[#F06B4F] sm:text-[1rem]">
-                이어잡의 서비스 특징
+                원모어의 서비스 특징
               </p>
               <h2
                 id="service-features-title"
@@ -306,7 +306,7 @@ export function LandingPage() {
         <section className="bg-white py-14 sm:py-18">
           <div className="site-rail py-9 text-center sm:py-12">
             <h2 className="text-[1.375rem] font-black leading-[1.35] text-[#17212B] sm:text-[1.875rem]">
-              지금 바로 이어잡의 검증된 프로젝트를 확인해 보세요
+              지금 바로 원모어의 검증된 프로젝트를 확인해 보세요
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-[1rem] font-medium leading-[1.7] text-[#53606E] sm:text-[1.125rem]">
               로그인 없이도 전체 실시간 프로젝트 데이터베이스를 자유롭게 둘러보실 수 있습니다.
@@ -496,10 +496,10 @@ export function LandingPage() {
 
       <footer className="border-t border-[#e7dfcb] bg-white py-7">
         <div className="site-rail flex items-center justify-between gap-4 text-[0.875rem] font-semibold text-[#667085]">
-          <a className="hover:text-[#173F3A]" href="mailto:ieojab2026@gmail.com">
-            고객 문의 ieojab2026@gmail.com
+          <a className="hover:text-[#173F3A]" href="mailto:onemore2026@gmail.com">
+            고객 문의 onemore2026@gmail.com
           </a>
-          <p>© 2026 이어잡 IEO Job. All rights reserved.</p>
+          <p>© 2026 원모어 OneMore. All rights reserved.</p>
         </div>
       </footer>
     </div>

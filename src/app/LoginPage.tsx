@@ -35,19 +35,19 @@ type BannerSlide = {
 
 const homeBannerSlides: BannerSlide[] = [
   {
-    alt: '이어잡의 경험 기반 프로젝트 연결 안내',
+    alt: '원모어의 경험 기반 프로젝트 연결 안내',
     description: '해결해 본 사람과 해결이 필요한 조직을 잇습니다.',
     height: 556,
     id: 1,
     image: '/eojob_pc_home_banner.png',
     imageLoginPc: '/eojob_login_pc_banner.png',
     imageMobile: '/eojob_mobile_banner.png',
-    tag: '이어잡 메인',
+    tag: '원모어 메인',
     title: '당신의 경험이, 다음 해답이 되도록',
     width: 1024,
   },
   {
-    alt: '이어잡 AI 경험 인터뷰 안내',
+    alt: '원모어 AI 경험 인터뷰 안내',
     description: '음성 대화로 답하면 전용 경험 카드가 자동 생성됩니다.',
     height: 556,
     id: 2,
@@ -59,7 +59,7 @@ const homeBannerSlides: BannerSlide[] = [
     width: 1024,
   },
   {
-    alt: '이어잡의 시니어 전문가와 기업 프로젝트 연결 안내',
+    alt: '원모어의 시니어 전문가와 기업 프로젝트 연결 안내',
     description: '필요한 전문 프로젝트를 경험 카드로 연결해 보세요.',
     height: 556,
     id: 3,
@@ -235,7 +235,7 @@ export function RollingBanner({
 
   return (
     <section
-      aria-label="이어잡 현장 프로젝트 소개"
+      aria-label="원모어 현장 프로젝트 소개"
       aria-roledescription="캐러셀"
       className="flex w-full flex-col gap-2"
     >
